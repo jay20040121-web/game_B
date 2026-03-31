@@ -4149,7 +4149,7 @@ function App() {
                 setBattleState(prev => ({ ...prev, active: false }));
 
                 setIsPvpMode(true);
-                syncMatchStatus('searching');
+                syncMatchStatus('idle');
                 initPeer();
                 updateDialogue("連線大廳", true);
                 logEvent(`進入連線大廳`);
