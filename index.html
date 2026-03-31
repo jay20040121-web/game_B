@@ -2523,6 +2523,7 @@ function App() {
     
     const [myPeerId, setMyPeerId] = useState("");
     const [targetPeerId, setTargetPeerId] = useState("");
+    const [pvpRoomPassword, setPvpRoomPassword] = useState("");
     const peerInstance = useRef(null);
     const connInstance = useRef(null);
     const isHost = useRef(false);
@@ -2538,6 +2539,8 @@ function App() {
     // =========================================
     // PeerJS 核心連線邏輯 & 穩定性強化
     // =========================================
+    
+    const PEER_PREFIX = "gameB_v1_";
     
     // 統一重置 PvP 狀態與連線 (避免卡死)
     const cleanupPvp = useCallback((msg = null) => {
@@ -2558,36 +2561,52 @@ function App() {
         
         // 對手資訊清空
         setPvpOpponent(null);
-    }, []);
+        connInstance.current = null;
+    }, [updateDialogue, setIsPvpMode, syncMatchStatus, setBattleState, setPendingPlayerMove, setPvpOpponent]);
 
-    // 初始化 Peer (包含錯誤處理)
-    const initPeer = () => {
-        // 如果已經有 Peer 實例且狀態正常就跳過
-        if (peerInstance.current && !peerInstance.current.destroyed) return;
+    // 初始化 Peer (支援自訂 ID 或自動 ID)
+    const initPeer = (customId = null, role = null) => {
+        // 如果已經有舊的 Peer 且 ID 不同，先關閉
+        if (peerInstance.current && !peerInstance.current.destroyed) {
+            peerInstance.current.destroy();
+        }
         
-        const peer = new window.Peer();
+        const peer = customId ? new window.Peer(customId) : new window.Peer();
         
         peer.on('open', (id) => {
             setMyPeerId(id);
+            // 如果我是挑戰者 (B)，開啟後立即連向 A
+            if (role === 'B') {
+                const targetId = customId.replace(/_B$/, '_A');
+                // 延遲一下確保對方 Peer 已啟動
+                setTimeout(() => connectToRemotePeer(targetId), 500);
+            }
         });
 
-        // 監聽 Peer 全域錯誤 (如 ID 重複、網路中斷)
+        // 監聽 Peer 全域錯誤
         peer.on('error', (err) => {
             console.error("PeerJS Error:", err);
+            
+            // 房間佔用邏輯：如果 A 位置有人，嘗試進入 B 位置
+            if (err.type === 'unavailable-id' && customId && customId.endsWith('_A')) {
+                const bId = customId.replace(/_A$/, '_B');
+                initPeer(bId, 'B');
+                return;
+            }
+
             let errMsg = "通訊伺服器錯誤。";
-            if (err.type === 'unavailable-id') errMsg = "連線識別碼衝突，請稍後再試。";
+            if (err.type === 'unavailable-id') errMsg = "連線識別碼衝突或房間已滿，請換個密碼。";
             if (err.type === 'network') errMsg = "網路連線中斷。";
+            if (err.type === 'peer-unavailable') errMsg = "找不到對手，請確認對手的房間號碼。";
             
             cleanupPvp(errMsg);
-            // 發生嚴重錯誤時銷毀 Peer 並設為 null 讓下次能重新初始化
-            peer.destroy();
+            if (peer.destroyed === false) peer.destroy();
             peerInstance.current = null;
         });
 
         peer.on('connection', (conn) => {
-            // 作為被邀請方 (Client) 接收連線
             if (connInstance.current) {
-                conn.close(); // 已有連線，拒絕新連線
+                conn.close();
                 return;
             }
             connInstance.current = conn;
@@ -2596,6 +2615,29 @@ function App() {
         });
         
         peerInstance.current = peer;
+    };
+
+    // 加入/建立 密碼房間
+    const joinPvpRoom = (pwd) => {
+        if (!pwd || pwd.trim() === "") {
+            setAlertMsg("請輸入房間密碼");
+            playBloop('fail');
+            return;
+        }
+        const safePwd = pwd.trim().replace(/[^a-zA-Z0-9]/g, '');
+        const hostId = PEER_PREFIX + safePwd + "_A";
+        syncMatchStatus('searching');
+        updateDialogue("正在進入房間節點...", true);
+        initPeer(hostId);
+    };
+
+    // 快速配對 (隨機挑選公共房間)
+    const quickMatch = () => {
+        // 公共頻道池
+        const pool = ["101", "202", "303", "505", "777", "888", "999"];
+        const rand = pool[Math.floor(Math.random() * pool.length)];
+        setPvpRoomPassword(rand);
+        joinPvpRoom(rand);
     };
 
     // 處理與對手之間的數據收發
@@ -5364,39 +5406,51 @@ function App() {
                             ) : (
                                 <>
                                     {matchStatus === 'searching' ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center p-2 w-full">
-                                            <div className="text-[12px] font-black text-[#1a1a1a] mb-2 border-b-2 border-black w-full text-center pb-1">連線大廳</div>
-                                            <div className="text-[10px] w-full mb-3 flex items-center justify-between bg-white/30 p-1 border border-[#1a1a1a]">
-                                                <span className="font-bold">連線ID:</span>
-                                                <span className="ml-1 font-mono text-[11px] select-all font-bold">{myPeerId || '載入中...'}</span>
-                                            </div>
+                                        <div className="flex-1 flex flex-col items-center justify-start p-3 w-full">
+                                            <div className="text-[12px] font-black text-[#1a1a1a] mb-2 border-b-2 border-black w-full text-center pb-1 uppercase tracking-widest">宇宙大廳</div>
                                             
-                                            <div className="w-full flex flex-col gap-1 mb-3">
-                                                <div className="text-[9px] font-bold">🎯 目標對手 ID</div>
+                                            <div className="w-full flex flex-col gap-2 mb-4 mt-2">
+                                                <div className="flex justify-between items-center px-1">
+                                                    <span className="text-[9px] font-black text-[#383a37]">🚪 房間密碼</span>
+                                                    <span className="text-[8px] opacity-70 underline">連線狀況: {myPeerId ? '已上線' : '準備中'}</span>
+                                                </div>
                                                 <input 
                                                     type="text" 
-                                                    placeholder="在此輸入對手ID..." 
-                                                    value={targetPeerId}
-                                                    onChange={e => setTargetPeerId(e.target.value)}
-                                                    className="w-full bg-white border-2 border-[#1a1a1a] p-1 text-[10px] outline-none font-mono"
+                                                    placeholder="請輸入 1~6 位房號..." 
+                                                    value={pvpRoomPassword}
+                                                    maxLength={6}
+                                                    onChange={e => setPvpRoomPassword(e.target.value)}
+                                                    className="w-full bg-[#f8fcf0] border-2 border-[#1a1a1a] p-2 text-[12px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal placeholder:opacity-40"
                                                 />
                                             </div>
 
-                                            <button 
-                                                onClick={() => {
-                                                    if (targetPeerId) {
-                                                        connectToRemotePeer(targetPeerId);
-                                                        updateDialogue("連線中...", true);
-                                                    }
-                                                }}
-                                                disabled={!targetPeerId}
-                                                className={`w-full py-1 border-2 border-[#1a1a1a] text-[10px] font-black transition-all shadow-[2px_2px_0_rgba(26,26,26,1)] ${targetPeerId ? 'bg-[#ffca28] text-[#1a1a1a] active:translate-y-px active:shadow-[1px_1px_0_rgba(26,26,26,1)]' : 'bg-gray-400 text-gray-700 opacity-50'}`}
-                                            >
-                                                發起挑戰
-                                            </button>
+                                            <div className="w-full grid grid-cols-1 gap-3">
+                                                <button 
+                                                    onClick={() => joinPvpRoom(pvpRoomPassword)}
+                                                    className="w-full py-2 bg-[#ff5252] text-white border-2 border-[#1a1a1a] text-[11px] font-black shadow-[3px_3px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                                                >
+                                                    進入房間
+                                                </button>
+
+                                                <div className="flex items-center gap-2 w-full mt-1">
+                                                    <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
+                                                    <span className="text-[8px] font-bold opacity-50">OR</span>
+                                                    <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
+                                                </div>
+
+                                                <button 
+                                                    onClick={() => quickMatch()}
+                                                    className="w-full py-2 bg-[#ffca28] text-[#1a1a1a] border-2 border-[#1a1a1a] text-[11px] font-black shadow-[3px_3px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                                                >
+                                                    🚀 快速配對
+                                                </button>
+                                            </div>
                                             
-                                            <div className="text-[9px] mt-auto pb-1 opacity-70 underline text-center w-full">
-                                                按 [C] 取消連線
+                                            <div className="mt-auto text-[9px] font-black text-[#1a1a1a] opacity-60 flex flex-col items-center gap-1">
+                                                <span>輸入相同密碼即可與好友對戰</span>
+                                                <div className="flex gap-2 text-[#383a37] underline decoration-dotted">
+                                                    <span>[C] 取消連線</span>
+                                                </div>
                                             </div>
                                         </div>
                                     ) : (
