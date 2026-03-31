@@ -5416,24 +5416,28 @@ function App() {
                                             <div className="w-full flex flex-col gap-1 mb-2 mt-1">
                                                 <div className="flex justify-between items-center px-1">
                                                     <span className="text-[8px] font-black text-[#383a37]">🚪 房間密碼</span>
-                                                    <span className="text-[8px] opacity-70 underline">狀況: {myPeerId ? '已上線' : '準備中'}</span>
+                                                    <span className={`text-[8px] font-bold underline transition-all ${matchStatus === 'searching' ? 'text-[#ff5252] animate-pulse' : 'text-[#383a37] opacity-70'}`}>
+                                                        狀況: {matchStatus === 'searching' ? '🏃 配對中...' : (myPeerId ? '已上線' : '準備中')}
+                                                    </span>
                                                 </div>
                                                 <input 
                                                     type="text" 
                                                     placeholder="1~6 位房號..." 
                                                     value={pvpRoomPassword}
                                                     maxLength={6}
+                                                    disabled={matchStatus === 'searching'}
                                                     onChange={e => setPvpRoomPassword(e.target.value)}
-                                                    className="w-full bg-[#f8fcf0] border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal placeholder:opacity-40"
+                                                    className={`w-full border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal ${matchStatus === 'searching' ? 'bg-gray-200 opacity-50' : 'bg-[#f8fcf0]'}`}
                                                 />
                                             </div>
 
                                             <div className="w-full grid grid-cols-1 gap-2">
                                                 <button 
-                                                    onClick={() => joinPvpRoom(pvpRoomPassword)}
-                                                    className="w-full py-1.5 bg-[#ff5252] text-white border-2 border-[#1a1a1a] text-[10px] font-black shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                                                    onClick={() => !((matchStatus === 'searching')) && joinPvpRoom(pvpRoomPassword)}
+                                                    disabled={matchStatus === 'searching'}
+                                                    className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ff5252] text-white shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
                                                 >
-                                                    進入房間
+                                                    {matchStatus === 'searching' ? '等待對手連線...' : '進入房間'}
                                                 </button>
 
                                                 <div className="flex items-center gap-2 w-full">
@@ -5443,8 +5447,9 @@ function App() {
                                                 </div>
 
                                                 <button 
-                                                    onClick={() => quickMatch()}
-                                                    className="w-full py-1.5 bg-[#ffca28] text-[#1a1a1a] border-2 border-[#1a1a1a] text-[10px] font-black shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                                                    onClick={() => !((matchStatus === 'searching')) && quickMatch()}
+                                                    disabled={matchStatus === 'searching'}
+                                                    className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ffca28] text-[#1a1a1a] shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
                                                 >
                                                     🚀 快速配對
                                                 </button>
