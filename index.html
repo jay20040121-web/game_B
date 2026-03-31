@@ -1817,7 +1817,12 @@ const WILD_EVOLUTION_MAP = {
     "41": 42, "42": 169, // 超音蝠線
     "56": 57, "57": 979, // 猴怪線
     "74": 75, "75": 76,  // 小拳石線
-    "60": 61, "61": 62   // 蚊香蝌蚪線
+    "60": 61, "61": 62,  // 蚊香蝌蚪線
+    "63": 64, "64": 65,  // 凱西線
+    "92": 93, "93": 94,  // 鬼斯線 (非靈魂版)
+    "1": 2, "2": 3,      // 妙蛙種子線
+    "4": 5, "5": 6,      // 小火龍線
+    "7": 8, "8": 9       // 傑尼龜線 (非靈魂版)
 };
 
 const TYPE_CHART = {
@@ -4232,7 +4237,9 @@ function App() {
                 }
 
                 // Determine basic soulNext based on locked affinity
-                if (stats.bondValue >= 80 && stats.lockedAffinity) {
+                // 規則：只有在 Stage 1 為「百變怪 (132)」時，才具備進入靈魂進化線的資格
+                const currentSpeciesId = getMonsterId();
+                if (currentSpeciesId === 132 && stats.bondValue >= 80 && stats.lockedAffinity) {
                     if (evolutionStage === 1) {
                         if (stats.lockedAffinity === 'fire') {
                             const fOpts = [];
