@@ -3561,6 +3561,10 @@ function App() {
                     
                     // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
+                    if (prev.mode === 'pvp') {
+                        pvpRemoteMoveRef.current = null;
+                        setPendingPlayerMove(null);
+                    }
                     return { ...prev, phase: nextPhase, activeMsg: "", turn: prev.turn + 1, flashTarget: null };
 
                 }
