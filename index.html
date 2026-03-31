@@ -2663,10 +2663,11 @@ function App() {
         });
     };
 
-    // 取得自身的戰鬥數值用於 INIT 傳送
+    // 取得自身的戰鬥數值用於 INIT 傳送 (直接從 Ref 讀取最新狀態)
     const generateMyBattleStats = () => {
-        const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
-        const speciesId = getMonsterId();
+        const cur = latestStats.current;
+        const level = Math.min(100, Math.max(1, Math.floor(((cur.advStats.basePower || 100) - 100) / 10) + 1));
+        const speciesId = getMonsterId(cur.evolutionBranch, cur.evolutionStage);
 
         // --- 性格修正系統 (Nature Modifiers) ---
         const getNatureMods = (tag) => {
@@ -2679,23 +2680,21 @@ function App() {
             return mods;
         };
 
-        const tagEntries = Object.entries(soulTagCounts);
+        const tagEntries = Object.entries(cur.soulTagCounts);
         const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
-        // 必須至少有過一次對談且分數 > 0 才有性格
         const dominantTag = best[1] > 0 ? best[0] : 'none';
         const pNatureMods = getNatureMods(dominantTag);
 
-        const pMaxHP = calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp);
-        const pATK = calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk);
-        const pDEF = calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def);
-        const pSPD = calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd);
+        const pMaxHP = calcFinalStat('hp', speciesId, cur.advStats.ivs.hp, cur.advStats.evs.hp, level, pNatureMods.hp);
+        const pATK = calcFinalStat('atk', speciesId, cur.advStats.ivs.atk, cur.advStats.evs.atk, level, pNatureMods.atk);
+        const pDEF = calcFinalStat('def', speciesId, cur.advStats.ivs.def, cur.advStats.evs.def, level, pNatureMods.def);
+        const pSPD = calcFinalStat('spd', speciesId, cur.advStats.ivs.spd, cur.advStats.evs.spd, level, pNatureMods.spd);
 
         const statsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
         const pType = statsRef.types; 
 
-        // --- 新：使用存檔中的永久招式陣列 ---
-        const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
-        // 防呆：如果完全沒招式 (應不發生)，給個基本招
+        // --- 使用存檔中的最新招式陣列 ---
+        const pMoves = (cur.advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
         if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle);
 
         return { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId: speciesId, pLevel: level };
@@ -3008,11 +3007,11 @@ function App() {
         return () => clearInterval(engineTimer);
     }, [vel, isDead, isEvolving, miniGame, isDuplicateTab]);
 
-    // 用 Ref 確保可以隨時讀取最新狀態而不觸發 useEffect 重啟
-    const latestStats = useRef({ mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats });
+    // 用 Ref 確保可以隨時讀取最新狀態而不觸發 useEffect 重啟 (包含對戰所需的即時數值)
+    const latestStats = useRef({ mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats, evolutionBranch, evolutionStage });
     useEffect(() => {
-        latestStats.current = { mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats };
-    }, [mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats]);
+        latestStats.current = { mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats, evolutionBranch, evolutionStage };
+    }, [mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats, evolutionBranch, evolutionStage]);
 
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
