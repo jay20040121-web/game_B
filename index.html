@@ -2536,40 +2536,81 @@ function App() {
     const pvpRemoteMoveRef = useRef(null);
 
     // =========================================
-    // PeerJS 核心連線邏輯
+    // PeerJS 核心連線邏輯 & 穩定性強化
     // =========================================
     
-    // 初始化 Peer
+    // 統一重置 PvP 狀態與連線 (避免卡死)
+    const cleanupPvp = useCallback((msg = null) => {
+        if (msg) updateDialogue(msg);
+        
+        // 斷開連線實例
+        if (connInstance.current) {
+            try { connInstance.current.close(); } catch(e) {}
+            connInstance.current = null;
+        }
+        
+        // 重置狀態與對戰資訊
+        setIsPvpMode(false);
+        syncMatchStatus('idle');
+        setBattleState(prev => (prev.mode === 'pvp' && prev.active) ? { ...prev, active: false, phase: 'end' } : { ...prev, active: false });
+        setPendingPlayerMove(null);
+        pvpRemoteMoveRef.current = null;
+        
+        // 對手資訊清空
+        setPvpOpponent(null);
+    }, []);
+
+    // 初始化 Peer (包含錯誤處理)
     const initPeer = () => {
-        if (peerInstance.current) return;
+        // 如果已經有 Peer 實例且狀態正常就跳過
+        if (peerInstance.current && !peerInstance.current.destroyed) return;
+        
         const peer = new window.Peer();
+        
         peer.on('open', (id) => {
             setMyPeerId(id);
         });
+
+        // 監聽 Peer 全域錯誤 (如 ID 重複、網路中斷)
+        peer.on('error', (err) => {
+            console.error("PeerJS Error:", err);
+            let errMsg = "通訊伺服器錯誤。";
+            if (err.type === 'unavailable-id') errMsg = "連線識別碼衝突，請稍後再試。";
+            if (err.type === 'network') errMsg = "網路連線中斷。";
+            
+            cleanupPvp(errMsg);
+            // 發生嚴重錯誤時銷毀 Peer 並設為 null 讓下次能重新初始化
+            peer.destroy();
+            peerInstance.current = null;
+        });
+
         peer.on('connection', (conn) => {
             // 作為被邀請方 (Client) 接收連線
-            if (connInstance.current) return; // 已經有連線了
+            if (connInstance.current) {
+                conn.close(); // 已有連線，拒絕新連線
+                return;
+            }
             connInstance.current = conn;
             isHost.current = false;
             setupConnectionHandlers(conn);
         });
+        
         peerInstance.current = peer;
     };
 
     // 處理與對手之間的數據收發
     const setupConnectionHandlers = (conn) => {
         conn.on('open', () => {
-            // 連線開啟後，主機端發送初始資訊
-            // 客戶端也會發送它的初始資訊
-            const { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId, pLevel } = generateMyBattleStats(); 
+            // [快照同步] 連線開啟的瞬間，抓取最即時的數值進行交換
+            const stats = generateMyBattleStats(); 
             conn.send({
                 type: 'INIT',
                 data: {
-                    id: myId,
+                    id: stats.myId,
                     name: "網路玩家",
-                    stats: { hp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, level: pLevel },
-                    type: pType,
-                    moves: pMoves
+                    stats: { hp: stats.pMaxHP, atk: stats.pATK, def: stats.pDEF, spd: stats.pSPD, level: stats.pLevel },
+                    type: stats.pType,
+                    moves: stats.pMoves
                 }
             });
         });
@@ -2591,10 +2632,9 @@ function App() {
                     return prevMove;
                 });
             } else if (payload.type === 'RESULT') {
-                // 客戶端接收主機端算好的結果，直接套用
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
-                    const { stepQueue, playerHpAfter, enemyHpAfter } = payload.data;
+                    const { stepQueue } = payload.data;
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
                     return {
@@ -2608,14 +2648,16 @@ function App() {
                 });
             }
         });
+
+        conn.on('error', (err) => {
+            console.error("Connection Error:", err);
+            cleanupPvp("連線發生錯誤。");
+        });
         
         conn.on('close', () => {
             // 只在對戰中或搜尋中才顯示斷線提示
             if (matchStatusRef.current !== 'idle') {
-                updateDialogue("對手斷線。");
-                setIsPvpMode(false);
-                syncMatchStatus('idle');
-                setBattleState(prev => ({ ...prev, active: false }));
+                cleanupPvp("對手已離開對戰。");
             }
             connInstance.current = null;
         });
@@ -3536,17 +3578,7 @@ function App() {
         logs.push({ msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: 1 });
 
         if (battleState.mode === 'pvp') {
-            if (connInstance.current) {
-                try { connInstance.current.close(); } catch(e) {}
-                connInstance.current = null;
-            }
-            pvpRemoteMoveRef.current = null;
-            setPendingPlayerMove(null);
-
-            setIsPvpMode(false);
-            setMatchStatus('idle');
-            setBattleState(prev => ({ ...prev, active: false }));
-            updateDialogue("對戰勝利！");
+            cleanupPvp("對戰勝利！");
             logEvent("在一場精彩的連線對決中獲得了勝利。");
             playBloop('success');
             return; // PvP 模式不進入冒險流程
@@ -3568,17 +3600,7 @@ function App() {
 
     const resolveBattleLoss = (isRun = false) => {
         if (battleState.mode === 'pvp') {
-            if (connInstance.current) {
-                try { connInstance.current.close(); } catch(e) {}
-                connInstance.current = null;
-            }
-            pvpRemoteMoveRef.current = null;
-            setPendingPlayerMove(null);
-
-            setIsPvpMode(false);
-            setMatchStatus('idle');
-            setBattleState(prev => ({ ...prev, active: false }));
-            updateDialogue("對戰結束，再接再厲！");
+            cleanupPvp("對戰失敗，再接再厲！");
             playBloop('fail');
             return; // PvP 模式不進入冒險流程
         }
