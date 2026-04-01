@@ -445,6 +445,7 @@ export default function App() {
     
     const [myPeerId, setMyPeerId] = useState("");
     const [targetPeerId, setTargetPeerId] = useState("");
+    const [pvpRoomPassword, setPvpRoomPassword] = useState("");
     const peerInstance = useRef(null);
     const connInstance = useRef(null);
     const isHost = useRef(false);
@@ -458,24 +459,107 @@ export default function App() {
     const pvpRemoteMoveRef = useRef(null);
 
     // =========================================
-    // PeerJS 核心連線邏輯
+    // PeerJS 核心連線邏輯 & 穩定性強化
     // =========================================
     
-    // 初始化 Peer
-    const initPeer = () => {
-        if (peerInstance.current) return;
-        const peer = new window.Peer();
+    const PEER_PREFIX = "gameB_v1_";
+    
+    // 統一重置 PvP 狀態與連線 (避免卡死)
+    const cleanupPvp = (msg = null) => {
+        if (msg) updateDialogue(msg);
+        
+        // 斷開連線實例
+        if (connInstance.current) {
+            try { connInstance.current.close(); } catch(e) {}
+            connInstance.current = null;
+        }
+        
+        // 重置狀態與對戰資訊
+        setIsPvpMode(false);
+        syncMatchStatus('idle');
+        setBattleState(prev => (prev.mode === 'pvp' && prev.active) ? { ...prev, active: false, phase: 'end' } : { ...prev, active: false });
+        setPendingPlayerMove(null);
+        pvpRemoteMoveRef.current = null;
+        
+        // 對手資訊清空
+        setPvpOpponent(null);
+        connInstance.current = null;
+    };
+
+    // 初始化 Peer (支援自訂 ID 或自動 ID)
+    const initPeer = (customId = null, role = null) => {
+        // 如果已經有舊的 Peer 且 ID 不同，先關閉
+        if (peerInstance.current && !peerInstance.current.destroyed) {
+            peerInstance.current.destroy();
+        }
+        
+        const peer = customId ? new window.Peer(customId) : new window.Peer();
+        
         peer.on('open', (id) => {
             setMyPeerId(id);
+            // 如果我是挑戰者 (B)，開啟後立即連向 A
+            if (role === 'B') {
+                const targetId = customId.replace(/_B$/, '_A');
+                // 延遲一下確保對方 Peer 已啟動
+                setTimeout(() => connectToRemotePeer(targetId), 500);
+            }
         });
+
+        // 監聽 Peer 全域錯誤
+        peer.on('error', (err) => {
+            console.error("PeerJS Error:", err);
+            
+            // 房間佔用邏輯：如果 A 位置有人，嘗試進入 B 位置
+            if (err.type === 'unavailable-id' && customId && customId.endsWith('_A')) {
+                const bId = customId.replace(/_A$/, '_B');
+                initPeer(bId, 'B');
+                return;
+            }
+
+            let errMsg = "通訊伺服器錯誤。";
+            if (err.type === 'unavailable-id') errMsg = "連線識別碼衝突或房間已滿，請換個密碼。";
+            if (err.type === 'network') errMsg = "網路連線中斷。";
+            if (err.type === 'peer-unavailable') errMsg = "找不到對手，請確認對手的房間號碼。";
+            
+            cleanupPvp(errMsg);
+            if (peer.destroyed === false) peer.destroy();
+            peerInstance.current = null;
+        });
+
         peer.on('connection', (conn) => {
-            // 作為被邀請方 (Client) 接收連線
-            if (connInstance.current) return; // 已經有連線了
+            if (connInstance.current) {
+                conn.close();
+                return;
+            }
             connInstance.current = conn;
             isHost.current = false;
             setupConnectionHandlers(conn);
         });
+        
         peerInstance.current = peer;
+    };
+
+    // 加入/建立 密碼房間
+    const joinPvpRoom = (pwd) => {
+        if (!pwd || pwd.trim() === "") {
+            setAlertMsg("請輸入房間密碼");
+            playBloop('fail');
+            return;
+        }
+        const safePwd = pwd.trim().replace(/[^a-zA-Z0-9]/g, '');
+        const hostId = PEER_PREFIX + safePwd + "_A";
+        syncMatchStatus('searching');
+        updateDialogue("正在進入房間節點...", true);
+        initPeer(hostId);
+    };
+
+    // 快速配對 (隨機挑選公共房間)
+    const quickMatch = () => {
+        // 公共頻道池
+        const pool = ["101", "202", "303", "505", "777", "888", "999"];
+        const rand = pool[Math.floor(Math.random() * pool.length)];
+        setPvpRoomPassword(rand);
+        joinPvpRoom(rand);
     };
 
     // 處理與對手之間的數據收發
@@ -576,7 +660,7 @@ export default function App() {
         // --- 新：使用存檔中的永久招式陣列 ---
         const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
         // 防呆：如果完全沒招式 (應不發生)，給個基本招
-        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle || { name: '撞擊', power: 40, type: 'normal' });
+        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle);
 
         return { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId: speciesId, pLevel: level };
     };
@@ -1098,12 +1182,11 @@ export default function App() {
             const nextQueue = [];
             const playerMoveList = prev.player.moves || [SKILL_DATABASE.tackle];
             // 智慧 AI 選招：優先考慮克制與最高傷害
-            const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList) || { name: '撞擊', power: 40, type: 'normal' };
-            const enemyMoveList = prev.enemy.moves || [];
+            const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList);
+            const enemyMoveList = prev.enemy.moves || [SKILL_DATABASE.tackle];
             
             // PvP 模式下使用來自網路的招式，否則使用智慧 AI
-            let enemyMove = pvpEnemyMove || getSmartMove(prev.enemy, prev.player, enemyMoveList);
-            if (!enemyMove) enemyMove = { name: '撞擊', power: 40, type: 'normal' };
+            const enemyMove = pvpEnemyMove || getSmartMove(prev.enemy, prev.player, enemyMoveList);
 
             // 為了讓 PvP 完全同步，使用回合數作為亂數種子，確保雙方算出的傷害完全一致
             let rngState = prev.turn * 1234567;
@@ -1858,9 +1941,7 @@ export default function App() {
         }
         if (isPvpMode) {
             if (matchStatus === 'searching') {
-                setIsPvpMode(false);
-                syncMatchStatus('idle');
-                updateDialogue("取消搜尋。");
+                cleanupPvp("取消搜尋。");
             } else {
                 updateDialogue("對戰中無法逃跑！", true);
             }
@@ -2010,19 +2091,10 @@ export default function App() {
                 setActiveIndex(-1);
                 break;
             case 'connect':
-                // 清掉任何舊的 PVP 狀態
-                if (connInstance.current) {
-                    try { connInstance.current.close(); } catch(e) {}
-                    connInstance.current = null;
-                }
-                pvpRemoteMoveRef.current = null;
-                setPendingPlayerMove(null);
-                setBattleState(prev => ({ ...prev, active: false }));
-
+                cleanupPvp();
                 setIsPvpMode(true);
-                syncMatchStatus('searching');
-                initPeer();
-                updateDialogue("連線大廳", true);
+                syncMatchStatus('idle');
+                updateDialogue("宇宙連線大廳", true);
                 logEvent(`進入連線大廳`);
                 break;
             case 'info':
@@ -2371,7 +2443,7 @@ export default function App() {
                     } else if (m >= 50) {
                         nextBranch = 'A';
                     } else if (h >= 50) {
-                    nextBranch = 'B';
+                        nextBranch = 'B';
                     } else {
                         nextBranch = 'C';
                     }
@@ -2518,12 +2590,10 @@ export default function App() {
             isTrainer: true
         };
     };
-
     const generateBattleState = (mode, myId, pvpOpponentData = null) => {
         const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
         const speciesId = getMonsterId();
 
-        // --- 性格修正系統 (Nature Modifiers) ---
         // --- 性格修正系統 (Nature Modifiers) ---
         const getNatureMods = (tag) => {
             const mods = { hp: 1.0, atk: 1.0, def: 1.0, spd: 1.0 };
@@ -3315,42 +3385,65 @@ setEvolutionBranch(savedDeathBranch);
                                 </div>
                             ) : (
                                 <>
-                                    {matchStatus === 'searching' ? (
-                                        <div className="flex-1 flex flex-col items-center justify-center p-2 w-full">
-                                            <div className="text-[12px] font-black text-[#1a1a1a] mb-2 border-b-2 border-black w-full text-center pb-1">連線大廳</div>
-                                            <div className="text-[10px] w-full mb-3 flex items-center justify-between bg-white/30 p-1 border border-[#1a1a1a]">
-                                                <span className="font-bold">連線ID:</span>
-                                                <span className="ml-1 font-mono text-[11px] select-all font-bold">{myPeerId || '載入中...'}</span>
-                                            </div>
-                                            
-                                            <div className="w-full flex flex-col gap-1 mb-3">
-                                                <div className="text-[9px] font-bold">🎯 目標對手 ID</div>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="在此輸入對手ID..." 
-                                                    value={targetPeerId}
-                                                    onChange={e => setTargetPeerId(e.target.value)}
-                                                    className="w-full bg-white border-2 border-[#1a1a1a] p-1 text-[10px] outline-none font-mono"
-                                                />
-                                            </div>
+                                    {isPvpMode ? (
+                                        (matchStatus === 'searching' || matchStatus === 'idle') ? (
+                                            <div className="flex-1 flex flex-col items-center justify-start p-2 w-full">
+                                                <div className="text-[11px] font-black text-[#1a1a1a] mb-1 border-b-2 border-black w-full text-center pb-0.5 uppercase tracking-widest">宇宙大廳</div>
+                                                
+                                                <div className="w-full flex flex-col gap-1 mb-2 mt-1">
+                                                    <div className="flex justify-between items-center px-1">
+                                                        <span className="text-[8px] font-black text-[#383a37]">🚪 房間密碼</span>
+                                                        <span className={`text-[8px] font-bold underline transition-all ${matchStatus === 'searching' ? 'text-[#ff5252] animate-pulse' : 'text-[#383a37] opacity-70'}`}>
+                                                            狀況: {matchStatus === 'searching' ? '🏃 配對中...' : (myPeerId ? '已上線' : '準備中')}
+                                                        </span>
+                                                    </div>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="1~6 位房號..." 
+                                                        value={pvpRoomPassword}
+                                                        maxLength={6}
+                                                        disabled={matchStatus === 'searching'}
+                                                        onChange={e => setPvpRoomPassword(e.target.value)}
+                                                        className={`w-full border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal ${matchStatus === 'searching' ? 'bg-gray-200 opacity-50' : 'bg-[#f8fcf0]'}`}
+                                                    />
+                                                </div>
 
-                                            <button 
-                                                onClick={() => {
-                                                    if (targetPeerId) {
-                                                        connectToRemotePeer(targetPeerId);
-                                                        updateDialogue("連線中...", true);
-                                                    }
-                                                }}
-                                                disabled={!targetPeerId}
-                                                className={`w-full py-1 border-2 border-[#1a1a1a] text-[10px] font-black transition-all shadow-[2px_2px_0_rgba(26,26,26,1)] ${targetPeerId ? 'bg-[#ffca28] text-[#1a1a1a] active:translate-y-px active:shadow-[1px_1px_0_rgba(26,26,26,1)]' : 'bg-gray-400 text-gray-700 opacity-50'}`}
-                                            >
-                                                發起挑戰
-                                            </button>
-                                            
-                                            <div className="text-[9px] mt-auto pb-1 opacity-70 underline text-center w-full">
-                                                按 [C] 取消連線
+                                                <div className="w-full grid grid-cols-1 gap-2">
+                                                    <button 
+                                                        onClick={() => (matchStatus !== 'searching') && joinPvpRoom(pvpRoomPassword)}
+                                                        disabled={matchStatus === 'searching'}
+                                                        className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ff5252] text-white shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
+                                                    >
+                                                        {matchStatus === 'searching' ? '等待對手連線...' : '進入房間'}
+                                                    </button>
+
+                                                    <div className="flex items-center gap-2 w-full">
+                                                        <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
+                                                        <span className="text-[8px] font-bold opacity-50">OR</span>
+                                                        <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
+                                                    </div>
+
+                                                    <button 
+                                                        onClick={() => (matchStatus !== 'searching') && quickMatch()}
+                                                        disabled={matchStatus === 'searching'}
+                                                        className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ffca28] text-[#1a1a1a] shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
+                                                    >
+                                                        🚀 快速配對
+                                                    </button>
+                                                </div>
+                                                
+                                                <div className="mt-auto text-[8px] font-black text-[#1a1a1a] opacity-60 flex flex-col items-center gap-0.5">
+                                                    <span>相同密碼即可連線</span>
+                                                    <div className="flex gap-2 text-[#383a37] underline decoration-dotted">
+                                                        <span>[C] 取消</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="flex-1 flex flex-col items-center justify-center p-2 w-full">
+                                                <div className="text-[12px] font-bold animate-pulse">連線建立中...</div>
+                                            </div>
+                                        )
                                     ) : (
                                         <>
                                             <div 
@@ -3884,8 +3977,8 @@ setEvolutionBranch(savedDeathBranch);
                         )}
                             </>
                         )}
-                        <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 4px 15px rgba(0,0,0,0.8)', zIndex: 100 }} />
                     </div>
+                    <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 4px 15px rgba(0,0,0,0.8)', zIndex: 100 }} />
                 </div>
 
                 <div className="mt-12 w-full flex justify-between px-4 mb-2">
