@@ -106,9 +106,162 @@ const loadSaveData = () => {
     return null;
 };
 
-// ==========================================
-// 虛擬連線系統 (Mock Socket) 已移除，改用 PeerJS
-// ==========================================
+// =========================================
+// 🛠️ 偵測面板元件 (Debug Panel)
+// =========================================
+const DebugPanel = ({ 
+    show, onClose, debugOverrides, setDebugOverrides, 
+    advStats, setAdvStats, inventory, setInventory, updateDialogue 
+}) => {
+    if (!show) return null;
+    
+    // 使用 React.useState 確保在 Babel 環境下的相容性
+    const [activeTab, setActiveTab] = React.useState('evo');
+    const [evInput, setEvInput] = React.useState({ 
+        hp: advStats.evs.hp, 
+        atk: advStats.evs.atk, 
+        def: advStats.evs.def, 
+        spd: advStats.evs.spd 
+    });
+    const [itemId, setItemId] = React.useState('001');
+    const [itemCount, setItemCount] = React.useState(1);
+
+    const totalEvs = Object.values(evInput).reduce((a, b) => a + b, 0);
+
+    const applyEvs = () => {
+        if (totalEvs > 510) {
+            alert("總和不能超過 510！");
+            return;
+        }
+        setAdvStats(prev => ({
+            ...prev,
+            evs: { ...evInput }
+        }));
+        updateDialogue("努力值已更新！");
+    };
+
+    const handleEvChange = (stat, val) => {
+        const num = Math.min(252, Math.max(0, parseInt(val) || 0));
+        setEvInput(prev => ({ ...prev, [stat]: num }));
+    };
+
+    const addItems = () => {
+        const itemDef = ADV_ITEMS.find(it => it.id === itemId) || DIARY_ITEM;
+        setInventory(prev => {
+            const idx = prev.findIndex(it => it.id === itemId);
+            if (idx !== -1) {
+                const next = [...prev];
+                next[idx] = { ...next[idx], count: (next[idx].count || 0) + itemCount };
+                return next;
+            }
+            return [...prev, { ...itemDef, count: itemCount }];
+        });
+        updateDialogue(`已新增 ${itemCount} 個 ${itemDef.name}`);
+    };
+
+    return (
+        <div className="debug-overlay" style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 10001, color: 'white',
+            display: 'flex', flexDirection: 'column', padding: '20px', fontSize: '14px',
+            fontFamily: 'monospace', overflowY: 'auto', pointerEvents: 'auto'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#f39c12', fontSize: '18px' }}>🛠️ 偵錯控制器</h2>
+                <button onClick={onClose} style={{ padding: '8px 20px', background: '#e74c3c', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>關閉 [X]</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <button onClick={() => setActiveTab('evo')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'evo' ? '#e67e22' : '#333', color: 'white' }}>進化/冒險</button>
+                <button onClick={() => setActiveTab('items')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'items' ? '#e67e22' : '#333', color: 'white' }}>物品</button>
+                <button onClick={() => setActiveTab('stats')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'stats' ? '#e67e22' : '#333', color: 'white' }}>數值調整</button>
+            </div>
+
+            <div className="debug-content" style={{ flex: 1 }}>
+                {activeTab === 'evo' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div>
+                            <div style={{ marginBottom: '5px' }}>進化時間覆蓋 (目前: {debugOverrides.evolutionMs ? debugOverrides.evolutionMs / 1000 + 's' : '預設'})</div>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                {[0, 10000, 60000, 300000].map(ms => (
+                                    <button key={ms} style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, evolutionMs: ms }))}>
+                                        {ms/1000}s
+                                    </button>
+                                ))}
+                                <button style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, evolutionMs: null }))}>重置</button>
+                            </div>
+                        </div>
+                        <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
+                            <div style={{ marginBottom: '5px' }}>冒險 CD 覆蓋 (目前: {debugOverrides.adventureCD === 0 ? '無 CD' : '預設'})</div>
+                            <button style={{ padding: '8px 15px', cursor: 'pointer', background: '#3498db', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, adventureCD: debugOverrides.adventureCD === 0 ? null : 0 }))}>
+                                {debugOverrides.adventureCD === 0 ? '恢復預設' : '立即免除冷卻 (0s)'}
+                            </button>
+                        </div>
+                        <div>
+                            <div style={{ marginBottom: '5px' }}>野生捕捉率 (目前: {debugOverrides.catchRate ? debugOverrides.catchRate * 100 + '%' : '預設'})</div>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                {[0.1, 0.5, 1.0].map(rate => (
+                                    <button key={rate} style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, catchRate: rate }))}>
+                                        {rate * 100}%
+                                    </button>
+                                ))}
+                                <button style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, catchRate: null }))}>重置</button>
+                            </div>
+                        </div>
+                        <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
+                            <div style={{ marginBottom: '5px' }}>冒險事件強制觸發:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 1, trainer: 0, gather: 0 } }))}>必遇野怪</button>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 0, trainer: 1, gather: 0 } }))}>必遇訓練家</button>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 0, trainer: 0, gather: 1 } }))}>必遇採集</button>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: null }))}>恢復隨機</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'items' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <p style={{ color: '#aaa', margin: 0 }}>物品 ID 例: 001(飯糰), 002(蛋白粉), 003(跑步鞋), 004(核心), 005(糖果)</p>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <span>ID:</span> 
+                            <input type="text" value={itemId} onChange={e => setItemId(e.target.value)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
+                            <span>數量:</span> 
+                            <input type="number" value={itemCount} onChange={e => setItemCount(parseInt(e.target.value) || 1)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
+                            <button onClick={addItems} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>執行新增</button>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'stats' && (
+                    <div>
+                        <div style={{ marginBottom: '15px', borderBottom: '1px solid #444', paddingBottom: '10px' }}>
+                            <strong>努力值調整 (EVs)</strong> - 當前總計: <span style={{ color: totalEvs > 510 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{totalEvs}</span> / 510
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {['hp', 'atk', 'def', 'spd'].map(stat => (
+                                <div key={stat} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <span style={{ width: '40px', textTransform: 'uppercase', fontWeight: 'bold' }}>{stat}</span>
+                                    <input 
+                                        type="range" min="0" max="252" value={evInput[stat]} 
+                                        onChange={e => handleEvChange(stat, e.target.value)} 
+                                        style={{ flex: 1, cursor: 'pointer' }}
+                                    />
+                                    <input 
+                                        type="number" value={evInput[stat]} 
+                                        onChange={e => handleEvChange(stat, e.target.value)}
+                                        style={{ width: '65px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555', textAlign: 'center' }} 
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={applyEvs} style={{ width: '100%', padding: '15px', marginTop: '25px', background: '#2980b9', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>立刻保存並套用數值</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export default function App() {
     const [initialData] = useState(() => loadSaveData());
@@ -161,6 +314,19 @@ export default function App() {
     const [isDead, setIsDead] = useState(getInit('isDead', false));
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
+
+    // --- 🛠️ 偵錯系統狀態 (Debug System) ---
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.hostname === '' || 
+                       window.location.protocol === 'file:';
+    const [showDebug, setShowDebug] = useState(false);
+    const [debugOverrides, setDebugOverrides] = useState({
+        evolutionMs: null,
+        encounterRates: null, // { trainer, wild, gather }
+        catchRate: null,
+        adventureCD: null
+    });
 
     const [miniGame, setMiniGame] = useState(null);
     const miniGameResultFired = useRef(false);
@@ -410,7 +576,7 @@ export default function App() {
         // --- 新：使用存檔中的永久招式陣列 ---
         const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
         // 防呆：如果完全沒招式 (應不發生)，給個基本招
-        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle);
+        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle || { name: '撞擊', power: 40, type: 'normal' });
 
         return { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId: speciesId, pLevel: level };
     };
@@ -731,7 +897,7 @@ export default function App() {
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
-        const thresh = EVOLUTION_TIME[evolutionStage] || 120000;
+        const thresh = debugOverrides.evolutionMs ?? (EVOLUTION_TIME[evolutionStage] || 120000);
 
         // Total drop phase logic: Ensure it drops 100 units over the entire phase
         const TARGET_DROP_PER_STAGE = 100;
@@ -932,11 +1098,12 @@ export default function App() {
             const nextQueue = [];
             const playerMoveList = prev.player.moves || [SKILL_DATABASE.tackle];
             // 智慧 AI 選招：優先考慮克制與最高傷害
-            const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList);
-            const enemyMoveList = prev.enemy.moves || [SKILL_DATABASE.tackle];
+            const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList) || { name: '撞擊', power: 40, type: 'normal' };
+            const enemyMoveList = prev.enemy.moves || [];
             
             // PvP 模式下使用來自網路的招式，否則使用智慧 AI
-            const enemyMove = pvpEnemyMove || getSmartMove(prev.enemy, prev.player, enemyMoveList);
+            let enemyMove = pvpEnemyMove || getSmartMove(prev.enemy, prev.player, enemyMoveList);
+            if (!enemyMove) enemyMove = { name: '撞擊', power: 40, type: 'normal' };
 
             // 為了讓 PvP 完全同步，使用回合數作為亂數種子，確保雙方算出的傷害完全一致
             let rngState = prev.turn * 1234567;
@@ -1086,7 +1253,8 @@ export default function App() {
 
     const startAdventure = () => {
         const now = Date.now();
-        const remainingCD = Math.max(0, Math.floor((lastAdvTime + ADV_BATTLE_RULES.CD_MS - now) / 1000));
+        const cdMs = debugOverrides.adventureCD !== null ? debugOverrides.adventureCD : ADV_BATTLE_RULES.CD_MS;
+        const remainingCD = Math.max(0, Math.floor((lastAdvTime + cdMs - now) / 1000));
         
         if (remainingCD > 0) {
             updateDialogue(`我好累，讓我休息 ${remainingCD} 秒再出發吧`, true);
@@ -1117,23 +1285,36 @@ export default function App() {
         let bStateToTrigger = null;
         let tempLog = [];
 
-        // --- 根據進化階段 (evolutionStage) 調整機率準則 ---
-        if (evolutionStage === 1) {
-            // Stage 1 (幼年期)：不遇訓練師，50% 野怪 / 50% 探索
-            if (r < 0.50) {
+        // --- 🛠️ 偵錯系統覆蓋：機率自定義 ---
+        if (debugOverrides.encounterRates) {
+            const rates = debugOverrides.encounterRates;
+            // 由於 rates 可能只有一個為 1 其餘為 0，這裡用簡單的隨機權重分配 (雖然目前 UI 只有單選)
+            if (rates.wild === 1) {
                 bStateToTrigger = generateBattleState('wild', myId);
-            } else {
+            } else if (rates.trainer === 1) {
+                bStateToTrigger = generateBattleState('trainer', myId);
+            } else if (rates.gather === 1) {
                 handleAdvGather(tempLog, myId);
             }
         } else {
-            // Stage 2+ (成長期之後)：大幅增加戰鬥頻率
-            // 60% 野怪 / 30% 訓練師 / 10% 探索
-            if (r < 0.60) {
-                bStateToTrigger = generateBattleState('wild', myId);
-            } else if (r < 0.90) {
-                bStateToTrigger = generateBattleState('trainer', myId);
+            // --- 根據進化階段 (evolutionStage) 調整機率準則 ---
+            if (evolutionStage === 1) {
+                // Stage 1 (幼年期)：不遇訓練師，50% 野怪 / 50% 探索
+                if (r < 0.50) {
+                    bStateToTrigger = generateBattleState('wild', myId);
+                } else {
+                    handleAdvGather(tempLog, myId);
+                }
             } else {
-                handleAdvGather(tempLog, myId);
+                // Stage 2+ (成長期之後)：大幅增加戰鬥頻率
+                // 60% 野怪 / 30% 訓練師 / 10% 探索
+                if (r < 0.60) {
+                    bStateToTrigger = generateBattleState('wild', myId);
+                } else if (r < 0.90) {
+                    bStateToTrigger = generateBattleState('trainer', myId);
+                } else {
+                    handleAdvGather(tempLog, myId);
+                }
             }
         }
 
@@ -1284,7 +1465,8 @@ export default function App() {
             logs.push({ msg: `🎁 獲得了戰利品：${item.name}！`, hpRatio: 1, iconId: myId });
         }
 
-        if (battleState.mode === 'wild' && enemy && Math.random() < 0.1) {
+        const catchRate = debugOverrides.catchRate ?? 0.1;
+        if (battleState.mode === 'wild' && enemy && Math.random() < catchRate) {
             logs.push({ msg: `✨ 感覺 ${enemy.name || '它'} 想成為你的夥伴...`, hpRatio: 1 });
             logs.push({ promptCapture: { id: enemy.id, name: enemy.name } });
         }
@@ -2369,7 +2551,7 @@ export default function App() {
 
         // --- 新：使用存檔中的永久招式陣列 ---
         const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
-        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle);
+        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle || { name: '撞擊', power: 40, type: 'normal' });
 
         let enemyData;
         let eMaxHP, eATK, eDEF, eSPD, eType, eLevel;
@@ -2402,7 +2584,7 @@ export default function App() {
             eSPD = calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel, eNatureMods.spd);
             
             const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
-            const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType);
+            const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
             return {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: { hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, statMods: { atk: 1.0, def: 1.0 } },
@@ -2421,7 +2603,7 @@ export default function App() {
             eSPD = (enemyData?.stats?.spd) || 90;
             eType = enemyData?.type || 'normal';
             // 重要：一定要使用傳過來的招式，而非本地生成的
-            const eMoves = enemyData?.moves || generateMoves(1, eType);
+            const eMoves = (enemyData?.moves || generateMoves(1, eType)).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `連線成功！${enemyData?.name || '神祕對手'} (Lv.${eLevel}) 降臨！`;
             return {
@@ -2448,7 +2630,7 @@ export default function App() {
             // Bug Fix #2: 從 SPECIES_BASE_STATS 讀取正確的雙屬性陣列，而非使用 stageMap 的硬編碼單屬性字串
             const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
             eType = eStatsRef.types;
-            const eMoves = generateMoves(evolutionStage, eType);
+            const eMoves = generateMoves(evolutionStage, eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
             return {
@@ -2758,7 +2940,7 @@ export default function App() {
         if (savedDeathBranch) {
             // D線觸發：靈魂重生為鬼斯/凱西線
             setEvolutionStage(1);
-            setEvolutionBranch(savedDeathBranch);
+setEvolutionBranch(savedDeathBranch);
             setDialogue(savedDeathBranch === 'G1' ? "鬼魂附身！" : "神秘力量覺醒！");
         } else {
             // 正常重啟：回到百變怪
@@ -2771,6 +2953,8 @@ export default function App() {
         try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
         try { sessionStorage.removeItem('pixel_monster_save'); } catch (e) { }
     };
+
+
 
     const getMonsterId = (branch = evolutionBranch, stage = evolutionStage) => {
         if (branch.startsWith('WILD_')) {
@@ -2876,8 +3060,41 @@ export default function App() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
             <style dangerouslySetInnerHTML={{ __html: BATTLE_STYLES }} />
+
+            {isLocalhost && (
+                <button 
+                    onClick={() => {
+                        console.log("🛠️ Debug Button Clicked!");
+                        setShowDebug(!showDebug);
+                    }}
+                    style={{
+                        position: 'fixed', bottom: '20px', right: '20px', 
+                        zIndex: 10002, opacity: 0.95, 
+                        background: '#f39c12', borderRadius: '50%',
+                        width: '64px', height: '64px', border: '4px solid #fff',
+                        fontSize: '32px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.6)',
+                        pointerEvents: 'auto'
+                    }}
+                >
+                    🛠️
+                </button>
+            )}
+
+            <DebugPanel 
+                show={showDebug} 
+                onClose={() => setShowDebug(false)}
+                debugOverrides={debugOverrides}
+                setDebugOverrides={setDebugOverrides}
+                advStats={advStats}
+                setAdvStats={setAdvStats}
+                inventory={inventory}
+                setInventory={setInventory}
+                updateDialogue={updateDialogue}
+            />
 
             <div className="relative w-80 h-[620px] bg-gradient-to-br from-[#c8c8c8] to-[#6d6d6d] rounded-t-[50px] rounded-b-[70px] border-b-[16px] border-r-[12px] border-[#5a5a5a] shadow-[15px_15px_50px_rgba(0,0,0,0.8)] pt-20 pb-10 px-6 flex flex-col items-center">
 
@@ -3003,7 +3220,7 @@ export default function App() {
                                     <div className="w-full flex flex-col gap-1 px-2">
                                         <div className="text-[9px] font-bold text-[#383a37] mb-1">請選擇要忘記的招式：</div>
                                         {advStats.moves.map((mId, idx) => {
-                                            const m = SKILL_DATABASE[mId];
+                                            const m = SKILL_DATABASE[mId] || { name: mId, power: 0 };
                                             const isSelected = skillSelectIdx === idx;
                                             return (
                                                 <div 

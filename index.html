@@ -30,29 +30,6 @@
         const { motion } = window.Motion || { motion: { div: "div" } };
 
 // Generated from PokeAPI (zh-Hant)
-const TYPE_MAP = {
-    'normal': '普', 'fire': '火', 'water': '水', 'grass': '草', 'electric': '電',
-    'ice': '冰', 'fighting': '鬥', 'poison': '毒', 'ground': '地', 'flying': '飛',
-    'psychic': '超', 'bug': '蟲', 'rock': '岩', 'ghost': '鬼', 'dragon': '龍',
-    'steel': '鋼', 'dark': '惡', 'fairy': '妖'
-};
-
-const NATURE_CONFIG = {
-    // 現代版本 Key (English)
-    'gentle':     { name: '溫柔', buff: 'hp',  nerf: 'atk', desc: 'HP +10%, 攻擊 -10%' },
-    'stubborn':   { name: '固執', buff: 'def', nerf: 'spd', desc: '防禦 +10%, 速度 -10%' },
-    'passionate': { name: '熱情', buff: 'atk', nerf: 'def', desc: '攻擊 +10%, 防禦 -10%' },
-    'nonsense':   { name: '無俚頭', buff: 'spd', nerf: 'def', desc: '速度 +10%, 防禦 -10%' },
-    'rational':   { name: '理性', buff: 'spd', nerf: 'atk', desc: '速度 +10%, 攻擊 -10%' },
-    // 舊版兼容性 Alias (Chinese)
-    '溫柔': { name: '溫柔', buff: 'hp',  nerf: 'atk' },
-    '固執': { name: '固執', buff: 'def', nerf: 'spd' },
-    '熱情': { name: '熱情', buff: 'atk', nerf: 'def' },
-    '熱血': { name: '熱情', buff: 'atk', nerf: 'def' },
-    '無俚頭': { name: '無俚頭', buff: 'spd', nerf: 'def' },
-    '搞笑': { name: '無俚頭', buff: 'spd', nerf: 'def' },
-    '理性': { name: '理性', buff: 'spd', nerf: 'atk' }
-};
 
 const MONSTER_NAMES = {
     "1": "妙蛙種子",
@@ -1692,113 +1669,2024 @@ const SPECIES_BASE_STATS = {
     }
 };
 
+const TYPE_MAP = {
+    "normal": "普",
+    "fire": "火",
+    "water": "水",
+    "grass": "草",
+    "electric": "電",
+    "ice": "冰",
+    "fighting": "鬥",
+    "poison": "毒",
+    "ground": "地",
+    "flying": "飛",
+    "psychic": "超",
+    "bug": "蟲",
+    "rock": "岩",
+    "ghost": "鬼",
+    "dragon": "龍",
+    "steel": "鋼",
+    "dark": "惡",
+    "fairy": "妖"
+};
 
-// --- 技能與其它遊戲參數控制區 ---
+const NATURE_CONFIG = {
+    "gentle": {
+        "name": "溫柔",
+        "buff": "hp",
+        "nerf": "atk",
+        "desc": "HP +10%, 攻擊 -10%"
+    },
+    "stubborn": {
+        "name": "固執",
+        "buff": "def",
+        "nerf": "spd",
+        "desc": "防禦 +10%, 速度 -10%"
+    },
+    "passionate": {
+        "name": "熱情",
+        "buff": "atk",
+        "nerf": "def",
+        "desc": "攻擊 +10%, 防禦 -10%"
+    },
+    "nonsense": {
+        "name": "無俚頭",
+        "buff": "spd",
+        "nerf": "def",
+        "desc": "速度 +10%, 防禦 -10%"
+    },
+    "rational": {
+        "name": "理性",
+        "buff": "spd",
+        "nerf": "atk",
+        "desc": "速度 +10%, 攻擊 -10%"
+    }
+};
 
+// --- 技能資料庫 ---
 const SKILL_DATABASE = {
-    // Normal
-    tackle: { id: 'tackle', name: '撞擊', type: 'normal', power: 40 },
-    quick_attack: { id: 'quick_attack', name: '電光一閃', type: 'normal', power: 40, priority: 1 },
-    take_down: { id: 'take_down', name: '猛撞', type: 'normal', power: 90, recoil: 0.25 },
-    hyper_beam: { id: 'hyper_beam', name: '破壞光線', type: 'normal', power: 150 },
-    
-    // Fire
-    ember: { id: 'ember', name: '火花', type: 'fire', power: 40 },
-    fire_fang: { id: 'fire_fang', name: '火焰牙', type: 'fire', power: 65 },
-    flamethrower: { id: 'flamethrower', name: '噴射火焰', type: 'fire', power: 90 },
-    fire_blast: { id: 'fire_blast', name: '大字爆炎', type: 'fire', power: 110 },
-    
-    // Water
-    water_gun: { id: 'water_gun', name: '水槍', type: 'water', power: 40 },
-    bubble_beam: { id: 'bubble_beam', name: '泡沫光線', type: 'water', power: 65 },
-    surf: { id: 'surf', name: '衝浪', type: 'water', power: 90 },
-    hydro_pump: { id: 'hydro_pump', name: '水炮', type: 'water', power: 110 },
-    
-    // Grass
-    vine_whip: { id: 'vine_whip', name: '藤鞭', type: 'grass', power: 45 },
-    razor_leaf: { id: 'razor_leaf', name: '飛葉快刀', type: 'grass', power: 55 },
-    energy_ball: { id: 'energy_ball', name: '能量球', type: 'grass', power: 90 },
-    solar_beam: { id: 'solar_beam', name: '日光束', type: 'grass', power: 120 },
-    
-    // Bug
-    bug_bite: { id: 'bug_bite', name: '蟲咬', type: 'bug', power: 60 },
-    signal_beam: { id: 'signal_beam', name: '信號光束', type: 'bug', power: 75 },
-    x_scissor: { id: 'x_scissor', name: '十字剪', type: 'bug', power: 80 },
-    megahorn: { id: 'megahorn', name: '超級角擊', type: 'bug', power: 120 },
-
-    // Flying
-    peck: { id: 'peck', name: '啄', type: 'flying', power: 35 },
-    wing_attack: { id: 'wing_attack', name: '翅膀攻擊', type: 'flying', power: 60 },
-    air_slash: { id: 'air_slash', name: '空氣斬', type: 'flying', power: 75 },
-    brave_bird: { id: 'brave_bird', name: '勇鳥猛攻', type: 'flying', power: 120, recoil: 0.33 },
-
-    // Poison
-    poison_sting: { id: 'poison_sting', name: '毒針', type: 'poison', power: 15 },
-    acid: { id: 'acid', name: '溶解液', type: 'poison', power: 40 },
-    sludge_bomb: { id: 'sludge_bomb', name: '污泥炸彈', type: 'poison', power: 90 },
-    gunk_shot: { id: 'gunk_shot', name: '垃圾射擊', type: 'poison', power: 120 },
-
-    // Ground
-    mud_slap: { id: 'mud_slap', name: '擲泥', type: 'ground', power: 20 },
-    mud_shot: { id: 'mud_shot', name: '泥巴射擊', type: 'ground', power: 55 },
-    earth_power: { id: 'earth_power', name: '大地之力', type: 'ground', power: 90 },
-    earthquake: { id: 'earthquake', name: '地震', type: 'ground', power: 100 },
-
-    // Rock
-    rock_throw: { id: 'rock_throw', name: '落石', type: 'rock', power: 50 },
-    rock_tomb: { id: 'rock_tomb', name: '岩石封鎖', type: 'rock', power: 60 },
-    rock_slide: { id: 'rock_slide', name: '岩崩', type: 'rock', power: 75 },
-    stone_edge: { id: 'stone_edge', name: '尖石攻擊', type: 'rock', power: 100 },
-
-    // Fighting
-    mach_punch: { id: 'mach_punch', name: '音速拳', type: 'fighting', power: 40, priority: 1 },
-    karate_chop: { id: 'karate_chop', name: '空手劈', type: 'fighting', power: 50 },
-    cross_chop: { id: 'cross_chop', name: '十字劈', type: 'fighting', power: 100 },
-    close_combat: { id: 'close_combat', name: '近身戰', type: 'fighting', power: 120 },
-
-    // Psychic
-    confusion: { id: 'confusion', name: '念力', type: 'psychic', power: 50 },
-    psybeam: { id: 'psybeam', name: '幻象光線', type: 'psychic', power: 65 },
-    psychic_attack: { id: 'psychic_attack', name: '精神強念', type: 'psychic', power: 90 },
-    future_sight: { id: 'future_sight', name: '預知未來', type: 'psychic', power: 120 },
-
-    // Ghost
-    lick: { id: 'lick', name: '舌舔', type: 'ghost', power: 45 },
-    shadow_ball: { id: 'shadow_ball', name: '暗影球', type: 'ghost', power: 80 },
-    
-    // Dragon
-    twister: { id: 'twister', name: '龍捲風', type: 'dragon', power: 40 },
-    dragon_pulse: { id: 'dragon_pulse', name: '龍之波動', type: 'dragon', power: 85 },
-    outrage: { id: 'outrage', name: '逆鱗', type: 'dragon', power: 120 },
-
-    // Electric
-    thunder_shock: { id: 'thunder_shock', name: '電擊', type: 'electric', power: 40 },
-    thunderbolt: { id: 'thunderbolt', name: '十萬伏特', type: 'electric', power: 90 },
-    thunder: { id: 'thunder', name: '打雷', type: 'electric', power: 110 },
-
-    // Ice
-    powder_snow: { id: 'powder_snow', name: '細雪', type: 'ice', power: 40 },
-    ice_beam: { id: 'ice_beam', name: '冰凍光束', type: 'ice', power: 90 },
-    blizzard: { id: 'blizzard', name: '暴風雪', type: 'ice', power: 110 }
+    "tackle": {
+        "id": "tackle",
+        "name": "撞擊",
+        "type": "normal",
+        "power": 40
+    },
+    "quick_attack": {
+        "id": "quick_attack",
+        "name": "電光一閃",
+        "type": "normal",
+        "power": 40,
+        "priority": 1
+    },
+    "hyper_beam": {
+        "id": "hyper_beam",
+        "name": "破壞光線",
+        "type": "normal",
+        "power": 150
+    },
+    "skull_bash": {
+        "id": "skull_bash",
+        "name": "火箭頭錘",
+        "type": "normal",
+        "power": 130
+    },
+    "mega_kick": {
+        "id": "mega_kick",
+        "name": "百萬噸重踢",
+        "type": "normal",
+        "power": 120
+    },
+    "thrash": {
+        "id": "thrash",
+        "name": "大鬧一番",
+        "type": "normal",
+        "power": 120
+    },
+    "double_edge": {
+        "id": "double_edge",
+        "name": "捨身衝撞",
+        "type": "normal",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "egg_bomb": {
+        "id": "egg_bomb",
+        "name": "炸蛋",
+        "type": "normal",
+        "power": 100
+    },
+    "take_down": {
+        "id": "take_down",
+        "name": "猛撞",
+        "type": "normal",
+        "power": 90,
+        "recoil": 0.25
+    },
+    "body_slam": {
+        "id": "body_slam",
+        "name": "泰山壓頂",
+        "type": "normal",
+        "power": 85
+    },
+    "mega_punch": {
+        "id": "mega_punch",
+        "name": "百萬噸重拳",
+        "type": "normal",
+        "power": 80
+    },
+    "razor_wind": {
+        "id": "razor_wind",
+        "name": "旋風刀",
+        "type": "normal",
+        "power": 80
+    },
+    "slam": {
+        "id": "slam",
+        "name": "摔打",
+        "type": "normal",
+        "power": 80
+    },
+    "strength": {
+        "id": "strength",
+        "name": "怪力",
+        "type": "normal",
+        "power": 80
+    },
+    "headbutt": {
+        "id": "headbutt",
+        "name": "頭錘",
+        "type": "normal",
+        "power": 70
+    },
+    "stomp": {
+        "id": "stomp",
+        "name": "踩踏",
+        "type": "normal",
+        "power": 65
+    },
+    "upper_hand": {
+        "id": "upper_hand",
+        "name": "快手還擊",
+        "type": "fighting",
+        "power": 65,
+        "priority": 3
+    },
+    "mach_punch": {
+        "id": "mach_punch",
+        "name": "音速拳",
+        "type": "fighting",
+        "power": 40,
+        "priority": 1
+    },
+    "vacuum_wave": {
+        "id": "vacuum_wave",
+        "name": "真空波",
+        "type": "fighting",
+        "power": 40,
+        "priority": 1
+    },
+    "focus_punch": {
+        "id": "focus_punch",
+        "name": "真氣拳",
+        "type": "fighting",
+        "power": 150,
+        "priority": -3
+    },
+    "meteor_assault": {
+        "id": "meteor_assault",
+        "name": "流星突擊",
+        "type": "fighting",
+        "power": 150
+    },
+    "high_jump_kick": {
+        "id": "high_jump_kick",
+        "name": "飛膝踢",
+        "type": "fighting",
+        "power": 130
+    },
+    "superpower": {
+        "id": "superpower",
+        "name": "蠻力",
+        "type": "fighting",
+        "power": 120
+    },
+    "close_combat": {
+        "id": "close_combat",
+        "name": "近身戰",
+        "type": "fighting",
+        "power": 120
+    },
+    "focus_blast": {
+        "id": "focus_blast",
+        "name": "真氣彈",
+        "type": "fighting",
+        "power": 120
+    },
+    "axe_kick": {
+        "id": "axe_kick",
+        "name": "下壓踢",
+        "type": "fighting",
+        "power": 120
+    },
+    "jump_kick": {
+        "id": "jump_kick",
+        "name": "飛踢",
+        "type": "fighting",
+        "power": 100
+    },
+    "dynamic_punch": {
+        "id": "dynamic_punch",
+        "name": "爆裂拳",
+        "type": "fighting",
+        "power": 100
+    },
+    "cross_chop": {
+        "id": "cross_chop",
+        "name": "十字劈",
+        "type": "fighting",
+        "power": 100
+    },
+    "hammer_arm": {
+        "id": "hammer_arm",
+        "name": "臂錘",
+        "type": "fighting",
+        "power": 100
+    },
+    "flying_press": {
+        "id": "flying_press",
+        "name": "飛身重壓",
+        "type": "fighting",
+        "power": 100
+    },
+    "sky_attack": {
+        "id": "sky_attack",
+        "name": "神鳥猛擊",
+        "type": "flying",
+        "power": 140
+    },
+    "brave_bird": {
+        "id": "brave_bird",
+        "name": "勇鳥猛攻",
+        "type": "flying",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "dragon_ascent": {
+        "id": "dragon_ascent",
+        "name": "畫龍點睛",
+        "type": "flying",
+        "power": 120
+    },
+    "hurricane": {
+        "id": "hurricane",
+        "name": "暴風",
+        "type": "flying",
+        "power": 110
+    },
+    "aeroblast": {
+        "id": "aeroblast",
+        "name": "氣旋攻擊",
+        "type": "flying",
+        "power": 100
+    },
+    "beak_blast": {
+        "id": "beak_blast",
+        "name": "鳥嘴加農炮",
+        "type": "flying",
+        "power": 100,
+        "priority": -3
+    },
+    "bleakwind_storm": {
+        "id": "bleakwind_storm",
+        "name": "枯葉風暴",
+        "type": "flying",
+        "power": 100
+    },
+    "fly": {
+        "id": "fly",
+        "name": "飛翔",
+        "type": "flying",
+        "power": 90
+    },
+    "floaty_fall": {
+        "id": "floaty_fall",
+        "name": "飄飄墜落",
+        "type": "flying",
+        "power": 90
+    },
+    "bounce": {
+        "id": "bounce",
+        "name": "彈跳",
+        "type": "flying",
+        "power": 85
+    },
+    "drill_peck": {
+        "id": "drill_peck",
+        "name": "啄鑽",
+        "type": "flying",
+        "power": 80
+    },
+    "oblivion_wing": {
+        "id": "oblivion_wing",
+        "name": "死亡之翼",
+        "type": "flying",
+        "power": 80
+    },
+    "air_slash": {
+        "id": "air_slash",
+        "name": "空氣斬",
+        "type": "flying",
+        "power": 75
+    },
+    "chatter": {
+        "id": "chatter",
+        "name": "喋喋不休",
+        "type": "flying",
+        "power": 65
+    },
+    "wing_attack": {
+        "id": "wing_attack",
+        "name": "翅膀攻擊",
+        "type": "flying",
+        "power": 60
+    },
+    "gunk_shot": {
+        "id": "gunk_shot",
+        "name": "垃圾射擊",
+        "type": "poison",
+        "power": 120
+    },
+    "belch": {
+        "id": "belch",
+        "name": "打嗝",
+        "type": "poison",
+        "power": 120
+    },
+    "noxious_torque": {
+        "id": "noxious_torque",
+        "name": "劇毒暴衝",
+        "type": "poison",
+        "power": 100
+    },
+    "malignant_chain": {
+        "id": "malignant_chain",
+        "name": "邪毒鎖鏈",
+        "type": "poison",
+        "power": 100
+    },
+    "sludge_wave": {
+        "id": "sludge_wave",
+        "name": "污泥波",
+        "type": "poison",
+        "power": 95
+    },
+    "sludge_bomb": {
+        "id": "sludge_bomb",
+        "name": "污泥炸彈",
+        "type": "poison",
+        "power": 90
+    },
+    "shell_side_arm": {
+        "id": "shell_side_arm",
+        "name": "臂貝武器",
+        "type": "poison",
+        "power": 90
+    },
+    "poison_jab": {
+        "id": "poison_jab",
+        "name": "毒擊",
+        "type": "poison",
+        "power": 80
+    },
+    "dire_claw": {
+        "id": "dire_claw",
+        "name": "克命爪",
+        "type": "poison",
+        "power": 80
+    },
+    "cross_poison": {
+        "id": "cross_poison",
+        "name": "十字毒刃",
+        "type": "poison",
+        "power": 70
+    },
+    "sludge": {
+        "id": "sludge",
+        "name": "污泥攻擊",
+        "type": "poison",
+        "power": 65
+    },
+    "venoshock": {
+        "id": "venoshock",
+        "name": "毒液衝擊",
+        "type": "poison",
+        "power": 65
+    },
+    "barb_barrage": {
+        "id": "barb_barrage",
+        "name": "毒千針",
+        "type": "poison",
+        "power": 60
+    },
+    "poison_fang": {
+        "id": "poison_fang",
+        "name": "劇毒牙",
+        "type": "poison",
+        "power": 50
+    },
+    "poison_tail": {
+        "id": "poison_tail",
+        "name": "毒尾",
+        "type": "poison",
+        "power": 50
+    },
+    "precipice_blades": {
+        "id": "precipice_blades",
+        "name": "斷崖之劍",
+        "type": "ground",
+        "power": 120
+    },
+    "headlong_rush": {
+        "id": "headlong_rush",
+        "name": "突飛猛撲",
+        "type": "ground",
+        "power": 120
+    },
+    "earthquake": {
+        "id": "earthquake",
+        "name": "地震",
+        "type": "ground",
+        "power": 100
+    },
+    "sandsear_storm": {
+        "id": "sandsear_storm",
+        "name": "熱沙風暴",
+        "type": "ground",
+        "power": 100
+    },
+    "high_horsepower": {
+        "id": "high_horsepower",
+        "name": "十萬馬力",
+        "type": "ground",
+        "power": 95
+    },
+    "earth_power": {
+        "id": "earth_power",
+        "name": "大地之力",
+        "type": "ground",
+        "power": 90
+    },
+    "thousand_arrows": {
+        "id": "thousand_arrows",
+        "name": "千箭齊發",
+        "type": "ground",
+        "power": 90
+    },
+    "thousand_waves": {
+        "id": "thousand_waves",
+        "name": "千波激盪",
+        "type": "ground",
+        "power": 90
+    },
+    "lands_wrath": {
+        "id": "lands_wrath",
+        "name": "大地神力",
+        "type": "ground",
+        "power": 90
+    },
+    "dig": {
+        "id": "dig",
+        "name": "挖洞",
+        "type": "ground",
+        "power": 80
+    },
+    "drill_run": {
+        "id": "drill_run",
+        "name": "直衝鑽",
+        "type": "ground",
+        "power": 80
+    },
+    "stomping_tantrum": {
+        "id": "stomping_tantrum",
+        "name": "跺腳",
+        "type": "ground",
+        "power": 75
+    },
+    "scorching_sands": {
+        "id": "scorching_sands",
+        "name": "熱沙大地",
+        "type": "ground",
+        "power": 70
+    },
+    "bone_club": {
+        "id": "bone_club",
+        "name": "骨棒",
+        "type": "ground",
+        "power": 65
+    },
+    "mud_bomb": {
+        "id": "mud_bomb",
+        "name": "泥巴炸彈",
+        "type": "ground",
+        "power": 65
+    },
+    "accelerock": {
+        "id": "accelerock",
+        "name": "衝岩",
+        "type": "rock",
+        "power": 40,
+        "priority": 1
+    },
+    "rock_wrecker": {
+        "id": "rock_wrecker",
+        "name": "岩石炮",
+        "type": "rock",
+        "power": 150
+    },
+    "head_smash": {
+        "id": "head_smash",
+        "name": "雙刃頭錘",
+        "type": "rock",
+        "power": 150
+    },
+    "meteor_beam": {
+        "id": "meteor_beam",
+        "name": "流星光束",
+        "type": "rock",
+        "power": 120
+    },
+    "stone_edge": {
+        "id": "stone_edge",
+        "name": "尖石攻擊",
+        "type": "rock",
+        "power": 100
+    },
+    "diamond_storm": {
+        "id": "diamond_storm",
+        "name": "鑽石風暴",
+        "type": "rock",
+        "power": 100
+    },
+    "mighty_cleave": {
+        "id": "mighty_cleave",
+        "name": "強刃攻擊",
+        "type": "rock",
+        "power": 95
+    },
+    "power_gem": {
+        "id": "power_gem",
+        "name": "力量寶石",
+        "type": "rock",
+        "power": 80
+    },
+    "rock_slide": {
+        "id": "rock_slide",
+        "name": "岩崩",
+        "type": "rock",
+        "power": 75
+    },
+    "stone_axe": {
+        "id": "stone_axe",
+        "name": "岩斧",
+        "type": "rock",
+        "power": 65
+    },
+    "ancient_power": {
+        "id": "ancient_power",
+        "name": "原始之力",
+        "type": "rock",
+        "power": 60
+    },
+    "rock_tomb": {
+        "id": "rock_tomb",
+        "name": "岩石封鎖",
+        "type": "rock",
+        "power": 60
+    },
+    "rock_throw": {
+        "id": "rock_throw",
+        "name": "落石",
+        "type": "rock",
+        "power": 50
+    },
+    "smack_down": {
+        "id": "smack_down",
+        "name": "擊落",
+        "type": "rock",
+        "power": 50
+    },
+    "salt_cure": {
+        "id": "salt_cure",
+        "name": "鹽醃",
+        "type": "rock",
+        "power": 40
+    },
+    "first_impression": {
+        "id": "first_impression",
+        "name": "迎頭一擊",
+        "type": "bug",
+        "power": 90,
+        "priority": 2
+    },
+    "megahorn": {
+        "id": "megahorn",
+        "name": "超級角擊",
+        "type": "bug",
+        "power": 120
+    },
+    "bug_buzz": {
+        "id": "bug_buzz",
+        "name": "蟲鳴",
+        "type": "bug",
+        "power": 90
+    },
+    "attack_order": {
+        "id": "attack_order",
+        "name": "攻擊指令",
+        "type": "bug",
+        "power": 90
+    },
+    "pollen_puff": {
+        "id": "pollen_puff",
+        "name": "花粉團",
+        "type": "bug",
+        "power": 90
+    },
+    "leech_life": {
+        "id": "leech_life",
+        "name": "吸血",
+        "type": "bug",
+        "power": 80
+    },
+    "x_scissor": {
+        "id": "x_scissor",
+        "name": "十字剪",
+        "type": "bug",
+        "power": 80
+    },
+    "lunge": {
+        "id": "lunge",
+        "name": "猛撲",
+        "type": "bug",
+        "power": 80
+    },
+    "signal_beam": {
+        "id": "signal_beam",
+        "name": "信號光束",
+        "type": "bug",
+        "power": 75
+    },
+    "u_turn": {
+        "id": "u_turn",
+        "name": "急速折返",
+        "type": "bug",
+        "power": 70
+    },
+    "skitter_smack": {
+        "id": "skitter_smack",
+        "name": "爬擊",
+        "type": "bug",
+        "power": 70
+    },
+    "steamroller": {
+        "id": "steamroller",
+        "name": "瘋狂滾壓",
+        "type": "bug",
+        "power": 65
+    },
+    "silver_wind": {
+        "id": "silver_wind",
+        "name": "銀色旋風",
+        "type": "bug",
+        "power": 60
+    },
+    "bug_bite": {
+        "id": "bug_bite",
+        "name": "蟲咬",
+        "type": "bug",
+        "power": 60
+    },
+    "struggle_bug": {
+        "id": "struggle_bug",
+        "name": "蟲之抵抗",
+        "type": "bug",
+        "power": 50
+    },
+    "shadow_sneak": {
+        "id": "shadow_sneak",
+        "name": "影子偷襲",
+        "type": "ghost",
+        "power": 40,
+        "priority": 1
+    },
+    "shadow_force": {
+        "id": "shadow_force",
+        "name": "暗影潛襲",
+        "type": "ghost",
+        "power": 120
+    },
+    "astral_barrage": {
+        "id": "astral_barrage",
+        "name": "星碎",
+        "type": "ghost",
+        "power": 120
+    },
+    "poltergeist": {
+        "id": "poltergeist",
+        "name": "靈騷",
+        "type": "ghost",
+        "power": 110
+    },
+    "moongeist_beam": {
+        "id": "moongeist_beam",
+        "name": "暗影之光",
+        "type": "ghost",
+        "power": 100
+    },
+    "phantom_force": {
+        "id": "phantom_force",
+        "name": "潛靈奇襲",
+        "type": "ghost",
+        "power": 90
+    },
+    "spectral_thief": {
+        "id": "spectral_thief",
+        "name": "暗影偷盜",
+        "type": "ghost",
+        "power": 90
+    },
+    "shadow_bone": {
+        "id": "shadow_bone",
+        "name": "暗影之骨",
+        "type": "ghost",
+        "power": 85
+    },
+    "shadow_ball": {
+        "id": "shadow_ball",
+        "name": "暗影球",
+        "type": "ghost",
+        "power": 80
+    },
+    "spirit_shackle": {
+        "id": "spirit_shackle",
+        "name": "縫影",
+        "type": "ghost",
+        "power": 80
+    },
+    "bitter_malice": {
+        "id": "bitter_malice",
+        "name": "冤冤相報",
+        "type": "ghost",
+        "power": 75
+    },
+    "shadow_claw": {
+        "id": "shadow_claw",
+        "name": "暗影爪",
+        "type": "ghost",
+        "power": 70
+    },
+    "hex": {
+        "id": "hex",
+        "name": "禍不單行",
+        "type": "ghost",
+        "power": 65
+    },
+    "shadow_punch": {
+        "id": "shadow_punch",
+        "name": "暗影拳",
+        "type": "ghost",
+        "power": 60
+    },
+    "ominous_wind": {
+        "id": "ominous_wind",
+        "name": "奇異之風",
+        "type": "ghost",
+        "power": 60
+    },
+    "bullet_punch": {
+        "id": "bullet_punch",
+        "name": "子彈拳",
+        "type": "steel",
+        "power": 40,
+        "priority": 1
+    },
+    "gigaton_hammer": {
+        "id": "gigaton_hammer",
+        "name": "巨力錘",
+        "type": "steel",
+        "power": 160
+    },
+    "doom_desire": {
+        "id": "doom_desire",
+        "name": "破滅之願",
+        "type": "steel",
+        "power": 140
+    },
+    "steel_beam": {
+        "id": "steel_beam",
+        "name": "鐵蹄光線",
+        "type": "steel",
+        "power": 140
+    },
+    "steel_roller": {
+        "id": "steel_roller",
+        "name": "鐵滾輪",
+        "type": "steel",
+        "power": 130
+    },
+    "make_it_rain": {
+        "id": "make_it_rain",
+        "name": "淘金潮",
+        "type": "steel",
+        "power": 120
+    },
+    "iron_tail": {
+        "id": "iron_tail",
+        "name": "鐵尾",
+        "type": "steel",
+        "power": 100
+    },
+    "sunsteel_strike": {
+        "id": "sunsteel_strike",
+        "name": "流星閃衝",
+        "type": "steel",
+        "power": 100
+    },
+    "behemoth_blade": {
+        "id": "behemoth_blade",
+        "name": "巨獸斬",
+        "type": "steel",
+        "power": 100
+    },
+    "behemoth_bash": {
+        "id": "behemoth_bash",
+        "name": "巨獸彈",
+        "type": "steel",
+        "power": 100
+    },
+    "spin_out": {
+        "id": "spin_out",
+        "name": "疾速轉輪",
+        "type": "steel",
+        "power": 100
+    },
+    "meteor_mash": {
+        "id": "meteor_mash",
+        "name": "彗星拳",
+        "type": "steel",
+        "power": 90
+    },
+    "flash_cannon": {
+        "id": "flash_cannon",
+        "name": "加農光炮",
+        "type": "steel",
+        "power": 80
+    },
+    "iron_head": {
+        "id": "iron_head",
+        "name": "鐵頭",
+        "type": "steel",
+        "power": 80
+    },
+    "anchor_shot": {
+        "id": "anchor_shot",
+        "name": "擲錨",
+        "type": "steel",
+        "power": 80
+    },
+    "eruption": {
+        "id": "eruption",
+        "name": "噴火",
+        "type": "fire",
+        "power": 150
+    },
+    "blast_burn": {
+        "id": "blast_burn",
+        "name": "爆炸烈焰",
+        "type": "fire",
+        "power": 150
+    },
+    "shell_trap": {
+        "id": "shell_trap",
+        "name": "陷阱甲殼",
+        "type": "fire",
+        "power": 150,
+        "priority": -3
+    },
+    "mind_blown": {
+        "id": "mind_blown",
+        "name": "驚爆大頭",
+        "type": "fire",
+        "power": 150
+    },
+    "overheat": {
+        "id": "overheat",
+        "name": "過熱",
+        "type": "fire",
+        "power": 130
+    },
+    "blue_flare": {
+        "id": "blue_flare",
+        "name": "青焰",
+        "type": "fire",
+        "power": 130
+    },
+    "burn_up": {
+        "id": "burn_up",
+        "name": "燃盡",
+        "type": "fire",
+        "power": 130
+    },
+    "flare_blitz": {
+        "id": "flare_blitz",
+        "name": "閃焰衝鋒",
+        "type": "fire",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "pyro_ball": {
+        "id": "pyro_ball",
+        "name": "火焰球",
+        "type": "fire",
+        "power": 120
+    },
+    "raging_fury": {
+        "id": "raging_fury",
+        "name": "大愤慨",
+        "type": "fire",
+        "power": 120
+    },
+    "armor_cannon": {
+        "id": "armor_cannon",
+        "name": "铠农炮",
+        "type": "fire",
+        "power": 120
+    },
+    "fire_blast": {
+        "id": "fire_blast",
+        "name": "大字爆炎",
+        "type": "fire",
+        "power": 110
+    },
+    "sacred_fire": {
+        "id": "sacred_fire",
+        "name": "神聖之火",
+        "type": "fire",
+        "power": 100
+    },
+    "magma_storm": {
+        "id": "magma_storm",
+        "name": "熔岩風暴",
+        "type": "fire",
+        "power": 100
+    },
+    "inferno": {
+        "id": "inferno",
+        "name": "煉獄",
+        "type": "fire",
+        "power": 100
+    },
+    "jet_punch": {
+        "id": "jet_punch",
+        "name": "喷射拳",
+        "type": "water",
+        "power": 60,
+        "priority": 1
+    },
+    "aqua_jet": {
+        "id": "aqua_jet",
+        "name": "水流噴射",
+        "type": "water",
+        "power": 40,
+        "priority": 1
+    },
+    "water_shuriken": {
+        "id": "water_shuriken",
+        "name": "飛水手裡劍",
+        "type": "water",
+        "power": 15,
+        "priority": 1
+    },
+    "hydro_cannon": {
+        "id": "hydro_cannon",
+        "name": "加農水砲",
+        "type": "water",
+        "power": 150
+    },
+    "water_spout": {
+        "id": "water_spout",
+        "name": "噴水",
+        "type": "water",
+        "power": 150
+    },
+    "wave_crash": {
+        "id": "wave_crash",
+        "name": "波動冲",
+        "type": "water",
+        "power": 120
+    },
+    "hydro_pump": {
+        "id": "hydro_pump",
+        "name": "水砲",
+        "type": "water",
+        "power": 110
+    },
+    "steam_eruption": {
+        "id": "steam_eruption",
+        "name": "蒸汽爆炸",
+        "type": "water",
+        "power": 110
+    },
+    "origin_pulse": {
+        "id": "origin_pulse",
+        "name": "根源波動",
+        "type": "water",
+        "power": 110
+    },
+    "crabhammer": {
+        "id": "crabhammer",
+        "name": "蟹鉗錘",
+        "type": "water",
+        "power": 100
+    },
+    "surf": {
+        "id": "surf",
+        "name": "衝浪",
+        "type": "water",
+        "power": 90
+    },
+    "muddy_water": {
+        "id": "muddy_water",
+        "name": "濁流",
+        "type": "water",
+        "power": 90
+    },
+    "aqua_tail": {
+        "id": "aqua_tail",
+        "name": "水流尾",
+        "type": "water",
+        "power": 90
+    },
+    "sparkling_aria": {
+        "id": "sparkling_aria",
+        "name": "泡影的詠歎調",
+        "type": "water",
+        "power": 90
+    },
+    "splishy_splash": {
+        "id": "splishy_splash",
+        "name": "滔滔衝浪",
+        "type": "water",
+        "power": 90
+    },
+    "frenzy_plant": {
+        "id": "frenzy_plant",
+        "name": "瘋狂植物",
+        "type": "grass",
+        "power": 150
+    },
+    "chloroblast": {
+        "id": "chloroblast",
+        "name": "葉绿爆震",
+        "type": "grass",
+        "power": 150
+    },
+    "leaf_storm": {
+        "id": "leaf_storm",
+        "name": "飛葉風暴",
+        "type": "grass",
+        "power": 130
+    },
+    "solar_blade": {
+        "id": "solar_blade",
+        "name": "日光刃",
+        "type": "grass",
+        "power": 125
+    },
+    "solar_beam": {
+        "id": "solar_beam",
+        "name": "日光束",
+        "type": "grass",
+        "power": 120
+    },
+    "petal_dance": {
+        "id": "petal_dance",
+        "name": "花瓣舞",
+        "type": "grass",
+        "power": 120
+    },
+    "power_whip": {
+        "id": "power_whip",
+        "name": "強力鞭打",
+        "type": "grass",
+        "power": 120
+    },
+    "wood_hammer": {
+        "id": "wood_hammer",
+        "name": "木槌",
+        "type": "grass",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "seed_flare": {
+        "id": "seed_flare",
+        "name": "種子閃光",
+        "type": "grass",
+        "power": 120
+    },
+    "sappy_seed": {
+        "id": "sappy_seed",
+        "name": "茁茁轟炸",
+        "type": "grass",
+        "power": 100
+    },
+    "leaf_blade": {
+        "id": "leaf_blade",
+        "name": "葉刃",
+        "type": "grass",
+        "power": 90
+    },
+    "energy_ball": {
+        "id": "energy_ball",
+        "name": "能量球",
+        "type": "grass",
+        "power": 90
+    },
+    "petal_blizzard": {
+        "id": "petal_blizzard",
+        "name": "落英繽紛",
+        "type": "grass",
+        "power": 90
+    },
+    "seed_bomb": {
+        "id": "seed_bomb",
+        "name": "種子炸彈",
+        "type": "grass",
+        "power": 80
+    },
+    "grass_pledge": {
+        "id": "grass_pledge",
+        "name": "草之誓約",
+        "type": "grass",
+        "power": 80
+    },
+    "zippy_zap": {
+        "id": "zippy_zap",
+        "name": "電電加速",
+        "type": "electric",
+        "power": 80,
+        "priority": 2
+    },
+    "thunderclap": {
+        "id": "thunderclap",
+        "name": "迅雷",
+        "type": "electric",
+        "power": 70,
+        "priority": 1
+    },
+    "bolt_strike": {
+        "id": "bolt_strike",
+        "name": "雷擊",
+        "type": "electric",
+        "power": 130
+    },
+    "electro_shot": {
+        "id": "electro_shot",
+        "name": "電光束",
+        "type": "electric",
+        "power": 130
+    },
+    "zap_cannon": {
+        "id": "zap_cannon",
+        "name": "電磁炮",
+        "type": "electric",
+        "power": 120
+    },
+    "volt_tackle": {
+        "id": "volt_tackle",
+        "name": "伏特攻擊",
+        "type": "electric",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "double_shock": {
+        "id": "double_shock",
+        "name": "電光双擊",
+        "type": "electric",
+        "power": 120
+    },
+    "thunder": {
+        "id": "thunder",
+        "name": "打雷",
+        "type": "electric",
+        "power": 110
+    },
+    "aura_wheel": {
+        "id": "aura_wheel",
+        "name": "氣場輪",
+        "type": "electric",
+        "power": 110
+    },
+    "fusion_bolt": {
+        "id": "fusion_bolt",
+        "name": "交錯閃電",
+        "type": "electric",
+        "power": 100
+    },
+    "plasma_fists": {
+        "id": "plasma_fists",
+        "name": "等離子閃電拳",
+        "type": "electric",
+        "power": 100
+    },
+    "wildbolt_storm": {
+        "id": "wildbolt_storm",
+        "name": "鸣雷風暴",
+        "type": "electric",
+        "power": 100
+    },
+    "electro_drift": {
+        "id": "electro_drift",
+        "name": "闪電猛冲",
+        "type": "electric",
+        "power": 100
+    },
+    "supercell_slam": {
+        "id": "supercell_slam",
+        "name": "閃電強襲",
+        "type": "electric",
+        "power": 100
+    },
+    "thunderbolt": {
+        "id": "thunderbolt",
+        "name": "十萬伏特",
+        "type": "electric",
+        "power": 90
+    },
+    "psycho_boost": {
+        "id": "psycho_boost",
+        "name": "精神突進",
+        "type": "psychic",
+        "power": 140
+    },
+    "future_sight": {
+        "id": "future_sight",
+        "name": "預知未來",
+        "type": "psychic",
+        "power": 120
+    },
+    "synchronoise": {
+        "id": "synchronoise",
+        "name": "同步干擾",
+        "type": "psychic",
+        "power": 120
+    },
+    "dream_eater": {
+        "id": "dream_eater",
+        "name": "食夢",
+        "type": "psychic",
+        "power": 100
+    },
+    "psystrike": {
+        "id": "psystrike",
+        "name": "精神擊破",
+        "type": "psychic",
+        "power": 100
+    },
+    "luster_purge": {
+        "id": "luster_purge",
+        "name": "潔淨光芒",
+        "type": "psychic",
+        "power": 95
+    },
+    "mist_ball": {
+        "id": "mist_ball",
+        "name": "薄霧球",
+        "type": "psychic",
+        "power": 95
+    },
+    "psychic": {
+        "id": "psychic",
+        "name": "精神強念",
+        "type": "psychic",
+        "power": 90
+    },
+    "extrasensory": {
+        "id": "extrasensory",
+        "name": "神通力",
+        "type": "psychic",
+        "power": 80
+    },
+    "zen_headbutt": {
+        "id": "zen_headbutt",
+        "name": "意念頭錘",
+        "type": "psychic",
+        "power": 80
+    },
+    "psyshock": {
+        "id": "psyshock",
+        "name": "精神衝擊",
+        "type": "psychic",
+        "power": 80
+    },
+    "hyperspace_hole": {
+        "id": "hyperspace_hole",
+        "name": "異次元洞",
+        "type": "psychic",
+        "power": 80
+    },
+    "psycho_cut": {
+        "id": "psycho_cut",
+        "name": "精神利刃",
+        "type": "psychic",
+        "power": 70
+    },
+    "psybeam": {
+        "id": "psybeam",
+        "name": "幻象光線",
+        "type": "psychic",
+        "power": 65
+    },
+    "heart_stamp": {
+        "id": "heart_stamp",
+        "name": "愛心印章",
+        "type": "psychic",
+        "power": 60
+    },
+    "ice_shard": {
+        "id": "ice_shard",
+        "name": "冰礫",
+        "type": "ice",
+        "power": 40,
+        "priority": 1
+    },
+    "freeze_shock": {
+        "id": "freeze_shock",
+        "name": "冰凍伏特",
+        "type": "ice",
+        "power": 140
+    },
+    "ice_burn": {
+        "id": "ice_burn",
+        "name": "極寒冷焰",
+        "type": "ice",
+        "power": 140
+    },
+    "glacial_lance": {
+        "id": "glacial_lance",
+        "name": "雪矛",
+        "type": "ice",
+        "power": 120
+    },
+    "blizzard": {
+        "id": "blizzard",
+        "name": "暴風雪",
+        "type": "ice",
+        "power": 110
+    },
+    "ice_hammer": {
+        "id": "ice_hammer",
+        "name": "冰錘",
+        "type": "ice",
+        "power": 100
+    },
+    "freezy_frost": {
+        "id": "freezy_frost",
+        "name": "冰冰霜凍",
+        "type": "ice",
+        "power": 100
+    },
+    "mountain_gale": {
+        "id": "mountain_gale",
+        "name": "冰山風",
+        "type": "ice",
+        "power": 100
+    },
+    "ice_beam": {
+        "id": "ice_beam",
+        "name": "冰凍光束",
+        "type": "ice",
+        "power": 90
+    },
+    "icicle_crash": {
+        "id": "icicle_crash",
+        "name": "冰柱墜擊",
+        "type": "ice",
+        "power": 85
+    },
+    "ice_spinner": {
+        "id": "ice_spinner",
+        "name": "冰旋",
+        "type": "ice",
+        "power": 80
+    },
+    "ice_punch": {
+        "id": "ice_punch",
+        "name": "冰凍拳",
+        "type": "ice",
+        "power": 75
+    },
+    "freeze_dry": {
+        "id": "freeze_dry",
+        "name": "冷凍乾燥",
+        "type": "ice",
+        "power": 70
+    },
+    "aurora_beam": {
+        "id": "aurora_beam",
+        "name": "極光束",
+        "type": "ice",
+        "power": 65
+    },
+    "ice_fang": {
+        "id": "ice_fang",
+        "name": "冰凍牙",
+        "type": "ice",
+        "power": 65
+    },
+    "eternabeam": {
+        "id": "eternabeam",
+        "name": "無極光束",
+        "type": "dragon",
+        "power": 160
+    },
+    "roar_of_time": {
+        "id": "roar_of_time",
+        "name": "時光咆哮",
+        "type": "dragon",
+        "power": 150
+    },
+    "dragon_energy": {
+        "id": "dragon_energy",
+        "name": "巨龍威能",
+        "type": "dragon",
+        "power": 150
+    },
+    "draco_meteor": {
+        "id": "draco_meteor",
+        "name": "流星群",
+        "type": "dragon",
+        "power": 130
+    },
+    "outrage": {
+        "id": "outrage",
+        "name": "逆鱗",
+        "type": "dragon",
+        "power": 120
+    },
+    "glaive_rush": {
+        "id": "glaive_rush",
+        "name": "巨剑突擊",
+        "type": "dragon",
+        "power": 120
+    },
+    "clanging_scales": {
+        "id": "clanging_scales",
+        "name": "鱗片噪音",
+        "type": "dragon",
+        "power": 110
+    },
+    "dragon_rush": {
+        "id": "dragon_rush",
+        "name": "龍之俯衝",
+        "type": "dragon",
+        "power": 100
+    },
+    "spacial_rend": {
+        "id": "spacial_rend",
+        "name": "亞空裂斬",
+        "type": "dragon",
+        "power": 100
+    },
+    "core_enforcer": {
+        "id": "core_enforcer",
+        "name": "核心懲罰者",
+        "type": "dragon",
+        "power": 100
+    },
+    "dragon_hammer": {
+        "id": "dragon_hammer",
+        "name": "龍錘",
+        "type": "dragon",
+        "power": 90
+    },
+    "dragon_pulse": {
+        "id": "dragon_pulse",
+        "name": "龍之波動",
+        "type": "dragon",
+        "power": 85
+    },
+    "dragon_claw": {
+        "id": "dragon_claw",
+        "name": "龍爪",
+        "type": "dragon",
+        "power": 80
+    },
+    "order_up": {
+        "id": "order_up",
+        "name": "上菜",
+        "type": "dragon",
+        "power": 80
+    },
+    "fickle_beam": {
+        "id": "fickle_beam",
+        "name": "隨機光",
+        "type": "dragon",
+        "power": 80
+    },
+    "sucker_punch": {
+        "id": "sucker_punch",
+        "name": "突襲",
+        "type": "dark",
+        "power": 70,
+        "priority": 1
+    },
+    "hyperspace_fury": {
+        "id": "hyperspace_fury",
+        "name": "異次元猛攻",
+        "type": "dark",
+        "power": 100
+    },
+    "foul_play": {
+        "id": "foul_play",
+        "name": "欺詐",
+        "type": "dark",
+        "power": 95
+    },
+    "fiery_wrath": {
+        "id": "fiery_wrath",
+        "name": "怒火中燒",
+        "type": "dark",
+        "power": 90
+    },
+    "night_daze": {
+        "id": "night_daze",
+        "name": "暗黑爆破",
+        "type": "dark",
+        "power": 85
+    },
+    "darkest_lariat": {
+        "id": "darkest_lariat",
+        "name": "ＤＤ金勾臂",
+        "type": "dark",
+        "power": 85
+    },
+    "kowtow_cleave": {
+        "id": "kowtow_cleave",
+        "name": "仆刀",
+        "type": "dark",
+        "power": 85
+    },
+    "crunch": {
+        "id": "crunch",
+        "name": "咬碎",
+        "type": "dark",
+        "power": 80
+    },
+    "dark_pulse": {
+        "id": "dark_pulse",
+        "name": "惡之波動",
+        "type": "dark",
+        "power": 80
+    },
+    "throat_chop": {
+        "id": "throat_chop",
+        "name": "地獄突刺",
+        "type": "dark",
+        "power": 80
+    },
+    "baddy_bad": {
+        "id": "baddy_bad",
+        "name": "壞壞領域",
+        "type": "dark",
+        "power": 80
+    },
+    "jaw_lock": {
+        "id": "jaw_lock",
+        "name": "緊咬不放",
+        "type": "dark",
+        "power": 80
+    },
+    "false_surrender": {
+        "id": "false_surrender",
+        "name": "假跪真撞",
+        "type": "dark",
+        "power": 80
+    },
+    "wicked_torque": {
+        "id": "wicked_torque",
+        "name": "黑暗暴冲",
+        "type": "dark",
+        "power": 80
+    },
+    "lash_out": {
+        "id": "lash_out",
+        "name": "洩憤",
+        "type": "dark",
+        "power": 75
+    },
+    "light_of_ruin": {
+        "id": "light_of_ruin",
+        "name": "破滅之光",
+        "type": "fairy",
+        "power": 140
+    },
+    "fleur_cannon": {
+        "id": "fleur_cannon",
+        "name": "花朵加農炮",
+        "type": "fairy",
+        "power": 130
+    },
+    "sparkly_swirl": {
+        "id": "sparkly_swirl",
+        "name": "亮亮風暴",
+        "type": "fairy",
+        "power": 120
+    },
+    "misty_explosion": {
+        "id": "misty_explosion",
+        "name": "薄霧炸裂",
+        "type": "fairy",
+        "power": 100
+    },
+    "springtide_storm": {
+        "id": "springtide_storm",
+        "name": "阳春風暴",
+        "type": "fairy",
+        "power": 100
+    },
+    "magical_torque": {
+        "id": "magical_torque",
+        "name": "魔法暴冲",
+        "type": "fairy",
+        "power": 100
+    },
+    "moonblast": {
+        "id": "moonblast",
+        "name": "月亮之力",
+        "type": "fairy",
+        "power": 95
+    },
+    "play_rough": {
+        "id": "play_rough",
+        "name": "嬉鬧",
+        "type": "fairy",
+        "power": 90
+    },
+    "strange_steam": {
+        "id": "strange_steam",
+        "name": "神奇蒸汽",
+        "type": "fairy",
+        "power": 90
+    },
+    "dazzling_gleam": {
+        "id": "dazzling_gleam",
+        "name": "魔法閃耀",
+        "type": "fairy",
+        "power": 80
+    },
+    "alluring_voice": {
+        "id": "alluring_voice",
+        "name": "魅誘之聲",
+        "type": "fairy",
+        "power": 80
+    },
+    "spirit_break": {
+        "id": "spirit_break",
+        "name": "靈魂衝擊",
+        "type": "fairy",
+        "power": 75
+    },
+    "draining_kiss": {
+        "id": "draining_kiss",
+        "name": "吸取之吻",
+        "type": "fairy",
+        "power": 50
+    },
+    "disarming_voice": {
+        "id": "disarming_voice",
+        "name": "魅惑之聲",
+        "type": "fairy",
+        "power": 40
+    },
+    "fairy_wind": {
+        "id": "fairy_wind",
+        "name": "妖精之風",
+        "type": "fairy",
+        "power": 40
+    }
 };
 
 const TYPE_SKILLS = {
-    normal: ['tackle', 'quick_attack', 'take_down', 'hyper_beam'],
-    fire: ['ember', 'fire_fang', 'flamethrower', 'fire_blast'],
-    water: ['water_gun', 'bubble_beam', 'surf', 'hydro_pump'],
-    grass: ['vine_whip', 'razor_leaf', 'energy_ball', 'solar_beam'],
-    bug: ['bug_bite', 'signal_beam', 'x_scissor', 'megahorn'],
-    flying: ['peck', 'wing_attack', 'air_slash', 'brave_bird'],
-    poison: ['poison_sting', 'acid', 'sludge_bomb', 'gunk_shot'],
-    ground: ['mud_slap', 'mud_shot', 'earth_power', 'earthquake'],
-    rock: ['rock_throw', 'rock_tomb', 'rock_slide', 'stone_edge'],
-    fighting: ['mach_punch', 'karate_chop', 'cross_chop', 'close_combat'],
-    psychic: ['confusion', 'psybeam', 'psychic_attack', 'future_sight'],
-    ghost: ['lick', 'shadow_ball'],
-    dragon: ['twister', 'dragon_pulse', 'outrage'],
-    electric: ['thunder_shock', 'thunderbolt', 'thunder'],
-    ice: ['powder_snow', 'ice_beam', 'blizzard']
+    "normal": [
+        "quick_attack",
+        "hyper_beam",
+        "skull_bash",
+        "mega_kick",
+        "thrash",
+        "double_edge",
+        "egg_bomb",
+        "take_down",
+        "body_slam",
+        "mega_punch",
+        "razor_wind",
+        "slam",
+        "strength",
+        "headbutt",
+        "stomp"
+    ],
+    "fighting": [
+        "upper_hand",
+        "mach_punch",
+        "vacuum_wave",
+        "focus_punch",
+        "meteor_assault",
+        "high_jump_kick",
+        "superpower",
+        "close_combat",
+        "focus_blast",
+        "axe_kick",
+        "jump_kick",
+        "dynamic_punch",
+        "cross_chop",
+        "hammer_arm",
+        "flying_press"
+    ],
+    "flying": [
+        "sky_attack",
+        "brave_bird",
+        "dragon_ascent",
+        "hurricane",
+        "aeroblast",
+        "beak_blast",
+        "bleakwind_storm",
+        "fly",
+        "floaty_fall",
+        "bounce",
+        "drill_peck",
+        "oblivion_wing",
+        "air_slash",
+        "chatter",
+        "wing_attack"
+    ],
+    "poison": [
+        "gunk_shot",
+        "belch",
+        "noxious_torque",
+        "malignant_chain",
+        "sludge_wave",
+        "sludge_bomb",
+        "shell_side_arm",
+        "poison_jab",
+        "dire_claw",
+        "cross_poison",
+        "sludge",
+        "venoshock",
+        "barb_barrage",
+        "poison_fang",
+        "poison_tail"
+    ],
+    "ground": [
+        "precipice_blades",
+        "headlong_rush",
+        "earthquake",
+        "sandsear_storm",
+        "high_horsepower",
+        "earth_power",
+        "thousand_arrows",
+        "thousand_waves",
+        "lands_wrath",
+        "dig",
+        "drill_run",
+        "stomping_tantrum",
+        "scorching_sands",
+        "bone_club",
+        "mud_bomb"
+    ],
+    "rock": [
+        "accelerock",
+        "rock_wrecker",
+        "head_smash",
+        "meteor_beam",
+        "stone_edge",
+        "diamond_storm",
+        "mighty_cleave",
+        "power_gem",
+        "rock_slide",
+        "stone_axe",
+        "ancient_power",
+        "rock_tomb",
+        "rock_throw",
+        "smack_down",
+        "salt_cure"
+    ],
+    "bug": [
+        "first_impression",
+        "megahorn",
+        "bug_buzz",
+        "attack_order",
+        "pollen_puff",
+        "leech_life",
+        "x_scissor",
+        "lunge",
+        "signal_beam",
+        "u_turn",
+        "skitter_smack",
+        "steamroller",
+        "silver_wind",
+        "bug_bite",
+        "struggle_bug"
+    ],
+    "ghost": [
+        "shadow_sneak",
+        "shadow_force",
+        "astral_barrage",
+        "poltergeist",
+        "moongeist_beam",
+        "phantom_force",
+        "spectral_thief",
+        "shadow_bone",
+        "shadow_ball",
+        "spirit_shackle",
+        "bitter_malice",
+        "shadow_claw",
+        "hex",
+        "shadow_punch",
+        "ominous_wind"
+    ],
+    "steel": [
+        "bullet_punch",
+        "gigaton_hammer",
+        "doom_desire",
+        "steel_beam",
+        "steel_roller",
+        "make_it_rain",
+        "iron_tail",
+        "sunsteel_strike",
+        "behemoth_blade",
+        "behemoth_bash",
+        "spin_out",
+        "meteor_mash",
+        "flash_cannon",
+        "iron_head",
+        "anchor_shot"
+    ],
+    "fire": [
+        "eruption",
+        "blast_burn",
+        "shell_trap",
+        "mind_blown",
+        "overheat",
+        "blue_flare",
+        "burn_up",
+        "flare_blitz",
+        "pyro_ball",
+        "raging_fury",
+        "armor_cannon",
+        "fire_blast",
+        "sacred_fire",
+        "magma_storm",
+        "inferno"
+    ],
+    "water": [
+        "jet_punch",
+        "aqua_jet",
+        "water_shuriken",
+        "hydro_cannon",
+        "water_spout",
+        "wave_crash",
+        "hydro_pump",
+        "steam_eruption",
+        "origin_pulse",
+        "crabhammer",
+        "surf",
+        "muddy_water",
+        "aqua_tail",
+        "sparkling_aria",
+        "splishy_splash"
+    ],
+    "grass": [
+        "frenzy_plant",
+        "chloroblast",
+        "leaf_storm",
+        "solar_blade",
+        "solar_beam",
+        "petal_dance",
+        "power_whip",
+        "wood_hammer",
+        "seed_flare",
+        "sappy_seed",
+        "leaf_blade",
+        "energy_ball",
+        "petal_blizzard",
+        "seed_bomb",
+        "grass_pledge"
+    ],
+    "electric": [
+        "zippy_zap",
+        "thunderclap",
+        "bolt_strike",
+        "electro_shot",
+        "zap_cannon",
+        "volt_tackle",
+        "double_shock",
+        "thunder",
+        "aura_wheel",
+        "fusion_bolt",
+        "plasma_fists",
+        "wildbolt_storm",
+        "electro_drift",
+        "supercell_slam",
+        "thunderbolt"
+    ],
+    "psychic": [
+        "psycho_boost",
+        "future_sight",
+        "synchronoise",
+        "dream_eater",
+        "psystrike",
+        "luster_purge",
+        "mist_ball",
+        "psychic",
+        "extrasensory",
+        "zen_headbutt",
+        "psyshock",
+        "hyperspace_hole",
+        "psycho_cut",
+        "psybeam",
+        "heart_stamp"
+    ],
+    "ice": [
+        "ice_shard",
+        "freeze_shock",
+        "ice_burn",
+        "glacial_lance",
+        "blizzard",
+        "ice_hammer",
+        "freezy_frost",
+        "mountain_gale",
+        "ice_beam",
+        "icicle_crash",
+        "ice_spinner",
+        "ice_punch",
+        "freeze_dry",
+        "aurora_beam",
+        "ice_fang"
+    ],
+    "dragon": [
+        "eternabeam",
+        "roar_of_time",
+        "dragon_energy",
+        "draco_meteor",
+        "outrage",
+        "glaive_rush",
+        "clanging_scales",
+        "dragon_rush",
+        "spacial_rend",
+        "core_enforcer",
+        "dragon_hammer",
+        "dragon_pulse",
+        "dragon_claw",
+        "order_up",
+        "fickle_beam"
+    ],
+    "dark": [
+        "sucker_punch",
+        "hyperspace_fury",
+        "foul_play",
+        "fiery_wrath",
+        "night_daze",
+        "darkest_lariat",
+        "kowtow_cleave",
+        "crunch",
+        "dark_pulse",
+        "throat_chop",
+        "baddy_bad",
+        "jaw_lock",
+        "false_surrender",
+        "wicked_torque",
+        "lash_out"
+    ],
+    "fairy": [
+        "light_of_ruin",
+        "fleur_cannon",
+        "sparkly_swirl",
+        "misty_explosion",
+        "springtide_storm",
+        "magical_torque",
+        "moonblast",
+        "play_rough",
+        "strange_steam",
+        "dazzling_gleam",
+        "alluring_voice",
+        "spirit_break",
+        "draining_kiss",
+        "disarming_voice",
+        "fairy_wind"
+    ]
 };
+
+// --- 其他戰鬥與遊戲邏輯 ---
 
 const ADV_WILD_POOL = [
     { id: 16, name: "波波", weight: 20, power: 90, type: "flying" },
@@ -1811,18 +3699,13 @@ const ADV_WILD_POOL = [
 ];
 
 const WILD_EVOLUTION_MAP = {
-    "16": 17, "17": 18,  // 波波線
-    "23": 24,           // 阿柏蛇線
-    "27": 28,           // 穿山鼠線
-    "41": 42, "42": 169, // 超音蝠線
-    "56": 57, "57": 979, // 猴怪線
-    "74": 75, "75": 76,  // 小拳石線
-    "60": 61, "61": 62,  // 蚊香蝌蚪線
-    "63": 64, "64": 65,  // 凱西線
-    "92": 93, "93": 94,  // 鬼斯線 (非靈魂版)
-    "1": 2, "2": 3,      // 妙蛙種子線
-    "4": 5, "5": 6,      // 小火龍線
-    "7": 8, "8": 9       // 傑尼龜線 (非靈魂版)
+    "16": 17, "17": 18,
+    "23": 24,
+    "27": 28,
+    "41": 42, "42": 169,
+    "56": 57, "57": 979,
+    "74": 75, "75": 76,
+    "60": 61, "61": 62
 };
 
 const TYPE_CHART = {
@@ -1846,18 +3729,9 @@ const TYPE_CHART = {
     fairy: { fighting: 2.0, dragon: 2.0, dark: 2.0, fire: 0.5, poison: 0.5, steel: 0.5 }
 };
 
-// --- Helper Functions ---
-
-/**
- * 計算屬性加乘 (支援雙屬性防禦)
- * @param {string} atkType 攻擊方技能屬性
- * @param {string | string[]} defTypes 防禦方屬性（單屬性或雙屬性陣列）
- * @returns {number} 倍率
- */
 const getTypeMultiplier = (atkType, defTypes) => {
     const targetTypes = Array.isArray(defTypes) ? defTypes : [defTypes];
     let multiplier = 1.0;
-    
     for (const defType of targetTypes) {
         if (TYPE_CHART[atkType] && TYPE_CHART[atkType][defType] !== undefined) {
             multiplier *= TYPE_CHART[atkType][defType];
@@ -1866,13 +3740,9 @@ const getTypeMultiplier = (atkType, defTypes) => {
     return multiplier;
 };
 
-/**
- * 核心傷害計算公式 (已從 App.js 抽離)
- */
 const calculateDamage = (atk, def, power, multiplier = 1.0) => {
     const baseDamage = (atk / def) * power * 0.5;
-    const finalDamage = Math.max(1, Math.floor(baseDamage * multiplier * (0.9 + Math.random() * 0.2)));
-    return finalDamage;
+    return Math.max(1, Math.floor(baseDamage * multiplier * (0.9 + Math.random() * 0.2)));
 };
 
 const generateMoves = (stage, types, forcedBonusId = null) => {
@@ -1885,22 +3755,22 @@ const generateMoves = (stage, types, forcedBonusId = null) => {
     });
     
     const getEarlyBonus = () => {
-        if (forcedBonusId && SKILL_DATABASE[forcedBonusId]) return SKILL_DATABASE[forcedBonusId];
+        if (forcedBonusId && SKILL_DATABASE[forcedBonusId]) return forcedBonusId;
         return null; 
     };
 
     if (stage <= 1) {
-        const primaryTypeMove = SKILL_DATABASE[TYPE_SKILLS[speciesTypes[0]]?.[0]] || SKILL_DATABASE.tackle;
-        return [primaryTypeMove, getEarlyBonus()].filter(Boolean);
+        const primaryTypeId = TYPE_SKILLS[speciesTypes[0]]?.[0] || 'tackle';
+        return [primaryTypeId, getEarlyBonus()].filter(Boolean);
     }
 
     let selectedIds = [];
-    if (stage === 2) selectedIds = ['tackle', movePool[0]];
-    else if (stage === 3) selectedIds = ['tackle', movePool[0], movePool[1] || movePool[0]];
+    if (stage === 2) selectedIds = ['tackle', movePool[0] || 'quick_attack'];
+    else if (stage === 3) selectedIds = ['tackle', movePool[0] || 'quick_attack', movePool[1] || movePool[0] || 'quick_attack'];
     else selectedIds = movePool.slice(0, 4);
 
-    const uniqueMoves = Array.from(new Set(selectedIds)).map(id => SKILL_DATABASE[id]).filter(Boolean);
-    return uniqueMoves.slice(0, 4);
+    const uniqueIds = Array.from(new Set(selectedIds)).filter(id => SKILL_DATABASE[id]);
+    return uniqueIds.slice(0, 4);
 };
 
 const calcFinalStat = (type, speciesId, iv, ev, level, natureMod = 1.0) => {
@@ -1916,6 +3786,7 @@ const calcFinalStat = (type, speciesId, iv, ev, level, natureMod = 1.0) => {
 
 
 /* --- SpriteRenderer.js --- */
+
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
@@ -2184,19 +4055,21 @@ const ADV_BATTLE_RULES = {
 
 // 智慧招式 AI：根據屬性相剋與威力選擇最佳招式
 const getSmartMove = (attacker, defender, moves) => {
-    // 假設 getTypeMultiplier 已經在 global namespace (由 monsterData.js 載入)
-    if (!moves || moves.length === 0) return null;
-    if (moves.length === 1) return moves[0];
+    // 過濾掉無效的招式物件，防止 crash
+    const validMoves = (moves || []).filter(m => m && typeof m === 'object');
+    if (validMoves.length === 0) return { name: '撞擊', power: 40, type: 'normal' };
+    if (validMoves.length === 1) return validMoves[0];
     
-    let bestMove = moves[0];
+    let bestMove = validMoves[0];
     let maxScore = -1;
     
-    for (const move of moves) {
-        const mult = window.getTypeMultiplier ? window.getTypeMultiplier(move.type, defender.type) : 1; 
-        // 為了避免 sync 後順序問題，用 global 取得函式，或者因為它不是 arrow function 可以直接呼叫 typeof getTypeMultiplier !== "undefined"
-        // 這裡最安全是直接依賴 getTypeMultiplier 如果它在 bundle 中被提早宣告。
-        const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(move.type, defender.type) : 1;
-        const score = move.power * realMult;
+    for (const move of validMoves) {
+        // 確保屬性定義存在
+        const moveType = move.type || 'normal';
+        const defenderType = defender.type || ['normal'];
+        
+        const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(moveType, defenderType) : 1;
+        const score = (move.power || 40) * realMult;
         if (score > maxScore) {
             maxScore = score;
             bestMove = move;
@@ -2355,9 +4228,162 @@ const loadSaveData = () => {
     return null;
 };
 
-// ==========================================
-// 虛擬連線系統 (Mock Socket) 已移除，改用 PeerJS
-// ==========================================
+// =========================================
+// 🛠️ 偵測面板元件 (Debug Panel)
+// =========================================
+const DebugPanel = ({ 
+    show, onClose, debugOverrides, setDebugOverrides, 
+    advStats, setAdvStats, inventory, setInventory, updateDialogue 
+}) => {
+    if (!show) return null;
+    
+    // 使用 React.useState 確保在 Babel 環境下的相容性
+    const [activeTab, setActiveTab] = React.useState('evo');
+    const [evInput, setEvInput] = React.useState({ 
+        hp: advStats.evs.hp, 
+        atk: advStats.evs.atk, 
+        def: advStats.evs.def, 
+        spd: advStats.evs.spd 
+    });
+    const [itemId, setItemId] = React.useState('001');
+    const [itemCount, setItemCount] = React.useState(1);
+
+    const totalEvs = Object.values(evInput).reduce((a, b) => a + b, 0);
+
+    const applyEvs = () => {
+        if (totalEvs > 510) {
+            alert("總和不能超過 510！");
+            return;
+        }
+        setAdvStats(prev => ({
+            ...prev,
+            evs: { ...evInput }
+        }));
+        updateDialogue("努力值已更新！");
+    };
+
+    const handleEvChange = (stat, val) => {
+        const num = Math.min(252, Math.max(0, parseInt(val) || 0));
+        setEvInput(prev => ({ ...prev, [stat]: num }));
+    };
+
+    const addItems = () => {
+        const itemDef = ADV_ITEMS.find(it => it.id === itemId) || DIARY_ITEM;
+        setInventory(prev => {
+            const idx = prev.findIndex(it => it.id === itemId);
+            if (idx !== -1) {
+                const next = [...prev];
+                next[idx] = { ...next[idx], count: (next[idx].count || 0) + itemCount };
+                return next;
+            }
+            return [...prev, { ...itemDef, count: itemCount }];
+        });
+        updateDialogue(`已新增 ${itemCount} 個 ${itemDef.name}`);
+    };
+
+    return (
+        <div className="debug-overlay" style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.92)', zIndex: 10001, color: 'white',
+            display: 'flex', flexDirection: 'column', padding: '20px', fontSize: '14px',
+            fontFamily: 'monospace', overflowY: 'auto', pointerEvents: 'auto'
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#f39c12', fontSize: '18px' }}>🛠️ 偵錯控制器</h2>
+                <button onClick={onClose} style={{ padding: '8px 20px', background: '#e74c3c', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>關閉 [X]</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <button onClick={() => setActiveTab('evo')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'evo' ? '#e67e22' : '#333', color: 'white' }}>進化/冒險</button>
+                <button onClick={() => setActiveTab('items')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'items' ? '#e67e22' : '#333', color: 'white' }}>物品</button>
+                <button onClick={() => setActiveTab('stats')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'stats' ? '#e67e22' : '#333', color: 'white' }}>數值調整</button>
+            </div>
+
+            <div className="debug-content" style={{ flex: 1 }}>
+                {activeTab === 'evo' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div>
+                            <div style={{ marginBottom: '5px' }}>進化時間覆蓋 (目前: {debugOverrides.evolutionMs ? debugOverrides.evolutionMs / 1000 + 's' : '預設'})</div>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                {[0, 10000, 60000, 300000].map(ms => (
+                                    <button key={ms} style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, evolutionMs: ms }))}>
+                                        {ms/1000}s
+                                    </button>
+                                ))}
+                                <button style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, evolutionMs: null }))}>重置</button>
+                            </div>
+                        </div>
+                        <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
+                            <div style={{ marginBottom: '5px' }}>冒險 CD 覆蓋 (目前: {debugOverrides.adventureCD === 0 ? '無 CD' : '預設'})</div>
+                            <button style={{ padding: '8px 15px', cursor: 'pointer', background: '#3498db', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, adventureCD: debugOverrides.adventureCD === 0 ? null : 0 }))}>
+                                {debugOverrides.adventureCD === 0 ? '恢復預設' : '立即免除冷卻 (0s)'}
+                            </button>
+                        </div>
+                        <div>
+                            <div style={{ marginBottom: '5px' }}>野生捕捉率 (目前: {debugOverrides.catchRate ? debugOverrides.catchRate * 100 + '%' : '預設'})</div>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                {[0.1, 0.5, 1.0].map(rate => (
+                                    <button key={rate} style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, catchRate: rate }))}>
+                                        {rate * 100}%
+                                    </button>
+                                ))}
+                                <button style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, catchRate: null }))}>重置</button>
+                            </div>
+                        </div>
+                        <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
+                            <div style={{ marginBottom: '5px' }}>冒險事件強制觸發:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 1, trainer: 0, gather: 0 } }))}>必遇野怪</button>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 0, trainer: 1, gather: 0 } }))}>必遇訓練家</button>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 0, trainer: 0, gather: 1 } }))}>必遇採集</button>
+                                <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: null }))}>恢復隨機</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'items' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <p style={{ color: '#aaa', margin: 0 }}>物品 ID 例: 001(飯糰), 002(蛋白粉), 003(跑步鞋), 004(核心), 005(糖果)</p>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <span>ID:</span> 
+                            <input type="text" value={itemId} onChange={e => setItemId(e.target.value)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
+                            <span>數量:</span> 
+                            <input type="number" value={itemCount} onChange={e => setItemCount(parseInt(e.target.value) || 1)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
+                            <button onClick={addItems} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>執行新增</button>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'stats' && (
+                    <div>
+                        <div style={{ marginBottom: '15px', borderBottom: '1px solid #444', paddingBottom: '10px' }}>
+                            <strong>努力值調整 (EVs)</strong> - 當前總計: <span style={{ color: totalEvs > 510 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{totalEvs}</span> / 510
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {['hp', 'atk', 'def', 'spd'].map(stat => (
+                                <div key={stat} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <span style={{ width: '40px', textTransform: 'uppercase', fontWeight: 'bold' }}>{stat}</span>
+                                    <input 
+                                        type="range" min="0" max="252" value={evInput[stat]} 
+                                        onChange={e => handleEvChange(stat, e.target.value)} 
+                                        style={{ flex: 1, cursor: 'pointer' }}
+                                    />
+                                    <input 
+                                        type="number" value={evInput[stat]} 
+                                        onChange={e => handleEvChange(stat, e.target.value)}
+                                        style={{ width: '65px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555', textAlign: 'center' }} 
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={applyEvs} style={{ width: '100%', padding: '15px', marginTop: '25px', background: '#2980b9', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>立刻保存並套用數值</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 function App() {
     const [initialData] = useState(() => loadSaveData());
@@ -2410,6 +4436,19 @@ function App() {
     const [isDead, setIsDead] = useState(getInit('isDead', false));
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
+
+    // --- 🛠️ 偵錯系統狀態 (Debug System) ---
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.hostname === '' || 
+                       window.location.protocol === 'file:';
+    const [showDebug, setShowDebug] = useState(false);
+    const [debugOverrides, setDebugOverrides] = useState({
+        evolutionMs: null,
+        encounterRates: null, // { trainer, wild, gather }
+        catchRate: null,
+        adventureCD: null
+    });
 
     const [miniGame, setMiniGame] = useState(null);
     const miniGameResultFired = useRef(false);
@@ -2528,7 +4567,6 @@ function App() {
     
     const [myPeerId, setMyPeerId] = useState("");
     const [targetPeerId, setTargetPeerId] = useState("");
-    const [pvpRoomPassword, setPvpRoomPassword] = useState("");
     const peerInstance = useRef(null);
     const connInstance = useRef(null);
     const isHost = useRef(false);
@@ -2542,122 +4580,40 @@ function App() {
     const pvpRemoteMoveRef = useRef(null);
 
     // =========================================
-    // PeerJS 核心連線邏輯 & 穩定性強化
+    // PeerJS 核心連線邏輯
     // =========================================
     
-    const PEER_PREFIX = "gameB_v1_";
-    
-    // 統一重置 PvP 狀態與連線 (避免卡死)
-    const cleanupPvp = useCallback((msg = null) => {
-        if (msg) updateDialogue(msg);
-        
-        // 斷開連線實例
-        if (connInstance.current) {
-            try { connInstance.current.close(); } catch(e) {}
-            connInstance.current = null;
-        }
-        
-        // 重置狀態與對戰資訊
-        setIsPvpMode(false);
-        syncMatchStatus('idle');
-        setBattleState(prev => (prev.mode === 'pvp' && prev.active) ? { ...prev, active: false, phase: 'end' } : { ...prev, active: false });
-        setPendingPlayerMove(null);
-        pvpRemoteMoveRef.current = null;
-        
-        // 對手資訊清空
-        setPvpOpponent(null);
-        connInstance.current = null;
-    }, [updateDialogue, setIsPvpMode, syncMatchStatus, setBattleState, setPendingPlayerMove, setPvpOpponent]);
-
-    // 初始化 Peer (支援自訂 ID 或自動 ID)
-    const initPeer = (customId = null, role = null) => {
-        // 如果已經有舊的 Peer 且 ID 不同，先關閉
-        if (peerInstance.current && !peerInstance.current.destroyed) {
-            peerInstance.current.destroy();
-        }
-        
-        const peer = customId ? new window.Peer(customId) : new window.Peer();
-        
+    // 初始化 Peer
+    const initPeer = () => {
+        if (peerInstance.current) return;
+        const peer = new window.Peer();
         peer.on('open', (id) => {
             setMyPeerId(id);
-            // 如果我是挑戰者 (B)，開啟後立即連向 A
-            if (role === 'B') {
-                const targetId = customId.replace(/_B$/, '_A');
-                // 延遲一下確保對方 Peer 已啟動
-                setTimeout(() => connectToRemotePeer(targetId), 500);
-            }
         });
-
-        // 監聽 Peer 全域錯誤
-        peer.on('error', (err) => {
-            console.error("PeerJS Error:", err);
-            
-            // 房間佔用邏輯：如果 A 位置有人，嘗試進入 B 位置
-            if (err.type === 'unavailable-id' && customId && customId.endsWith('_A')) {
-                const bId = customId.replace(/_A$/, '_B');
-                initPeer(bId, 'B');
-                return;
-            }
-
-            let errMsg = "通訊伺服器錯誤。";
-            if (err.type === 'unavailable-id') errMsg = "連線識別碼衝突或房間已滿，請換個密碼。";
-            if (err.type === 'network') errMsg = "網路連線中斷。";
-            if (err.type === 'peer-unavailable') errMsg = "找不到對手，請確認對手的房間號碼。";
-            
-            cleanupPvp(errMsg);
-            if (peer.destroyed === false) peer.destroy();
-            peerInstance.current = null;
-        });
-
         peer.on('connection', (conn) => {
-            if (connInstance.current) {
-                conn.close();
-                return;
-            }
+            // 作為被邀請方 (Client) 接收連線
+            if (connInstance.current) return; // 已經有連線了
             connInstance.current = conn;
             isHost.current = false;
             setupConnectionHandlers(conn);
         });
-        
         peerInstance.current = peer;
-    };
-
-    // 加入/建立 密碼房間
-    const joinPvpRoom = (pwd) => {
-        if (!pwd || pwd.trim() === "") {
-            setAlertMsg("請輸入房間密碼");
-            playBloop('fail');
-            return;
-        }
-        const safePwd = pwd.trim().replace(/[^a-zA-Z0-9]/g, '');
-        const hostId = PEER_PREFIX + safePwd + "_A";
-        syncMatchStatus('searching');
-        updateDialogue("正在進入房間節點...", true);
-        initPeer(hostId);
-    };
-
-    // 快速配對 (隨機挑選公共房間)
-    const quickMatch = () => {
-        // 公共頻道池
-        const pool = ["101", "202", "303", "505", "777", "888", "999"];
-        const rand = pool[Math.floor(Math.random() * pool.length)];
-        setPvpRoomPassword(rand);
-        joinPvpRoom(rand);
     };
 
     // 處理與對手之間的數據收發
     const setupConnectionHandlers = (conn) => {
         conn.on('open', () => {
-            // [快照同步] 連線開啟的瞬間，抓取最即時的數值進行交換
-            const stats = generateMyBattleStats(); 
+            // 連線開啟後，主機端發送初始資訊
+            // 客戶端也會發送它的初始資訊
+            const { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId, pLevel } = generateMyBattleStats(); 
             conn.send({
                 type: 'INIT',
                 data: {
-                    id: stats.myId,
+                    id: myId,
                     name: "網路玩家",
-                    stats: { hp: stats.pMaxHP, atk: stats.pATK, def: stats.pDEF, spd: stats.pSPD, level: stats.pLevel },
-                    type: stats.pType,
-                    moves: stats.pMoves
+                    stats: { hp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, level: pLevel },
+                    type: pType,
+                    moves: pMoves
                 }
             });
         });
@@ -2679,9 +4635,10 @@ function App() {
                     return prevMove;
                 });
             } else if (payload.type === 'RESULT') {
+                // 客戶端接收主機端算好的結果，直接套用
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
-                    const { stepQueue } = payload.data;
+                    const { stepQueue, playerHpAfter, enemyHpAfter } = payload.data;
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
                     return {
@@ -2695,26 +4652,23 @@ function App() {
                 });
             }
         });
-
-        conn.on('error', (err) => {
-            console.error("Connection Error:", err);
-            cleanupPvp("連線發生錯誤。");
-        });
         
         conn.on('close', () => {
             // 只在對戰中或搜尋中才顯示斷線提示
             if (matchStatusRef.current !== 'idle') {
-                cleanupPvp("對手已離開對戰。");
+                updateDialogue("對手斷線。");
+                setIsPvpMode(false);
+                syncMatchStatus('idle');
+                setBattleState(prev => ({ ...prev, active: false }));
             }
             connInstance.current = null;
         });
     };
 
-    // 取得自身的戰鬥數值用於 INIT 傳送 (直接從 Ref 讀取最新狀態)
+    // 取得自身的戰鬥數值用於 INIT 傳送
     const generateMyBattleStats = () => {
-        const cur = latestStats.current;
-        const level = Math.min(100, Math.max(1, Math.floor(((cur.advStats.basePower || 100) - 100) / 10) + 1));
-        const speciesId = getMonsterId(cur.evolutionBranch, cur.evolutionStage);
+        const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
+        const speciesId = getMonsterId();
 
         // --- 性格修正系統 (Nature Modifiers) ---
         const getNatureMods = (tag) => {
@@ -2727,22 +4681,24 @@ function App() {
             return mods;
         };
 
-        const tagEntries = Object.entries(cur.soulTagCounts);
+        const tagEntries = Object.entries(soulTagCounts);
         const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
+        // 必須至少有過一次對談且分數 > 0 才有性格
         const dominantTag = best[1] > 0 ? best[0] : 'none';
         const pNatureMods = getNatureMods(dominantTag);
 
-        const pMaxHP = calcFinalStat('hp', speciesId, cur.advStats.ivs.hp, cur.advStats.evs.hp, level, pNatureMods.hp);
-        const pATK = calcFinalStat('atk', speciesId, cur.advStats.ivs.atk, cur.advStats.evs.atk, level, pNatureMods.atk);
-        const pDEF = calcFinalStat('def', speciesId, cur.advStats.ivs.def, cur.advStats.evs.def, level, pNatureMods.def);
-        const pSPD = calcFinalStat('spd', speciesId, cur.advStats.ivs.spd, cur.advStats.evs.spd, level, pNatureMods.spd);
+        const pMaxHP = calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp);
+        const pATK = calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk);
+        const pDEF = calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def);
+        const pSPD = calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd);
 
         const statsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
         const pType = statsRef.types; 
 
-        // --- 使用存檔中的最新招式陣列 ---
-        const pMoves = (cur.advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
-        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle);
+        // --- 新：使用存檔中的永久招式陣列 ---
+        const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
+        // 防呆：如果完全沒招式 (應不發生)，給個基本招
+        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle || { name: '撞擊', power: 40, type: 'normal' });
 
         return { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId: speciesId, pLevel: level };
     };
@@ -3054,16 +5010,16 @@ function App() {
         return () => clearInterval(engineTimer);
     }, [vel, isDead, isEvolving, miniGame, isDuplicateTab]);
 
-    // 用 Ref 確保可以隨時讀取最新狀態而不觸發 useEffect 重啟 (包含對戰所需的即時數值)
-    const latestStats = useRef({ mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats, evolutionBranch, evolutionStage });
+    // 用 Ref 確保可以隨時讀取最新狀態而不觸發 useEffect 重啟
+    const latestStats = useRef({ mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats });
     useEffect(() => {
-        latestStats.current = { mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats, evolutionBranch, evolutionStage };
-    }, [mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats, evolutionBranch, evolutionStage]);
+        latestStats.current = { mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats };
+    }, [mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats]);
 
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
-        const thresh = EVOLUTION_TIME[evolutionStage] || 120000;
+        const thresh = debugOverrides.evolutionMs ?? (EVOLUTION_TIME[evolutionStage] || 120000);
 
         // Total drop phase logic: Ensure it drops 100 units over the entire phase
         const TARGET_DROP_PER_STAGE = 100;
@@ -3264,11 +5220,12 @@ function App() {
             const nextQueue = [];
             const playerMoveList = prev.player.moves || [SKILL_DATABASE.tackle];
             // 智慧 AI 選招：優先考慮克制與最高傷害
-            const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList);
-            const enemyMoveList = prev.enemy.moves || [SKILL_DATABASE.tackle];
+            const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList) || { name: '撞擊', power: 40, type: 'normal' };
+            const enemyMoveList = prev.enemy.moves || [];
             
             // PvP 模式下使用來自網路的招式，否則使用智慧 AI
-            const enemyMove = pvpEnemyMove || getSmartMove(prev.enemy, prev.player, enemyMoveList);
+            let enemyMove = pvpEnemyMove || getSmartMove(prev.enemy, prev.player, enemyMoveList);
+            if (!enemyMove) enemyMove = { name: '撞擊', power: 40, type: 'normal' };
 
             // 為了讓 PvP 完全同步，使用回合數作為亂數種子，確保雙方算出的傷害完全一致
             let rngState = prev.turn * 1234567;
@@ -3418,7 +5375,8 @@ function App() {
 
     const startAdventure = () => {
         const now = Date.now();
-        const remainingCD = Math.max(0, Math.floor((lastAdvTime + ADV_BATTLE_RULES.CD_MS - now) / 1000));
+        const cdMs = debugOverrides.adventureCD !== null ? debugOverrides.adventureCD : ADV_BATTLE_RULES.CD_MS;
+        const remainingCD = Math.max(0, Math.floor((lastAdvTime + cdMs - now) / 1000));
         
         if (remainingCD > 0) {
             updateDialogue(`我好累，讓我休息 ${remainingCD} 秒再出發吧`, true);
@@ -3449,23 +5407,36 @@ function App() {
         let bStateToTrigger = null;
         let tempLog = [];
 
-        // --- 根據進化階段 (evolutionStage) 調整機率準則 ---
-        if (evolutionStage === 1) {
-            // Stage 1 (幼年期)：不遇訓練師，50% 野怪 / 50% 探索
-            if (r < 0.50) {
+        // --- 🛠️ 偵錯系統覆蓋：機率自定義 ---
+        if (debugOverrides.encounterRates) {
+            const rates = debugOverrides.encounterRates;
+            // 由於 rates 可能只有一個為 1 其餘為 0，這裡用簡單的隨機權重分配 (雖然目前 UI 只有單選)
+            if (rates.wild === 1) {
                 bStateToTrigger = generateBattleState('wild', myId);
-            } else {
+            } else if (rates.trainer === 1) {
+                bStateToTrigger = generateBattleState('trainer', myId);
+            } else if (rates.gather === 1) {
                 handleAdvGather(tempLog, myId);
             }
         } else {
-            // Stage 2+ (成長期之後)：大幅增加戰鬥頻率
-            // 60% 野怪 / 30% 訓練師 / 10% 探索
-            if (r < 0.60) {
-                bStateToTrigger = generateBattleState('wild', myId);
-            } else if (r < 0.90) {
-                bStateToTrigger = generateBattleState('trainer', myId);
+            // --- 根據進化階段 (evolutionStage) 調整機率準則 ---
+            if (evolutionStage === 1) {
+                // Stage 1 (幼年期)：不遇訓練師，50% 野怪 / 50% 探索
+                if (r < 0.50) {
+                    bStateToTrigger = generateBattleState('wild', myId);
+                } else {
+                    handleAdvGather(tempLog, myId);
+                }
             } else {
-                handleAdvGather(tempLog, myId);
+                // Stage 2+ (成長期之後)：大幅增加戰鬥頻率
+                // 60% 野怪 / 30% 訓練師 / 10% 探索
+                if (r < 0.60) {
+                    bStateToTrigger = generateBattleState('wild', myId);
+                } else if (r < 0.90) {
+                    bStateToTrigger = generateBattleState('trainer', myId);
+                } else {
+                    handleAdvGather(tempLog, myId);
+                }
             }
         }
 
@@ -3566,10 +5537,6 @@ function App() {
                     
                     // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
-                    if (prev.mode === 'pvp') {
-                        pvpRemoteMoveRef.current = null;
-                        setPendingPlayerMove(null);
-                    }
                     return { ...prev, phase: nextPhase, activeMsg: "", turn: prev.turn + 1, flashTarget: null };
 
                 }
@@ -3620,7 +5587,8 @@ function App() {
             logs.push({ msg: `🎁 獲得了戰利品：${item.name}！`, hpRatio: 1, iconId: myId });
         }
 
-        if (battleState.mode === 'wild' && enemy && Math.random() < 0.1) {
+        const catchRate = debugOverrides.catchRate ?? 0.1;
+        if (battleState.mode === 'wild' && enemy && Math.random() < catchRate) {
             logs.push({ msg: `✨ 感覺 ${enemy.name || '它'} 想成為你的夥伴...`, hpRatio: 1 });
             logs.push({ promptCapture: { id: enemy.id, name: enemy.name } });
         }
@@ -3628,7 +5596,17 @@ function App() {
         logs.push({ msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: 1 });
 
         if (battleState.mode === 'pvp') {
-            cleanupPvp("對戰勝利！");
+            if (connInstance.current) {
+                try { connInstance.current.close(); } catch(e) {}
+                connInstance.current = null;
+            }
+            pvpRemoteMoveRef.current = null;
+            setPendingPlayerMove(null);
+
+            setIsPvpMode(false);
+            setMatchStatus('idle');
+            setBattleState(prev => ({ ...prev, active: false }));
+            updateDialogue("對戰勝利！");
             logEvent("在一場精彩的連線對決中獲得了勝利。");
             playBloop('success');
             return; // PvP 模式不進入冒險流程
@@ -3650,7 +5628,17 @@ function App() {
 
     const resolveBattleLoss = (isRun = false) => {
         if (battleState.mode === 'pvp') {
-            cleanupPvp("對戰失敗，再接再厲！");
+            if (connInstance.current) {
+                try { connInstance.current.close(); } catch(e) {}
+                connInstance.current = null;
+            }
+            pvpRemoteMoveRef.current = null;
+            setPendingPlayerMove(null);
+
+            setIsPvpMode(false);
+            setMatchStatus('idle');
+            setBattleState(prev => ({ ...prev, active: false }));
+            updateDialogue("對戰結束，再接再厲！");
             playBloop('fail');
             return; // PvP 模式不進入冒險流程
         }
@@ -4154,7 +6142,7 @@ function App() {
                 setBattleState(prev => ({ ...prev, active: false }));
 
                 setIsPvpMode(true);
-                syncMatchStatus('idle');
+                syncMatchStatus('searching');
                 initPeer();
                 updateDialogue("連線大廳", true);
                 logEvent(`進入連線大廳`);
@@ -4237,9 +6225,7 @@ function App() {
                 }
 
                 // Determine basic soulNext based on locked affinity
-                // 規則：只有在 Stage 1 為「百變怪 (132)」時，才具備進入靈魂進化線的資格
-                const currentSpeciesId = getMonsterId();
-                if (currentSpeciesId === 132 && stats.bondValue >= 80 && stats.lockedAffinity) {
+                if (stats.bondValue >= 80 && stats.lockedAffinity) {
                     if (evolutionStage === 1) {
                         if (stats.lockedAffinity === 'fire') {
                             const fOpts = [];
@@ -4687,7 +6673,7 @@ function App() {
 
         // --- 新：使用存檔中的永久招式陣列 ---
         const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
-        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle);
+        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle || { name: '撞擊', power: 40, type: 'normal' });
 
         let enemyData;
         let eMaxHP, eATK, eDEF, eSPD, eType, eLevel;
@@ -4720,7 +6706,7 @@ function App() {
             eSPD = calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel, eNatureMods.spd);
             
             const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
-            const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType);
+            const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
             return {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: { hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, statMods: { atk: 1.0, def: 1.0 } },
@@ -4739,7 +6725,7 @@ function App() {
             eSPD = (enemyData?.stats?.spd) || 90;
             eType = enemyData?.type || 'normal';
             // 重要：一定要使用傳過來的招式，而非本地生成的
-            const eMoves = enemyData?.moves || generateMoves(1, eType);
+            const eMoves = (enemyData?.moves || generateMoves(1, eType)).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `連線成功！${enemyData?.name || '神祕對手'} (Lv.${eLevel}) 降臨！`;
             return {
@@ -4766,7 +6752,7 @@ function App() {
             // Bug Fix #2: 從 SPECIES_BASE_STATS 讀取正確的雙屬性陣列，而非使用 stageMap 的硬編碼單屬性字串
             const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
             eType = eStatsRef.types;
-            const eMoves = generateMoves(evolutionStage, eType);
+            const eMoves = generateMoves(evolutionStage, eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
             return {
@@ -5076,7 +7062,7 @@ function App() {
         if (savedDeathBranch) {
             // D線觸發：靈魂重生為鬼斯/凱西線
             setEvolutionStage(1);
-            setEvolutionBranch(savedDeathBranch);
+setEvolutionBranch(savedDeathBranch);
             setDialogue(savedDeathBranch === 'G1' ? "鬼魂附身！" : "神秘力量覺醒！");
         } else {
             // 正常重啟：回到百變怪
@@ -5089,6 +7075,8 @@ function App() {
         try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
         try { sessionStorage.removeItem('pixel_monster_save'); } catch (e) { }
     };
+
+
 
     const getMonsterId = (branch = evolutionBranch, stage = evolutionStage) => {
         if (branch.startsWith('WILD_')) {
@@ -5194,8 +7182,41 @@ function App() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
             <style dangerouslySetInnerHTML={{ __html: BATTLE_STYLES }} />
+
+            {isLocalhost && (
+                <button 
+                    onClick={() => {
+                        console.log("🛠️ Debug Button Clicked!");
+                        setShowDebug(!showDebug);
+                    }}
+                    style={{
+                        position: 'fixed', bottom: '20px', right: '20px', 
+                        zIndex: 10002, opacity: 0.95, 
+                        background: '#f39c12', borderRadius: '50%',
+                        width: '64px', height: '64px', border: '4px solid #fff',
+                        fontSize: '32px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.6)',
+                        pointerEvents: 'auto'
+                    }}
+                >
+                    🛠️
+                </button>
+            )}
+
+            <DebugPanel 
+                show={showDebug} 
+                onClose={() => setShowDebug(false)}
+                debugOverrides={debugOverrides}
+                setDebugOverrides={setDebugOverrides}
+                advStats={advStats}
+                setAdvStats={setAdvStats}
+                inventory={inventory}
+                setInventory={setInventory}
+                updateDialogue={updateDialogue}
+            />
 
             <div className="relative w-80 h-[620px] bg-gradient-to-br from-[#c8c8c8] to-[#6d6d6d] rounded-t-[50px] rounded-b-[70px] border-b-[16px] border-r-[12px] border-[#5a5a5a] shadow-[15px_15px_50px_rgba(0,0,0,0.8)] pt-20 pb-10 px-6 flex flex-col items-center">
 
@@ -5321,7 +7342,7 @@ function App() {
                                     <div className="w-full flex flex-col gap-1 px-2">
                                         <div className="text-[9px] font-bold text-[#383a37] mb-1">請選擇要忘記的招式：</div>
                                         {advStats.moves.map((mId, idx) => {
-                                            const m = SKILL_DATABASE[mId];
+                                            const m = SKILL_DATABASE[mId] || { name: mId, power: 0 };
                                             const isSelected = skillSelectIdx === idx;
                                             return (
                                                 <div 
@@ -5416,57 +7437,40 @@ function App() {
                                 </div>
                             ) : (
                                 <>
-                                    {(isPvpMode && (matchStatus === 'searching' || matchStatus === 'idle')) ? (
-                                        <div className="flex-1 flex flex-col items-center justify-start p-2 w-full">
-                                            <div className="text-[11px] font-black text-[#1a1a1a] mb-1 border-b-2 border-black w-full text-center pb-0.5 uppercase tracking-widest">宇宙大廳</div>
+                                    {matchStatus === 'searching' ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center p-2 w-full">
+                                            <div className="text-[12px] font-black text-[#1a1a1a] mb-2 border-b-2 border-black w-full text-center pb-1">連線大廳</div>
+                                            <div className="text-[10px] w-full mb-3 flex items-center justify-between bg-white/30 p-1 border border-[#1a1a1a]">
+                                                <span className="font-bold">連線ID:</span>
+                                                <span className="ml-1 font-mono text-[11px] select-all font-bold">{myPeerId || '載入中...'}</span>
+                                            </div>
                                             
-                                            <div className="w-full flex flex-col gap-1 mb-2 mt-1">
-                                                <div className="flex justify-between items-center px-1">
-                                                    <span className="text-[8px] font-black text-[#383a37]">🚪 房間密碼</span>
-                                                    <span className={`text-[8px] font-bold underline transition-all ${matchStatus === 'searching' ? 'text-[#ff5252] animate-pulse' : 'text-[#383a37] opacity-70'}`}>
-                                                        狀況: {matchStatus === 'searching' ? '🏃 配對中...' : (myPeerId ? '已上線' : '準備中')}
-                                                    </span>
-                                                </div>
+                                            <div className="w-full flex flex-col gap-1 mb-3">
+                                                <div className="text-[9px] font-bold">🎯 目標對手 ID</div>
                                                 <input 
                                                     type="text" 
-                                                    placeholder="1~6 位房號..." 
-                                                    value={pvpRoomPassword}
-                                                    maxLength={6}
-                                                    disabled={matchStatus === 'searching'}
-                                                    onChange={e => setPvpRoomPassword(e.target.value)}
-                                                    className={`w-full border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal ${matchStatus === 'searching' ? 'bg-gray-200 opacity-50' : 'bg-[#f8fcf0]'}`}
+                                                    placeholder="在此輸入對手ID..." 
+                                                    value={targetPeerId}
+                                                    onChange={e => setTargetPeerId(e.target.value)}
+                                                    className="w-full bg-white border-2 border-[#1a1a1a] p-1 text-[10px] outline-none font-mono"
                                                 />
                                             </div>
 
-                                            <div className="w-full grid grid-cols-1 gap-2">
-                                                <button 
-                                                    onClick={() => (matchStatus !== 'searching') && joinPvpRoom(pvpRoomPassword)}
-                                                    disabled={matchStatus === 'searching'}
-                                                    className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ff5252] text-white shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
-                                                >
-                                                    {matchStatus === 'searching' ? '等待對手連線...' : '進入房間'}
-                                                </button>
-
-                                                <div className="flex items-center gap-2 w-full">
-                                                    <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
-                                                    <span className="text-[8px] font-bold opacity-50">OR</span>
-                                                    <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
-                                                </div>
-
-                                                <button 
-                                                    onClick={() => (matchStatus !== 'searching') && quickMatch()}
-                                                    disabled={matchStatus === 'searching'}
-                                                    className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ffca28] text-[#1a1a1a] shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
-                                                >
-                                                    🚀 快速配對
-                                                </button>
-                                            </div>
+                                            <button 
+                                                onClick={() => {
+                                                    if (targetPeerId) {
+                                                        connectToRemotePeer(targetPeerId);
+                                                        updateDialogue("連線中...", true);
+                                                    }
+                                                }}
+                                                disabled={!targetPeerId}
+                                                className={`w-full py-1 border-2 border-[#1a1a1a] text-[10px] font-black transition-all shadow-[2px_2px_0_rgba(26,26,26,1)] ${targetPeerId ? 'bg-[#ffca28] text-[#1a1a1a] active:translate-y-px active:shadow-[1px_1px_0_rgba(26,26,26,1)]' : 'bg-gray-400 text-gray-700 opacity-50'}`}
+                                            >
+                                                發起挑戰
+                                            </button>
                                             
-                                            <div className="mt-auto text-[8px] font-black text-[#1a1a1a] opacity-60 flex flex-col items-center gap-0.5">
-                                                <span>相同密碼即可連線</span>
-                                                <div className="flex gap-2 text-[#383a37] underline decoration-dotted">
-                                                    <span>[C] 取消</span>
-                                                </div>
+                                            <div className="text-[9px] mt-auto pb-1 opacity-70 underline text-center w-full">
+                                                按 [C] 取消連線
                                             </div>
                                         </div>
                                     ) : (

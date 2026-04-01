@@ -1,27 +1,4 @@
 // Generated from PokeAPI (zh-Hant)
-export const TYPE_MAP = {
-    'normal': '普', 'fire': '火', 'water': '水', 'grass': '草', 'electric': '電',
-    'ice': '冰', 'fighting': '鬥', 'poison': '毒', 'ground': '地', 'flying': '飛',
-    'psychic': '超', 'bug': '蟲', 'rock': '岩', 'ghost': '鬼', 'dragon': '龍',
-    'steel': '鋼', 'dark': '惡', 'fairy': '妖'
-};
-
-export const NATURE_CONFIG = {
-    // 現代版本 Key (English)
-    'gentle':     { name: '溫柔', buff: 'hp',  nerf: 'atk', desc: 'HP +10%, 攻擊 -10%' },
-    'stubborn':   { name: '固執', buff: 'def', nerf: 'spd', desc: '防禦 +10%, 速度 -10%' },
-    'passionate': { name: '熱情', buff: 'atk', nerf: 'def', desc: '攻擊 +10%, 防禦 -10%' },
-    'nonsense':   { name: '無俚頭', buff: 'spd', nerf: 'def', desc: '速度 +10%, 防禦 -10%' },
-    'rational':   { name: '理性', buff: 'spd', nerf: 'atk', desc: '速度 +10%, 攻擊 -10%' },
-    // 舊版兼容性 Alias (Chinese)
-    '溫柔': { name: '溫柔', buff: 'hp',  nerf: 'atk' },
-    '固執': { name: '固執', buff: 'def', nerf: 'spd' },
-    '熱情': { name: '熱情', buff: 'atk', nerf: 'def' },
-    '熱血': { name: '熱情', buff: 'atk', nerf: 'def' },
-    '無俚頭': { name: '無俚頭', buff: 'spd', nerf: 'def' },
-    '搞笑': { name: '無俚頭', buff: 'spd', nerf: 'def' },
-    '理性': { name: '理性', buff: 'spd', nerf: 'atk' }
-};
 
 export const MONSTER_NAMES = {
     "1": "妙蛙種子",
@@ -1661,113 +1638,2024 @@ export const SPECIES_BASE_STATS = {
     }
 };
 
+export const TYPE_MAP = {
+    "normal": "普",
+    "fire": "火",
+    "water": "水",
+    "grass": "草",
+    "electric": "電",
+    "ice": "冰",
+    "fighting": "鬥",
+    "poison": "毒",
+    "ground": "地",
+    "flying": "飛",
+    "psychic": "超",
+    "bug": "蟲",
+    "rock": "岩",
+    "ghost": "鬼",
+    "dragon": "龍",
+    "steel": "鋼",
+    "dark": "惡",
+    "fairy": "妖"
+};
 
-// --- 技能與其它遊戲參數控制區 ---
+export const NATURE_CONFIG = {
+    "gentle": {
+        "name": "溫柔",
+        "buff": "hp",
+        "nerf": "atk",
+        "desc": "HP +10%, 攻擊 -10%"
+    },
+    "stubborn": {
+        "name": "固執",
+        "buff": "def",
+        "nerf": "spd",
+        "desc": "防禦 +10%, 速度 -10%"
+    },
+    "passionate": {
+        "name": "熱情",
+        "buff": "atk",
+        "nerf": "def",
+        "desc": "攻擊 +10%, 防禦 -10%"
+    },
+    "nonsense": {
+        "name": "無俚頭",
+        "buff": "spd",
+        "nerf": "def",
+        "desc": "速度 +10%, 防禦 -10%"
+    },
+    "rational": {
+        "name": "理性",
+        "buff": "spd",
+        "nerf": "atk",
+        "desc": "速度 +10%, 攻擊 -10%"
+    }
+};
 
+// --- 技能資料庫 ---
 export const SKILL_DATABASE = {
-    // Normal
-    tackle: { id: 'tackle', name: '撞擊', type: 'normal', power: 40 },
-    quick_attack: { id: 'quick_attack', name: '電光一閃', type: 'normal', power: 40, priority: 1 },
-    take_down: { id: 'take_down', name: '猛撞', type: 'normal', power: 90, recoil: 0.25 },
-    hyper_beam: { id: 'hyper_beam', name: '破壞光線', type: 'normal', power: 150 },
-    
-    // Fire
-    ember: { id: 'ember', name: '火花', type: 'fire', power: 40 },
-    fire_fang: { id: 'fire_fang', name: '火焰牙', type: 'fire', power: 65 },
-    flamethrower: { id: 'flamethrower', name: '噴射火焰', type: 'fire', power: 90 },
-    fire_blast: { id: 'fire_blast', name: '大字爆炎', type: 'fire', power: 110 },
-    
-    // Water
-    water_gun: { id: 'water_gun', name: '水槍', type: 'water', power: 40 },
-    bubble_beam: { id: 'bubble_beam', name: '泡沫光線', type: 'water', power: 65 },
-    surf: { id: 'surf', name: '衝浪', type: 'water', power: 90 },
-    hydro_pump: { id: 'hydro_pump', name: '水炮', type: 'water', power: 110 },
-    
-    // Grass
-    vine_whip: { id: 'vine_whip', name: '藤鞭', type: 'grass', power: 45 },
-    razor_leaf: { id: 'razor_leaf', name: '飛葉快刀', type: 'grass', power: 55 },
-    energy_ball: { id: 'energy_ball', name: '能量球', type: 'grass', power: 90 },
-    solar_beam: { id: 'solar_beam', name: '日光束', type: 'grass', power: 120 },
-    
-    // Bug
-    bug_bite: { id: 'bug_bite', name: '蟲咬', type: 'bug', power: 60 },
-    signal_beam: { id: 'signal_beam', name: '信號光束', type: 'bug', power: 75 },
-    x_scissor: { id: 'x_scissor', name: '十字剪', type: 'bug', power: 80 },
-    megahorn: { id: 'megahorn', name: '超級角擊', type: 'bug', power: 120 },
-
-    // Flying
-    peck: { id: 'peck', name: '啄', type: 'flying', power: 35 },
-    wing_attack: { id: 'wing_attack', name: '翅膀攻擊', type: 'flying', power: 60 },
-    air_slash: { id: 'air_slash', name: '空氣斬', type: 'flying', power: 75 },
-    brave_bird: { id: 'brave_bird', name: '勇鳥猛攻', type: 'flying', power: 120, recoil: 0.33 },
-
-    // Poison
-    poison_sting: { id: 'poison_sting', name: '毒針', type: 'poison', power: 15 },
-    acid: { id: 'acid', name: '溶解液', type: 'poison', power: 40 },
-    sludge_bomb: { id: 'sludge_bomb', name: '污泥炸彈', type: 'poison', power: 90 },
-    gunk_shot: { id: 'gunk_shot', name: '垃圾射擊', type: 'poison', power: 120 },
-
-    // Ground
-    mud_slap: { id: 'mud_slap', name: '擲泥', type: 'ground', power: 20 },
-    mud_shot: { id: 'mud_shot', name: '泥巴射擊', type: 'ground', power: 55 },
-    earth_power: { id: 'earth_power', name: '大地之力', type: 'ground', power: 90 },
-    earthquake: { id: 'earthquake', name: '地震', type: 'ground', power: 100 },
-
-    // Rock
-    rock_throw: { id: 'rock_throw', name: '落石', type: 'rock', power: 50 },
-    rock_tomb: { id: 'rock_tomb', name: '岩石封鎖', type: 'rock', power: 60 },
-    rock_slide: { id: 'rock_slide', name: '岩崩', type: 'rock', power: 75 },
-    stone_edge: { id: 'stone_edge', name: '尖石攻擊', type: 'rock', power: 100 },
-
-    // Fighting
-    mach_punch: { id: 'mach_punch', name: '音速拳', type: 'fighting', power: 40, priority: 1 },
-    karate_chop: { id: 'karate_chop', name: '空手劈', type: 'fighting', power: 50 },
-    cross_chop: { id: 'cross_chop', name: '十字劈', type: 'fighting', power: 100 },
-    close_combat: { id: 'close_combat', name: '近身戰', type: 'fighting', power: 120 },
-
-    // Psychic
-    confusion: { id: 'confusion', name: '念力', type: 'psychic', power: 50 },
-    psybeam: { id: 'psybeam', name: '幻象光線', type: 'psychic', power: 65 },
-    psychic_attack: { id: 'psychic_attack', name: '精神強念', type: 'psychic', power: 90 },
-    future_sight: { id: 'future_sight', name: '預知未來', type: 'psychic', power: 120 },
-
-    // Ghost
-    lick: { id: 'lick', name: '舌舔', type: 'ghost', power: 45 },
-    shadow_ball: { id: 'shadow_ball', name: '暗影球', type: 'ghost', power: 80 },
-    
-    // Dragon
-    twister: { id: 'twister', name: '龍捲風', type: 'dragon', power: 40 },
-    dragon_pulse: { id: 'dragon_pulse', name: '龍之波動', type: 'dragon', power: 85 },
-    outrage: { id: 'outrage', name: '逆鱗', type: 'dragon', power: 120 },
-
-    // Electric
-    thunder_shock: { id: 'thunder_shock', name: '電擊', type: 'electric', power: 40 },
-    thunderbolt: { id: 'thunderbolt', name: '十萬伏特', type: 'electric', power: 90 },
-    thunder: { id: 'thunder', name: '打雷', type: 'electric', power: 110 },
-
-    // Ice
-    powder_snow: { id: 'powder_snow', name: '細雪', type: 'ice', power: 40 },
-    ice_beam: { id: 'ice_beam', name: '冰凍光束', type: 'ice', power: 90 },
-    blizzard: { id: 'blizzard', name: '暴風雪', type: 'ice', power: 110 }
+    "tackle": {
+        "id": "tackle",
+        "name": "撞擊",
+        "type": "normal",
+        "power": 40
+    },
+    "quick_attack": {
+        "id": "quick_attack",
+        "name": "電光一閃",
+        "type": "normal",
+        "power": 40,
+        "priority": 1
+    },
+    "hyper_beam": {
+        "id": "hyper_beam",
+        "name": "破壞光線",
+        "type": "normal",
+        "power": 150
+    },
+    "skull_bash": {
+        "id": "skull_bash",
+        "name": "火箭頭錘",
+        "type": "normal",
+        "power": 130
+    },
+    "mega_kick": {
+        "id": "mega_kick",
+        "name": "百萬噸重踢",
+        "type": "normal",
+        "power": 120
+    },
+    "thrash": {
+        "id": "thrash",
+        "name": "大鬧一番",
+        "type": "normal",
+        "power": 120
+    },
+    "double_edge": {
+        "id": "double_edge",
+        "name": "捨身衝撞",
+        "type": "normal",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "egg_bomb": {
+        "id": "egg_bomb",
+        "name": "炸蛋",
+        "type": "normal",
+        "power": 100
+    },
+    "take_down": {
+        "id": "take_down",
+        "name": "猛撞",
+        "type": "normal",
+        "power": 90,
+        "recoil": 0.25
+    },
+    "body_slam": {
+        "id": "body_slam",
+        "name": "泰山壓頂",
+        "type": "normal",
+        "power": 85
+    },
+    "mega_punch": {
+        "id": "mega_punch",
+        "name": "百萬噸重拳",
+        "type": "normal",
+        "power": 80
+    },
+    "razor_wind": {
+        "id": "razor_wind",
+        "name": "旋風刀",
+        "type": "normal",
+        "power": 80
+    },
+    "slam": {
+        "id": "slam",
+        "name": "摔打",
+        "type": "normal",
+        "power": 80
+    },
+    "strength": {
+        "id": "strength",
+        "name": "怪力",
+        "type": "normal",
+        "power": 80
+    },
+    "headbutt": {
+        "id": "headbutt",
+        "name": "頭錘",
+        "type": "normal",
+        "power": 70
+    },
+    "stomp": {
+        "id": "stomp",
+        "name": "踩踏",
+        "type": "normal",
+        "power": 65
+    },
+    "upper_hand": {
+        "id": "upper_hand",
+        "name": "快手還擊",
+        "type": "fighting",
+        "power": 65,
+        "priority": 3
+    },
+    "mach_punch": {
+        "id": "mach_punch",
+        "name": "音速拳",
+        "type": "fighting",
+        "power": 40,
+        "priority": 1
+    },
+    "vacuum_wave": {
+        "id": "vacuum_wave",
+        "name": "真空波",
+        "type": "fighting",
+        "power": 40,
+        "priority": 1
+    },
+    "focus_punch": {
+        "id": "focus_punch",
+        "name": "真氣拳",
+        "type": "fighting",
+        "power": 150,
+        "priority": -3
+    },
+    "meteor_assault": {
+        "id": "meteor_assault",
+        "name": "流星突擊",
+        "type": "fighting",
+        "power": 150
+    },
+    "high_jump_kick": {
+        "id": "high_jump_kick",
+        "name": "飛膝踢",
+        "type": "fighting",
+        "power": 130
+    },
+    "superpower": {
+        "id": "superpower",
+        "name": "蠻力",
+        "type": "fighting",
+        "power": 120
+    },
+    "close_combat": {
+        "id": "close_combat",
+        "name": "近身戰",
+        "type": "fighting",
+        "power": 120
+    },
+    "focus_blast": {
+        "id": "focus_blast",
+        "name": "真氣彈",
+        "type": "fighting",
+        "power": 120
+    },
+    "axe_kick": {
+        "id": "axe_kick",
+        "name": "下壓踢",
+        "type": "fighting",
+        "power": 120
+    },
+    "jump_kick": {
+        "id": "jump_kick",
+        "name": "飛踢",
+        "type": "fighting",
+        "power": 100
+    },
+    "dynamic_punch": {
+        "id": "dynamic_punch",
+        "name": "爆裂拳",
+        "type": "fighting",
+        "power": 100
+    },
+    "cross_chop": {
+        "id": "cross_chop",
+        "name": "十字劈",
+        "type": "fighting",
+        "power": 100
+    },
+    "hammer_arm": {
+        "id": "hammer_arm",
+        "name": "臂錘",
+        "type": "fighting",
+        "power": 100
+    },
+    "flying_press": {
+        "id": "flying_press",
+        "name": "飛身重壓",
+        "type": "fighting",
+        "power": 100
+    },
+    "sky_attack": {
+        "id": "sky_attack",
+        "name": "神鳥猛擊",
+        "type": "flying",
+        "power": 140
+    },
+    "brave_bird": {
+        "id": "brave_bird",
+        "name": "勇鳥猛攻",
+        "type": "flying",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "dragon_ascent": {
+        "id": "dragon_ascent",
+        "name": "畫龍點睛",
+        "type": "flying",
+        "power": 120
+    },
+    "hurricane": {
+        "id": "hurricane",
+        "name": "暴風",
+        "type": "flying",
+        "power": 110
+    },
+    "aeroblast": {
+        "id": "aeroblast",
+        "name": "氣旋攻擊",
+        "type": "flying",
+        "power": 100
+    },
+    "beak_blast": {
+        "id": "beak_blast",
+        "name": "鳥嘴加農炮",
+        "type": "flying",
+        "power": 100,
+        "priority": -3
+    },
+    "bleakwind_storm": {
+        "id": "bleakwind_storm",
+        "name": "枯葉風暴",
+        "type": "flying",
+        "power": 100
+    },
+    "fly": {
+        "id": "fly",
+        "name": "飛翔",
+        "type": "flying",
+        "power": 90
+    },
+    "floaty_fall": {
+        "id": "floaty_fall",
+        "name": "飄飄墜落",
+        "type": "flying",
+        "power": 90
+    },
+    "bounce": {
+        "id": "bounce",
+        "name": "彈跳",
+        "type": "flying",
+        "power": 85
+    },
+    "drill_peck": {
+        "id": "drill_peck",
+        "name": "啄鑽",
+        "type": "flying",
+        "power": 80
+    },
+    "oblivion_wing": {
+        "id": "oblivion_wing",
+        "name": "死亡之翼",
+        "type": "flying",
+        "power": 80
+    },
+    "air_slash": {
+        "id": "air_slash",
+        "name": "空氣斬",
+        "type": "flying",
+        "power": 75
+    },
+    "chatter": {
+        "id": "chatter",
+        "name": "喋喋不休",
+        "type": "flying",
+        "power": 65
+    },
+    "wing_attack": {
+        "id": "wing_attack",
+        "name": "翅膀攻擊",
+        "type": "flying",
+        "power": 60
+    },
+    "gunk_shot": {
+        "id": "gunk_shot",
+        "name": "垃圾射擊",
+        "type": "poison",
+        "power": 120
+    },
+    "belch": {
+        "id": "belch",
+        "name": "打嗝",
+        "type": "poison",
+        "power": 120
+    },
+    "noxious_torque": {
+        "id": "noxious_torque",
+        "name": "劇毒暴衝",
+        "type": "poison",
+        "power": 100
+    },
+    "malignant_chain": {
+        "id": "malignant_chain",
+        "name": "邪毒鎖鏈",
+        "type": "poison",
+        "power": 100
+    },
+    "sludge_wave": {
+        "id": "sludge_wave",
+        "name": "污泥波",
+        "type": "poison",
+        "power": 95
+    },
+    "sludge_bomb": {
+        "id": "sludge_bomb",
+        "name": "污泥炸彈",
+        "type": "poison",
+        "power": 90
+    },
+    "shell_side_arm": {
+        "id": "shell_side_arm",
+        "name": "臂貝武器",
+        "type": "poison",
+        "power": 90
+    },
+    "poison_jab": {
+        "id": "poison_jab",
+        "name": "毒擊",
+        "type": "poison",
+        "power": 80
+    },
+    "dire_claw": {
+        "id": "dire_claw",
+        "name": "克命爪",
+        "type": "poison",
+        "power": 80
+    },
+    "cross_poison": {
+        "id": "cross_poison",
+        "name": "十字毒刃",
+        "type": "poison",
+        "power": 70
+    },
+    "sludge": {
+        "id": "sludge",
+        "name": "污泥攻擊",
+        "type": "poison",
+        "power": 65
+    },
+    "venoshock": {
+        "id": "venoshock",
+        "name": "毒液衝擊",
+        "type": "poison",
+        "power": 65
+    },
+    "barb_barrage": {
+        "id": "barb_barrage",
+        "name": "毒千針",
+        "type": "poison",
+        "power": 60
+    },
+    "poison_fang": {
+        "id": "poison_fang",
+        "name": "劇毒牙",
+        "type": "poison",
+        "power": 50
+    },
+    "poison_tail": {
+        "id": "poison_tail",
+        "name": "毒尾",
+        "type": "poison",
+        "power": 50
+    },
+    "precipice_blades": {
+        "id": "precipice_blades",
+        "name": "斷崖之劍",
+        "type": "ground",
+        "power": 120
+    },
+    "headlong_rush": {
+        "id": "headlong_rush",
+        "name": "突飛猛撲",
+        "type": "ground",
+        "power": 120
+    },
+    "earthquake": {
+        "id": "earthquake",
+        "name": "地震",
+        "type": "ground",
+        "power": 100
+    },
+    "sandsear_storm": {
+        "id": "sandsear_storm",
+        "name": "熱沙風暴",
+        "type": "ground",
+        "power": 100
+    },
+    "high_horsepower": {
+        "id": "high_horsepower",
+        "name": "十萬馬力",
+        "type": "ground",
+        "power": 95
+    },
+    "earth_power": {
+        "id": "earth_power",
+        "name": "大地之力",
+        "type": "ground",
+        "power": 90
+    },
+    "thousand_arrows": {
+        "id": "thousand_arrows",
+        "name": "千箭齊發",
+        "type": "ground",
+        "power": 90
+    },
+    "thousand_waves": {
+        "id": "thousand_waves",
+        "name": "千波激盪",
+        "type": "ground",
+        "power": 90
+    },
+    "lands_wrath": {
+        "id": "lands_wrath",
+        "name": "大地神力",
+        "type": "ground",
+        "power": 90
+    },
+    "dig": {
+        "id": "dig",
+        "name": "挖洞",
+        "type": "ground",
+        "power": 80
+    },
+    "drill_run": {
+        "id": "drill_run",
+        "name": "直衝鑽",
+        "type": "ground",
+        "power": 80
+    },
+    "stomping_tantrum": {
+        "id": "stomping_tantrum",
+        "name": "跺腳",
+        "type": "ground",
+        "power": 75
+    },
+    "scorching_sands": {
+        "id": "scorching_sands",
+        "name": "熱沙大地",
+        "type": "ground",
+        "power": 70
+    },
+    "bone_club": {
+        "id": "bone_club",
+        "name": "骨棒",
+        "type": "ground",
+        "power": 65
+    },
+    "mud_bomb": {
+        "id": "mud_bomb",
+        "name": "泥巴炸彈",
+        "type": "ground",
+        "power": 65
+    },
+    "accelerock": {
+        "id": "accelerock",
+        "name": "衝岩",
+        "type": "rock",
+        "power": 40,
+        "priority": 1
+    },
+    "rock_wrecker": {
+        "id": "rock_wrecker",
+        "name": "岩石炮",
+        "type": "rock",
+        "power": 150
+    },
+    "head_smash": {
+        "id": "head_smash",
+        "name": "雙刃頭錘",
+        "type": "rock",
+        "power": 150
+    },
+    "meteor_beam": {
+        "id": "meteor_beam",
+        "name": "流星光束",
+        "type": "rock",
+        "power": 120
+    },
+    "stone_edge": {
+        "id": "stone_edge",
+        "name": "尖石攻擊",
+        "type": "rock",
+        "power": 100
+    },
+    "diamond_storm": {
+        "id": "diamond_storm",
+        "name": "鑽石風暴",
+        "type": "rock",
+        "power": 100
+    },
+    "mighty_cleave": {
+        "id": "mighty_cleave",
+        "name": "強刃攻擊",
+        "type": "rock",
+        "power": 95
+    },
+    "power_gem": {
+        "id": "power_gem",
+        "name": "力量寶石",
+        "type": "rock",
+        "power": 80
+    },
+    "rock_slide": {
+        "id": "rock_slide",
+        "name": "岩崩",
+        "type": "rock",
+        "power": 75
+    },
+    "stone_axe": {
+        "id": "stone_axe",
+        "name": "岩斧",
+        "type": "rock",
+        "power": 65
+    },
+    "ancient_power": {
+        "id": "ancient_power",
+        "name": "原始之力",
+        "type": "rock",
+        "power": 60
+    },
+    "rock_tomb": {
+        "id": "rock_tomb",
+        "name": "岩石封鎖",
+        "type": "rock",
+        "power": 60
+    },
+    "rock_throw": {
+        "id": "rock_throw",
+        "name": "落石",
+        "type": "rock",
+        "power": 50
+    },
+    "smack_down": {
+        "id": "smack_down",
+        "name": "擊落",
+        "type": "rock",
+        "power": 50
+    },
+    "salt_cure": {
+        "id": "salt_cure",
+        "name": "鹽醃",
+        "type": "rock",
+        "power": 40
+    },
+    "first_impression": {
+        "id": "first_impression",
+        "name": "迎頭一擊",
+        "type": "bug",
+        "power": 90,
+        "priority": 2
+    },
+    "megahorn": {
+        "id": "megahorn",
+        "name": "超級角擊",
+        "type": "bug",
+        "power": 120
+    },
+    "bug_buzz": {
+        "id": "bug_buzz",
+        "name": "蟲鳴",
+        "type": "bug",
+        "power": 90
+    },
+    "attack_order": {
+        "id": "attack_order",
+        "name": "攻擊指令",
+        "type": "bug",
+        "power": 90
+    },
+    "pollen_puff": {
+        "id": "pollen_puff",
+        "name": "花粉團",
+        "type": "bug",
+        "power": 90
+    },
+    "leech_life": {
+        "id": "leech_life",
+        "name": "吸血",
+        "type": "bug",
+        "power": 80
+    },
+    "x_scissor": {
+        "id": "x_scissor",
+        "name": "十字剪",
+        "type": "bug",
+        "power": 80
+    },
+    "lunge": {
+        "id": "lunge",
+        "name": "猛撲",
+        "type": "bug",
+        "power": 80
+    },
+    "signal_beam": {
+        "id": "signal_beam",
+        "name": "信號光束",
+        "type": "bug",
+        "power": 75
+    },
+    "u_turn": {
+        "id": "u_turn",
+        "name": "急速折返",
+        "type": "bug",
+        "power": 70
+    },
+    "skitter_smack": {
+        "id": "skitter_smack",
+        "name": "爬擊",
+        "type": "bug",
+        "power": 70
+    },
+    "steamroller": {
+        "id": "steamroller",
+        "name": "瘋狂滾壓",
+        "type": "bug",
+        "power": 65
+    },
+    "silver_wind": {
+        "id": "silver_wind",
+        "name": "銀色旋風",
+        "type": "bug",
+        "power": 60
+    },
+    "bug_bite": {
+        "id": "bug_bite",
+        "name": "蟲咬",
+        "type": "bug",
+        "power": 60
+    },
+    "struggle_bug": {
+        "id": "struggle_bug",
+        "name": "蟲之抵抗",
+        "type": "bug",
+        "power": 50
+    },
+    "shadow_sneak": {
+        "id": "shadow_sneak",
+        "name": "影子偷襲",
+        "type": "ghost",
+        "power": 40,
+        "priority": 1
+    },
+    "shadow_force": {
+        "id": "shadow_force",
+        "name": "暗影潛襲",
+        "type": "ghost",
+        "power": 120
+    },
+    "astral_barrage": {
+        "id": "astral_barrage",
+        "name": "星碎",
+        "type": "ghost",
+        "power": 120
+    },
+    "poltergeist": {
+        "id": "poltergeist",
+        "name": "靈騷",
+        "type": "ghost",
+        "power": 110
+    },
+    "moongeist_beam": {
+        "id": "moongeist_beam",
+        "name": "暗影之光",
+        "type": "ghost",
+        "power": 100
+    },
+    "phantom_force": {
+        "id": "phantom_force",
+        "name": "潛靈奇襲",
+        "type": "ghost",
+        "power": 90
+    },
+    "spectral_thief": {
+        "id": "spectral_thief",
+        "name": "暗影偷盜",
+        "type": "ghost",
+        "power": 90
+    },
+    "shadow_bone": {
+        "id": "shadow_bone",
+        "name": "暗影之骨",
+        "type": "ghost",
+        "power": 85
+    },
+    "shadow_ball": {
+        "id": "shadow_ball",
+        "name": "暗影球",
+        "type": "ghost",
+        "power": 80
+    },
+    "spirit_shackle": {
+        "id": "spirit_shackle",
+        "name": "縫影",
+        "type": "ghost",
+        "power": 80
+    },
+    "bitter_malice": {
+        "id": "bitter_malice",
+        "name": "冤冤相報",
+        "type": "ghost",
+        "power": 75
+    },
+    "shadow_claw": {
+        "id": "shadow_claw",
+        "name": "暗影爪",
+        "type": "ghost",
+        "power": 70
+    },
+    "hex": {
+        "id": "hex",
+        "name": "禍不單行",
+        "type": "ghost",
+        "power": 65
+    },
+    "shadow_punch": {
+        "id": "shadow_punch",
+        "name": "暗影拳",
+        "type": "ghost",
+        "power": 60
+    },
+    "ominous_wind": {
+        "id": "ominous_wind",
+        "name": "奇異之風",
+        "type": "ghost",
+        "power": 60
+    },
+    "bullet_punch": {
+        "id": "bullet_punch",
+        "name": "子彈拳",
+        "type": "steel",
+        "power": 40,
+        "priority": 1
+    },
+    "gigaton_hammer": {
+        "id": "gigaton_hammer",
+        "name": "巨力錘",
+        "type": "steel",
+        "power": 160
+    },
+    "doom_desire": {
+        "id": "doom_desire",
+        "name": "破滅之願",
+        "type": "steel",
+        "power": 140
+    },
+    "steel_beam": {
+        "id": "steel_beam",
+        "name": "鐵蹄光線",
+        "type": "steel",
+        "power": 140
+    },
+    "steel_roller": {
+        "id": "steel_roller",
+        "name": "鐵滾輪",
+        "type": "steel",
+        "power": 130
+    },
+    "make_it_rain": {
+        "id": "make_it_rain",
+        "name": "淘金潮",
+        "type": "steel",
+        "power": 120
+    },
+    "iron_tail": {
+        "id": "iron_tail",
+        "name": "鐵尾",
+        "type": "steel",
+        "power": 100
+    },
+    "sunsteel_strike": {
+        "id": "sunsteel_strike",
+        "name": "流星閃衝",
+        "type": "steel",
+        "power": 100
+    },
+    "behemoth_blade": {
+        "id": "behemoth_blade",
+        "name": "巨獸斬",
+        "type": "steel",
+        "power": 100
+    },
+    "behemoth_bash": {
+        "id": "behemoth_bash",
+        "name": "巨獸彈",
+        "type": "steel",
+        "power": 100
+    },
+    "spin_out": {
+        "id": "spin_out",
+        "name": "疾速轉輪",
+        "type": "steel",
+        "power": 100
+    },
+    "meteor_mash": {
+        "id": "meteor_mash",
+        "name": "彗星拳",
+        "type": "steel",
+        "power": 90
+    },
+    "flash_cannon": {
+        "id": "flash_cannon",
+        "name": "加農光炮",
+        "type": "steel",
+        "power": 80
+    },
+    "iron_head": {
+        "id": "iron_head",
+        "name": "鐵頭",
+        "type": "steel",
+        "power": 80
+    },
+    "anchor_shot": {
+        "id": "anchor_shot",
+        "name": "擲錨",
+        "type": "steel",
+        "power": 80
+    },
+    "eruption": {
+        "id": "eruption",
+        "name": "噴火",
+        "type": "fire",
+        "power": 150
+    },
+    "blast_burn": {
+        "id": "blast_burn",
+        "name": "爆炸烈焰",
+        "type": "fire",
+        "power": 150
+    },
+    "shell_trap": {
+        "id": "shell_trap",
+        "name": "陷阱甲殼",
+        "type": "fire",
+        "power": 150,
+        "priority": -3
+    },
+    "mind_blown": {
+        "id": "mind_blown",
+        "name": "驚爆大頭",
+        "type": "fire",
+        "power": 150
+    },
+    "overheat": {
+        "id": "overheat",
+        "name": "過熱",
+        "type": "fire",
+        "power": 130
+    },
+    "blue_flare": {
+        "id": "blue_flare",
+        "name": "青焰",
+        "type": "fire",
+        "power": 130
+    },
+    "burn_up": {
+        "id": "burn_up",
+        "name": "燃盡",
+        "type": "fire",
+        "power": 130
+    },
+    "flare_blitz": {
+        "id": "flare_blitz",
+        "name": "閃焰衝鋒",
+        "type": "fire",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "pyro_ball": {
+        "id": "pyro_ball",
+        "name": "火焰球",
+        "type": "fire",
+        "power": 120
+    },
+    "raging_fury": {
+        "id": "raging_fury",
+        "name": "大愤慨",
+        "type": "fire",
+        "power": 120
+    },
+    "armor_cannon": {
+        "id": "armor_cannon",
+        "name": "铠农炮",
+        "type": "fire",
+        "power": 120
+    },
+    "fire_blast": {
+        "id": "fire_blast",
+        "name": "大字爆炎",
+        "type": "fire",
+        "power": 110
+    },
+    "sacred_fire": {
+        "id": "sacred_fire",
+        "name": "神聖之火",
+        "type": "fire",
+        "power": 100
+    },
+    "magma_storm": {
+        "id": "magma_storm",
+        "name": "熔岩風暴",
+        "type": "fire",
+        "power": 100
+    },
+    "inferno": {
+        "id": "inferno",
+        "name": "煉獄",
+        "type": "fire",
+        "power": 100
+    },
+    "jet_punch": {
+        "id": "jet_punch",
+        "name": "喷射拳",
+        "type": "water",
+        "power": 60,
+        "priority": 1
+    },
+    "aqua_jet": {
+        "id": "aqua_jet",
+        "name": "水流噴射",
+        "type": "water",
+        "power": 40,
+        "priority": 1
+    },
+    "water_shuriken": {
+        "id": "water_shuriken",
+        "name": "飛水手裡劍",
+        "type": "water",
+        "power": 15,
+        "priority": 1
+    },
+    "hydro_cannon": {
+        "id": "hydro_cannon",
+        "name": "加農水砲",
+        "type": "water",
+        "power": 150
+    },
+    "water_spout": {
+        "id": "water_spout",
+        "name": "噴水",
+        "type": "water",
+        "power": 150
+    },
+    "wave_crash": {
+        "id": "wave_crash",
+        "name": "波動冲",
+        "type": "water",
+        "power": 120
+    },
+    "hydro_pump": {
+        "id": "hydro_pump",
+        "name": "水砲",
+        "type": "water",
+        "power": 110
+    },
+    "steam_eruption": {
+        "id": "steam_eruption",
+        "name": "蒸汽爆炸",
+        "type": "water",
+        "power": 110
+    },
+    "origin_pulse": {
+        "id": "origin_pulse",
+        "name": "根源波動",
+        "type": "water",
+        "power": 110
+    },
+    "crabhammer": {
+        "id": "crabhammer",
+        "name": "蟹鉗錘",
+        "type": "water",
+        "power": 100
+    },
+    "surf": {
+        "id": "surf",
+        "name": "衝浪",
+        "type": "water",
+        "power": 90
+    },
+    "muddy_water": {
+        "id": "muddy_water",
+        "name": "濁流",
+        "type": "water",
+        "power": 90
+    },
+    "aqua_tail": {
+        "id": "aqua_tail",
+        "name": "水流尾",
+        "type": "water",
+        "power": 90
+    },
+    "sparkling_aria": {
+        "id": "sparkling_aria",
+        "name": "泡影的詠歎調",
+        "type": "water",
+        "power": 90
+    },
+    "splishy_splash": {
+        "id": "splishy_splash",
+        "name": "滔滔衝浪",
+        "type": "water",
+        "power": 90
+    },
+    "frenzy_plant": {
+        "id": "frenzy_plant",
+        "name": "瘋狂植物",
+        "type": "grass",
+        "power": 150
+    },
+    "chloroblast": {
+        "id": "chloroblast",
+        "name": "葉绿爆震",
+        "type": "grass",
+        "power": 150
+    },
+    "leaf_storm": {
+        "id": "leaf_storm",
+        "name": "飛葉風暴",
+        "type": "grass",
+        "power": 130
+    },
+    "solar_blade": {
+        "id": "solar_blade",
+        "name": "日光刃",
+        "type": "grass",
+        "power": 125
+    },
+    "solar_beam": {
+        "id": "solar_beam",
+        "name": "日光束",
+        "type": "grass",
+        "power": 120
+    },
+    "petal_dance": {
+        "id": "petal_dance",
+        "name": "花瓣舞",
+        "type": "grass",
+        "power": 120
+    },
+    "power_whip": {
+        "id": "power_whip",
+        "name": "強力鞭打",
+        "type": "grass",
+        "power": 120
+    },
+    "wood_hammer": {
+        "id": "wood_hammer",
+        "name": "木槌",
+        "type": "grass",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "seed_flare": {
+        "id": "seed_flare",
+        "name": "種子閃光",
+        "type": "grass",
+        "power": 120
+    },
+    "sappy_seed": {
+        "id": "sappy_seed",
+        "name": "茁茁轟炸",
+        "type": "grass",
+        "power": 100
+    },
+    "leaf_blade": {
+        "id": "leaf_blade",
+        "name": "葉刃",
+        "type": "grass",
+        "power": 90
+    },
+    "energy_ball": {
+        "id": "energy_ball",
+        "name": "能量球",
+        "type": "grass",
+        "power": 90
+    },
+    "petal_blizzard": {
+        "id": "petal_blizzard",
+        "name": "落英繽紛",
+        "type": "grass",
+        "power": 90
+    },
+    "seed_bomb": {
+        "id": "seed_bomb",
+        "name": "種子炸彈",
+        "type": "grass",
+        "power": 80
+    },
+    "grass_pledge": {
+        "id": "grass_pledge",
+        "name": "草之誓約",
+        "type": "grass",
+        "power": 80
+    },
+    "zippy_zap": {
+        "id": "zippy_zap",
+        "name": "電電加速",
+        "type": "electric",
+        "power": 80,
+        "priority": 2
+    },
+    "thunderclap": {
+        "id": "thunderclap",
+        "name": "迅雷",
+        "type": "electric",
+        "power": 70,
+        "priority": 1
+    },
+    "bolt_strike": {
+        "id": "bolt_strike",
+        "name": "雷擊",
+        "type": "electric",
+        "power": 130
+    },
+    "electro_shot": {
+        "id": "electro_shot",
+        "name": "電光束",
+        "type": "electric",
+        "power": 130
+    },
+    "zap_cannon": {
+        "id": "zap_cannon",
+        "name": "電磁炮",
+        "type": "electric",
+        "power": 120
+    },
+    "volt_tackle": {
+        "id": "volt_tackle",
+        "name": "伏特攻擊",
+        "type": "electric",
+        "power": 120,
+        "recoil": 0.33
+    },
+    "double_shock": {
+        "id": "double_shock",
+        "name": "電光双擊",
+        "type": "electric",
+        "power": 120
+    },
+    "thunder": {
+        "id": "thunder",
+        "name": "打雷",
+        "type": "electric",
+        "power": 110
+    },
+    "aura_wheel": {
+        "id": "aura_wheel",
+        "name": "氣場輪",
+        "type": "electric",
+        "power": 110
+    },
+    "fusion_bolt": {
+        "id": "fusion_bolt",
+        "name": "交錯閃電",
+        "type": "electric",
+        "power": 100
+    },
+    "plasma_fists": {
+        "id": "plasma_fists",
+        "name": "等離子閃電拳",
+        "type": "electric",
+        "power": 100
+    },
+    "wildbolt_storm": {
+        "id": "wildbolt_storm",
+        "name": "鸣雷風暴",
+        "type": "electric",
+        "power": 100
+    },
+    "electro_drift": {
+        "id": "electro_drift",
+        "name": "闪電猛冲",
+        "type": "electric",
+        "power": 100
+    },
+    "supercell_slam": {
+        "id": "supercell_slam",
+        "name": "閃電強襲",
+        "type": "electric",
+        "power": 100
+    },
+    "thunderbolt": {
+        "id": "thunderbolt",
+        "name": "十萬伏特",
+        "type": "electric",
+        "power": 90
+    },
+    "psycho_boost": {
+        "id": "psycho_boost",
+        "name": "精神突進",
+        "type": "psychic",
+        "power": 140
+    },
+    "future_sight": {
+        "id": "future_sight",
+        "name": "預知未來",
+        "type": "psychic",
+        "power": 120
+    },
+    "synchronoise": {
+        "id": "synchronoise",
+        "name": "同步干擾",
+        "type": "psychic",
+        "power": 120
+    },
+    "dream_eater": {
+        "id": "dream_eater",
+        "name": "食夢",
+        "type": "psychic",
+        "power": 100
+    },
+    "psystrike": {
+        "id": "psystrike",
+        "name": "精神擊破",
+        "type": "psychic",
+        "power": 100
+    },
+    "luster_purge": {
+        "id": "luster_purge",
+        "name": "潔淨光芒",
+        "type": "psychic",
+        "power": 95
+    },
+    "mist_ball": {
+        "id": "mist_ball",
+        "name": "薄霧球",
+        "type": "psychic",
+        "power": 95
+    },
+    "psychic": {
+        "id": "psychic",
+        "name": "精神強念",
+        "type": "psychic",
+        "power": 90
+    },
+    "extrasensory": {
+        "id": "extrasensory",
+        "name": "神通力",
+        "type": "psychic",
+        "power": 80
+    },
+    "zen_headbutt": {
+        "id": "zen_headbutt",
+        "name": "意念頭錘",
+        "type": "psychic",
+        "power": 80
+    },
+    "psyshock": {
+        "id": "psyshock",
+        "name": "精神衝擊",
+        "type": "psychic",
+        "power": 80
+    },
+    "hyperspace_hole": {
+        "id": "hyperspace_hole",
+        "name": "異次元洞",
+        "type": "psychic",
+        "power": 80
+    },
+    "psycho_cut": {
+        "id": "psycho_cut",
+        "name": "精神利刃",
+        "type": "psychic",
+        "power": 70
+    },
+    "psybeam": {
+        "id": "psybeam",
+        "name": "幻象光線",
+        "type": "psychic",
+        "power": 65
+    },
+    "heart_stamp": {
+        "id": "heart_stamp",
+        "name": "愛心印章",
+        "type": "psychic",
+        "power": 60
+    },
+    "ice_shard": {
+        "id": "ice_shard",
+        "name": "冰礫",
+        "type": "ice",
+        "power": 40,
+        "priority": 1
+    },
+    "freeze_shock": {
+        "id": "freeze_shock",
+        "name": "冰凍伏特",
+        "type": "ice",
+        "power": 140
+    },
+    "ice_burn": {
+        "id": "ice_burn",
+        "name": "極寒冷焰",
+        "type": "ice",
+        "power": 140
+    },
+    "glacial_lance": {
+        "id": "glacial_lance",
+        "name": "雪矛",
+        "type": "ice",
+        "power": 120
+    },
+    "blizzard": {
+        "id": "blizzard",
+        "name": "暴風雪",
+        "type": "ice",
+        "power": 110
+    },
+    "ice_hammer": {
+        "id": "ice_hammer",
+        "name": "冰錘",
+        "type": "ice",
+        "power": 100
+    },
+    "freezy_frost": {
+        "id": "freezy_frost",
+        "name": "冰冰霜凍",
+        "type": "ice",
+        "power": 100
+    },
+    "mountain_gale": {
+        "id": "mountain_gale",
+        "name": "冰山風",
+        "type": "ice",
+        "power": 100
+    },
+    "ice_beam": {
+        "id": "ice_beam",
+        "name": "冰凍光束",
+        "type": "ice",
+        "power": 90
+    },
+    "icicle_crash": {
+        "id": "icicle_crash",
+        "name": "冰柱墜擊",
+        "type": "ice",
+        "power": 85
+    },
+    "ice_spinner": {
+        "id": "ice_spinner",
+        "name": "冰旋",
+        "type": "ice",
+        "power": 80
+    },
+    "ice_punch": {
+        "id": "ice_punch",
+        "name": "冰凍拳",
+        "type": "ice",
+        "power": 75
+    },
+    "freeze_dry": {
+        "id": "freeze_dry",
+        "name": "冷凍乾燥",
+        "type": "ice",
+        "power": 70
+    },
+    "aurora_beam": {
+        "id": "aurora_beam",
+        "name": "極光束",
+        "type": "ice",
+        "power": 65
+    },
+    "ice_fang": {
+        "id": "ice_fang",
+        "name": "冰凍牙",
+        "type": "ice",
+        "power": 65
+    },
+    "eternabeam": {
+        "id": "eternabeam",
+        "name": "無極光束",
+        "type": "dragon",
+        "power": 160
+    },
+    "roar_of_time": {
+        "id": "roar_of_time",
+        "name": "時光咆哮",
+        "type": "dragon",
+        "power": 150
+    },
+    "dragon_energy": {
+        "id": "dragon_energy",
+        "name": "巨龍威能",
+        "type": "dragon",
+        "power": 150
+    },
+    "draco_meteor": {
+        "id": "draco_meteor",
+        "name": "流星群",
+        "type": "dragon",
+        "power": 130
+    },
+    "outrage": {
+        "id": "outrage",
+        "name": "逆鱗",
+        "type": "dragon",
+        "power": 120
+    },
+    "glaive_rush": {
+        "id": "glaive_rush",
+        "name": "巨剑突擊",
+        "type": "dragon",
+        "power": 120
+    },
+    "clanging_scales": {
+        "id": "clanging_scales",
+        "name": "鱗片噪音",
+        "type": "dragon",
+        "power": 110
+    },
+    "dragon_rush": {
+        "id": "dragon_rush",
+        "name": "龍之俯衝",
+        "type": "dragon",
+        "power": 100
+    },
+    "spacial_rend": {
+        "id": "spacial_rend",
+        "name": "亞空裂斬",
+        "type": "dragon",
+        "power": 100
+    },
+    "core_enforcer": {
+        "id": "core_enforcer",
+        "name": "核心懲罰者",
+        "type": "dragon",
+        "power": 100
+    },
+    "dragon_hammer": {
+        "id": "dragon_hammer",
+        "name": "龍錘",
+        "type": "dragon",
+        "power": 90
+    },
+    "dragon_pulse": {
+        "id": "dragon_pulse",
+        "name": "龍之波動",
+        "type": "dragon",
+        "power": 85
+    },
+    "dragon_claw": {
+        "id": "dragon_claw",
+        "name": "龍爪",
+        "type": "dragon",
+        "power": 80
+    },
+    "order_up": {
+        "id": "order_up",
+        "name": "上菜",
+        "type": "dragon",
+        "power": 80
+    },
+    "fickle_beam": {
+        "id": "fickle_beam",
+        "name": "隨機光",
+        "type": "dragon",
+        "power": 80
+    },
+    "sucker_punch": {
+        "id": "sucker_punch",
+        "name": "突襲",
+        "type": "dark",
+        "power": 70,
+        "priority": 1
+    },
+    "hyperspace_fury": {
+        "id": "hyperspace_fury",
+        "name": "異次元猛攻",
+        "type": "dark",
+        "power": 100
+    },
+    "foul_play": {
+        "id": "foul_play",
+        "name": "欺詐",
+        "type": "dark",
+        "power": 95
+    },
+    "fiery_wrath": {
+        "id": "fiery_wrath",
+        "name": "怒火中燒",
+        "type": "dark",
+        "power": 90
+    },
+    "night_daze": {
+        "id": "night_daze",
+        "name": "暗黑爆破",
+        "type": "dark",
+        "power": 85
+    },
+    "darkest_lariat": {
+        "id": "darkest_lariat",
+        "name": "ＤＤ金勾臂",
+        "type": "dark",
+        "power": 85
+    },
+    "kowtow_cleave": {
+        "id": "kowtow_cleave",
+        "name": "仆刀",
+        "type": "dark",
+        "power": 85
+    },
+    "crunch": {
+        "id": "crunch",
+        "name": "咬碎",
+        "type": "dark",
+        "power": 80
+    },
+    "dark_pulse": {
+        "id": "dark_pulse",
+        "name": "惡之波動",
+        "type": "dark",
+        "power": 80
+    },
+    "throat_chop": {
+        "id": "throat_chop",
+        "name": "地獄突刺",
+        "type": "dark",
+        "power": 80
+    },
+    "baddy_bad": {
+        "id": "baddy_bad",
+        "name": "壞壞領域",
+        "type": "dark",
+        "power": 80
+    },
+    "jaw_lock": {
+        "id": "jaw_lock",
+        "name": "緊咬不放",
+        "type": "dark",
+        "power": 80
+    },
+    "false_surrender": {
+        "id": "false_surrender",
+        "name": "假跪真撞",
+        "type": "dark",
+        "power": 80
+    },
+    "wicked_torque": {
+        "id": "wicked_torque",
+        "name": "黑暗暴冲",
+        "type": "dark",
+        "power": 80
+    },
+    "lash_out": {
+        "id": "lash_out",
+        "name": "洩憤",
+        "type": "dark",
+        "power": 75
+    },
+    "light_of_ruin": {
+        "id": "light_of_ruin",
+        "name": "破滅之光",
+        "type": "fairy",
+        "power": 140
+    },
+    "fleur_cannon": {
+        "id": "fleur_cannon",
+        "name": "花朵加農炮",
+        "type": "fairy",
+        "power": 130
+    },
+    "sparkly_swirl": {
+        "id": "sparkly_swirl",
+        "name": "亮亮風暴",
+        "type": "fairy",
+        "power": 120
+    },
+    "misty_explosion": {
+        "id": "misty_explosion",
+        "name": "薄霧炸裂",
+        "type": "fairy",
+        "power": 100
+    },
+    "springtide_storm": {
+        "id": "springtide_storm",
+        "name": "阳春風暴",
+        "type": "fairy",
+        "power": 100
+    },
+    "magical_torque": {
+        "id": "magical_torque",
+        "name": "魔法暴冲",
+        "type": "fairy",
+        "power": 100
+    },
+    "moonblast": {
+        "id": "moonblast",
+        "name": "月亮之力",
+        "type": "fairy",
+        "power": 95
+    },
+    "play_rough": {
+        "id": "play_rough",
+        "name": "嬉鬧",
+        "type": "fairy",
+        "power": 90
+    },
+    "strange_steam": {
+        "id": "strange_steam",
+        "name": "神奇蒸汽",
+        "type": "fairy",
+        "power": 90
+    },
+    "dazzling_gleam": {
+        "id": "dazzling_gleam",
+        "name": "魔法閃耀",
+        "type": "fairy",
+        "power": 80
+    },
+    "alluring_voice": {
+        "id": "alluring_voice",
+        "name": "魅誘之聲",
+        "type": "fairy",
+        "power": 80
+    },
+    "spirit_break": {
+        "id": "spirit_break",
+        "name": "靈魂衝擊",
+        "type": "fairy",
+        "power": 75
+    },
+    "draining_kiss": {
+        "id": "draining_kiss",
+        "name": "吸取之吻",
+        "type": "fairy",
+        "power": 50
+    },
+    "disarming_voice": {
+        "id": "disarming_voice",
+        "name": "魅惑之聲",
+        "type": "fairy",
+        "power": 40
+    },
+    "fairy_wind": {
+        "id": "fairy_wind",
+        "name": "妖精之風",
+        "type": "fairy",
+        "power": 40
+    }
 };
 
 export const TYPE_SKILLS = {
-    normal: ['tackle', 'quick_attack', 'take_down', 'hyper_beam'],
-    fire: ['ember', 'fire_fang', 'flamethrower', 'fire_blast'],
-    water: ['water_gun', 'bubble_beam', 'surf', 'hydro_pump'],
-    grass: ['vine_whip', 'razor_leaf', 'energy_ball', 'solar_beam'],
-    bug: ['bug_bite', 'signal_beam', 'x_scissor', 'megahorn'],
-    flying: ['peck', 'wing_attack', 'air_slash', 'brave_bird'],
-    poison: ['poison_sting', 'acid', 'sludge_bomb', 'gunk_shot'],
-    ground: ['mud_slap', 'mud_shot', 'earth_power', 'earthquake'],
-    rock: ['rock_throw', 'rock_tomb', 'rock_slide', 'stone_edge'],
-    fighting: ['mach_punch', 'karate_chop', 'cross_chop', 'close_combat'],
-    psychic: ['confusion', 'psybeam', 'psychic_attack', 'future_sight'],
-    ghost: ['lick', 'shadow_ball'],
-    dragon: ['twister', 'dragon_pulse', 'outrage'],
-    electric: ['thunder_shock', 'thunderbolt', 'thunder'],
-    ice: ['powder_snow', 'ice_beam', 'blizzard']
+    "normal": [
+        "quick_attack",
+        "hyper_beam",
+        "skull_bash",
+        "mega_kick",
+        "thrash",
+        "double_edge",
+        "egg_bomb",
+        "take_down",
+        "body_slam",
+        "mega_punch",
+        "razor_wind",
+        "slam",
+        "strength",
+        "headbutt",
+        "stomp"
+    ],
+    "fighting": [
+        "upper_hand",
+        "mach_punch",
+        "vacuum_wave",
+        "focus_punch",
+        "meteor_assault",
+        "high_jump_kick",
+        "superpower",
+        "close_combat",
+        "focus_blast",
+        "axe_kick",
+        "jump_kick",
+        "dynamic_punch",
+        "cross_chop",
+        "hammer_arm",
+        "flying_press"
+    ],
+    "flying": [
+        "sky_attack",
+        "brave_bird",
+        "dragon_ascent",
+        "hurricane",
+        "aeroblast",
+        "beak_blast",
+        "bleakwind_storm",
+        "fly",
+        "floaty_fall",
+        "bounce",
+        "drill_peck",
+        "oblivion_wing",
+        "air_slash",
+        "chatter",
+        "wing_attack"
+    ],
+    "poison": [
+        "gunk_shot",
+        "belch",
+        "noxious_torque",
+        "malignant_chain",
+        "sludge_wave",
+        "sludge_bomb",
+        "shell_side_arm",
+        "poison_jab",
+        "dire_claw",
+        "cross_poison",
+        "sludge",
+        "venoshock",
+        "barb_barrage",
+        "poison_fang",
+        "poison_tail"
+    ],
+    "ground": [
+        "precipice_blades",
+        "headlong_rush",
+        "earthquake",
+        "sandsear_storm",
+        "high_horsepower",
+        "earth_power",
+        "thousand_arrows",
+        "thousand_waves",
+        "lands_wrath",
+        "dig",
+        "drill_run",
+        "stomping_tantrum",
+        "scorching_sands",
+        "bone_club",
+        "mud_bomb"
+    ],
+    "rock": [
+        "accelerock",
+        "rock_wrecker",
+        "head_smash",
+        "meteor_beam",
+        "stone_edge",
+        "diamond_storm",
+        "mighty_cleave",
+        "power_gem",
+        "rock_slide",
+        "stone_axe",
+        "ancient_power",
+        "rock_tomb",
+        "rock_throw",
+        "smack_down",
+        "salt_cure"
+    ],
+    "bug": [
+        "first_impression",
+        "megahorn",
+        "bug_buzz",
+        "attack_order",
+        "pollen_puff",
+        "leech_life",
+        "x_scissor",
+        "lunge",
+        "signal_beam",
+        "u_turn",
+        "skitter_smack",
+        "steamroller",
+        "silver_wind",
+        "bug_bite",
+        "struggle_bug"
+    ],
+    "ghost": [
+        "shadow_sneak",
+        "shadow_force",
+        "astral_barrage",
+        "poltergeist",
+        "moongeist_beam",
+        "phantom_force",
+        "spectral_thief",
+        "shadow_bone",
+        "shadow_ball",
+        "spirit_shackle",
+        "bitter_malice",
+        "shadow_claw",
+        "hex",
+        "shadow_punch",
+        "ominous_wind"
+    ],
+    "steel": [
+        "bullet_punch",
+        "gigaton_hammer",
+        "doom_desire",
+        "steel_beam",
+        "steel_roller",
+        "make_it_rain",
+        "iron_tail",
+        "sunsteel_strike",
+        "behemoth_blade",
+        "behemoth_bash",
+        "spin_out",
+        "meteor_mash",
+        "flash_cannon",
+        "iron_head",
+        "anchor_shot"
+    ],
+    "fire": [
+        "eruption",
+        "blast_burn",
+        "shell_trap",
+        "mind_blown",
+        "overheat",
+        "blue_flare",
+        "burn_up",
+        "flare_blitz",
+        "pyro_ball",
+        "raging_fury",
+        "armor_cannon",
+        "fire_blast",
+        "sacred_fire",
+        "magma_storm",
+        "inferno"
+    ],
+    "water": [
+        "jet_punch",
+        "aqua_jet",
+        "water_shuriken",
+        "hydro_cannon",
+        "water_spout",
+        "wave_crash",
+        "hydro_pump",
+        "steam_eruption",
+        "origin_pulse",
+        "crabhammer",
+        "surf",
+        "muddy_water",
+        "aqua_tail",
+        "sparkling_aria",
+        "splishy_splash"
+    ],
+    "grass": [
+        "frenzy_plant",
+        "chloroblast",
+        "leaf_storm",
+        "solar_blade",
+        "solar_beam",
+        "petal_dance",
+        "power_whip",
+        "wood_hammer",
+        "seed_flare",
+        "sappy_seed",
+        "leaf_blade",
+        "energy_ball",
+        "petal_blizzard",
+        "seed_bomb",
+        "grass_pledge"
+    ],
+    "electric": [
+        "zippy_zap",
+        "thunderclap",
+        "bolt_strike",
+        "electro_shot",
+        "zap_cannon",
+        "volt_tackle",
+        "double_shock",
+        "thunder",
+        "aura_wheel",
+        "fusion_bolt",
+        "plasma_fists",
+        "wildbolt_storm",
+        "electro_drift",
+        "supercell_slam",
+        "thunderbolt"
+    ],
+    "psychic": [
+        "psycho_boost",
+        "future_sight",
+        "synchronoise",
+        "dream_eater",
+        "psystrike",
+        "luster_purge",
+        "mist_ball",
+        "psychic",
+        "extrasensory",
+        "zen_headbutt",
+        "psyshock",
+        "hyperspace_hole",
+        "psycho_cut",
+        "psybeam",
+        "heart_stamp"
+    ],
+    "ice": [
+        "ice_shard",
+        "freeze_shock",
+        "ice_burn",
+        "glacial_lance",
+        "blizzard",
+        "ice_hammer",
+        "freezy_frost",
+        "mountain_gale",
+        "ice_beam",
+        "icicle_crash",
+        "ice_spinner",
+        "ice_punch",
+        "freeze_dry",
+        "aurora_beam",
+        "ice_fang"
+    ],
+    "dragon": [
+        "eternabeam",
+        "roar_of_time",
+        "dragon_energy",
+        "draco_meteor",
+        "outrage",
+        "glaive_rush",
+        "clanging_scales",
+        "dragon_rush",
+        "spacial_rend",
+        "core_enforcer",
+        "dragon_hammer",
+        "dragon_pulse",
+        "dragon_claw",
+        "order_up",
+        "fickle_beam"
+    ],
+    "dark": [
+        "sucker_punch",
+        "hyperspace_fury",
+        "foul_play",
+        "fiery_wrath",
+        "night_daze",
+        "darkest_lariat",
+        "kowtow_cleave",
+        "crunch",
+        "dark_pulse",
+        "throat_chop",
+        "baddy_bad",
+        "jaw_lock",
+        "false_surrender",
+        "wicked_torque",
+        "lash_out"
+    ],
+    "fairy": [
+        "light_of_ruin",
+        "fleur_cannon",
+        "sparkly_swirl",
+        "misty_explosion",
+        "springtide_storm",
+        "magical_torque",
+        "moonblast",
+        "play_rough",
+        "strange_steam",
+        "dazzling_gleam",
+        "alluring_voice",
+        "spirit_break",
+        "draining_kiss",
+        "disarming_voice",
+        "fairy_wind"
+    ]
 };
+
+// --- 其他戰鬥與遊戲邏輯 ---
 
 export const ADV_WILD_POOL = [
     { id: 16, name: "波波", weight: 20, power: 90, type: "flying" },
@@ -1780,13 +3668,13 @@ export const ADV_WILD_POOL = [
 ];
 
 export const WILD_EVOLUTION_MAP = {
-    "16": 17, "17": 18,  // 波波線
-    "23": 24,           // 阿柏蛇線
-    "27": 28,           // 穿山鼠線
-    "41": 42, "42": 169, // 超音蝠線
-    "56": 57, "57": 979, // 猴怪線
-    "74": 75, "75": 76,  // 小拳石線
-    "60": 61, "61": 62   // 蚊香蝌蚪線
+    "16": 17, "17": 18,
+    "23": 24,
+    "27": 28,
+    "41": 42, "42": 169,
+    "56": 57, "57": 979,
+    "74": 75, "75": 76,
+    "60": 61, "61": 62
 };
 
 export const TYPE_CHART = {
@@ -1810,18 +3698,9 @@ export const TYPE_CHART = {
     fairy: { fighting: 2.0, dragon: 2.0, dark: 2.0, fire: 0.5, poison: 0.5, steel: 0.5 }
 };
 
-// --- Helper Functions ---
-
-/**
- * 計算屬性加乘 (支援雙屬性防禦)
- * @param {string} atkType 攻擊方技能屬性
- * @param {string | string[]} defTypes 防禦方屬性（單屬性或雙屬性陣列）
- * @returns {number} 倍率
- */
 export const getTypeMultiplier = (atkType, defTypes) => {
     const targetTypes = Array.isArray(defTypes) ? defTypes : [defTypes];
     let multiplier = 1.0;
-    
     for (const defType of targetTypes) {
         if (TYPE_CHART[atkType] && TYPE_CHART[atkType][defType] !== undefined) {
             multiplier *= TYPE_CHART[atkType][defType];
@@ -1830,13 +3709,9 @@ export const getTypeMultiplier = (atkType, defTypes) => {
     return multiplier;
 };
 
-/**
- * 核心傷害計算公式 (已從 App.js 抽離)
- */
 export const calculateDamage = (atk, def, power, multiplier = 1.0) => {
     const baseDamage = (atk / def) * power * 0.5;
-    const finalDamage = Math.max(1, Math.floor(baseDamage * multiplier * (0.9 + Math.random() * 0.2)));
-    return finalDamage;
+    return Math.max(1, Math.floor(baseDamage * multiplier * (0.9 + Math.random() * 0.2)));
 };
 
 export const generateMoves = (stage, types, forcedBonusId = null) => {
@@ -1849,22 +3724,22 @@ export const generateMoves = (stage, types, forcedBonusId = null) => {
     });
     
     const getEarlyBonus = () => {
-        if (forcedBonusId && SKILL_DATABASE[forcedBonusId]) return SKILL_DATABASE[forcedBonusId];
+        if (forcedBonusId && SKILL_DATABASE[forcedBonusId]) return forcedBonusId;
         return null; 
     };
 
     if (stage <= 1) {
-        const primaryTypeMove = SKILL_DATABASE[TYPE_SKILLS[speciesTypes[0]]?.[0]] || SKILL_DATABASE.tackle;
-        return [primaryTypeMove, getEarlyBonus()].filter(Boolean);
+        const primaryTypeId = TYPE_SKILLS[speciesTypes[0]]?.[0] || 'tackle';
+        return [primaryTypeId, getEarlyBonus()].filter(Boolean);
     }
 
     let selectedIds = [];
-    if (stage === 2) selectedIds = ['tackle', movePool[0]];
-    else if (stage === 3) selectedIds = ['tackle', movePool[0], movePool[1] || movePool[0]];
+    if (stage === 2) selectedIds = ['tackle', movePool[0] || 'quick_attack'];
+    else if (stage === 3) selectedIds = ['tackle', movePool[0] || 'quick_attack', movePool[1] || movePool[0] || 'quick_attack'];
     else selectedIds = movePool.slice(0, 4);
 
-    const uniqueMoves = Array.from(new Set(selectedIds)).map(id => SKILL_DATABASE[id]).filter(Boolean);
-    return uniqueMoves.slice(0, 4);
+    const uniqueIds = Array.from(new Set(selectedIds)).filter(id => SKILL_DATABASE[id]);
+    return uniqueIds.slice(0, 4);
 };
 
 export const calcFinalStat = (type, speciesId, iv, ev, level, natureMod = 1.0) => {

@@ -83,19 +83,21 @@ const ADV_BATTLE_RULES = {
 
 // 智慧招式 AI：根據屬性相剋與威力選擇最佳招式
 const getSmartMove = (attacker, defender, moves) => {
-    // 假設 getTypeMultiplier 已經在 global namespace (由 monsterData.js 載入)
-    if (!moves || moves.length === 0) return null;
-    if (moves.length === 1) return moves[0];
+    // 過濾掉無效的招式物件，防止 crash
+    const validMoves = (moves || []).filter(m => m && typeof m === 'object');
+    if (validMoves.length === 0) return { name: '撞擊', power: 40, type: 'normal' };
+    if (validMoves.length === 1) return validMoves[0];
     
-    let bestMove = moves[0];
+    let bestMove = validMoves[0];
     let maxScore = -1;
     
-    for (const move of moves) {
-        const mult = window.getTypeMultiplier ? window.getTypeMultiplier(move.type, defender.type) : 1; 
-        // 為了避免 sync 後順序問題，用 global 取得函式，或者因為它不是 arrow function 可以直接呼叫 typeof getTypeMultiplier !== "undefined"
-        // 這裡最安全是直接依賴 getTypeMultiplier 如果它在 bundle 中被提早宣告。
-        const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(move.type, defender.type) : 1;
-        const score = move.power * realMult;
+    for (const move of validMoves) {
+        // 確保屬性定義存在
+        const moveType = move.type || 'normal';
+        const defenderType = defender.type || ['normal'];
+        
+        const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(moveType, defenderType) : 1;
+        const score = (move.power || 40) * realMult;
         if (score > maxScore) {
             maxScore = score;
             bestMove = move;
