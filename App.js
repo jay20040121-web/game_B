@@ -708,8 +708,11 @@ export default function App() {
         // 防止重複觸發正在進行中的同步，或沒有使用者/DB，或尚未完成初始檢查
         if (isCloudSyncing || !user || !db || !hasCheckedCloud) return;
 
-        // 如果這次的資料時間跟上次同步的一模一樣，就不重複傳
-        if (saveData.lastSaveTime === lastCloudSyncTime) return;
+        // 【核心安全性校驗】：如果本地進度比雲端上次同步的還舊，絕對不准上傳 (除非是剛重載或是同一個動作週期的數值更新)
+        if (saveData.lastSaveTime < lastCloudSyncTime) {
+            console.warn(`☁️ 擋下過期的存檔！本地 ${saveData.lastSaveTime} < 雲端最新 ${lastCloudSyncTime}`);
+            return;
+        }
 
         setIsCloudSyncing(true);
         console.log("☁️ Attempting Cloud Save (Project ID: " + db.app.options.projectId + ")...");
@@ -779,6 +782,9 @@ export default function App() {
                     updateDialogue(`☁️ 帳號連線成功，本地進度已是最新`, false);
                     setHasCheckedCloud(true);
                     setIsCloudLoading(false);
+
+                    // 重要：初始化同步基準時間，防止後續 autosave 因為 T1 == T1 被擋下
+                    setLastCloudSyncTime(cloudTime);
                     saveToCloud(localData);   // 確保同步
                 }
             } else {
@@ -2389,6 +2395,7 @@ export default function App() {
                 }
 
                 setMiniGame({ type: 'talk', status: 'question', qIdx: qi });
+                recordGameAction(); // 進入對談視為一動作
                 updateDialogue("陪伴對談中...", true);
                 logEvent("與怪獸談心。");
                 break;
@@ -2408,6 +2415,7 @@ export default function App() {
                 updateDialogue("查看狀態中...", true);
                 break;
             case 'train':
+                recordGameAction(); // 進入特訓視為一動作
                 miniGameResultFired.current = false;
                 const roll = Math.random();
                 if (roll < 0.33) {
@@ -2430,6 +2438,7 @@ export default function App() {
             case 'connect':
                 cleanupPvp();
                 setIsPvpMode(true);
+                recordGameAction(); // 進入連線大廳預扣一動作
                 syncMatchStatus('idle');
                 updateDialogue("宇宙連線大廳", true);
                 logEvent(`進入連線大廳`);
