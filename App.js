@@ -702,13 +702,19 @@ export default function App() {
 
     // 手動觸發雲端同步
     const saveToCloud = async (saveData) => {
-        if (!user || !db) return;
+        if (!user || !db) {
+            console.log("☁️ Cloud Sync Skipped: No User or DB");
+            return;
+        }
         setIsCloudSyncing(true);
+        console.log("☁️ Saving to Cloud...", saveData);
         try {
             await db.collection('users').doc(user.uid).set(saveData);
             setLastCloudSyncTime(Date.now());
+            console.log("☁️ Cloud Save Success!");
         } catch (e) {
-            console.error("Cloud Save Error:", e);
+            console.error("☁️ Cloud Save Error:", e);
+            updateDialogue(`雲端同步失敗: ${e.message}`, true);
         } finally {
             setIsCloudSyncing(false);
         }
@@ -717,7 +723,7 @@ export default function App() {
     // 從雲端載入進度
     const loadFromCloud = async (currentUser) => {
         if (!currentUser || !db) return;
-        updateDialogue("正在從雲端同步進度...", true);
+        updateDialogue("☁️ 正在檢查雲端同步狀態...", true);
         try {
             const doc = await db.collection('users').doc(currentUser.uid).get();
             if (doc.exists) {
@@ -725,22 +731,28 @@ export default function App() {
                 const localStr = localStorage.getItem('pixel_monster_save');
                 const localData = localStr ? JSON.parse(localStr) : null;
 
-                // 比對時間戳記，取最新者
-                if (!localData || (cloudData.lastSaveTime > (localData.lastSaveTime || 0))) {
-                    console.log("Using Cloud Save (Newer)");
-                    updateDialogue("已同步雲端最新進度！");
-                    // 這裡觸發頁面重整或手動更新所有 State (簡單做法是重投初始數據)
+                const cloudTime = cloudData.lastSaveTime || 0;
+                const localTime = localData ? (localData.lastSaveTime || 0) : 0;
+
+                console.log(`☁️ Sync Check - Cloud: ${new Date(cloudTime).toLocaleString()}, Local: ${new Date(localTime).toLocaleString()}`);
+
+                // 比對時間戳記，取最新者 (容許 2 秒誤差防止頻繁刷新)
+                if (!localData || (cloudTime > localTime + 2000)) {
+                    updateDialogue("☁️ 發現較新的雲端進度，同步中...", true);
                     localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
-                    window.location.reload(); // 最簡單的全面更新方式
+                    setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    console.log("Local Save is newer or equal.");
-                    updateDialogue("本地進度已是最新。");
-                    // 如果本地比較新，順便幫玩家同步回雲端，確保下次切換裝置時也是新的
-                    saveToCloud(localData);
+                    updateDialogue(`☁️ 帳號連線成功，本地進度已是最新`, false);
+                    saveToCloud(localData); // 反向同步回雲端確保一致
                 }
+            } else {
+                updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
+                const localStr = localStorage.getItem('pixel_monster_save');
+                if (localStr) saveToCloud(JSON.parse(localStr));
             }
         } catch (e) {
-            console.error("Cloud Load Error:", e);
+            console.error("☁️ Cloud Load Error:", e);
+            updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
         }
     };
 
@@ -757,13 +769,20 @@ export default function App() {
     }, []);
 
     const loginWithGoogle = async () => {
-        if (!auth || !googleProvider) return;
+        if (!auth || !googleProvider) {
+            setAlertMsg("Firebase 未正確啟動");
+            return;
+        }
+        updateDialogue("正在啟動 Google 安全登入...", true);
         try {
-            await auth.signInWithPopup(googleProvider);
-            playBloop('success');
+            const result = await auth.signInWithPopup(googleProvider);
+            if (result.user) {
+                updateDialogue(`🎉 歡迎回訪: ${result.user.displayName}`, false);
+                playBloop('success');
+            }
         } catch (e) {
-            console.error("Login Error:", e);
-            setAlertMsg("登入失敗，請稍後再試。");
+            console.error("☁️ Login Error:", e);
+            updateDialogue(`登入失敗: ${e.message}`, true);
         }
     };
 
