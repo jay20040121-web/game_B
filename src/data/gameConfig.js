@@ -23,7 +23,7 @@ const ADV_ITEMS = [
     { id: '004', name: "覺醒之核", desc: "提升基礎戰力與全屬性", rarity: 3 },
     { id: '005', name: "奇異糖果", desc: "隨機大幅提升戰鬥屬性", rarity: 5 },
     { id: '006', skillId: 'dynamic_punch', name: "爆裂拳秘笈書", desc: "讓怪獸學會招式「爆裂拳」(100%混亂)", rarity: 5 },
-    { id: '007', skillId: 'chatter', name: "喋喋不休秘笈書", desc: "讓怪獸學會招式「喋喋不休」(100%混亂)", rarity: 5 },
+    { id: '007', skillId: 'chatter', name: "喋喋不休秘笈書", desc: "讓怪獸學會招式「喋喋不休」(100%混亂)", rarity: 2 },
     { id: '008', skillId: 'inferno', name: "煉獄秘笈書", desc: "讓怪獸學會招式「煉獄」(100%燒傷)", rarity: 5 },
     { id: '009', skillId: 'zap_cannon', name: "電磁炮秘笈書", desc: "讓怪獸學會招式「電磁炮」(100%麻痺)", rarity: 5 },
     { id: '010', skillId: 'sappy_seed', name: "茁茁轟炸秘笈書", desc: "讓怪獸學會招式「茁茁轟炸」(100%寄生)", rarity: 5 },
