@@ -42,7 +42,7 @@ export const checkPreTurnStatus = (state, rng = Math.random) => {
 };
 
 export const applyMoveEffects = (move, targetState, sourceState, rng = Math.random) => {
-    let messages = [];
+    let messageObjs = [];
     
     // 1. Ailment (異常狀態附加)
     if (move.ailment && move.ailment !== 'none' && !targetState.status) {
@@ -66,7 +66,10 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
             else if (move.ailment === 'confusion') targetState.statusTurns = Math.floor(rng() * 3) + 2; // 2~4 回合
             else if (move.ailment === 'leech-seed' || move.ailment === 'trap') targetState.statusTurns = 5; // 預設 5 回合
             
-            messages.push(ailmentMap[move.ailment] || `陷入了 ${move.ailment} 狀態！`);
+            messageObjs.push({
+                text: ailmentMap[move.ailment] || `陷入了 ${move.ailment} 狀態！`,
+                targetType: 'target'
+            });
         }
     }
     
@@ -85,7 +88,9 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
         if (chance === 0) chance = 100;
         
         if (rng() * 100 <= chance) {
-            let targetObj = move.stat_target === 'self' ? sourceState : targetState;
+            const isSelf = move.stat_target === 'self';
+            let targetObj = isSelf ? sourceState : targetState;
+            
             move.stat_changes.forEach(sc => {
                 const stat = sc.stat; 
                 if (!targetObj.statStages) targetObj.statStages = { atk: 0, def: 0, spd: 0 };
@@ -97,9 +102,9 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
                 const statNameMap = { atk: "攻擊", def: "防禦", spd: "速度" };
                 const sName = statNameMap[stat] || stat;
                 if (newStage > oldStage) {
-                    messages.push(`${sName} 提升了！`);
+                    messageObjs.push({ text: `${sName} 提升了！`, targetType: isSelf ? 'source' : 'target' });
                 } else if (newStage < oldStage) {
-                    messages.push(`${sName} 下降了！`);
+                    messageObjs.push({ text: `${sName} 下降了！`, targetType: isSelf ? 'source' : 'target' });
                 }
             });
         }
@@ -109,7 +114,7 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
     let drainPct = move.drain || 0;
     let recoilPct = move.recoil || 0;
     
-    return { messages, drainPct, recoilPct };
+    return { messages: messageObjs, drainPct, recoilPct };
 };
 
 export const processPostTurnStatus = (state, maxHp, rng = Math.random) => {
@@ -144,11 +149,11 @@ export const processPostTurnStatus = (state, maxHp, rng = Math.random) => {
 };
 
 export const getStatMultiplier = (stage) => {
-    if (!stage) return 1.0;
+    if (!stage || stage === 0) return 1.0;
+    // 使用指數成長曲線 (1.5 倍率)，讓數值變化更有感
     if (stage > 0) {
-        return (2 + stage) / 2.0;
-    } else if (stage < 0) {
-        return 2.0 / (2 - stage);
+        return Math.pow(1.5, stage);
+    } else {
+        return Math.pow(0.66, -stage);
     }
-    return 1.0;
 };

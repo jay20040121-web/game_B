@@ -27,7 +27,12 @@ const ADV_ITEMS = [
     { id: '008', skillId: 'inferno', name: "煉獄秘笈書", desc: "讓怪獸學會招式「煉獄」(100%燒傷)", rarity: 5 },
     { id: '009', skillId: 'zap_cannon', name: "電磁炮秘笈書", desc: "讓怪獸學會招式「電磁炮」(100%麻痺)", rarity: 5 },
     { id: '010', skillId: 'sappy_seed', name: "茁茁轟炸秘笈書", desc: "讓怪獸學會招式「茁茁轟炸」(100%寄生)", rarity: 5 },
-    { id: '011', skillId: 'magma_storm', name: "熔岩風暴秘笈書", desc: "讓怪獸學會招式「熔岩風暴」(100%束縛)", rarity: 5 }
+    { id: '011', skillId: 'magma_storm', name: "熔岩風暴秘笈書", desc: "讓怪獸學會招式「熔岩風暴」(100%束縛)", rarity: 5 },
+    { id: '012', skillId: 'work_up', name: "自我激勵秘笈書", desc: "讓怪獸學會招式「自我激勵」(攻擊+2)", rarity: 4 },
+    { id: '013', skillId: 'minimize', name: "縮小秘笈書", desc: "讓怪獸學會招式「縮小」(速度+2)", rarity: 4 },
+    { id: '014', skillId: 'harden', name: "變硬秘笈書", desc: "讓怪獸學會招式「變硬」(防禦+2)", rarity: 3 },
+    { id: '015', skillId: 'double_team', name: "影子分身秘笈書", desc: "讓怪獸學會招式「影子分身」(速度+2)", rarity: 4 },
+    { id: '016', skillId: 'swords_dance', name: "劍舞秘笈書", desc: "讓怪獸學會招式「劍舞」(攻擊+2)", rarity: 5 }
 ];
 
 // ==========================================

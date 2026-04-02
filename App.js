@@ -1226,7 +1226,17 @@ export default function App() {
 
             // Damage formula: Gen 1 style
             const calcDamage = (attacker, move, defender) => {
-                let hitSuccess = rFunc() < ADV_BATTLE_RULES.HIT_RATE;
+                // --- 新：狀態技能 (威力為 0) 不計算傷害 ---
+                if (!move.power || move.power === 0) return { dmg: 0, msg: "" };
+
+                // --- 原有的攻擊命中與傷害邏輯 ---
+                const attackerEffSpd = attacker.spd * getStatMultiplier(attacker.statStages?.spd || 0) * (attacker.status === 'paralysis' ? 0.5 : 1);
+                const defenderEffSpd = defender.spd * getStatMultiplier(defender.statStages?.spd || 0) * (defender.status === 'paralysis' ? 0.5 : 1);
+                
+                const speedRatio = attackerEffSpd / defenderEffSpd;
+                const hitRateProb = Math.min(1.0, Math.max(0.3, 0.9 + 0.1 * Math.log2(speedRatio)));
+                
+                let hitSuccess = rFunc() < hitRateProb;
                 if (!hitSuccess) return { dmg: 0, msg: '攻擊落空了！' };
 
                 const attackerLevel = attacker.level || 5;
@@ -1263,15 +1273,13 @@ export default function App() {
 
             const addMoveExecution = (side, move) => {
                 const isPlayer = side === 'player';
-                // 這裡的 attacker/defender 僅用於計算，不直接寫回 state.hp
                 const attacker = isPlayer ? updatedPlayer : updatedEnemy;
                 const defender = isPlayer ? updatedEnemy : updatedPlayer;
                 const attackerName = isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name;
                 const defenderName = isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你');
 
-                // 1. 回合前狀態檢查 (麻痺、睡眠、混亂等) - 傳入 rFunc 確保 PvP 同步
+                // 1. 回合前狀態檢查
                 const preCheck = checkPreTurnStatus(attacker, rFunc);
-                // 更新狀態 (不可變性)
                 attacker.status = preCheck.nextStatus;
                 attacker.statusTurns = preCheck.nextTurns;
 
@@ -1282,12 +1290,9 @@ export default function App() {
                     if (preCheck.selfDamage) {
                         const selfDmg = Math.max(1, Math.floor(attacker.maxHp * 0.08)); 
                         nextQueue.push({ 
-                            type: 'damage', 
-                            target: isPlayer ? 'player' : 'enemy', 
-                            value: selfDmg, 
-                            text: `${attackerName} 受到了混亂的回擊！` 
+                            type: 'damage', target: isPlayer ? 'player' : 'enemy', 
+                            value: selfDmg, text: `${attackerName} 受到了混亂的回擊！` 
                         });
-                        // 雖然動畫會扣血，但邏輯層仍需扣除以防該回合後續判斷 (如死亡)
                         attacker.hp = Math.max(0, attacker.hp - selfDmg);
                     }
                     return;
@@ -1295,25 +1300,41 @@ export default function App() {
 
                 nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name}]！` });
                 
-                // 2. 傷害結算
+                const isStatusMove = !move.power || move.power === 0;
+
+                // 2. 命中與傷害結算
                 const result = calcDamage(attacker, move, defender);
-                if (result.dmg > 0) {
+                
+                // 如果是狀態技能且落空 (例如命中率不滿 100 的狀態技)
+                if (isStatusMove) {
+                    if (move.accuracy && rFunc() * 100 > move.accuracy) {
+                        nextQueue.push({ type: 'msg', text: `${attackerName} 的技能沒中！` });
+                        return;
+                    }
+                } else if (result.dmg === 0) {
+                    // 攻擊技能落空
+                    nextQueue.push({ type: 'msg', text: `${attackerName} 的攻擊沒中！` });
+                    return;
+                }
+
+                // 3. 處理傷害 (僅針對非狀態技能)
+                if (!isStatusMove && result.dmg > 0) {
                     nextQueue.push({ 
-                        type: 'damage', 
-                        target: isPlayer ? 'enemy' : 'player', 
-                        value: result.dmg, 
-                        text: `對 ${defenderName} 造成了 ${result.dmg} 點傷害！${result.msg}` 
+                        type: 'damage', target: isPlayer ? 'enemy' : 'player', 
+                        value: result.dmg, text: `對 ${defenderName} 造成了 ${result.dmg} 點傷害！${result.msg}` 
                     });
-                    // 更新邏輯層 HP 供後續計算
                     defender.hp = Math.max(0, defender.hp - result.dmg);
+                }
 
-                    // 3. 技能副作用結算 (異常狀態、能力升降) - 傳入 rFunc 確保 PvP 同步
-                    const effects = applyMoveEffects(move, defender, attacker, rFunc);
-                    effects.messages.forEach(m => {
-                        nextQueue.push({ type: 'msg', text: `${isPlayer ? defenderName : attackerName}${m}` });
-                    });
+                // 4. 技能效果結算 (BUFF、異常狀態等)
+                const effects = applyMoveEffects(move, defender, attacker, rFunc);
+                effects.messages.forEach(m => {
+                    const targetName = m.targetType === 'source' ? attackerName : defenderName;
+                    nextQueue.push({ type: 'msg', text: `${targetName} ${m.text}` });
+                });
 
-                    // 吸血與反彈 (Drain / Recoil)
+                // 5. 吸血與反彈 (僅針對傷害技能)
+                if (!isStatusMove && result.dmg > 0) {
                     if (effects.recoilPct > 0) {
                         const recoilDmg = Math.floor(result.dmg * effects.recoilPct);
                         nextQueue.push({ 
@@ -1330,8 +1351,6 @@ export default function App() {
                         });
                         attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
                     }
-                } else {
-                    nextQueue.push({ type: 'msg', text: `${attackerName} 的攻擊沒中！` });
                 }
             };
 
