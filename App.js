@@ -1676,6 +1676,11 @@ export default function App() {
         logs.push({ msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: 1 });
 
         if (battleState.mode === 'pvp') {
+            setAdvStats(prev => ({
+                ...prev,
+                basePower: prev.basePower + 10
+            }));
+
             if (connInstance.current) {
                 try { connInstance.current.close(); } catch(e) {}
                 connInstance.current = null;
@@ -1686,8 +1691,8 @@ export default function App() {
             setIsPvpMode(false);
             setMatchStatus('idle');
             setBattleState(prev => ({ ...prev, active: false }));
-            updateDialogue("對戰勝利！");
-            logEvent("在一場精彩的連線對決中獲得了勝利。");
+            updateDialogue("對戰勝利！獲得 10 點戰力！");
+            logEvent("在一場精彩的連線對決中獲得了勝利，戰力 +10。");
             playBloop('success');
             return; // PvP 模式不進入冒險流程
         }
@@ -1708,6 +1713,11 @@ export default function App() {
 
     const resolveBattleLoss = (isRun = false) => {
         if (battleState.mode === 'pvp') {
+            setAdvStats(prev => ({
+                ...prev,
+                basePower: prev.basePower + 5
+            }));
+
             if (connInstance.current) {
                 try { connInstance.current.close(); } catch(e) {}
                 connInstance.current = null;
@@ -1718,7 +1728,8 @@ export default function App() {
             setIsPvpMode(false);
             setMatchStatus('idle');
             setBattleState(prev => ({ ...prev, active: false }));
-            updateDialogue("對戰結束，再接再厲！");
+            updateDialogue("對戰結束，獲得 5 點戰力！");
+            logEvent("在一場連線對決中落敗，獲得了 5 點戰力的鼓勵。");
             playBloop('fail');
             return; // PvP 模式不進入冒險流程
         }
