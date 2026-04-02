@@ -7439,19 +7439,19 @@ const loadSaveData = () => {
 // =========================================
 // 🛠️ 偵測面板元件 (Debug Panel)
 // =========================================
-const DebugPanel = ({ 
-    show, onClose, debugOverrides, setDebugOverrides, 
-    advStats, setAdvStats, inventory, setInventory, updateDialogue 
+const DebugPanel = ({
+    show, onClose, debugOverrides, setDebugOverrides,
+    advStats, setAdvStats, inventory, setInventory, updateDialogue
 }) => {
     if (!show) return null;
-    
+
     // 使用 React.useState 確保在 Babel 環境下的相容性
     const [activeTab, setActiveTab] = React.useState('evo');
-    const [evInput, setEvInput] = React.useState({ 
-        hp: advStats.evs.hp, 
-        atk: advStats.evs.atk, 
-        def: advStats.evs.def, 
-        spd: advStats.evs.spd 
+    const [evInput, setEvInput] = React.useState({
+        hp: advStats.evs.hp,
+        atk: advStats.evs.atk,
+        def: advStats.evs.def,
+        spd: advStats.evs.spd
     });
     const [itemId, setItemId] = React.useState('001');
     const [itemCount, setItemCount] = React.useState(1);
@@ -7515,7 +7515,7 @@ const DebugPanel = ({
                             <div style={{ display: 'flex', gap: '5px' }}>
                                 {[0, 10000, 60000, 300000].map(ms => (
                                     <button key={ms} style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, evolutionMs: ms }))}>
-                                        {ms/1000}s
+                                        {ms / 1000}s
                                     </button>
                                 ))}
                                 <button style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, evolutionMs: null }))}>重置</button>
@@ -7555,9 +7555,9 @@ const DebugPanel = ({
                         <p style={{ color: '#aaa', margin: 0 }}>物品 ID 例: 001(飯糰), 002(蛋白粉), 003(跑步鞋), 004(核心), 005(糖果)</p>
                         <p style={{ color: '#aaa', margin: 0 }}>秘笈書 ID: 006(爆裂拳), 008(煉獄), 009(電磁炮), 010(茁茁轟炸)...</p>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <span>ID:</span> 
+                            <span>ID:</span>
                             <input type="text" value={itemId} onChange={e => setItemId(e.target.value)} style={{ width: '80px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
-                            <span>數量:</span> 
+                            <span>數量:</span>
                             <input type="number" value={itemCount} onChange={e => setItemCount(parseInt(e.target.value) || 1)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
                             <button onClick={addItems} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>執行新增</button>
                         </div>
@@ -7573,15 +7573,15 @@ const DebugPanel = ({
                             {['hp', 'atk', 'def', 'spd'].map(stat => (
                                 <div key={stat} style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                     <span style={{ width: '40px', textTransform: 'uppercase', fontWeight: 'bold' }}>{stat}</span>
-                                    <input 
-                                        type="range" min="0" max="252" value={evInput[stat]} 
-                                        onChange={e => handleEvChange(stat, e.target.value)} 
+                                    <input
+                                        type="range" min="0" max="252" value={evInput[stat]}
+                                        onChange={e => handleEvChange(stat, e.target.value)}
                                         style={{ flex: 1, cursor: 'pointer' }}
                                     />
-                                    <input 
-                                        type="number" value={evInput[stat]} 
+                                    <input
+                                        type="number" value={evInput[stat]}
                                         onChange={e => handleEvChange(stat, e.target.value)}
-                                        style={{ width: '65px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555', textAlign: 'center' }} 
+                                        style={{ width: '65px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555', textAlign: 'center' }}
                                     />
                                 </div>
                             ))}
@@ -7633,11 +7633,11 @@ function App() {
     const [lastEvolutionTime, setLastEvolutionTime] = useState(getInit('lastEvolutionTime', Date.now()));
 
     // 談心系統新增狀態
-    const [bondValue, setBondValue] = useState(getInit('bondValue', 0));             
-    const [talkCount, setTalkCount] = useState(getInit('talkCount', 0));             
+    const [bondValue, setBondValue] = useState(getInit('bondValue', 0));
+    const [talkCount, setTalkCount] = useState(getInit('talkCount', 0));
     const [lockedAffinity, setLockedAffinity] = useState(getInit('lockedAffinity', null));
-    const [soulAffinityCounts, setSoulAffinityCounts] = useState(getInit('soulAffinityCounts', { fire: 0, water: 0, grass: 0, bug: 0 })); 
-    const [soulTagCounts, setSoulTagCounts] = useState(getInit('soulTagCounts', { gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 })); 
+    const [soulAffinityCounts, setSoulAffinityCounts] = useState(getInit('soulAffinityCounts', { fire: 0, water: 0, grass: 0, bug: 0 }));
+    const [soulTagCounts, setSoulTagCounts] = useState(getInit('soulTagCounts', { gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 }));
 
     const [steps, setSteps] = useState(getInit('steps', 0));
     const [interactionLogs, setInteractionLogs] = useState(getInit('interactionLogs', []));
@@ -7647,10 +7647,10 @@ function App() {
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
 
     // --- 🛠️ 偵錯系統狀態 (Debug System) ---
-    const isLocalhost = window.location.hostname === 'localhost' || 
-                       window.location.hostname === '127.0.0.1' || 
-                       window.location.hostname === '' || 
-                       window.location.protocol === 'file:';
+    const isLocalhost = window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '' ||
+        window.location.protocol === 'file:';
     const [showDebug, setShowDebug] = useState(false);
     const [debugOverrides, setDebugOverrides] = useState({
         evolutionMs: null,
@@ -7680,10 +7680,10 @@ function App() {
         // 資料遷移：如果沒有 ivs，隨機生成一組 IV (0~31)
         if (!d.ivs) {
             d.ivs = {
-                hp: Math.floor(Math.random()*32),
-                atk: Math.floor(Math.random()*32),
-                def: Math.floor(Math.random()*32),
-                spd: Math.floor(Math.random()*32)
+                hp: Math.floor(Math.random() * 32),
+                atk: Math.floor(Math.random() * 32),
+                def: Math.floor(Math.random() * 32),
+                spd: Math.floor(Math.random() * 32)
             };
         }
         // 資料遷移：如果沒有 evs，將舊有的 atk/def 高數值按比例轉為努力值
@@ -7700,7 +7700,7 @@ function App() {
             const pool = ['ember', 'water_gun', 'vine_whip', 'quick_attack'];
             d.bonusMoveId = pool[Math.floor(Math.random() * pool.length)];
         }
-        
+
         // --- 新增：招式永久化存檔 ---
         if (!d.moves) {
             // 嘗試取得暫存的物種ID
@@ -7720,9 +7720,9 @@ function App() {
     const derivedLevel = Math.min(100, Math.max(1, Math.floor(((advStats?.basePower || 100) - 100) / 10) + 1));
     const previousLevelRef = useRef(derivedLevel);
     const [pendingSkillLearn, setPendingSkillLearn] = useState(null);
-    const [skillSelectIdx, setSkillSelectIdx] = useState(0); 
+    const [skillSelectIdx, setSkillSelectIdx] = useState(0);
     const [isConfirmingReplace, setIsConfirmingReplace] = useState(false);
-    const [tempReplaceIdx, setTempReplaceIdx] = useState(-1); 
+    const [tempReplaceIdx, setTempReplaceIdx] = useState(-1);
 
     // 等級提升換招式系統
     useEffect(() => {
@@ -7753,7 +7753,7 @@ function App() {
                 if (candidateIds.length > 0) {
                     const newSkillId = candidateIds[Math.floor(Math.random() * candidateIds.length)];
                     const newSkill = SKILL_DATABASE[newSkillId];
-                    
+
                     // 檢查是否已經學過這招
                     const currentMoveIds = advStats.moves || [];
                     if (!currentMoveIds.includes(newSkillId)) {
@@ -7773,7 +7773,7 @@ function App() {
         setMatchStatus(status);
         matchStatusRef.current = status;
     };
-    
+
     const [myPeerId, setMyPeerId] = useState("");
     const [targetPeerId, setTargetPeerId] = useState("");
     const [pvpRoomPassword, setPvpRoomPassword] = useState("");
@@ -7797,35 +7797,35 @@ function App() {
     // =========================================
     // PeerJS 核心連線邏輯 & 穩定性強化
     // =========================================
-    
+
     const PEER_PREFIX = "gameB_v1_";
-    
+
     // 統一重置 PvP 狀態與連線 (避免卡死)
     const cleanupPvp = (msg = null, destroyPeer = true) => {
         if (msg) updateDialogue(msg);
-        
+
         // 斷開連線實例
         if (connInstance.current) {
-            try { connInstance.current.close(); } catch(e) {}
+            try { connInstance.current.close(); } catch (e) { }
             connInstance.current = null;
         }
-        
+
         // 徹底銷毀 Peer 實例 (非常重要：能讓伺服器立即釋放 ID，防止殭屍 Peer)
         if (destroyPeer && peerInstance.current) {
-            try { 
-                if (!peerInstance.current.destroyed) peerInstance.current.destroy(); 
-            } catch(e) {}
+            try {
+                if (!peerInstance.current.destroyed) peerInstance.current.destroy();
+            } catch (e) { }
             peerInstance.current = null;
             setMyPeerId("");
         }
-        
+
         // 重置狀態與對戰資訊
         setIsPvpMode(false);
         syncMatchStatus('idle');
         setBattleState(prev => (prev.mode === 'pvp' && prev.active) ? { ...prev, active: false, phase: 'end' } : { ...prev, active: false });
         setPendingPlayerMove(null);
         pvpRemoteMoveRef.current = null;
-        
+
         // 對手資訊清空
         setPvpOpponent(null);
     };
@@ -7834,18 +7834,18 @@ function App() {
     const initPeer = (customId = null, role = null) => {
         // 如果已經有舊的 Peer，先徹底銷毀
         if (peerInstance.current && !peerInstance.current.destroyed) {
-            try { peerInstance.current.destroy(); } catch(e) {}
+            try { peerInstance.current.destroy(); } catch (e) { }
         }
-        
+
         // 設定 12 秒連線超時警告，防止畫面上卡在 searching
         const connectionTimeout = setTimeout(() => {
             if (matchStatusRef.current === 'searching' || matchStatusRef.current === 'matching') {
                 cleanupPvp("連線超時，請檢查密碼或請對方重新開啟。");
             }
-        }, 12000); 
+        }, 12000);
 
         const peer = customId ? new window.Peer(customId) : new window.Peer();
-        
+
         peer.on('open', (id) => {
             setMyPeerId(id);
             // 如果我是挑戰者 (B)，開啟後立即連向 A
@@ -7859,7 +7859,7 @@ function App() {
         peer.on('error', (err) => {
             clearTimeout(connectionTimeout);
             console.error("PeerJS Error:", err);
-            
+
             // 房間佔用邏輯：如果 A 位置有人，嘗試進入 B 位置
             if (err.type === 'unavailable-id' && customId && customId.endsWith('_A')) {
                 initPeer(customId.replace(/_A$/, '_B'), 'B');
@@ -7870,7 +7870,7 @@ function App() {
             if (err.type === 'unavailable-id') errMsg = "房間識別碼衝突，請稍後再試。";
             if (err.type === 'network') errMsg = "網路連線中斷。";
             if (err.type === 'peer-unavailable') errMsg = "找不到對手房號，請確認對方已開好房間。";
-            
+
             cleanupPvp(errMsg);
             peerInstance.current = null;
         });
@@ -7885,7 +7885,7 @@ function App() {
             isHost.current = false;
             setupConnectionHandlers(conn);
         });
-        
+
         peerInstance.current = peer;
     };
 
@@ -7917,7 +7917,7 @@ function App() {
         conn.on('open', () => {
             // 連線開啟後，主機端發送初始資訊
             // 客戶端也會發送它的初始資訊
-            const { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId, pLevel } = generateMyBattleStats(); 
+            const { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId, pLevel } = generateMyBattleStats();
             conn.send({
                 type: 'INIT',
                 data: {
@@ -7966,7 +7966,7 @@ function App() {
                 });
             }
         });
-        
+
         conn.on('close', () => {
             // 只在對戰中或搜尋中才顯示斷線提示
             if (matchStatusRef.current !== 'idle') {
@@ -8007,7 +8007,7 @@ function App() {
         const pSPD = calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd);
 
         const statsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
-        const pType = statsRef.types; 
+        const pType = statsRef.types;
 
         // --- 新：使用存檔中的永久招式陣列 ---
         const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
@@ -8021,7 +8021,7 @@ function App() {
     const connectToRemotePeer = (targetId) => {
         if (!peerInstance.current) return;
         syncMatchStatus('matching');
-        updateDialogue("發現對手，正在建立通訊...", true); 
+        updateDialogue("發現對手，正在建立通訊...", true);
         const conn = peerInstance.current.connect(targetId);
         connInstance.current = conn;
         isHost.current = true;
@@ -8037,25 +8037,35 @@ function App() {
         if (saveData.lastSaveTime === lastCloudSyncTime) return;
 
         setIsCloudSyncing(true);
-        console.log("☁️ Attempting Cloud Save...");
-        
+        console.log("☁️ Attempting Cloud Save (Project ID: " + db.app.options.projectId + ")...");
+
         try {
-            // 加入 10 秒自動逾時機制，避免燈號卡死
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error("連線逾時")), 10000)
+            // 加入 20 秒自動逾時機制，避免燈號卡死
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("連線逾時 (請檢查網路或 Firebase Firestore 是否已建立)")), 20000)
             );
-            
-            const savePromise = db.collection('users').doc(user.uid).set(saveData);
-            
+
+            // 【重要】對資料進行深度克隆並移除 undefined (Firestore 不支援 undefined)
+            const cleanData = JSON.parse(JSON.stringify(saveData));
+
+            const savePromise = db.collection('users').doc(user.uid).set(cleanData);
+
             await Promise.race([savePromise, timeoutPromise]);
-            
+
             setLastCloudSyncTime(saveData.lastSaveTime);
-            console.log("☁️ Cloud Save SUCCESS!");
+            console.log("☁️ Cloud Save SUCCESS! (UID: " + user.uid + ")");
         } catch (e) {
             console.error("☁️ Cloud Save FAILED:", e);
-            // 發生錯誤時，直接在畫面上方跳出大警告，讓玩家知道原因
-            setAlertMsg(`❌ 雲端同步失敗: ${e.message}`);
-            updateDialogue(`❌ 備份失敗，請確認資料庫已建立並發布規則。`, true);
+            // 根據錯誤類型提供更具體的建議
+            let specificMsg = e.message;
+            if (e.code === 'permission-denied') {
+                specificMsg = "存取被拒 (請檢查 Firestore Rules 設定)";
+            } else if (e.code === 'not-found') {
+                specificMsg = "找不到目標 (請確認 Firestore 已建立資料庫)";
+            }
+
+            setAlertMsg(`❌ 雲端同步失敗: ${specificMsg}`);
+            updateDialogue(`❌ 備份失敗：${specificMsg}。可檢查控制台 (F12) 的 UID 並確認 Firestore 已建立。`, true);
         } finally {
             setIsCloudSyncing(false);
         }
@@ -8115,7 +8125,7 @@ function App() {
             setAlertMsg("系統尚未啟動: Firebase 初始化失敗。請確認網路連線或稍後再試。");
             return;
         }
-        
+
         updateDialogue("⚡ 正在連結 Google 伺服器...", true);
         try {
             // 使用更積極的錯誤補救方案
@@ -8135,7 +8145,7 @@ function App() {
             if (e.code === 'auth/popup-closed-by-user') errMsg = "登入視窗被關閉了。";
             if (e.code === 'auth/unauthorized-domain') errMsg = "此網域尚未被授權，請檢查 Firebase 設定。";
             if (e.code === 'auth/operation-not-allowed') errMsg = "請在 Firebase 控制台啟用 Google 登入方法。";
-            
+
             updateDialogue(`❌ 登入失敗: ${errMsg}`, true);
             setAlertMsg(`登入失敗: ${errMsg}`);
         }
@@ -8162,7 +8172,7 @@ function App() {
     const [lastAdvTime, setLastAdvTime] = useState(initialData?.lastAdvTime || 0);
     const [advLog, setAdvLog] = useState([]);
     const [isAdvMode, setIsAdvMode] = useState(false);
-    const [advCD, setAdvCD] = useState(0); 
+    const [advCD, setAdvCD] = useState(0);
     const [isAdvStreaming, setIsAdvStreaming] = useState(false);
     const [isStatusUIOpen, setIsStatusUIOpen] = useState(false);
     const [alertMsg, setAlertMsg] = useState("");
@@ -8180,7 +8190,7 @@ function App() {
         return "D";
     };
 
-// Final stat calculation is now managed in monsterData.js
+    // Final stat calculation is now managed in monsterData.js
 
 
 
@@ -8197,7 +8207,7 @@ function App() {
     const [isDiaryOpen, setIsDiaryOpen] = useState(false);
     const [diaryViewDate, setDiaryViewDate] = useState(null); // null = 今天
 
-    
+
     useEffect(() => {
         if (!alertMsg) return;
         const timer = setTimeout(() => setAlertMsg(""), 3000);
@@ -8208,7 +8218,7 @@ function App() {
     const [selectedItemIdx, setSelectedItemIdx] = useState(0);
     const [isUsingItem, setIsUsingItem] = useState(false);
     const [pendingWildCapture, setPendingWildCapture] = useState(null); // { id, name }
-    
+
     // --- 經典回合制戰鬥狀態 ---
     const [battleState, setBattleState] = useState({
         active: false,
@@ -8219,12 +8229,12 @@ function App() {
         enemy: null, // { id, name, hp, maxHp, atk, spd }
         logs: [], // 戰鬥對話文字陣列
         isPlayerTurn: true,
-        menuIdx: 0, 
+        menuIdx: 0,
         stepQueue: [], // 新增：分步動作隊列
         activeMsg: "",  // 新增：目前正在播報的文字
         flashTarget: null // 'player' | 'enemy' | null
     });
- 
+
     const [pendingAdvLogs, setPendingAdvLogs] = useState([]); // 儲存待顯示的冒險日誌隊列
 
     const tabIdRef = useRef(Math.random().toString(36).substr(2, 9));
@@ -8284,7 +8294,7 @@ function App() {
         }
         return () => clearInterval(timer);
     }, [isBooting]);
- 
+
     // 自動合併舊有重複物品以及確認名稱/描述同步最新的設定
     useEffect(() => {
         const merged = [];
@@ -8308,7 +8318,7 @@ function App() {
             const latestDef = ADV_ITEMS.find(it => it.id === searchId);
             // 關鍵修正：必須同步所有屬性（尤其是 skillId），而不單只有名稱與描述
             const updatedItem = latestDef ? { ...item, ...latestDef, id: searchId } : item;
-            
+
             if (latestDef && (item.id !== searchId || item.name !== latestDef.name || item.skillId !== latestDef.skillId)) {
                 changed = true;
             }
@@ -8343,8 +8353,8 @@ function App() {
                 lastSaveTime: Date.now()
             };
             const str = JSON.stringify(saveData);
-            try { 
-                localStorage.setItem('pixel_monster_save', str); 
+            try {
+                localStorage.setItem('pixel_monster_save', str);
                 // 如果已登入，同步至雲端 (將防抖時間拉長至 5 秒，減少連線壓力)
                 if (user) {
                     const timer = setTimeout(() => saveToCloud(saveData), 5000);
@@ -8352,7 +8362,7 @@ function App() {
                 }
             } catch (e) { }
         } catch (e) { }
-    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority]); 
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority]);
 
     // 日記獨立自動存檔（每次 diaryLog 變更時觸發）
     useEffect(() => {
@@ -8493,25 +8503,25 @@ function App() {
 
     const handleTalkChoice = (idx) => {
         if (!miniGame || miniGame.status !== 'question') return;
-        
+
         const opt = SOUL_QUESTIONS[miniGame.qIdx].options[idx];
         if (!opt) return;
 
         const topTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-        
+
         let pts = (opt.tag === topTag || opt.affinity === lockedAffinity) ? 10 : 5;
         if (!lockedAffinity && topTag === 'none') { pts = 5; } // base points for early stage
-        
-        setBondValue(b => b + pts); 
+
+        setBondValue(b => b + pts);
         setTalkCount(t => t + 1);
         setTodayBondGained(b => b + pts);
         setSoulTagCounts(s => ({ ...s, [opt.tag]: (s[opt.tag] || 0) + 1 }));
         if (!lockedAffinity) {
             setSoulAffinityCounts(s => ({ ...s, [opt.affinity]: (s[opt.affinity] || 0) + 1 }));
         }
-        
-        setMiniGame(p => ({ ...p, status: 'result', points: pts })); 
-        playSoundEffect('success'); 
+
+        setMiniGame(p => ({ ...p, status: 'result', points: pts }));
+        playSoundEffect('success');
         updateDialogue(`絆 +${pts}！`);
 
         setTimeout(() => {
@@ -8542,11 +8552,11 @@ function App() {
             else if (type === 'charge_click' || type === 'charge') { statKey = 'def'; statName = '防禦'; }
 
             const gotHPBonus = Math.random() < 0.4; // 40% 機率額外提升 HP 潛能
-            
+
             setAdvStats(prev => {
                 const nextEVs = { ...prev.evs };
                 const updateEVFunc = (key, val) => {
-                    const currentTotal = Object.values(nextEVs).reduce((a,b)=>a+b, 0);
+                    const currentTotal = Object.values(nextEVs).reduce((a, b) => a + b, 0);
                     const canAdd = Math.min(val, 510 - currentTotal, 252 - (nextEVs[key] || 0));
                     if (canAdd > 0) nextEVs[key] += canAdd;
                 };
@@ -8578,14 +8588,14 @@ function App() {
     const confirmWildCapture = (confirm) => {
         if (confirm && pendingWildCapture) {
             setEvolutionBranch('WILD_' + pendingWildCapture.id);
-            setEvolutionStage(1); 
+            setEvolutionStage(1);
             setLastEvolutionTime(Date.now()); // 🔥 捕獲後務必重置進化時鐘，防止繼承舊寵物時間導致瞬間進化或暴斃
             setStageTrainWins(0);            // 重置當前階級勝次
-            
+
             // --- 🔹 重置冒險數值 (新怪獸新開場，且給予優質個體保底) 🔹 ---
             // 讓玩家在犧牲練度轉換新寵物時，能換到更高資質 (A~S 級) 的個體
             const randomHighIV = () => 25 + Math.floor(Math.random() * 7); // 25~31 (Grade A~S)
-            
+
             const startMoveId = ['92'].includes(String(pendingWildCapture.id)) ? 'lick' : (['63'].includes(String(pendingWildCapture.id)) ? 'confusion' : 'tackle');
             const bonusId = ['ember', 'water_gun', 'vine_whip', 'quick_attack'][Math.floor(Math.random() * 4)];
 
@@ -8613,7 +8623,7 @@ function App() {
     const executeBattleTurn = (playerAction = 'attack', actionMove = null, pvpEnemyMove = null) => {
         setBattleState(prev => {
             if (!prev || prev.phase === 'end' || !prev.active || prev.phase === 'action_streaming') return prev;
-            
+
             // --- PvP 模式特殊預處理 ---
             if (prev.mode === 'pvp' && playerAction === 'attack') {
                 // =============================================================
@@ -8668,7 +8678,7 @@ function App() {
             // 智慧 AI 選招：優先考慮克制與最高傷害
             const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList);
             const enemyMoveList = prev.enemy.moves || [SKILL_DATABASE.tackle];
-            
+
             // PvP 模式下使用來自網路的招式，否則使用智慧 AI
             const enemyMove = pvpEnemyMove || getSmartMove(prev.enemy, prev.player, enemyMoveList);
 
@@ -8683,7 +8693,7 @@ function App() {
             // Determine Priority Order
             const pPrio = playerMove.priority || 0;
             const ePrio = enemyMove.priority || 0;
-            
+
             // 計算實際速度（套用能力階級）
             // 套用能力階級 (Stat Stages)
             let pEffSpd = prev.player.spd * getStatMultiplier(prev.player.statStages?.spd || 0);
@@ -8692,7 +8702,7 @@ function App() {
             // 麻痺副作用：速度減半
             if (prev.player.status === 'paralysis') pEffSpd *= 0.5;
             if (prev.enemy.status === 'paralysis') eEffSpd *= 0.5;
-            
+
             let isPlayerFirst = true;
             if (pPrio > ePrio) isPlayerFirst = true;
             else if (ePrio > pPrio) isPlayerFirst = false;
@@ -8712,10 +8722,10 @@ function App() {
                 // --- 原有的攻擊命中與傷害邏輯 ---
                 const attackerEffSpd = attacker.spd * getStatMultiplier(attacker.statStages?.spd || 0) * (attacker.status === 'paralysis' ? 0.5 : 1);
                 const defenderEffSpd = defender.spd * getStatMultiplier(defender.statStages?.spd || 0) * (defender.status === 'paralysis' ? 0.5 : 1);
-                
+
                 const speedRatio = attackerEffSpd / defenderEffSpd;
                 const hitRateProb = Math.min(1.0, Math.max(0.3, 0.9 + 0.1 * Math.log2(speedRatio)));
-                
+
                 let hitSuccess = rFunc() < hitRateProb;
                 if (!hitSuccess) return { dmg: 0, msg: '攻擊落空了！' };
 
@@ -8724,30 +8734,30 @@ function App() {
                 // 套用能力階級 (ATK of attacker, DEF of defender)
                 const atkMult = getStatMultiplier(attacker.statStages?.atk || 0);
                 const defMult = getStatMultiplier(defender.statStages?.def || 0);
-                
+
                 let effectiveAtk = attacker.atk * atkMult;
-                let effectiveDef = defender.def * defMult; 
+                let effectiveDef = defender.def * defMult;
 
                 // 燒傷副作用：物理攻擊減半
                 if (attacker.status === 'burn') effectiveAtk *= 0.5;
 
                 let baseDmg = (Math.floor((2 * attackerLevel) / 5 + 2) * move.power * (effectiveAtk / effectiveDef)) / 50 + 2;
-                
+
                 const attackerTypes = Array.isArray(attacker.type) ? attacker.type : [attacker.type];
                 if (attackerTypes.includes(move.type)) baseDmg *= 1.5;
 
                 const mult = getTypeMultiplier(move.type, defender.type);
                 const rngMod = 0.85 + rFunc() * 0.15;
                 const finalDmg = Math.max(1, Math.floor(baseDmg * mult * rngMod));
-                
+
                 let effectMsg = '';
                 if (mult >= 2.0) effectMsg = ' (效果絕佳！)';
                 else if (mult <= 0.5 && mult > 0) effectMsg = ' (效果似乎不太好...)';
                 else if (mult === 0) effectMsg = ' (似乎沒有效果...)';
-                
+
                 return { dmg: finalDmg, msg: effectMsg };
             };
-            
+
             const updatedPlayer = { ...prev.player };
             const updatedEnemy = { ...prev.enemy };
 
@@ -8768,10 +8778,10 @@ function App() {
                         nextQueue.push({ type: 'msg', text: `${attackerName}${preCheck.message}` });
                     }
                     if (preCheck.selfDamage) {
-                        const selfDmg = Math.max(1, Math.floor(attacker.maxHp * 0.08)); 
-                        nextQueue.push({ 
-                            type: 'damage', target: isPlayer ? 'player' : 'enemy', 
-                            value: selfDmg, text: `${attackerName} 受到了混亂的回擊！` 
+                        const selfDmg = Math.max(1, Math.floor(attacker.maxHp * 0.08));
+                        nextQueue.push({
+                            type: 'damage', target: isPlayer ? 'player' : 'enemy',
+                            value: selfDmg, text: `${attackerName} 受到了混亂的回擊！`
                         });
                         attacker.hp = Math.max(0, attacker.hp - selfDmg);
                     }
@@ -8779,12 +8789,12 @@ function App() {
                 }
 
                 nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name}]！` });
-                
+
                 const isStatusMove = !move.power || move.power === 0;
 
                 // 2. 命中與傷害結算
                 const result = calcDamage(attacker, move, defender);
-                
+
                 // 如果是狀態技能且落空 (例如命中率不滿 100 的狀態技)
                 if (isStatusMove) {
                     if (move.accuracy && rFunc() * 100 > move.accuracy) {
@@ -8799,9 +8809,9 @@ function App() {
 
                 // 3. 處理傷害 (僅針對非狀態技能)
                 if (!isStatusMove && result.dmg > 0) {
-                    nextQueue.push({ 
-                        type: 'damage', target: isPlayer ? 'enemy' : 'player', 
-                        value: result.dmg, text: `對 ${defenderName} 造成了 ${result.dmg} 點傷害！${result.msg}` 
+                    nextQueue.push({
+                        type: 'damage', target: isPlayer ? 'enemy' : 'player',
+                        value: result.dmg, text: `對 ${defenderName} 造成了 ${result.dmg} 點傷害！${result.msg}`
                     });
                     defender.hp = Math.max(0, defender.hp - result.dmg);
                 }
@@ -8817,17 +8827,17 @@ function App() {
                 if (!isStatusMove && result.dmg > 0) {
                     if (effects.recoilPct > 0) {
                         const recoilDmg = Math.floor(result.dmg * effects.recoilPct);
-                        nextQueue.push({ 
-                            type: 'damage', target: isPlayer ? 'player' : 'enemy', 
-                            value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！` 
+                        nextQueue.push({
+                            type: 'damage', target: isPlayer ? 'player' : 'enemy',
+                            value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！`
                         });
                         attacker.hp = Math.max(0, attacker.hp - recoilDmg);
                     }
                     if (effects.drainPct > 0) {
                         const drainHeal = Math.floor(result.dmg * effects.drainPct);
-                        nextQueue.push({ 
-                            type: 'heal', target: isPlayer ? 'player' : 'enemy', 
-                            value: drainHeal, text: `${attackerName} 吸收了生命值！` 
+                        nextQueue.push({
+                            type: 'heal', target: isPlayer ? 'player' : 'enemy',
+                            value: drainHeal, text: `${attackerName} 吸收了生命值！`
                         });
                         attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
                     }
@@ -8912,9 +8922,9 @@ function App() {
                 // 將副作用移出 Reducer 執行的安全方式 (使用 setTimeout 令其在下一幀執行)
                 const connRef = connInstance.current;
                 setTimeout(() => {
-                    try { 
-                        connRef.send({ type: 'RESULT', data: { stepQueue: flippedQueue } }); 
-                    } catch(e) { console.error("PVP Result Send Error:", e); }
+                    try {
+                        connRef.send({ type: 'RESULT', data: { stepQueue: flippedQueue } });
+                    } catch (e) { console.error("PVP Result Send Error:", e); }
                 }, 0);
             }
 
@@ -8926,7 +8936,7 @@ function App() {
         const now = Date.now();
         const cdMs = debugOverrides.adventureCD !== null ? debugOverrides.adventureCD : ADV_BATTLE_RULES.CD_MS;
         const remainingCD = Math.max(0, Math.floor((lastAdvTime + cdMs - now) / 1000));
-        
+
         if (remainingCD > 0) {
             updateDialogue(`我好累，讓我休息 ${remainingCD} 秒再出發吧`, true);
             return;
@@ -8991,18 +9001,18 @@ function App() {
 
         if (bStateToTrigger) {
             // 不再立即跳轉，而是推入播報隊列，等待玩家按 B
-            const battleIntroLog = { 
-                msg: bStateToTrigger.initMsg, 
-                hpRatio: 1, 
+            const battleIntroLog = {
+                msg: bStateToTrigger.initMsg,
+                hpRatio: 1,
                 iconId: bStateToTrigger.enemy.id,
-                triggerBattle: bStateToTrigger 
+                triggerBattle: bStateToTrigger
             };
             setAdvLog(prev => [...prev, battleIntroLog]);
             setPendingAdvLogs([battleIntroLog]); // 讓 handleB 處理最後的 triggerBattle
             setIsAdvStreaming(true);
         } else if (tempLog.length > 0) {
             // 採集事件：將採集日誌送入播報隊列
-            const logs = [...tempLog, { msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: tempLog[tempLog.length-1].hpRatio }];
+            const logs = [...tempLog, { msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: tempLog[tempLog.length - 1].hpRatio }];
             setAdvLog([logs[0]]);
             setPendingAdvLogs(logs.slice(1));
             setIsAdvStreaming(true);
@@ -9022,18 +9032,18 @@ function App() {
         let timer;
         if (battleState.mode === 'wild') {
             if (battleState.phase === 'intro') {
-                timer = setTimeout(() => setBattleState(p => ({...p, phase: 'combat'})), 1500);
+                timer = setTimeout(() => setBattleState(p => ({ ...p, phase: 'combat' })), 1500);
             } else if (battleState.phase === 'combat') {
                 timer = setTimeout(() => executeBattleTurn('attack'), 1500);
             }
         } else if (battleState.mode === 'trainer' || battleState.mode === 'pvp') {
             if (battleState.phase === 'intro') {
-                timer = setTimeout(() => setBattleState(p => ({...p, phase: 'player_action'})), 2000);
+                timer = setTimeout(() => setBattleState(p => ({ ...p, phase: 'player_action' })), 2000);
             }
         }
         return () => clearTimeout(timer);
     }, [battleState.active, battleState.phase, battleState.turn, battleState.mode]);
- 
+
     // --- 🔹 戰鬥播報自動播放引擎 🔹 ---
     useEffect(() => {
         if (!battleState.active || battleState.phase !== 'action_streaming') return;
@@ -9043,15 +9053,15 @@ function App() {
         const delay = currentStep && currentStep.type === 'damage' ? 600 : 1300; // 訊息 1.3s，傷害閃爍 0.6s
 
         const timer = setTimeout(() => {
-             // 模擬按下 B 鍵觸發更新
-             setBattleState(prev => {
+            // 模擬按下 B 鍵觸發更新
+            setBattleState(prev => {
                 if (prev.stepQueue.length > 30) return prev; // Safety net
-                
+
                 // 執行與 handleB 邏輯相同的狀態更新
                 if (prev.stepQueue.length > 0) {
                     const nextStep = prev.stepQueue[0];
                     const updated = { ...prev, stepQueue: prev.stepQueue.slice(1), activeMsg: nextStep.text || "" };
-                    
+
                     if (nextStep.type === 'damage') {
                         if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.max(0, updated.enemy.hp - nextStep.value) };
                         else updated.player = { ...updated.player, hp: Math.max(0, updated.player.hp - nextStep.value) };
@@ -9075,32 +9085,32 @@ function App() {
                     // 隊列結束，進行最後的數值校準
                     const finalPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
                     const finalEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
-                    
+
                     if (prev.player.hp <= 0 || prev.enemy.hp <= 0) {
                         const isWin = prev.enemy.hp <= 0;
-                        const next = { 
-                            ...prev, 
-                            phase: 'end', 
-                            activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...", 
+                        const next = {
+                            ...prev,
+                            phase: 'end',
+                            activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...",
                             flashTarget: null,
                             player: { ...prev.player, hp: finalPlayerHp },
                             enemy: { ...prev.enemy, hp: finalEnemyHp }
                         };
-                        
+
                         // 動態計算經驗值 (與 handleB 邏輯同步)
                         const scaling = 1 + evolutionStage * 0.2;
                         const gain = Math.floor((prev.mode === 'trainer' ? 5 : 2) + scaling);
-                        
+
                         setTimeout(() => isWin ? resolveBattleWin(gain, prev.enemy) : resolveBattleLoss(), 1500);
                         return next;
                     }
-                    
+
                     // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
                     return { ...prev, phase: nextPhase, activeMsg: "", turn: prev.turn + 1, flashTarget: null };
 
                 }
-             });
+            });
         }, delay);
 
         return () => clearTimeout(timer);
@@ -9110,7 +9120,7 @@ function App() {
     const resolveBattleWin = (finalGain, enemy) => {
         const myId = getMonsterId();
         const logs = [];
-        
+
         logs.push({ msg: `🏆 戰鬥勝利！獲得 ${finalGain} 點成長。`, hpRatio: 1, iconId: myId });
         applyAdvGain(finalGain, logs, advCurrentHP, myId);
         if (battleState.mode === 'wild' && enemy) {
@@ -9119,21 +9129,21 @@ function App() {
             const prefix = enemy.isElite ? '擊敗了精英怪：' : '擊敗了野怪：';
             updateDiaryEvent(`${prefix}${enemy.name || '未知怪獸'}`, priority);
         }
-        
+
         let shouldDropItem = false;
         if (battleState.mode === 'trainer') shouldDropItem = true;
         if (battleState.mode === 'wild' && (enemy.isElite || Math.random() < 0.15)) shouldDropItem = true;
 
         if (shouldDropItem) {
-            const weights = { 1: 100, 2: 50, 3: 20, 4: 5, 5: battleState.mode==='trainer'?1:2 }; 
+            const weights = { 1: 100, 2: 50, 3: 20, 4: 5, 5: battleState.mode === 'trainer' ? 1 : 2 };
             const pool = [];
             ADV_ITEMS.forEach(it => {
                 const w = weights[it.rarity] || 1;
-                const count = enemy.isElite && it.rarity >= 3 ? w * 3 : w; 
-                for(let i=0; i<count; i++) pool.push(it);
+                const count = enemy.isElite && it.rarity >= 3 ? w * 3 : w;
+                for (let i = 0; i < count; i++) pool.push(it);
             });
             const item = pool[Math.floor(Math.random() * pool.length)];
-            
+
             setInventory(prev => {
                 const idx = prev.findIndex(it => it.id === item.id);
                 if (idx !== -1) {
@@ -9162,7 +9172,7 @@ function App() {
             }));
 
             if (connInstance.current) {
-                try { connInstance.current.close(); } catch(e) {}
+                try { connInstance.current.close(); } catch (e) { }
                 connInstance.current = null;
             }
             pvpRemoteMoveRef.current = null;
@@ -9179,7 +9189,7 @@ function App() {
 
         // Hide Battle UI but remain in Adventure overlay
         setBattleState(prev => ({ ...prev, active: false }));
-        
+
         if (logs.length > 0) {
             // 開始手動播報流程：顯示第一行
             const firstLine = logs[0];
@@ -9199,7 +9209,7 @@ function App() {
             }));
 
             if (connInstance.current) {
-                try { connInstance.current.close(); } catch(e) {}
+                try { connInstance.current.close(); } catch (e) { }
                 connInstance.current = null;
             }
             pvpRemoteMoveRef.current = null;
@@ -9222,9 +9232,9 @@ function App() {
             logs.push({ msg: `💨 逃跑成功...`, hpRatio: advCurrentHP });
         }
         logs.push({ msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: isRun ? advCurrentHP : 0 });
-        
+
         setBattleState(prev => ({ ...prev, active: false }));
-        
+
         if (logs.length > 0) {
             // 開始手動播報流程：顯示第一行
             const firstLine = logs[0];
@@ -9297,7 +9307,7 @@ function App() {
         if (isBooting) {
             setIsBooting(false);
             const isFreshStart = !initialData || (interactionCount === 0 && trainWins === 0);
-            
+
             if (isFreshStart) {
                 setLastEvolutionTime(Date.now());
                 updateDialogue("家裡來了一隻小像素怪獸...", true);
@@ -9387,7 +9397,7 @@ function App() {
                 setTempReplaceIdx(-1);
             } else { // NO (不學習)
                 setIsConfirmingReplace(false);
-                setSkillSelectIdx(0); 
+                setSkillSelectIdx(0);
             }
             return;
         }
@@ -9424,7 +9434,7 @@ function App() {
             // --- 戰鬥播報模式 (Step-by-Step) --- 
             // ❌ 已將手動 B 鍵推進移除，由 useEffect 自動播放引擎接手
             if (battleState && battleState.active && battleState.phase === 'action_streaming') {
-                return; 
+                return;
             }
 
             // ❌ 移除手動按 B 推進播報 (由自動 Timer 接手)
@@ -9435,7 +9445,7 @@ function App() {
             if (isAdvStreaming && (pendingAdvLogs?.length || 0) >= 0) {
                 if (pendingAdvLogs.length > 0) {
                     const nextLine = pendingAdvLogs[0];
-                    
+
                     // --- 特殊標記處理：觸發隨機事件 ---
                     if (nextLine.triggerEvent) {
                         setPendingAdvLogs([]);
@@ -9563,7 +9573,7 @@ function App() {
             const todayStr = getTodayStr();
             setDiaryViewDate(prev => {
                 const current = prev || todayStr;
-                if (current >= todayStr) return todayStr; 
+                if (current >= todayStr) return todayStr;
                 const d = new Date(current);
                 d.setDate(d.getDate() + 1);
                 return getTodayStr(d);
@@ -9647,12 +9657,12 @@ function App() {
                 logEvent("餵食了怪獸。");
                 break;
             case 'talk':
-                let qi; 
+                let qi;
                 if (lockedAffinity) {
-                    const weightedIndices = SOUL_QUESTIONS.map((q, i) => 
+                    const weightedIndices = SOUL_QUESTIONS.map((q, i) =>
                         q.options.some(o => o.affinity === lockedAffinity) ? i : -1
                     ).filter(idx => idx !== -1);
-                
+
                     if (Math.random() < 0.7 && weightedIndices.length > 0) {
                         qi = weightedIndices[Math.floor(Math.random() * weightedIndices.length)];
                     } else {
@@ -9661,7 +9671,7 @@ function App() {
                 } else {
                     qi = Math.floor(Math.random() * SOUL_QUESTIONS.length);
                 }
-                
+
                 setMiniGame({ type: 'talk', status: 'question', qIdx: qi });
                 updateDialogue("陪伴對談中...", true);
                 logEvent("與怪獸談心。");
@@ -9772,11 +9782,11 @@ function App() {
                 // Stage 1 to 2: Lock affinity
                 if (evolutionStage === 1 && !stats.lockedAffinity) {
                     let maxAff = 'none', mv = -1;
-                    for (const [k, v] of Object.entries(stats.soulAffinityCounts)) { 
-                        if (v > mv && v > 0) { 
-                            mv = v; 
-                            maxAff = k; 
-                        } 
+                    for (const [k, v] of Object.entries(stats.soulAffinityCounts)) {
+                        if (v > mv && v > 0) {
+                            mv = v;
+                            maxAff = k;
+                        }
                     }
                     if (maxAff !== 'none') {
                         setLockedAffinity(maxAff);
@@ -9791,24 +9801,24 @@ function App() {
                             const fOpts = [];
                             if (m >= 50 && h >= 50) fOpts.push({ branch: 'F_VULPIX_SOUL', count: 3 });
                             fOpts.push({ branch: 'F_SOUL', count: 1 });
-                            fOpts.sort((a,b) => b.count - a.count);
+                            fOpts.sort((a, b) => b.count - a.count);
                             soulNext = fOpts[0].branch;
                         }
                         if (stats.lockedAffinity === 'water') {
                             const wOpts = [];
                             if (m >= 50 && h >= 50 && sWins >= 8) wOpts.push({ branch: 'W_DRATINI_SOUL', count: 4 });
                             wOpts.push({ branch: 'W_SQUIRTLE_SOUL', count: 1 });
-                            wOpts.sort((a,b) => b.count - a.count);
+                            wOpts.sort((a, b) => b.count - a.count);
                             soulNext = wOpts[0].branch;
                         }
                         if (stats.lockedAffinity === 'grass') {
                             const grOpts = [];
                             if (m >= 50 && h >= 50) grOpts.push({ branch: 'GR_ODDISH_SOUL', count: 3 });
                             grOpts.push({ branch: 'GR_SOUL', count: 1 });
-                            grOpts.sort((a,b) => b.count - a.count);
+                            grOpts.sort((a, b) => b.count - a.count);
                             soulNext = grOpts[0].branch;
                         }
-                        if (stats.lockedAffinity === 'bug') soulNext = 'B_SOUL'; 
+                        if (stats.lockedAffinity === 'bug') soulNext = 'B_SOUL';
                     }
                 }
 
@@ -9850,7 +9860,7 @@ function App() {
                         const topTag = Object.entries(stats.soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
                         if (evolutionStage === 2) {
                             // 傑尼龜線
-                            if (['W_SQUIRTLE_SOUL','W_SOUL'].includes(evolutionBranch)) {
+                            if (['W_SQUIRTLE_SOUL', 'W_SOUL'].includes(evolutionBranch)) {
                                 nextBranch = 'W_WARTORTLE_SOUL'; // 無條件進化
                             }
                             // 迷你龍線
@@ -9859,13 +9869,13 @@ function App() {
                                 if (m >= 50 && h >= 50 && sWins >= 30) wOpts.push({ branch: 'W_DRAGONAIR_SOUL', count: 4 });
                                 if (['rational', 'gentle'].includes(topTag)) wOpts.push({ branch: 'W_HORSEA_SOUL', count: 2 });
                                 wOpts.push({ branch: 'W_MAGIKARP_SOUL', count: 1 });
-                                wOpts.sort((a,b) => b.count - a.count);
+                                wOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = wOpts[0].branch;
                             }
                             else { nextBranch = evolutionBranch; }
                         } else if (evolutionStage === 3) {
                             // 卡咪龜 → 水箭龜
-                            if (['W_WARTORTLE_SOUL','W_SOUL'].includes(evolutionBranch)) {
+                            if (['W_WARTORTLE_SOUL', 'W_SOUL'].includes(evolutionBranch)) {
                                 nextBranch = 'W_BLASTOISE_SOUL'; // 無條件進化
                             }
                             // 哈克龍 → 快龍
@@ -9882,7 +9892,7 @@ function App() {
                                 if (m >= 50 && ['rational', 'gentle'].includes(topTag))
                                     wOpts.push({ branch: 'W_LAPRAS_SOUL', count: 3 });
                                 wOpts.push({ branch: 'W_SEADRA_SOUL', count: 1 });
-                                wOpts.sort((a,b) => b.count - a.count);
+                                wOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = wOpts[0].branch;
                             }
                             else { nextBranch = evolutionBranch; }
@@ -9898,31 +9908,31 @@ function App() {
                                 const fOpts = [];
                                 if (m >= 80) fOpts.push({ branch: 'F_CHARMELEON_SOUL', count: 2 });
                                 fOpts.push({ branch: 'F_CUBONE_SOUL', count: 1 });
-                                fOpts.sort((a,b) => b.count - a.count);
+                                fOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = fOpts[0].branch;
                             }
                             // 六尾線
                             else if (evolutionBranch === 'F_VULPIX_SOUL') {
                                 const fOpts = [];
-                                if (m >= 50 && h >= 50 && ['passionate','stubborn'].includes(topTag))
+                                if (m >= 50 && h >= 50 && ['passionate', 'stubborn'].includes(topTag))
                                     fOpts.push({ branch: 'F_GROWLITHE_SOUL', count: 3 });
-                                if (['rational','nonsense'].includes(topTag))
+                                if (['rational', 'nonsense'].includes(topTag))
                                     fOpts.push({ branch: 'F_PONYTA_SOUL', count: 2 });
                                 fOpts.push({ branch: 'F_NINETALES_SOUL', count: 1 });
-                                fOpts.sort((a,b) => b.count - a.count);
+                                fOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = fOpts[0].branch;
                             }
                             else { nextBranch = evolutionBranch; }
                         } else if (evolutionStage === 3) {
                             // 火恐龍 / 卡拉卡拉線
-                            if (['F_CHARMELEON_SOUL','F_CUBONE_SOUL'].includes(evolutionBranch)) {
+                            if (['F_CHARMELEON_SOUL', 'F_CUBONE_SOUL'].includes(evolutionBranch)) {
                                 const fOpts = [];
-                                if (m >= 50 && h >= 50 && ['passionate','stubborn'].includes(topTag))
+                                if (m >= 50 && h >= 50 && ['passionate', 'stubborn'].includes(topTag))
                                     fOpts.push({ branch: 'F_CHARIZARD_SOUL', count: 3 });
                                 if (m < 50 && topTag === 'stubborn')
                                     fOpts.push({ branch: 'F_MAGMAR_SOUL', count: 3 });
                                 fOpts.push({ branch: 'F_MAROWAK_SOUL', count: 1 });
-                                fOpts.sort((a,b) => b.count - a.count);
+                                fOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = fOpts[0].branch;
                             }
                             // 卡蒂狗 → 風速狗（無條件）
@@ -9946,29 +9956,29 @@ function App() {
                                 const grOpts = [];
                                 if (m >= 80) grOpts.push({ branch: 'GR_IVYSAUR_SOUL', count: 2 });
                                 grOpts.push({ branch: 'GR_PARAS_SOUL', count: 1 });
-                                grOpts.sort((a,b) => b.count - a.count);
+                                grOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = grOpts[0].branch;
                             }
                             // 走路草線
                             else if (evolutionBranch === 'GR_ODDISH_SOUL') {
                                 const grOpts = [];
-                                if (m >= 50 && h >= 50 && ['gentle','rational'].includes(topTag))
+                                if (m >= 50 && h >= 50 && ['gentle', 'rational'].includes(topTag))
                                     grOpts.push({ branch: 'GR_BELLSPROUT_SOUL', count: 3 });
-                                if (['passionate','nonsense'].includes(topTag))
+                                if (['passionate', 'nonsense'].includes(topTag))
                                     grOpts.push({ branch: 'GR_EXEGGCUTE_SOUL', count: 2 });
                                 grOpts.push({ branch: 'GR_GLOOM_SOUL', count: 1 });
-                                grOpts.sort((a,b) => b.count - a.count);
+                                grOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = grOpts[0].branch;
                             }
                             else { nextBranch = evolutionBranch; }
                         } else if (evolutionStage === 3) {
                             // 妙蛙草 / 派拉斯線
-                            if (['GR_IVYSAUR_SOUL','GR_PARAS_SOUL'].includes(evolutionBranch)) {
+                            if (['GR_IVYSAUR_SOUL', 'GR_PARAS_SOUL'].includes(evolutionBranch)) {
                                 const grOpts = [];
-                                if (m >= 50 && h >= 50 && ['gentle','rational'].includes(topTag))
+                                if (m >= 50 && h >= 50 && ['gentle', 'rational'].includes(topTag))
                                     grOpts.push({ branch: 'GR_VENUSAUR_SOUL', count: 3 });
                                 grOpts.push({ branch: 'GR_PARASECT_SOUL', count: 1 });
-                                grOpts.sort((a,b) => b.count - a.count);
+                                grOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = grOpts[0].branch;
                             }
                             // 臭臭花 → 霸王花（無條件）
@@ -10070,7 +10080,7 @@ function App() {
                     const evolvedName = MONSTER_NAMES[evolvedId] || nextBranch;
                     updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
                     setTodayHasEvolved(true);
-                    
+
                     setEvolutionStage(evolutionStage + 1);
                     setEvolutionBranch(nextBranch);
                     setLastEvolutionTime(Date.now());
@@ -10142,7 +10152,7 @@ function App() {
                     setMiniGame(prev => {
                         if (prev.status !== 'spinning') return prev;
                         let nextTick = (prev.tick || 0) + 1;
-                        if (nextTick >= 13) { 
+                        if (nextTick >= 13) {
                             return { ...prev, currentIdx: (prev.currentIdx + 1) % prev.items.length, tick: 0 };
                         }
                         return { ...prev, tick: nextTick };
@@ -10174,16 +10184,16 @@ function App() {
     // --- 🔹 戰鬥引擎與對手生成 🔹 ---
     const generateTrainerOpponent = (stage) => {
         const stageMap = {
-            1: [{id: 132, name: '百變怪', type: 'normal'}, {id: 92, name: '鬼斯', type: 'poison'}, {id: 63, name: '凱西', type: 'psychic'}],
-            2: [{id: 4, name: '小火龍', type: 'fire'}, {id: 7, name: '傑尼龜', type: 'water'}, {id: 1, name: '妙蛙種子', type: 'grass'}, {id: 10, name: '綠毛蟲', type: 'bug'}, {id: 19, name: '小拉達', type: 'normal'}],
-            3: [{id: 5, name: '火恐龍', type: 'fire'}, {id: 8, name: '卡咪龜', type: 'water'}, {id: 2, name: '妙蛙草', type: 'grass'}, {id: 11, name: '鐵殼蛹', type: 'bug'}, {id: 20, name: '拉達', type: 'normal'}],
-            4: [{id: 6, name: '噴火龍', type: 'fire'}, {id: 9, name: '水箭龜', type: 'water'}, {id: 3, name: '妙蛙花', type: 'grass'}, {id: 12, name: '巴大蝶', type: 'bug'}, {id: 149, name: '快龍', type: 'flying'}],
-            5: [{id: 249, name: '洛奇亞', type: 'flying'}, {id: 150, name: '超夢', type: 'psychic'}, {id: 144, name: '急凍鳥', type: 'flying'}],
-            6: [{id: 384, name: '烈空坐', type: 'flying'}, {id: 151, name: '夢幻', type: 'psychic'}, {id: 250, name: '鳳王', type: 'fire'}]
+            1: [{ id: 132, name: '百變怪', type: 'normal' }, { id: 92, name: '鬼斯', type: 'poison' }, { id: 63, name: '凱西', type: 'psychic' }],
+            2: [{ id: 4, name: '小火龍', type: 'fire' }, { id: 7, name: '傑尼龜', type: 'water' }, { id: 1, name: '妙蛙種子', type: 'grass' }, { id: 10, name: '綠毛蟲', type: 'bug' }, { id: 19, name: '小拉達', type: 'normal' }],
+            3: [{ id: 5, name: '火恐龍', type: 'fire' }, { id: 8, name: '卡咪龜', type: 'water' }, { id: 2, name: '妙蛙草', type: 'grass' }, { id: 11, name: '鐵殼蛹', type: 'bug' }, { id: 20, name: '拉達', type: 'normal' }],
+            4: [{ id: 6, name: '噴火龍', type: 'fire' }, { id: 9, name: '水箭龜', type: 'water' }, { id: 3, name: '妙蛙花', type: 'grass' }, { id: 12, name: '巴大蝶', type: 'bug' }, { id: 149, name: '快龍', type: 'flying' }],
+            5: [{ id: 249, name: '洛奇亞', type: 'flying' }, { id: 150, name: '超夢', type: 'psychic' }, { id: 144, name: '急凍鳥', type: 'flying' }],
+            6: [{ id: 384, name: '烈空坐', type: 'flying' }, { id: 151, name: '夢幻', type: 'psychic' }, { id: 250, name: '鳳王', type: 'fire' }]
         };
         const pool = stageMap[stage] || stageMap[1];
         const base = pool[Math.floor(Math.random() * pool.length)];
-        
+
         const modifiers = [
             { prefix: '強壯的', hpBonus: 1.5, atkBonus: 1.0, spdBonus: 1.0 },
             { prefix: '狂暴的', hpBonus: 1.0, atkBonus: 1.5, spdBonus: 1.0 },
@@ -10238,8 +10248,8 @@ function App() {
 
         if (mode === 'wild') {
             // 新手保護：在 Stage 1 時過濾掉岩石系等難度過高的怪獸
-            const filteredPool = (evolutionStage === 1) 
-                ? ADV_WILD_POOL.filter(m => m.id !== 74) 
+            const filteredPool = (evolutionStage === 1)
+                ? ADV_WILD_POOL.filter(m => m.id !== 74)
                 : ADV_WILD_POOL;
 
             const totalWeight = filteredPool.reduce((sum, m) => sum + m.weight, 0);
@@ -10251,37 +10261,37 @@ function App() {
             const isBaby = evolutionStage < 2;
             const isElite = Math.random() < 0.12 && !isBaby;
             eLevel = Math.max(1, isElite ? level + 5 : Math.floor(level * (0.8 + Math.random() * 0.4)));
-            
+
             // 野生怪隨機分配 IV 與 性格修正
             const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
             const eNatureMods = getNatureMods(eNature);
-            const eIVs = { hp: Math.floor(Math.random()*32), atk: Math.floor(Math.random()*32), def: Math.floor(Math.random()*32), spd: Math.floor(Math.random()*32) };
+            const eIVs = { hp: Math.floor(Math.random() * 32), atk: Math.floor(Math.random() * 32), def: Math.floor(Math.random() * 32), spd: Math.floor(Math.random() * 32) };
             const eEVs = { hp: eLevel * 2, atk: eLevel * 2, def: eLevel * 2, spd: eLevel * 2 };
 
             eMaxHP = calcFinalStat('hp', enemyData.id, eIVs.hp, eEVs.hp, eLevel, eNatureMods.hp);
             eATK = calcFinalStat('atk', enemyData.id, eIVs.atk, eEVs.atk, eLevel, eNatureMods.atk);
             eDEF = calcFinalStat('def', enemyData.id, eIVs.def, eEVs.def, eLevel, eNatureMods.def);
             eSPD = calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel, eNatureMods.spd);
-            
+
             const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
             const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
             return {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
-                player: { 
-                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, 
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                player: {
+                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
-                enemy: { 
-                    id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves, 
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                enemy: {
+                    id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
             };
         } else if (mode === 'pvp' && pvpOpponentData) {
-            eLevel = pvpOpponentData?.stats?.level || level; 
+            eLevel = pvpOpponentData?.stats?.level || level;
             const enemyData = pvpOpponentData;
-            
+
             // 使用對手傳來的原始數據，完全排除本地進化或模式修正
             eMaxHP = (enemyData?.stats?.hp) || 150;
             eATK = (enemyData?.stats?.atk) || 80;
@@ -10294,13 +10304,13 @@ function App() {
             const initMsg = `連線成功！${enemyData?.name || '神祕對手'} (Lv.${eLevel}) 降臨！`;
             return {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
-                player: { 
-                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, 
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                player: {
+                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
-                enemy: { 
-                    id: enemyData?.id || 132, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves, 
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                enemy: {
+                    id: enemyData?.id || 132, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
@@ -10327,13 +10337,13 @@ function App() {
             const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
             return {
                 active: true, mode: 'trainer', phase: 'intro', turn: 1,
-                player: { 
-                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, 
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                player: {
+                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
-                enemy: { 
-                    id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves, 
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                enemy: {
+                    id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves,
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
@@ -10345,7 +10355,7 @@ function App() {
 
     const handleAdvGather = (log, myId) => {
         log.push({ msg: "在路邊草叢閃爍著光芒...", hpRatio: 1 });
-        
+
         // 採集主要出產等級 1 物品，極低機率出高等級物品
         let item;
         const r = Math.random();
@@ -10388,11 +10398,11 @@ function App() {
             const nextEVs = { ...prev.evs };
             // 努力值上限檢查：單項 252, 總和 510
             const updateEV = (key, val) => {
-                const currentTotal = Object.values(nextEVs).reduce((a,b)=>a+b, 0);
+                const currentTotal = Object.values(nextEVs).reduce((a, b) => a + b, 0);
                 const canAdd = Math.min(val, 510 - currentTotal, 252 - nextEVs[key]);
                 if (canAdd > 0) nextEVs[key] += canAdd;
             };
-            
+
             updateEV('hp', hpEV);
             updateEV('atk', atkEV);
             updateEV('def', defEV);
@@ -10410,7 +10420,7 @@ function App() {
     const useItem = (itemIdx) => {
         if (isUsingItem) return;
         if (itemIdx < 0 || itemIdx >= inventory.length) return;
-        
+
         setIsUsingItem(true);
         const item = inventory[itemIdx];
         let success = true;
@@ -10445,7 +10455,7 @@ function App() {
                 case '002': // 戰鬥蛋白粉 (增加 10 點攻擊努力值)
                     setAdvStats(prev => {
                         const nextEVs = { ...prev.evs };
-                        const canAdd = Math.min(10, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs.atk);
+                        const canAdd = Math.min(10, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs.atk);
                         if (canAdd > 0) nextEVs.atk += canAdd;
                         return { ...prev, evs: nextEVs, basePower: prev.basePower + 10 };
                     });
@@ -10461,7 +10471,7 @@ function App() {
                         const nextEVs = { ...prev.evs };
                         const stats = ['hp', 'atk', 'def', 'spd'];
                         stats.forEach(s => {
-                            const canAdd = Math.min(8, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs[s]);
+                            const canAdd = Math.min(8, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[s]);
                             if (canAdd > 0) nextEVs[s] += canAdd;
                         });
                         return { ...prev, evs: nextEVs, basePower: prev.basePower + 30 };
@@ -10472,8 +10482,8 @@ function App() {
                     setAdvStats(prev => {
                         const nextEVs = { ...prev.evs };
                         const pool = ['hp', 'atk', 'def', 'spd'];
-                        const target = pool[Math.floor(Math.random()*4)];
-                        const canAdd = Math.min(20, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs[target]);
+                        const target = pool[Math.floor(Math.random() * 4)];
+                        const canAdd = Math.min(20, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[target]);
                         if (canAdd > 0) nextEVs[target] += canAdd;
                         return { ...prev, evs: nextEVs, basePower: prev.basePower + 50 };
                     });
@@ -10584,7 +10594,7 @@ function App() {
 
         setIsBooting(true); // 觸發啟動彩蛋畫面
         setBootMonsterId(Math.floor(Math.random() * 151) + 1); // 隨機一隻開場怪獸
-        
+
         setHunger(60);
         setMood(50);
         setIsSleeping(false);
@@ -10618,16 +10628,16 @@ function App() {
         setAdvStats({
             basePower: 100 + inheritedPower,
             ivs: {
-                hp: Math.floor(Math.random()*32),
-                atk: Math.floor(Math.random()*32),
-                def: Math.floor(Math.random()*32),
-                spd: Math.floor(Math.random()*32)
+                hp: Math.floor(Math.random() * 32),
+                atk: Math.floor(Math.random() * 32),
+                def: Math.floor(Math.random() * 32),
+                spd: Math.floor(Math.random() * 32)
             },
             evs: { hp: 0, atk: 0, def: 0, spd: 0 },
             bonusMoveId: nextBonusId,
             moves: [nextStarterMove, nextBonusId].filter(Boolean)
         });
-        
+
         // 給予玩家反饋提示
         if (inheritedPower > 0) {
             updateDialogue(`獲得了 ${inheritedPower} 點前代戰力遺產！`, true);
@@ -10638,22 +10648,22 @@ function App() {
         // 死亡後不重置 bondValue 與 talkCount 即可繼承
         const inheritedBond = Math.floor((latestStats.current.bondValue || 0) * 0.2);
         const prevAffinity = latestStats.current.lockedAffinity;
-        
-        setBondValue(inheritedBond); 
+
+        setBondValue(inheritedBond);
         setTalkCount(0);
         setLockedAffinity(null);
-        setSoulAffinityCounts({ 
-            fire: prevAffinity === 'fire' ? 1 : 0, 
-            water: prevAffinity === 'water' ? 1 : 0, 
-            grass: prevAffinity === 'grass' ? 1 : 0, 
-            bug: prevAffinity === 'bug' ? 1 : 0 
+        setSoulAffinityCounts({
+            fire: prevAffinity === 'fire' ? 1 : 0,
+            water: prevAffinity === 'water' ? 1 : 0,
+            grass: prevAffinity === 'grass' ? 1 : 0,
+            bug: prevAffinity === 'bug' ? 1 : 0
         });
         setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
 
         if (savedDeathBranch) {
             // D線觸發：靈魂重生為鬼斯/凱西線
             setEvolutionStage(1);
-setEvolutionBranch(savedDeathBranch);
+            setEvolutionBranch(savedDeathBranch);
             setDialogue(savedDeathBranch === 'G1' ? "鬼魂附身！" : "神秘力量覺醒！");
         } else {
             // 正常重啟：回到百變怪
@@ -10777,14 +10787,14 @@ setEvolutionBranch(savedDeathBranch);
             <style dangerouslySetInnerHTML={{ __html: BATTLE_STYLES }} />
 
             {isLocalhost && (
-                <button 
+                <button
                     onClick={() => {
                         console.log("🛠️ Debug Button Clicked!");
                         setShowDebug(!showDebug);
                     }}
                     style={{
-                        position: 'fixed', bottom: '20px', right: '20px', 
-                        zIndex: 10002, opacity: 0.95, 
+                        position: 'fixed', bottom: '20px', right: '20px',
+                        zIndex: 10002, opacity: 0.95,
                         background: '#f39c12', borderRadius: '50%',
                         width: '64px', height: '64px', border: '4px solid #fff',
                         fontSize: '32px', cursor: 'pointer',
@@ -10797,8 +10807,8 @@ setEvolutionBranch(savedDeathBranch);
                 </button>
             )}
 
-            <DebugPanel 
-                show={showDebug} 
+            <DebugPanel
+                show={showDebug}
                 onClose={() => setShowDebug(false)}
                 debugOverrides={debugOverrides}
                 setDebugOverrides={setDebugOverrides}
@@ -10874,18 +10884,18 @@ setEvolutionBranch(savedDeathBranch);
                                         boxShadow: '8px 8px 0 rgba(0,0,0,0.2)'
                                     }}>
                                         <div style={{ fontSize: '11px', fontWeight: '900', color: '#111', lineHeight: '1.4' }}>
-                                            確定要忘記<br/>
-                                            <span style={{color: '#d32f2f'}}>{SKILL_DATABASE[advStats.moves[tempReplaceIdx]]?.name}</span><br/>
+                                            確定要忘記<br />
+                                            <span style={{ color: '#d32f2f' }}>{SKILL_DATABASE[advStats.moves[tempReplaceIdx]]?.name}</span><br />
                                             並學習新招嗎？
                                         </div>
                                         <div style={{ display: 'flex', gap: '20px' }}>
-                                            <div 
+                                            <div
                                                 onClick={() => handleB(0)}
                                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                                             >
                                                 <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 0 ? '#ff5252' : '#7a8a6a', color: skillSelectIdx === 0 ? '#fff' : '#444', fontSize: '10px', fontWeight: 'black', boxShadow: skillSelectIdx === 0 ? '0 0 8px #ff5252' : 'none' }}>{skillSelectIdx === 0 ? '▶ ' : ''}是</div>
                                             </div>
-                                            <div 
+                                            <div
                                                 onClick={() => handleB(1)}
                                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                                             >
@@ -10899,21 +10909,21 @@ setEvolutionBranch(savedDeathBranch);
                             <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
                                 <span>新的領悟！ (Lv.{pendingSkillLearn.level})</span>
                             </div>
-                            
+
                             <div className="flex-1 w-full flex flex-col items-center justify-center gap-2">
                                 <div className="text-[11px] font-bold text-[#1a1a1a] text-center mb-1">
                                     想學會 <span className="underline decoration-2">{pendingSkillLearn.skill.name}</span>
                                 </div>
                                 <div className="text-[9px] text-[#383a37] mb-2 text-center">
-                                    ({pendingSkillLearn.skill.type === 'normal' ? '普' : 
-                                      pendingSkillLearn.skill.type === 'fire' ? '火' :
-                                      pendingSkillLearn.skill.type === 'water' ? '水' :
-                                      pendingSkillLearn.skill.type === 'grass' ? '草' :
-                                      pendingSkillLearn.skill.type === 'bug' ? '蟲' :
-                                      pendingSkillLearn.skill.type === 'flying' ? '飛' :
-                                      pendingSkillLearn.skill.type === 'electric' ? '電' :
-                                      pendingSkillLearn.skill.type === 'psychic' ? '超' :
-                                      pendingSkillLearn.skill.type === 'ghost' ? '鬼' : '屬'} / 威力:{pendingSkillLearn.skill.power})
+                                    ({pendingSkillLearn.skill.type === 'normal' ? '普' :
+                                        pendingSkillLearn.skill.type === 'fire' ? '火' :
+                                            pendingSkillLearn.skill.type === 'water' ? '水' :
+                                                pendingSkillLearn.skill.type === 'grass' ? '草' :
+                                                    pendingSkillLearn.skill.type === 'bug' ? '蟲' :
+                                                        pendingSkillLearn.skill.type === 'flying' ? '飛' :
+                                                            pendingSkillLearn.skill.type === 'electric' ? '電' :
+                                                                pendingSkillLearn.skill.type === 'psychic' ? '超' :
+                                                                    pendingSkillLearn.skill.type === 'ghost' ? '鬼' : '屬'} / 威力:{pendingSkillLearn.skill.power})
                                 </div>
 
                                 {advStats.moves.length < 4 ? (
@@ -10936,7 +10946,7 @@ setEvolutionBranch(savedDeathBranch);
                                             const m = SKILL_DATABASE[mId] || { name: mId, power: 0 };
                                             const isSelected = skillSelectIdx === idx;
                                             return (
-                                                <div 
+                                                <div
                                                     key={idx}
                                                     className={`w-full py-1 px-2 border-2 flex justify-between items-center transition-all ${isSelected ? 'bg-[#ffca28] text-[#1a1a1a] border-[#1a1a1a] scale-[1.02]' : 'bg-[#7a8a6a]/50 text-[#444] border-transparent opacity-60'}`}
                                                 >
@@ -10960,9 +10970,9 @@ setEvolutionBranch(savedDeathBranch);
                         <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{ backgroundColor: battleState.active ? '#9dae8a' : 'rgba(157, 174, 138, 0.98)' }}>
                             <div className="w-full bg-[#383a37] text-[#8fa07e] text-[10px] px-2 py-1 flex justify-between items-center mb-1">
                                 <span>{isPvpMode ? '宇宙連線對戰' : '冒險模式'} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
-                                <span>{isPvpMode ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD/60)}:${(advCD%60).toString().padStart(2,'0')}` : '準備就緒')}</span>
+                                <span>{isPvpMode ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
                             </div>
-                            
+
                             {battleState.active ? (
                                 <div className="flex-1 w-full relative pb-1">
                                     {/* Enemy Area */}
@@ -10970,14 +10980,13 @@ setEvolutionBranch(savedDeathBranch);
                                         <div className="flex items-center gap-1">
                                             <div className="text-[10px] font-bold text-[#1a1a1a] truncate w-[60px] leading-tight">{battleState?.enemy?.name}</div>
                                             {battleState?.enemy?.status && (
-                                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${
-                                                    battleState.enemy.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                    battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                    battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                    battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                    battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
-                                                }`}>
-                                                    {{burn:'燒', paralysis:'麻', poison:'毒', sleep:'眠', freeze:'凍', confusion:'混'}[battleState.enemy.status] || '狀'}
+                                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.enemy.status === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                        battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                            battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                                battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                    battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                    }`}>
+                                                    {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.enemy.status] || '狀'}
                                                 </span>
                                             )}
                                         </div>
@@ -10996,14 +11005,13 @@ setEvolutionBranch(savedDeathBranch);
                                     <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-[#8fa07e] border-2 border-[#1a1a1a] rounded-md p-1 pr-2 shadow-sm">
                                         <div className="flex items-center gap-1">
                                             {battleState?.player?.status && (
-                                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${
-                                                    battleState.player.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                    battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                    battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                    battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                    battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
-                                                }`}>
-                                                    {{burn:'燒', paralysis:'麻', poison:'毒', sleep:'眠', freeze:'凍', confusion:'混'}[battleState.player.status] || '狀'}
+                                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.player.status === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                        battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                            battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                                battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                    battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                    }`}>
+                                                    {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.player.status] || '狀'}
                                                 </span>
                                             )}
                                             <div className="text-[10px] font-bold text-[#1a1a1a] text-right truncate">Lv.{Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1))}</div>
@@ -11030,13 +11038,12 @@ setEvolutionBranch(savedDeathBranch);
                                                     const move = battleState.player?.moves?.[idx];
                                                     const isSelected = (battleState.menuIdx || 0) === idx;
                                                     return (
-                                                        <div 
+                                                        <div
                                                             key={idx}
-                                                            className={`border-2 flex items-center justify-center transition-all ${
-                                                                isSelected 
-                                                                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0' 
+                                                            className={`border-2 flex items-center justify-center transition-all ${isSelected
+                                                                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0'
                                                                     : 'border-[#1a1a1a] bg-white/20'
-                                                            } ${!move ? 'opacity-30 border-dashed' : ''}`}
+                                                                } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                                         >
                                                             {move ? move.name : '---'}
                                                         </div>
@@ -11058,7 +11065,7 @@ setEvolutionBranch(savedDeathBranch);
                                         (matchStatus === 'searching' || matchStatus === 'idle') ? (
                                             <div className="flex-1 flex flex-col items-center justify-start p-2 w-full">
                                                 <div className="text-[11px] font-black text-[#1a1a1a] mb-1 border-b-2 border-black w-full text-center pb-0.5 uppercase tracking-widest">宇宙大廳</div>
-                                                
+
                                                 <div className="w-full flex flex-col gap-1 mb-2 mt-1">
                                                     <div className="flex justify-between items-center px-1">
                                                         <span className="text-[8px] font-black text-[#383a37]">🚪 房間密碼</span>
@@ -11066,9 +11073,9 @@ setEvolutionBranch(savedDeathBranch);
                                                             狀況: {matchStatus === 'searching' ? '🏃 配對中...' : (myPeerId ? '已上線' : '準備中')}
                                                         </span>
                                                     </div>
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="1~6 位房號..." 
+                                                    <input
+                                                        type="text"
+                                                        placeholder="1~6 位房號..."
                                                         value={pvpRoomPassword}
                                                         maxLength={6}
                                                         disabled={matchStatus === 'searching'}
@@ -11078,7 +11085,7 @@ setEvolutionBranch(savedDeathBranch);
                                                 </div>
 
                                                 <div className="w-full grid grid-cols-1 gap-2">
-                                                    <button 
+                                                    <button
                                                         onClick={() => (matchStatus !== 'searching') && joinPvpRoom(pvpRoomPassword)}
                                                         disabled={matchStatus === 'searching'}
                                                         className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ff5252] text-white shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
@@ -11092,7 +11099,7 @@ setEvolutionBranch(savedDeathBranch);
                                                         <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
                                                     </div>
 
-                                                    <button 
+                                                    <button
                                                         onClick={() => (matchStatus !== 'searching') && quickMatch()}
                                                         disabled={matchStatus === 'searching'}
                                                         className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ffca28] text-[#1a1a1a] shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
@@ -11100,7 +11107,7 @@ setEvolutionBranch(savedDeathBranch);
                                                         🚀 快速配對
                                                     </button>
                                                 </div>
-                                                
+
                                                 <div className="mt-auto text-[8px] font-black text-[#1a1a1a] opacity-60 flex flex-col items-center gap-0.5">
                                                     <span>相同密碼即可連線</span>
                                                     <div className="flex gap-2 text-[#383a37] underline decoration-dotted">
@@ -11115,7 +11122,7 @@ setEvolutionBranch(savedDeathBranch);
                                         )
                                     ) : (
                                         <>
-                                            <div 
+                                            <div
                                                 ref={advLogRef}
                                                 className="flex-1 w-full bg-[#8fa07e] border-2 border-[#383a37] p-2 flex flex-col gap-1 overflow-y-auto"
                                             >
@@ -11140,7 +11147,7 @@ setEvolutionBranch(savedDeathBranch);
                                                     </div>
                                                 )) : <div className="text-center mt-10 animate-pulse text-[12px] font-bold">探索中...</div>}
                                             </div>
-                                            
+
                                             {/* HP 血條區域 */}
                                             <div className="w-full flex flex-col gap-1 mt-1">
                                                 <div className="flex justify-between items-center px-1">
@@ -11150,11 +11157,11 @@ setEvolutionBranch(savedDeathBranch);
                                                     </span>
                                                 </div>
                                                 <div className="w-full h-2.5 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden">
-                                                    <div 
+                                                    <div
                                                         className="h-full transition-all duration-300 ease-out"
-                                                        style={{ 
-                                                            width: `${advCurrentHP * 100}%`, 
-                                                            backgroundColor: advCurrentHP > 0.5 ? '#2ecc71' : advCurrentHP > 0.25 ? '#f1c40f' : '#e74c3c' 
+                                                        style={{
+                                                            width: `${advCurrentHP * 100}%`,
+                                                            backgroundColor: advCurrentHP > 0.5 ? '#2ecc71' : advCurrentHP > 0.25 ? '#f1c40f' : '#e74c3c'
                                                         }}
                                                     />
                                                 </div>
@@ -11172,7 +11179,7 @@ setEvolutionBranch(savedDeathBranch);
                                             <DitheredSprite id={pendingWildCapture.id} scale={2} />
                                         </div>
                                         <div className="text-[#1a1a1a] text-[11px] font-black text-center leading-relaxed">
-                                            ✨ 野生 {pendingWildCapture.name} <br/> 加入了您！<br/>是否要更換寵物？
+                                            ✨ 野生 {pendingWildCapture.name} <br /> 加入了您！<br />是否要更換寵物？
                                         </div>
                                         <div className="flex w-full gap-3 justify-center">
                                             <div className="flex flex-col items-center gap-1">
@@ -11196,7 +11203,7 @@ setEvolutionBranch(savedDeathBranch);
                                 <span>狀態資訊</span>
                                 <span>[C] 關閉</span>
                             </div>
-                            
+
                             <div className="flex-1 w-full flex flex-col gap-1.5 px-1 justify-start pb-1">
                                 <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-[#1a1a1a]">
                                     <span>屬性: {(() => {
@@ -11231,7 +11238,7 @@ setEvolutionBranch(savedDeathBranch);
                                                 <span>{s.text !== undefined ? s.text : `${Math.floor(s.val)}%`}</span>
                                             </div>
                                             <div className="w-full h-2 bg-[#ccd6be] border border-[#383a37] rounded-sm overflow-hidden">
-                                                <div className="h-full transition-all duration-300" style={{ width: `${s.text !== undefined ? Math.min(100, (s.text/150)*100) : s.val}%`, backgroundColor: s.color }} />
+                                                <div className="h-full transition-all duration-300" style={{ width: `${s.text !== undefined ? Math.min(100, (s.text / 150) * 100) : s.val}%`, backgroundColor: s.color }} />
                                             </div>
                                         </div>
                                     ))}
@@ -11289,7 +11296,7 @@ setEvolutionBranch(savedDeathBranch);
                                         {inventory.length > 0 ? `${selectedItemIdx + 1} / ${inventory.length}` : '0/0'}
                                     </div>
                                 </div>
-                                
+
                                 <div className="relative flex-1 mt-1 flex flex-col items-center justify-center">
                                     {inventory.length > 0 ? (
                                         <div className="w-full flex flex-col items-center gap-2">
@@ -11304,8 +11311,8 @@ setEvolutionBranch(savedDeathBranch);
                                                     if (!isSelected && !isNext && !isPrev) return null;
 
                                                     return (
-                                                        <div 
-                                                            key={idx} 
+                                                        <div
+                                                            key={idx}
                                                             className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center
                                                                 ${isSelected ? 'bg-[#383a37] text-[#8fa07e] border-[#1a1a1a] scale-100 opacity-100 z-10' : 'bg-[#9dae8a] text-[#1a1a1a] border-[#383a37]/30 scale-90 opacity-40 blur-[0.5px]'}`}
                                                             style={{
@@ -11398,13 +11405,13 @@ setEvolutionBranch(savedDeathBranch);
                                                 <div style={{ fontSize: '9px', color: '#1a1a1a', borderBottom: '1px solid #383a37', paddingBottom: '3px', marginBottom: '3px' }}>
                                                     📊 {isToday ? '今日記錄' : '當日回顧'}
                                                 </div>
-                                                
+
                                                 {(() => {
                                                     // 取得當天個性 (如果是今天則現算，如果是舊日則取存檔)
-                                                    const tag = isToday 
+                                                    const tag = isToday
                                                         ? Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0]
                                                         : entry?.dominantTag;
-                                                    
+
                                                     const attitudeMap = {
                                                         gentle: "溫婉有加，把你當成避風港。",
                                                         stubborn: "有點嘴硬，但心裡非常依賴你。",
@@ -11455,7 +11462,7 @@ setEvolutionBranch(savedDeathBranch);
                                         <div className="flex-1 flex flex-col items-center justify-center gap-2">
                                             <div style={{ fontSize: '24px' }}>📭</div>
                                             <div style={{ fontSize: '9px', color: '#555', textAlign: 'center', lineHeight: '1.8', fontFamily: 'sans-serif' }}>
-                                                這一天還沒有記錄哦。<br/>
+                                                這一天還沒有記錄哦。<br />
                                                 那天我們在哪裡呢...？
                                             </div>
                                         </div>
@@ -11481,13 +11488,13 @@ setEvolutionBranch(savedDeathBranch);
                                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>
                                         按 <span className="blink-anim">A</span> 開始冒險
                                     </div>
-                                    
+
                                     {/* Firebase 登入控制項 */}
                                     <div className="mt-4 pointer-events-auto flex flex-col items-center gap-2">
                                         {user ? (
                                             <div className="flex flex-col items-center">
                                                 <div className="text-[9px] text-[#444] mb-1">已登入: {user.displayName}</div>
-                                                <button 
+                                                <button
                                                     onClick={logoutGoogle}
                                                     className="bg-[#eee] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.2)] active:translate-y-[1px]"
                                                 >
@@ -11495,7 +11502,7 @@ setEvolutionBranch(savedDeathBranch);
                                                 </button>
                                             </div>
                                         ) : (
-                                            <button 
+                                            <button
                                                 onClick={loginWithGoogle}
                                                 className="bg-[#ffca28] border-2 border-[#1a1a1a] px-3 py-1.5 text-[10px] font-bold shadow-[3px_3px_0_rgba(0,0,0,0.2)] active:translate-y-[1px] flex items-center gap-2"
                                             >
@@ -11532,150 +11539,150 @@ setEvolutionBranch(savedDeathBranch);
                                     )}
                                 </div>
 
-                        <div className="w-full flex-1 relative z-10 overflow-hidden flex flex-col items-center justify-center">
-                            {isEvolving && (
-                                <div className="absolute inset-0 bg-[#8fa07e]/80 flex items-center justify-center z-30">
-                                    <span className="animate-pulse text-[14px] tracking-widest font-bold">進化中...</span>
-                                </div>
-                            )}
-
-                            {miniGame && (
-                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-start pt-8 pointer-events-none">
-                                    {miniGame.type === 'reaction' && (
-                                        <>
-                                            {miniGame.status === 'ready' && <span className="text-[20px] font-bold animate-pulse text-[#111]">READY?</span>}
-                                            {miniGame.status === 'countdown' && <span className="text-[48px] font-black text-[#111]">{miniGame.count}</span>}
-                                            {miniGame.status === 'go' && <span className="text-[36px] font-black text-[#ff5252] animate-bounce" style={{ textShadow: '2px 2px 0 #fff' }}>GO!</span>}
-                                        </>
+                                <div className="w-full flex-1 relative z-10 overflow-hidden flex flex-col items-center justify-center">
+                                    {isEvolving && (
+                                        <div className="absolute inset-0 bg-[#8fa07e]/80 flex items-center justify-center z-30">
+                                            <span className="animate-pulse text-[14px] tracking-widest font-bold">進化中...</span>
+                                        </div>
                                     )}
 
-                                    {miniGame.type === 'charge_click' && (
-                                        <>
-                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111]">CLICK B!</span>}
-                                            {(miniGame.status === 'idle' || miniGame.status === 'clicking') && (
-                                                <div className="w-[160px] h-[24px] border-4 border-[#111] bg-[#8fa07e] relative shadow-[0_4px_0_rgba(0,0,0,0.2)] mt-4">
-                                                    <div className="h-full bg-[#ff5252] transition-all duration-75" style={{ width: `${miniGame.energy}%` }} />
+                                    {miniGame && (
+                                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-start pt-8 pointer-events-none">
+                                            {miniGame.type === 'reaction' && (
+                                                <>
+                                                    {miniGame.status === 'ready' && <span className="text-[20px] font-bold animate-pulse text-[#111]">READY?</span>}
+                                                    {miniGame.status === 'countdown' && <span className="text-[48px] font-black text-[#111]">{miniGame.count}</span>}
+                                                    {miniGame.status === 'go' && <span className="text-[36px] font-black text-[#ff5252] animate-bounce" style={{ textShadow: '2px 2px 0 #fff' }}>GO!</span>}
+                                                </>
+                                            )}
+
+                                            {miniGame.type === 'charge_click' && (
+                                                <>
+                                                    {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111]">CLICK B!</span>}
+                                                    {(miniGame.status === 'idle' || miniGame.status === 'clicking') && (
+                                                        <div className="w-[160px] h-[24px] border-4 border-[#111] bg-[#8fa07e] relative shadow-[0_4px_0_rgba(0,0,0,0.2)] mt-4">
+                                                            <div className="h-full bg-[#ff5252] transition-all duration-75" style={{ width: `${miniGame.energy}%` }} />
+                                                        </div>
+                                                    )}
+                                                    {miniGame.status === 'clicking' && (
+                                                        <span className="text-[16px] font-bold text-[#111] mt-2">
+                                                            {Math.max(0, Math.ceil((3000 - (Date.now() - miniGame.startTime)) / 1000))}s
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )}
+                                            {miniGame.type === 'spin' && (
+                                                <>
+                                                    {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
+                                                    {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
+
+                                                    {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
+                                                        <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
+                                                            <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                            {miniGame.type === 'spin_heart' && (
+                                                <>
+                                                    {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
+                                                    {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
+
+                                                    {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
+                                                        <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
+                                                            <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                            {miniGame.type === 'talk' && miniGame.status === 'question' && (
+                                                <div className="absolute inset-x-2 top-2 bottom-2 bg-[#9baea0] border-[4px] border-[#383a37] shadow-[4px_4px_0_rgba(0,0,0,0.2)] p-2 flex flex-col pointer-events-auto z-40">
+                                                    <div className="text-[13px] font-extrabold text-[#111] mb-2 leading-tight whitespace-normal break-words h-[40px] flex items-center shrink-0">
+                                                        {SOUL_QUESTIONS[miniGame.qIdx].q}
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 w-full bg-[#839788] px-2 py-1.5 border-[2px] border-[#5e6d62] flex-1 justify-around">
+                                                        {SOUL_QUESTIONS[miniGame.qIdx].options.map((opt, i) => (
+                                                            <div key={i} className="text-[11px] whitespace-normal leading-[1.2] text-[#111] font-bold tracking-tight flex items-start">
+                                                                <span className="text-[#333] font-black mr-1 shrink-0">{['A', 'B', 'C'][i]}.</span>
+                                                                <span>{opt.label}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             )}
-                                            {miniGame.status === 'clicking' && (
-                                                <span className="text-[16px] font-bold text-[#111] mt-2">
-                                                    {Math.max(0, Math.ceil((3000 - (Date.now() - miniGame.startTime)) / 1000))}s
+                                            {miniGame.status === 'result' && (
+                                                <span className={`text-[24px] font-black ${(miniGame.points || miniGame.result) ? 'text-[#ffca28]' : 'text-[#444]'}`} style={{ textShadow: '2px 2px 0 #fff' }}>
+                                                    {miniGame.points ? `+${miniGame.points}` : (miniGame.result ? "PERFECT!" : "MISS")}
                                                 </span>
                                             )}
-                                        </>
+                                        </div>
                                     )}
-                                    {miniGame.type === 'spin' && (
-                                        <>
-                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
-                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
 
-                                            {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
-                                                <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
-                                                    <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                    {miniGame.type === 'spin_heart' && (
-                                        <>
-                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
-                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
+                                    <div
+                                        className="absolute"
+                                        style={{
+                                            left: pos.x, top: pos.y,
+                                            transform: `translate(-50%, -50%)${!isDead && isSpinning ? ' rotate(180deg)' : ''}`,
+                                            animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none'
+                                        }}
+                                    >
+                                        {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterId(); return null; })()}
+                                        <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterId()} />
+                                    </div>
 
-                                            {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
-                                                <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
-                                                    <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-                                    {miniGame.type === 'talk' && miniGame.status === 'question' && (
-                                        <div className="absolute inset-x-2 top-2 bottom-2 bg-[#9baea0] border-[4px] border-[#383a37] shadow-[4px_4px_0_rgba(0,0,0,0.2)] p-2 flex flex-col pointer-events-auto z-40">
-                                            <div className="text-[13px] font-extrabold text-[#111] mb-2 leading-tight whitespace-normal break-words h-[40px] flex items-center shrink-0">
-                                                {SOUL_QUESTIONS[miniGame.qIdx].q}
-                                            </div>
-                                            <div className="flex flex-col gap-1 w-full bg-[#839788] px-2 py-1.5 border-[2px] border-[#5e6d62] flex-1 justify-around">
-                                                {SOUL_QUESTIONS[miniGame.qIdx].options.map((opt, i) => (
-                                                    <div key={i} className="text-[11px] whitespace-normal leading-[1.2] text-[#111] font-bold tracking-tight flex items-start">
-                                                        <span className="text-[#333] font-black mr-1 shrink-0">{['A', 'B', 'C'][i]}.</span>
-                                                        <span>{opt.label}</span>
-                                                    </div>
-                                                ))}
+                                    {/* 死亡後提示文字 */}
+                                    {isDead && showRestartHint && (
+                                        <div
+                                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                                            style={{ animation: 'hint-fadein 0.8s ease-out forwards' }}
+                                        >
+                                            <div style={{
+                                                fontFamily: "'Press Start 2P', monospace",
+                                                fontSize: '10px',
+                                                color: '#1a1a1a',
+                                                textAlign: 'center',
+                                                lineHeight: 2,
+                                                opacity: 0.85
+                                            }}>
+                                                按任意按鈕<br />重新開始
                                             </div>
                                         </div>
                                     )}
-                                    {miniGame.status === 'result' && (
-                                        <span className={`text-[24px] font-black ${(miniGame.points || miniGame.result) ? 'text-[#ffca28]' : 'text-[#444]'}`} style={{ textShadow: '2px 2px 0 #fff' }}>
-                                            {miniGame.points ? `+${miniGame.points}` : (miniGame.result ? "PERFECT!" : "MISS")}
-                                        </span>
-                                    )}
                                 </div>
-                            )}
 
-                            <div
-                                className="absolute"
-                                style={{
-                                    left: pos.x, top: pos.y,
-                                    transform: `translate(-50%, -50%)${!isDead && isSpinning ? ' rotate(180deg)' : ''}`,
-                                    animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none'
-                                }}
-                            >
-                                {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterId(); return null; })()}
-                                <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterId()} />
-                            </div>
+                                <div className="w-[240px] h-[32px] border-2 border-[#1a1a1a] flex items-center px-2 overflow-hidden z-20 bg-[#9dae8a] shrink-0 mb-3 shadow-[inset_2px_2px_0_rgba(0,0,0,0.2)]">
+                                    <span key={marqueeKey} className={`text-[11px] font-bold ${isBooting ? 'whitespace-pre-line text-center w-full leading-tight' : 'whitespace-nowrap'}`} style={{ animation: isBooting ? 'none' : 'marquee-once 4s ease-out forwards' }}>
+                                        {isBooting ? (
+                                            <>
+                                                <div>像素怪獸</div>
+                                                <div>按 <span className="blink-anim">A</span> 開始冒險</div>
+                                            </>
+                                        ) : dialogue}
+                                    </span>
+                                </div>
 
-                            {/* 死亡後提示文字 */}
-                            {isDead && showRestartHint && (
-                                <div
-                                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                                    style={{ animation: 'hint-fadein 0.8s ease-out forwards' }}
-                                >
-                                    <div style={{
-                                        fontFamily: "'Press Start 2P', monospace",
-                                        fontSize: '10px',
-                                        color: '#1a1a1a',
-                                        textAlign: 'center',
-                                        lineHeight: 2,
-                                        opacity: 0.85
-                                    }}>
-                                        按任意按鈕<br/>重新開始
+                                <div className="w-full h-[24px] flex justify-between px-4 pb-2 z-20 shrink-0">
+                                    {menuItems.slice(4, 8).map((item, idx) => (
+                                        <div key={item.id} className="pixel-rendering" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
+                                            <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* 全域警告彈窗 (Alert Modal) */}
+                                {alertMsg && (
+                                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[1px]">
+                                        <div className="bg-[#9dae8a] border-[4px] border-[#1a1a1a] shadow-[4px_4px_0_rgba(0,0,0,0.3)] p-3 w-full flex flex-col items-center">
+                                            <div className="text-[12px] font-black text-[#ff5252] mb-1 tracking-widest">[ SYSTEM ALERT ]</div>
+                                            <div className="text-[13px] font-bold text-[#111] text-center leading-tight mb-3">
+                                                {alertMsg}
+                                            </div>
+                                            <div className="text-[10px] text-[#444] animate-pulse">
+                                                -- 按任意鍵關閉 --
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="w-[240px] h-[32px] border-2 border-[#1a1a1a] flex items-center px-2 overflow-hidden z-20 bg-[#9dae8a] shrink-0 mb-3 shadow-[inset_2px_2px_0_rgba(0,0,0,0.2)]">
-                            <span key={marqueeKey} className={`text-[11px] font-bold ${isBooting ? 'whitespace-pre-line text-center w-full leading-tight' : 'whitespace-nowrap'}`} style={{ animation: isBooting ? 'none' : 'marquee-once 4s ease-out forwards' }}>
-                                {isBooting ? (
-                                    <>
-                                        <div>像素怪獸</div>
-                                        <div>按 <span className="blink-anim">A</span> 開始冒險</div>
-                                    </>
-                                ) : dialogue}
-                            </span>
-                        </div>
-
-                        <div className="w-full h-[24px] flex justify-between px-4 pb-2 z-20 shrink-0">
-                            {menuItems.slice(4, 8).map((item, idx) => (
-                                <div key={item.id} className="pixel-rendering" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
-                                    <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* 全域警告彈窗 (Alert Modal) */}
-                        {alertMsg && (
-                            <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[1px]">
-                                <div className="bg-[#9dae8a] border-[4px] border-[#1a1a1a] shadow-[4px_4px_0_rgba(0,0,0,0.3)] p-3 w-full flex flex-col items-center">
-                                    <div className="text-[12px] font-black text-[#ff5252] mb-1 tracking-widest">[ SYSTEM ALERT ]</div>
-                                    <div className="text-[13px] font-bold text-[#111] text-center leading-tight mb-3">
-                                        {alertMsg}
-                                    </div>
-                                    <div className="text-[10px] text-[#444] animate-pulse">
-                                        -- 按任意鍵關閉 --
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                                )}
                             </>
                         )}
                     </div>
