@@ -8081,17 +8081,23 @@ function App() {
         setIsCloudLoading(true);
         try {
             const doc = await db.collection('users').doc(currentUser.uid).get();
+            const localStr = localStorage.getItem('pixel_monster_save');
+            let localData = localStr ? JSON.parse(localStr) : null;
+
+            // --- 🔹 跨帳號保護邏輯 (UID 所有權檢查) 🔹 ---
+            if (localData && localData.ownerUid && localData.ownerUid !== currentUser.uid) {
+                console.warn(`☁️ 發現跨帳號衝突！本地存檔屬於 ${localData.ownerUid}，但您目前登入的是 ${currentUser.uid}。將強行以雲端資料為準。`);
+                localData = null; // 抹除本地不屬於該使用者的暫存，以該帳號的雲端或新遊戲為準
+            }
+
             if (doc.exists) {
                 const cloudData = doc.data();
-                const localStr = localStorage.getItem('pixel_monster_save');
-                const localData = localStr ? JSON.parse(localStr) : null;
-
                 const cloudTime = cloudData.lastSaveTime || 0;
                 const localTime = (localData && localData.lastSaveTime) || 0;
 
                 console.log(`☁️ Sync Check - Cloud: ${new Date(cloudTime).toLocaleString()}, Local: ${new Date(localTime).toLocaleString()}`);
 
-                // 比對時間戳記，取最新者 (雲端較新則重載)
+                // 比對時間戳記，取最新者 (且必須是同一個人的資料，剛才 localData 已過濾過)
                 if (!localData || (cloudTime > localTime + 2000)) {
                     updateDialogue("☁️ 發現較新的雲端進度，同步中...", true);
                     localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
@@ -8105,10 +8111,10 @@ function App() {
                 }
             } else {
                 updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
-                const localStr = localStorage.getItem('pixel_monster_save');
                 setHasCheckedCloud(true); 
                 setIsCloudLoading(false);
-                if (localStr) saveToCloud(JSON.parse(localStr));
+                // 只有當本地資料為「訪客 (無 ownerUid)」或是「本人」時，才建立初始備份
+                if (localData) saveToCloud(localData);
             }
         } catch (e) {
             console.error("☁️ Cloud Load Error:", e);
@@ -8166,8 +8172,14 @@ function App() {
         if (!auth) return;
         try {
             await auth.signOut();
+            // 登出時執行本地存檔清理，防止跨帳號衝突
+            try { 
+                localStorage.removeItem('pixel_monster_save'); 
+                sessionStorage.removeItem('pixel_monster_save');
+            } catch (e) { }
             playBloop('pop');
-            updateDialogue("已退出登入。");
+            updateDialogue("已退出登入並清除本地快取。");
+            setTimeout(() => window.location.reload(), 1000);
         } catch (e) { console.error(e); }
     };
 
@@ -8366,7 +8378,8 @@ function App() {
                 advStats, inventory, lastAdvTime,
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
                 todayHasEvolved, todaySpecialEvent, todayEventPriority,
-                lastSaveTime: lastSaveTime // 使用鎖定的時間戳記
+                lastSaveTime: lastSaveTime, // 使用鎖定的時間戳記
+                ownerUid: user?.uid || null // 標記所有者
             };
             
             const currentDataStr = JSON.stringify(currentData);
