@@ -8098,19 +8098,33 @@ function App() {
 
     const loginWithGoogle = async () => {
         if (!auth || !googleProvider) {
-            setAlertMsg("Firebase 未正確啟動");
+            console.error("Firebase not initialized", { auth, googleProvider });
+            setAlertMsg("系統尚未啟動: Firebase 初始化失敗。請確認網路連線或稍後再試。");
             return;
         }
-        updateDialogue("正在啟動 Google 安全登入...", true);
+        
+        updateDialogue("⚡ 正在連結 Google 伺服器...", true);
         try {
+            // 使用更積極的錯誤補救方案
             const result = await auth.signInWithPopup(googleProvider);
             if (result.user) {
-                updateDialogue(`🎉 歡迎回訪: ${result.user.displayName}`, false);
+                updateDialogue(`🎉 登入成功: ${result.user.displayName}`, false);
+                setAlertMsg(`成功連動帳號: ${result.user.displayName}`);
                 playBloop('success');
+                // 延遲重整以確保資料夾載入
+                setTimeout(() => loadFromCloud(result.user), 1000);
+            } else {
+                updateDialogue("⚠️ 登入已取消或找不到使用者資訊。", true);
             }
         } catch (e) {
             console.error("☁️ Login Error:", e);
-            updateDialogue(`登入失敗: ${e.message}`, true);
+            let errMsg = e.message;
+            if (e.code === 'auth/popup-closed-by-user') errMsg = "登入視窗被關閉了。";
+            if (e.code === 'auth/unauthorized-domain') errMsg = "此網域尚未被授權，請檢查 Firebase 設定。";
+            if (e.code === 'auth/operation-not-allowed') errMsg = "請在 Firebase 控制台啟用 Google 登入方法。";
+            
+            updateDialogue(`❌ 登入失敗: ${errMsg}`, true);
+            setAlertMsg(`登入失敗: ${errMsg}`);
         }
     };
 
