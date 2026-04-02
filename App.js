@@ -223,9 +223,10 @@ const DebugPanel = ({
                 {activeTab === 'items' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         <p style={{ color: '#aaa', margin: 0 }}>物品 ID 例: 001(飯糰), 002(蛋白粉), 003(跑步鞋), 004(核心), 005(糖果)</p>
+                        <p style={{ color: '#aaa', margin: 0 }}>秘笈書 ID: 006(爆裂拳), 008(煉獄), 009(電磁炮), 010(茁茁轟炸)...</p>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <span>ID:</span> 
-                            <input type="text" value={itemId} onChange={e => setItemId(e.target.value)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
+                            <input type="text" value={itemId} onChange={e => setItemId(e.target.value)} style={{ width: '80px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
                             <span>數量:</span> 
                             <input type="number" value={itemCount} onChange={e => setItemCount(parseInt(e.target.value) || 1)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
                             <button onClick={addItems} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>執行新增</button>
@@ -610,6 +611,8 @@ export default function App() {
                         activeMsg: first.text || "",
                         lastStep: first,
                         flashTarget: null,
+                        playerHpAfter: playerHpAfter,
+                        enemyHpAfter: enemyHpAfter
                     };
                 });
             }
@@ -830,9 +833,10 @@ export default function App() {
                 searchId = searchId.padStart(3, '0');
             }
             const latestDef = ADV_ITEMS.find(it => it.id === searchId);
-            const updatedItem = latestDef ? { ...item, id: searchId, name: latestDef.name, desc: latestDef.desc } : item;
+            // 關鍵修正：必須同步所有屬性（尤其是 skillId），而不單只有名稱與描述
+            const updatedItem = latestDef ? { ...item, ...latestDef, id: searchId } : item;
             
-            if (latestDef && (item.id !== searchId || item.name !== latestDef.name || item.desc !== latestDef.desc)) {
+            if (latestDef && (item.id !== searchId || item.name !== latestDef.name || item.skillId !== latestDef.skillId)) {
                 changed = true;
             }
 
@@ -1199,63 +1203,99 @@ export default function App() {
             // Determine Priority Order
             const pPrio = playerMove.priority || 0;
             const ePrio = enemyMove.priority || 0;
+            
+            // 計算實際速度（套用能力階級）
+            // 套用能力階級 (Stat Stages)
+            let pEffSpd = prev.player.spd * getStatMultiplier(prev.player.statStages?.spd || 0);
+            let eEffSpd = prev.enemy.spd * getStatMultiplier(prev.enemy.statStages?.spd || 0);
+
+            // 麻痺副作用：速度減半
+            if (prev.player.status === 'paralysis') pEffSpd *= 0.5;
+            if (prev.enemy.status === 'paralysis') eEffSpd *= 0.5;
+            
             let isPlayerFirst = true;
             if (pPrio > ePrio) isPlayerFirst = true;
             else if (ePrio > pPrio) isPlayerFirst = false;
             else {
-                if (prev.player.spd === prev.enemy.spd) {
+                if (pEffSpd === eEffSpd) {
                     isPlayerFirst = prev.mode === 'pvp' ? isHost.current : rFunc() > 0.5;
                 } else {
-                    isPlayerFirst = prev.player.spd > prev.enemy.spd;
+                    isPlayerFirst = pEffSpd > eEffSpd;
                 }
             }
-
-            // Compute Hidden Level (Max Lv 100, Start Lv 1 at basePower 100)
-            const hiddenLevel = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
 
             // Damage formula: Gen 1 style
             const calcDamage = (attacker, move, defender) => {
                 let hitSuccess = rFunc() < ADV_BATTLE_RULES.HIT_RATE;
                 if (!hitSuccess) return { dmg: 0, msg: '攻擊落空了！' };
 
-                // 使用進攻方的等級進行精確計算
                 const attackerLevel = attacker.level || 5;
 
-                // Apply Stat Mods (ATK of attacker, DEF of defender)
-                const effectiveAtk = attacker.atk * (attacker.statMods?.atk || 1.0);
-                const effectiveDef = defender.def * (defender.statMods?.def || 1.0); 
+                // 套用能力階級 (ATK of attacker, DEF of defender)
+                const atkMult = getStatMultiplier(attacker.statStages?.atk || 0);
+                const defMult = getStatMultiplier(defender.statStages?.def || 0);
+                
+                let effectiveAtk = attacker.atk * atkMult;
+                let effectiveDef = defender.def * defMult; 
 
-                // Gen 1 simplified formula: Damage = ((((2 * Level) / 5) + 2) * Power * (A / D)) / 50 + 2
+                // 燒傷副作用：物理攻擊減半
+                if (attacker.status === 'burn') effectiveAtk *= 0.5;
+
                 let baseDmg = (Math.floor((2 * attackerLevel) / 5 + 2) * move.power * (effectiveAtk / effectiveDef)) / 50 + 2;
                 
-                // STAB (本系加成)：如果攻擊屬性在攻擊方的屬性列表內
                 const attackerTypes = Array.isArray(attacker.type) ? attacker.type : [attacker.type];
                 if (attackerTypes.includes(move.type)) baseDmg *= 1.5;
 
-                // 屬性相剋 (Type Multiplier)：支援雙屬性防禦
                 const mult = getTypeMultiplier(move.type, defender.type);
-
-                // RNG 波動 (0.85 ~ 1.0)
                 const rngMod = 0.85 + rFunc() * 0.15;
-
                 const finalDmg = Math.max(1, Math.floor(baseDmg * mult * rngMod));
                 
                 let effectMsg = '';
                 if (mult >= 2.0) effectMsg = ' (效果絕佳！)';
-                else if (mult <= 0.5) effectMsg = ' (效果似乎不太好...)';
+                else if (mult <= 0.5 && mult > 0) effectMsg = ' (效果似乎不太好...)';
+                else if (mult === 0) effectMsg = ' (似乎沒有效果...)';
                 
                 return { dmg: finalDmg, msg: effectMsg };
             };
             
+            const updatedPlayer = { ...prev.player };
+            const updatedEnemy = { ...prev.enemy };
+
             const addMoveExecution = (side, move) => {
                 const isPlayer = side === 'player';
-                const attacker = isPlayer ? prev.player : prev.enemy;
-                const defender = isPlayer ? prev.enemy : prev.player;
+                // 這裡的 attacker/defender 僅用於計算，不直接寫回 state.hp
+                const attacker = isPlayer ? updatedPlayer : updatedEnemy;
+                const defender = isPlayer ? updatedEnemy : updatedPlayer;
                 const attackerName = isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name;
                 const defenderName = isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你');
 
+                // 1. 回合前狀態檢查 (麻痺、睡眠、混亂等) - 傳入 rFunc 確保 PvP 同步
+                const preCheck = checkPreTurnStatus(attacker, rFunc);
+                // 更新狀態 (不可變性)
+                attacker.status = preCheck.nextStatus;
+                attacker.statusTurns = preCheck.nextTurns;
+
+                if (!preCheck.canAct) {
+                    if (preCheck.message) {
+                        nextQueue.push({ type: 'msg', text: `${attackerName}${preCheck.message}` });
+                    }
+                    if (preCheck.selfDamage) {
+                        const selfDmg = Math.max(1, Math.floor(attacker.maxHp * 0.08)); 
+                        nextQueue.push({ 
+                            type: 'damage', 
+                            target: isPlayer ? 'player' : 'enemy', 
+                            value: selfDmg, 
+                            text: `${attackerName} 受到了混亂的回擊！` 
+                        });
+                        // 雖然動畫會扣血，但邏輯層仍需扣除以防該回合後續判斷 (如死亡)
+                        attacker.hp = Math.max(0, attacker.hp - selfDmg);
+                    }
+                    return;
+                }
+
                 nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name}]！` });
                 
+                // 2. 傷害結算
                 const result = calcDamage(attacker, move, defender);
                 if (result.dmg > 0) {
                     nextQueue.push({ 
@@ -1264,26 +1304,31 @@ export default function App() {
                         value: result.dmg, 
                         text: `對 ${defenderName} 造成了 ${result.dmg} 點傷害！${result.msg}` 
                     });
+                    // 更新邏輯層 HP 供後續計算
+                    defender.hp = Math.max(0, defender.hp - result.dmg);
 
-                    // Recoil logic
-                    if (move.recoil) {
-                        const recoilDmg = Math.floor(result.dmg * move.recoil);
+                    // 3. 技能副作用結算 (異常狀態、能力升降) - 傳入 rFunc 確保 PvP 同步
+                    const effects = applyMoveEffects(move, defender, attacker, rFunc);
+                    effects.messages.forEach(m => {
+                        nextQueue.push({ type: 'msg', text: `${isPlayer ? defenderName : attackerName}${m}` });
+                    });
+
+                    // 吸血與反彈 (Drain / Recoil)
+                    if (effects.recoilPct > 0) {
+                        const recoilDmg = Math.floor(result.dmg * effects.recoilPct);
                         nextQueue.push({ 
-                            type: 'damage', 
-                            target: isPlayer ? 'player' : 'enemy', 
-                            value: recoilDmg, 
-                            text: `${attackerName} 受到了反作用力傷害！` 
+                            type: 'damage', target: isPlayer ? 'player' : 'enemy', 
+                            value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！` 
                         });
+                        attacker.hp = Math.max(0, attacker.hp - recoilDmg);
                     }
-
-                    // Stat Change logic
-                    if (move.statChange) {
-                        const sc = move.statChange;
-                        if (sc.target === 'self') {
-                            nextQueue.push({ type: 'msg', text: `${attackerName} 的能力下降了！` });
-                            // Logic for actual modifier will be updated in state transition if needed, 
-                            // but for now we apply message. Actual modifier is complex since it's inside prev state.
-                        }
+                    if (effects.drainPct > 0) {
+                        const drainHeal = Math.floor(result.dmg * effects.drainPct);
+                        nextQueue.push({ 
+                            type: 'heal', target: isPlayer ? 'player' : 'enemy', 
+                            value: drainHeal, text: `${attackerName} 吸收了生命值！` 
+                        });
+                        attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
                     }
                 } else {
                     nextQueue.push({ type: 'msg', text: `${attackerName} 的攻擊沒中！` });
@@ -1293,16 +1338,67 @@ export default function App() {
             if (playerAction === 'run') {
                 nextQueue.push({ type: 'run', text: `你選擇撤退... 逃跑成功！` });
             } else if (playerAction === 'potion') {
-                const heal = Math.floor(prev.player.maxHp * 0.3);
+                const heal = Math.floor(updatedPlayer.maxHp * 0.3);
                 nextQueue.push({ type: 'heal', target: 'player', value: heal, text: `使用了傷藥，恢復了 ${heal} 點 HP！` });
+                updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + heal);
                 addMoveExecution('enemy', enemyMove);
             } else if (isPlayerFirst) {
                 addMoveExecution('player', playerMove);
-                addMoveExecution('enemy', enemyMove);
+                if (updatedEnemy.hp > 0) addMoveExecution('enemy', enemyMove);
             } else {
                 addMoveExecution('enemy', enemyMove);
-                addMoveExecution('player', playerMove);
+                if (updatedPlayer.hp > 0) addMoveExecution('player', playerMove);
             }
+
+            // 4. 回合結束後的狀態結算 (燒傷、中毒、寄生、束縛扣血) - 傳入 rFunc 確保 PvP 同步
+            const pPost = processPostTurnStatus(updatedPlayer, updatedPlayer.maxHp, rFunc);
+            updatedPlayer.status = pPost.nextStatus;
+            updatedPlayer.statusTurns = pPost.nextTurns;
+            if (pPost.message) {
+                if (pPost.dmg > 0) {
+                    nextQueue.push({ type: 'damage', target: 'player', value: pPost.dmg, text: `你${pPost.message}` });
+                    updatedPlayer.hp = Math.max(0, updatedPlayer.hp - pPost.dmg);
+                    // 寄生回血邏輯 (雖然簡化版，但補上 healing step)
+                    if (pPost.heal > 0 && updatedEnemy.hp > 0) {
+                        nextQueue.push({ type: 'heal', target: 'enemy', value: pPost.heal, text: `${updatedEnemy.name} 吸收了生命精華！` });
+                        updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + pPost.heal);
+                    }
+                } else {
+                    nextQueue.push({ type: 'msg', text: `你${pPost.message}` });
+                }
+            }
+
+            const ePost = processPostTurnStatus(updatedEnemy, updatedEnemy.maxHp, rFunc);
+            updatedEnemy.status = ePost.nextStatus;
+            updatedEnemy.statusTurns = ePost.nextTurns;
+            if (ePost.message) {
+                if (ePost.dmg > 0) {
+                    nextQueue.push({ type: 'damage', target: 'enemy', value: ePost.dmg, text: `${updatedEnemy.name}${ePost.message}` });
+                    updatedEnemy.hp = Math.max(0, updatedEnemy.hp - ePost.dmg);
+                    if (ePost.heal > 0 && updatedPlayer.hp > 0) {
+                        nextQueue.push({ type: 'heal', target: 'player', value: ePost.heal, text: `你從寄生中恢復了生命！` });
+                        updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + ePost.heal);
+                    }
+                } else {
+                    nextQueue.push({ type: 'msg', text: `${updatedEnemy.name}${ePost.message}` });
+                }
+            }
+
+            const finalBattleState = {
+                ...prev,
+                turn: prev.turn + 1,
+                phase: 'action_streaming',
+                stepQueue: nextQueue.slice(1),
+                activeMsg: nextQueue[0]?.text || "",
+                lastStep: nextQueue[0] || null,
+                // 關鍵：這裡不要立刻更新 HP，否則 HP 條會瞬間跳轉，導致動畫雙倍扣血
+                // 我們只更新狀態 (Status)，血量由 stepQueue 動畫處理，最後再同步校準
+                player: { ...prev.player, status: updatedPlayer.status, statusTurns: updatedPlayer.statusTurns },
+                enemy: { ...prev.enemy, status: updatedEnemy.status, statusTurns: updatedEnemy.statusTurns },
+                // 儲存邏輯結算後的血量，用於動畫結束後的校準
+                playerHpAfter: updatedPlayer.hp,
+                enemyHpAfter: updatedEnemy.hp
+            };
 
             // 主機端將完整的 stepQueue 發送給客戶端，確保雙方展示相同傷害
             if (prev.mode === 'pvp' && isHost.current && connInstance.current) {
@@ -1323,14 +1419,7 @@ export default function App() {
                 }, 0);
             }
 
-            const first = nextQueue[0];
-            return {
-                ...prev,
-                phase: 'action_streaming',
-                stepQueue: nextQueue.slice(1),
-                activeMsg: first.text || "",
-                lastStep: first
-            };
+            return finalBattleState;
         });
     };
 
@@ -1470,7 +1559,8 @@ export default function App() {
                         updated.flashTarget = nextStep.target;
                         playBloop('pop');
                     } else if (nextStep.type === 'heal') {
-                        updated.player = { ...updated.player, hp: Math.min(updated.player.maxHp, updated.player.hp + nextStep.value) };
+                        if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };
+                        else updated.player = { ...updated.player, hp: Math.min(updated.player.maxHp, updated.player.hp + nextStep.value) };
                         updated.flashTarget = null;
                         playBloop('success');
                     } else if (nextStep.type === 'run') {
@@ -1483,10 +1573,20 @@ export default function App() {
                     if (updated.player.hp <= 0 || updated.enemy.hp <= 0) updated.stepQueue = [];
                     return updated;
                 } else {
-                    // 隊列結束，根據模式決定下一個階段
+                    // 隊列結束，進行最後的數值校準
+                    const finalPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
+                    const finalEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
+                    
                     if (prev.player.hp <= 0 || prev.enemy.hp <= 0) {
                         const isWin = prev.enemy.hp <= 0;
-                        const next = { ...prev, phase: 'end', activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...", flashTarget: null };
+                        const next = { 
+                            ...prev, 
+                            phase: 'end', 
+                            activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...", 
+                            flashTarget: null,
+                            player: { ...prev.player, hp: finalPlayerHp },
+                            enemy: { ...prev.enemy, hp: finalEnemyHp }
+                        };
                         
                         // 動態計算經驗值 (與 handleB 邏輯同步)
                         const scaling = 1 + evolutionStage * 0.2;
@@ -2657,8 +2757,14 @@ export default function App() {
             const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
             return {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
-                player: { hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, statMods: { atk: 1.0, def: 1.0 } },
-                enemy: { id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves, statMods: { atk: 1.0, def: 1.0 } },
+                player: { 
+                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, 
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                },
+                enemy: { 
+                    id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves, 
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
             };
@@ -2678,8 +2784,14 @@ export default function App() {
             const initMsg = `連線成功！${enemyData?.name || '神祕對手'} (Lv.${eLevel}) 降臨！`;
             return {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
-                player: { hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, statMods: { atk: 1.0, def: 1.0 } },
-                enemy: { id: enemyData?.id || 132, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves, statMods: { atk: 1.0, def: 1.0 } },
+                player: { 
+                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, 
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                },
+                enemy: { 
+                    id: enemyData?.id || 132, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves, 
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
             };
@@ -2705,8 +2817,14 @@ export default function App() {
             const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
             return {
                 active: true, mode: 'trainer', phase: 'intro', turn: 1,
-                player: { hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, statMods: { atk: 1.0, def: 1.0 } },
-                enemy: { id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves, statMods: { atk: 1.0, def: 1.0 } },
+                player: { 
+                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level, 
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                },
+                enemy: { 
+                    id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves, 
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0 
+                },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
             };
@@ -2787,59 +2905,74 @@ export default function App() {
         const item = inventory[itemIdx];
         let success = true;
 
-        switch (item.id) {
-            case 'DIARY': // 📖 對戰日記 - 永久道具，開啟全版日記 UI
-                setIsUsingItem(false); // 立即解鎖，不走消耗流程
-                setIsInventoryOpen(false);
-                setDiaryViewDate(getTodayStr()); // 預設顯示今天
-                setIsDiaryOpen(true);
-                playBloop('success');
-                return; // 直接返回，不走後面的 success 消耗邏輯
-
-            case '001': // 活力飯糰
-                setAdvStats(prev => ({ ...prev, basePower: prev.basePower + 10 }));
-                updateDialogue(`吃了${item.name}，戰力提升，感覺等級快升了！`);
-                break;
-            case '002': // 戰鬥蛋白粉 (增加 10 點攻擊努力值)
-                setAdvStats(prev => {
-                    const nextEVs = { ...prev.evs };
-                    const canAdd = Math.min(10, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs.atk);
-                    if (canAdd > 0) nextEVs.atk += canAdd;
-                    return { ...prev, evs: nextEVs, basePower: prev.basePower + 10 };
-                });
-                updateDialogue("使用了戰鬥蛋白粉！攻擊潛能提升了");
-                break;
-            case '003': // 跑步鞋
-                // 減少 60 分鐘冷卻：將上次冒險時間往前推移 3600 秒
-                setLastAdvTime(prev => Math.max(1, prev - 3600000));
-                updateDialogue("穿上跑步鞋，感覺還能再戰！");
-                break;
-            case '004': // 覺醒之核 (全面提升)
-                setAdvStats(prev => {
-                    const nextEVs = { ...prev.evs };
-                    const stats = ['hp', 'atk', 'def', 'spd'];
-                    stats.forEach(s => {
-                        const canAdd = Math.min(8, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs[s]);
-                        if (canAdd > 0) nextEVs[s] += canAdd;
-                    });
-                    return { ...prev, evs: nextEVs, basePower: prev.basePower + 30 };
-                });
-                updateDialogue("覺醒之核發光了！全屬性潛能開發成功");
-                break;
-            case '005': // 奇異糖果 (隨機大幅提升)
-                setAdvStats(prev => {
-                    const nextEVs = { ...prev.evs };
-                    const pool = ['hp', 'atk', 'def', 'spd'];
-                    const target = pool[Math.floor(Math.random()*4)];
-                    const canAdd = Math.min(20, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs[target]);
-                    if (canAdd > 0) nextEVs[target] += canAdd;
-                    return { ...prev, evs: nextEVs, basePower: prev.basePower + 50 };
-                });
-                updateDialogue("奇異糖果真奇異！一項屬性潛能大幅爆發");
-                break;
-            default:
-                updateDialogue(`未知物品 (ID: ${item.id})，無法使用`);
+        if (item.skillId) {
+            const skill = SKILL_DATABASE[item.skillId];
+            if (!skill) {
+                updateDialogue("這份秘笈書記載的內容似乎已無法辨認...");
                 success = false;
+            } else if ((advStats.moves || []).includes(item.skillId)) {
+                updateDialogue(`怪獸已經學會「${skill.name}」了，不用再讀啦！`);
+                success = false;
+            } else {
+                setPendingSkillLearn({ skill: skill, level: derivedLevel });
+                setIsInventoryOpen(false);
+                updateDialogue(`打開了${item.name}！怪獸開始專心領悟新的招式...`);
+            }
+        } else {
+            switch (item.id) {
+                case 'DIARY': // 📖 對戰日記 - 永久道具，開啟全版日記 UI
+                    setIsUsingItem(false); // 立即解鎖，不走消耗流程
+                    setIsInventoryOpen(false);
+                    setDiaryViewDate(getTodayStr()); // 預設顯示今天
+                    setIsDiaryOpen(true);
+                    playBloop('success');
+                    return; // 直接返回，不走後面的 success 消耗邏輯
+
+                case '001': // 活力飯糰
+                    setAdvStats(prev => ({ ...prev, basePower: prev.basePower + 10 }));
+                    updateDialogue(`吃了${item.name}，戰力提升，感覺等級快升了！`);
+                    break;
+                case '002': // 戰鬥蛋白粉 (增加 10 點攻擊努力值)
+                    setAdvStats(prev => {
+                        const nextEVs = { ...prev.evs };
+                        const canAdd = Math.min(10, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs.atk);
+                        if (canAdd > 0) nextEVs.atk += canAdd;
+                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 10 };
+                    });
+                    updateDialogue("使用了戰鬥蛋白粉！攻擊潛能提升了");
+                    break;
+                case '003': // 跑步鞋
+                    // 減少 60 分鐘冷卻：將上次冒險時間往前推移 3600 秒
+                    setLastAdvTime(prev => Math.max(1, prev - 3600000));
+                    updateDialogue("穿上跑步鞋，感覺還能再戰！");
+                    break;
+                case '004': // 覺醒之核 (全面提升)
+                    setAdvStats(prev => {
+                        const nextEVs = { ...prev.evs };
+                        const stats = ['hp', 'atk', 'def', 'spd'];
+                        stats.forEach(s => {
+                            const canAdd = Math.min(8, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs[s]);
+                            if (canAdd > 0) nextEVs[s] += canAdd;
+                        });
+                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 30 };
+                    });
+                    updateDialogue("覺醒之核發光了！全屬性潛能開發成功");
+                    break;
+                case '005': // 奇異糖果 (隨機大幅提升)
+                    setAdvStats(prev => {
+                        const nextEVs = { ...prev.evs };
+                        const pool = ['hp', 'atk', 'def', 'spd'];
+                        const target = pool[Math.floor(Math.random()*4)];
+                        const canAdd = Math.min(20, 510 - Object.values(nextEVs).reduce((a,b)=>a+b, 0), 252 - nextEVs[target]);
+                        if (canAdd > 0) nextEVs[target] += canAdd;
+                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 50 };
+                    });
+                    updateDialogue("奇異糖果真奇異！一項屬性潛能大幅爆發");
+                    break;
+                default:
+                    updateDialogue(`未知物品 (ID: ${item.id})，無法使用`);
+                    success = false;
+            }
         }
 
         if (success) {
@@ -3324,7 +3457,20 @@ setEvolutionBranch(savedDeathBranch);
                                 <div className="flex-1 w-full relative pb-1">
                                     {/* Enemy Area */}
                                     <div className="absolute top-2 left-2 flex flex-col items-start min-w-[100px] z-20 bg-[#8fa07e] border-2 border-[#1a1a1a] rounded-md p-1 pl-2 shadow-sm">
-                                        <div className="text-[10px] font-bold text-[#1a1a1a] truncate w-[90px] leading-tight">{battleState?.enemy?.name}</div>
+                                        <div className="flex items-center gap-1">
+                                            <div className="text-[10px] font-bold text-[#1a1a1a] truncate w-[60px] leading-tight">{battleState?.enemy?.name}</div>
+                                            {battleState?.enemy?.status && (
+                                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${
+                                                    battleState.enemy.status === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                    battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                    battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                    battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                    battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                }`}>
+                                                    {{burn:'燒', paralysis:'麻', poison:'毒', sleep:'眠', freeze:'凍', confusion:'混'}[battleState.enemy.status] || '狀'}
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner">
                                             <div className="h-full transition-all duration-300" style={{ width: `${(battleState?.enemy?.hp / battleState?.enemy?.maxHp) * 100}%`, backgroundColor: (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.5 ? '#2ecc71' : (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
                                         </div>
@@ -3338,7 +3484,20 @@ setEvolutionBranch(savedDeathBranch);
                                         <DitheredBackSprite id={battleState?.player?.id} scale={2} />
                                     </div>
                                     <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-[#8fa07e] border-2 border-[#1a1a1a] rounded-md p-1 pr-2 shadow-sm">
-                                        <div className="text-[10px] font-bold text-[#1a1a1a] text-right truncate">Lv.{Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1))}</div>
+                                        <div className="flex items-center gap-1">
+                                            {battleState?.player?.status && (
+                                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${
+                                                    battleState.player.status === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                    battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                    battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                    battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                    battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                }`}>
+                                                    {{burn:'燒', paralysis:'麻', poison:'毒', sleep:'眠', freeze:'凍', confusion:'混'}[battleState.player.status] || '狀'}
+                                                </span>
+                                            )}
+                                            <div className="text-[10px] font-bold text-[#1a1a1a] text-right truncate">Lv.{Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1))}</div>
+                                        </div>
                                         <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner">
                                             <div className="h-full transition-all duration-300" style={{ width: `${((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) * 100}%`, backgroundColor: ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.5 ? '#2ecc71' : ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
                                         </div>
