@@ -24,6 +24,8 @@ import {
     getPetDailyMessage, DIARY_STORAGE_KEY, loadDiaryData, saveDiaryData, getSmartMove
 } from './src/data/gameConfig';
 
+import { auth, db, googleProvider } from './src/utils/firebase';
+
 // Web Audio API 8-bit 音效產生器
 const playBloop = (type) => {
     try {
@@ -451,6 +453,11 @@ export default function App() {
     const connInstance = useRef(null);
     const isHost = useRef(false);
 
+    // --- Firebase 帳號與雲端同步狀態 ---
+    const [user, setUser] = useState(null);
+    const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+    const [lastCloudSyncTime, setLastCloudSyncTime] = useState(0);
+
     const [pvpOpponent, setPvpOpponent] = useState(null);
     const [pvpLog, setPvpLog] = useState([]);
     const [isMyTurn, setIsMyTurn] = useState(false);
@@ -693,6 +700,82 @@ export default function App() {
         setupConnectionHandlers(conn);
     };
 
+    // 手動觸發雲端同步
+    const saveToCloud = async (saveData) => {
+        if (!user || !db) return;
+        setIsCloudSyncing(true);
+        try {
+            await db.collection('users').doc(user.uid).set(saveData);
+            setLastCloudSyncTime(Date.now());
+        } catch (e) {
+            console.error("Cloud Save Error:", e);
+        } finally {
+            setIsCloudSyncing(false);
+        }
+    };
+
+    // 從雲端載入進度
+    const loadFromCloud = async (currentUser) => {
+        if (!currentUser || !db) return;
+        updateDialogue("正在從雲端同步進度...", true);
+        try {
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            if (doc.exists) {
+                const cloudData = doc.data();
+                const localStr = localStorage.getItem('pixel_monster_save');
+                const localData = localStr ? JSON.parse(localStr) : null;
+
+                // 比對時間戳記，取最新者
+                if (!localData || (cloudData.lastSaveTime > (localData.lastSaveTime || 0))) {
+                    console.log("Using Cloud Save (Newer)");
+                    updateDialogue("已同步雲端最新進度！");
+                    // 這裡觸發頁面重整或手動更新所有 State (簡單做法是重投初始數據)
+                    localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
+                    window.location.reload(); // 最簡單的全面更新方式
+                } else {
+                    console.log("Local Save is newer or equal.");
+                    updateDialogue("本地進度已是最新。");
+                    // 如果本地比較新，順便幫玩家同步回雲端，確保下次切換裝置時也是新的
+                    saveToCloud(localData);
+                }
+            }
+        } catch (e) {
+            console.error("Cloud Load Error:", e);
+        }
+    };
+
+    // 監聽登入狀態
+    useEffect(() => {
+        if (!auth) return;
+        const unsubscribe = auth.onAuthStateChanged((u) => {
+            setUser(u);
+            if (u) {
+                loadFromCloud(u);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const loginWithGoogle = async () => {
+        if (!auth || !googleProvider) return;
+        try {
+            await auth.signInWithPopup(googleProvider);
+            playBloop('success');
+        } catch (e) {
+            console.error("Login Error:", e);
+            setAlertMsg("登入失敗，請稍後再試。");
+        }
+    };
+
+    const logoutGoogle = async () => {
+        if (!auth) return;
+        try {
+            await auth.signOut();
+            playBloop('pop');
+            updateDialogue("已退出登入。");
+        } catch (e) { console.error(e); }
+    };
+
     // 清理連線
     useEffect(() => {
         return () => {
@@ -886,9 +969,16 @@ export default function App() {
                 lastSaveTime: Date.now()
             };
             const str = JSON.stringify(saveData);
-            try { localStorage.setItem('pixel_monster_save', str); } catch (e) { }
+            try { 
+                localStorage.setItem('pixel_monster_save', str); 
+                // 如果已登入，同步至雲端 (使用簡易防抖)
+                if (user) {
+                    const timer = setTimeout(() => saveToCloud(saveData), 2000);
+                    return () => clearTimeout(timer);
+                }
+            } catch (e) { }
         } catch (e) { }
-    }, [hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority]); // 移除未定義的 lastBondTime，修復崩潰
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority]); 
 
     // 日記獨立自動存檔（每次 diaryLog 變更時觸發）
     useEffect(() => {
@@ -4017,6 +4107,28 @@ setEvolutionBranch(savedDeathBranch);
                                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>
                                         按 <span className="blink-anim">A</span> 開始冒險
                                     </div>
+                                    
+                                    {/* Firebase 登入控制項 */}
+                                    <div className="mt-4 pointer-events-auto flex flex-col items-center gap-2">
+                                        {user ? (
+                                            <div className="flex flex-col items-center">
+                                                <div className="text-[9px] text-[#444] mb-1">已登入: {user.displayName}</div>
+                                                <button 
+                                                    onClick={logoutGoogle}
+                                                    className="bg-[#eee] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.2)] active:translate-y-[1px]"
+                                                >
+                                                    登出帳號
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button 
+                                                onClick={loginWithGoogle}
+                                                className="bg-[#ffca28] border-2 border-[#1a1a1a] px-3 py-1.5 text-[10px] font-bold shadow-[3px_3px_0_rgba(0,0,0,0.2)] active:translate-y-[1px] flex items-center gap-2"
+                                            >
+                                                <span>連動 Google 帳號</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* 畫面中央偏下隨機怪獸 -> 修改為更靠近中央 */}
@@ -4034,6 +4146,16 @@ setEvolutionBranch(savedDeathBranch);
                                             <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
                                         </div>
                                     ))}
+
+                                    {/* 雲端同步狀態顯示 */}
+                                    {user && (
+                                        <div className="absolute right-4 top-2 flex items-center gap-1">
+                                            <div className={`w-[6px] h-[6px] rounded-full ${isCloudSyncing ? 'bg-[#ff5252] animate-pulse' : 'bg-[#4caf50]'}`} />
+                                            <span className="text-[8px] text-[#444] font-bold">
+                                                {isCloudSyncing ? '同步中...' : '雲端存檔已同步'}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                         <div className="w-full flex-1 relative z-10 overflow-hidden flex flex-col items-center justify-center">
