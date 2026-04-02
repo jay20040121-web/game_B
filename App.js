@@ -702,19 +702,26 @@ export default function App() {
 
     // 手動觸發雲端同步
     const saveToCloud = async (saveData) => {
-        if (!user || !db) {
-            console.log("☁️ Cloud Sync Skipped: No User or DB");
+        // 防止重複觸發正在進行中的同步，或沒有使用者/DB
+        if (isCloudSyncing || !user || !db) {
+            console.log("☁️ Sync Skipped: Already syncing or No User");
             return;
         }
+
+        // 如果這次的資料時間跟上次同步的一模一樣，就不重複傳
+        if (saveData.lastSaveTime === lastCloudSyncTime) {
+            return;
+        }
+
         setIsCloudSyncing(true);
         console.log("☁️ Saving to Cloud...", saveData);
         try {
             await db.collection('users').doc(user.uid).set(saveData);
-            setLastCloudSyncTime(Date.now());
+            setLastCloudSyncTime(saveData.lastSaveTime);
             console.log("☁️ Cloud Save Success!");
         } catch (e) {
             console.error("☁️ Cloud Save Error:", e);
-            updateDialogue(`雲端同步失敗: ${e.message}`, true);
+            updateDialogue(`❌ 雲端備份失敗: ${e.message}`, true);
         } finally {
             setIsCloudSyncing(false);
         }
@@ -1004,9 +1011,9 @@ export default function App() {
             const str = JSON.stringify(saveData);
             try { 
                 localStorage.setItem('pixel_monster_save', str); 
-                // 如果已登入，同步至雲端 (使用簡易防抖)
+                // 如果已登入，同步至雲端 (將防抖時間拉長至 5 秒，減少連線壓力)
                 if (user) {
-                    const timer = setTimeout(() => saveToCloud(saveData), 2000);
+                    const timer = setTimeout(() => saveToCloud(saveData), 5000);
                     return () => clearTimeout(timer);
                 }
             } catch (e) { }
