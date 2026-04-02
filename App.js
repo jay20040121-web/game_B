@@ -466,13 +466,22 @@ export default function App() {
     const PEER_PREFIX = "gameB_v1_";
     
     // 統一重置 PvP 狀態與連線 (避免卡死)
-    const cleanupPvp = (msg = null) => {
+    const cleanupPvp = (msg = null, destroyPeer = true) => {
         if (msg) updateDialogue(msg);
         
         // 斷開連線實例
         if (connInstance.current) {
             try { connInstance.current.close(); } catch(e) {}
             connInstance.current = null;
+        }
+        
+        // 徹底銷毀 Peer 實例 (非常重要：能讓伺服器立即釋放 ID，防止殭屍 Peer)
+        if (destroyPeer && peerInstance.current) {
+            try { 
+                if (!peerInstance.current.destroyed) peerInstance.current.destroy(); 
+            } catch(e) {}
+            peerInstance.current = null;
+            setMyPeerId("");
         }
         
         // 重置狀態與對戰資訊
@@ -484,16 +493,22 @@ export default function App() {
         
         // 對手資訊清空
         setPvpOpponent(null);
-        connInstance.current = null;
     };
 
     // 初始化 Peer (支援自訂 ID 或自動 ID)
     const initPeer = (customId = null, role = null) => {
-        // 如果已經有舊的 Peer 且 ID 不同，先關閉
+        // 如果已經有舊的 Peer，先徹底銷毀
         if (peerInstance.current && !peerInstance.current.destroyed) {
-            peerInstance.current.destroy();
+            try { peerInstance.current.destroy(); } catch(e) {}
         }
         
+        // 設定 12 秒連線超時警告，防止畫面上卡在 searching
+        const connectionTimeout = setTimeout(() => {
+            if (matchStatusRef.current === 'searching' || matchStatusRef.current === 'matching') {
+                cleanupPvp("連線超時，請檢查密碼或請對方重新開啟。");
+            }
+        }, 12000); 
+
         const peer = customId ? new window.Peer(customId) : new window.Peer();
         
         peer.on('open', (id) => {
@@ -501,33 +516,32 @@ export default function App() {
             // 如果我是挑戰者 (B)，開啟後立即連向 A
             if (role === 'B') {
                 const targetId = customId.replace(/_B$/, '_A');
-                // 延遲一下確保對方 Peer 已啟動
                 setTimeout(() => connectToRemotePeer(targetId), 500);
             }
         });
 
         // 監聽 Peer 全域錯誤
         peer.on('error', (err) => {
+            clearTimeout(connectionTimeout);
             console.error("PeerJS Error:", err);
             
             // 房間佔用邏輯：如果 A 位置有人，嘗試進入 B 位置
             if (err.type === 'unavailable-id' && customId && customId.endsWith('_A')) {
-                const bId = customId.replace(/_A$/, '_B');
-                initPeer(bId, 'B');
+                initPeer(customId.replace(/_A$/, '_B'), 'B');
                 return;
             }
 
             let errMsg = "通訊伺服器錯誤。";
-            if (err.type === 'unavailable-id') errMsg = "連線識別碼衝突或房間已滿，請換個密碼。";
+            if (err.type === 'unavailable-id') errMsg = "房間識別碼衝突，請稍後再試。";
             if (err.type === 'network') errMsg = "網路連線中斷。";
-            if (err.type === 'peer-unavailable') errMsg = "找不到對手，請確認對手的房間號碼。";
+            if (err.type === 'peer-unavailable') errMsg = "找不到對手房號，請確認對方已開好房間。";
             
             cleanupPvp(errMsg);
-            if (peer.destroyed === false) peer.destroy();
             peerInstance.current = null;
         });
 
         peer.on('connection', (conn) => {
+            clearTimeout(connectionTimeout);
             if (connInstance.current) {
                 conn.close();
                 return;
@@ -671,6 +685,8 @@ export default function App() {
     // 當觸發尋找連線時 (按下準備好的確認鍵)
     const connectToRemotePeer = (targetId) => {
         if (!peerInstance.current) return;
+        syncMatchStatus('matching');
+        updateDialogue("發現對手，正在建立通訊...", true); 
         const conn = peerInstance.current.connect(targetId);
         connInstance.current = conn;
         isHost.current = true;
