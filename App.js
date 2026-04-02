@@ -703,25 +703,31 @@ export default function App() {
     // 手動觸發雲端同步
     const saveToCloud = async (saveData) => {
         // 防止重複觸發正在進行中的同步，或沒有使用者/DB
-        if (isCloudSyncing || !user || !db) {
-            console.log("☁️ Sync Skipped: Already syncing or No User");
-            return;
-        }
+        if (isCloudSyncing || !user || !db) return;
 
         // 如果這次的資料時間跟上次同步的一模一樣，就不重複傳
-        if (saveData.lastSaveTime === lastCloudSyncTime) {
-            return;
-        }
+        if (saveData.lastSaveTime === lastCloudSyncTime) return;
 
         setIsCloudSyncing(true);
-        console.log("☁️ Saving to Cloud...", saveData);
+        console.log("☁️ Attempting Cloud Save...");
+        
         try {
-            await db.collection('users').doc(user.uid).set(saveData);
+            // 加入 10 秒自動逾時機制，避免燈號卡死
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("連線逾時")), 10000)
+            );
+            
+            const savePromise = db.collection('users').doc(user.uid).set(saveData);
+            
+            await Promise.race([savePromise, timeoutPromise]);
+            
             setLastCloudSyncTime(saveData.lastSaveTime);
-            console.log("☁️ Cloud Save Success!");
+            console.log("☁️ Cloud Save SUCCESS!");
         } catch (e) {
-            console.error("☁️ Cloud Save Error:", e);
-            updateDialogue(`❌ 雲端備份失敗: ${e.message}`, true);
+            console.error("☁️ Cloud Save FAILED:", e);
+            // 發生錯誤時，直接在畫面上方跳出大警告，讓玩家知道原因
+            setAlertMsg(`❌ 雲端同步失敗: ${e.message}`);
+            updateDialogue(`❌ 備份失敗，請確認資料庫已建立並發布規則。`, true);
         } finally {
             setIsCloudSyncing(false);
         }
