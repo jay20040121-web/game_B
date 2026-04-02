@@ -303,6 +303,7 @@ export default function App() {
     const [feedCount, setFeedCount] = useState(getInit('feedCount', 0));
     const [deathBranch, setDeathBranch] = useState(getInit('deathBranch', null));
     const [lastEvolutionTime, setLastEvolutionTime] = useState(getInit('lastEvolutionTime', Date.now()));
+    const [lastSaveTime, setLastSaveTime] = useState(getInit('lastSaveTime', Date.now()));
 
     // 談心系統新增狀態
     const [bondValue, setBondValue] = useState(getInit('bondValue', 0));
@@ -456,6 +457,8 @@ export default function App() {
     // --- Firebase 帳號與雲端同步狀態 ---
     const [user, setUser] = useState(null);
     const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+    const [isCloudLoading, setIsCloudLoading] = useState(false);
+    const [hasCheckedCloud, setHasCheckedCloud] = useState(false);
     const [lastCloudSyncTime, setLastCloudSyncTime] = useState(0);
 
     const [pvpOpponent, setPvpOpponent] = useState(null);
@@ -702,8 +705,8 @@ export default function App() {
 
     // 手動觸發雲端同步
     const saveToCloud = async (saveData) => {
-        // 防止重複觸發正在進行中的同步，或沒有使用者/DB
-        if (isCloudSyncing || !user || !db) return;
+        // 防止重複觸發正在進行中的同步，或沒有使用者/DB，或尚未完成初始檢查
+        if (isCloudSyncing || !user || !db || !hasCheckedCloud) return;
 
         // 如果這次的資料時間跟上次同步的一模一樣，就不重複傳
         if (saveData.lastSaveTime === lastCloudSyncTime) return;
@@ -747,6 +750,7 @@ export default function App() {
     const loadFromCloud = async (currentUser) => {
         if (!currentUser || !db) return;
         updateDialogue("☁️ 正在檢查雲端同步狀態...", true);
+        setIsCloudLoading(true);
         try {
             const doc = await db.collection('users').doc(currentUser.uid).get();
             if (doc.exists) {
@@ -755,27 +759,34 @@ export default function App() {
                 const localData = localStr ? JSON.parse(localStr) : null;
 
                 const cloudTime = cloudData.lastSaveTime || 0;
-                const localTime = localData ? (localData.lastSaveTime || 0) : 0;
+                const localTime = (localData && localData.lastSaveTime) || 0;
 
                 console.log(`☁️ Sync Check - Cloud: ${new Date(cloudTime).toLocaleString()}, Local: ${new Date(localTime).toLocaleString()}`);
 
-                // 比對時間戳記，取最新者 (容許 2 秒誤差防止頻繁刷新)
+                // 比對時間戳記，取最新者 (雲端較新則重載)
                 if (!localData || (cloudTime > localTime + 2000)) {
                     updateDialogue("☁️ 發現較新的雲端進度，同步中...", true);
                     localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
                     setTimeout(() => window.location.reload(), 1500);
+                    // 不關閉 isCloudLoading，直到網頁刷新
                 } else {
                     updateDialogue(`☁️ 帳號連線成功，本地進度已是最新`, false);
-                    saveToCloud(localData); // 反向同步回雲端確保一致
+                    setHasCheckedCloud(true);
+                    setIsCloudLoading(false);
+                    saveToCloud(localData);   // 確保同步
                 }
             } else {
                 updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
                 const localStr = localStorage.getItem('pixel_monster_save');
+                setHasCheckedCloud(true); 
+                setIsCloudLoading(false);
                 if (localStr) saveToCloud(JSON.parse(localStr));
             }
         } catch (e) {
             console.error("☁️ Cloud Load Error:", e);
             updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
+            setHasCheckedCloud(true); 
+            setIsCloudLoading(false);
         }
     };
 
@@ -1008,33 +1019,45 @@ export default function App() {
     }, []);
 
 
+    // 追蹤上一次存檔的內容（不含時間戳記），用來判斷是否真的有變動
+    const lastSavedDataRef = useRef("");
+
+    // 核心動作紀錄器：只有發生具體遊戲行為時更新 lastSaveTime
+    const recordGameAction = () => {
+        setLastSaveTime(Date.now());
+    };
+
     // Autosave when essential states change
     useEffect(() => {
         try {
-            const saveData = {
+            const currentData = {
                 saveVersion: SAVE_VERSION,
                 hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch,
                 trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime,
                 deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts,
-                // 冒險數據存檔
-                advStats,
-                inventory,
-                lastAdvTime,
+                advStats, inventory, lastAdvTime,
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
                 todayHasEvolved, todaySpecialEvent, todayEventPriority,
-                lastSaveTime: Date.now()
+                lastSaveTime: lastSaveTime // 使用鎖定的時間戳記
             };
-            const str = JSON.stringify(saveData);
+            
+            const currentDataStr = JSON.stringify(currentData);
+            
+            // 如果內容沒變，就不存檔 (避免開啟網頁就刷掉時間)
+            if (currentDataStr === lastSavedDataRef.current) return;
+
             try {
-                localStorage.setItem('pixel_monster_save', str);
-                // 如果已登入，同步至雲端 (將防抖時間拉長至 5 秒，減少連線壓力)
-                if (user) {
-                    const timer = setTimeout(() => saveToCloud(saveData), 5000);
+                localStorage.setItem('pixel_monster_save', currentDataStr);
+                lastSavedDataRef.current = currentDataStr;
+
+                // 只有在登入且確認過雲端進度後，才啟動自動同步
+                if (user && hasCheckedCloud) {
+                    const timer = setTimeout(() => saveToCloud(JSON.parse(currentDataStr)), 5000);
                     return () => clearTimeout(timer);
                 }
             } catch (e) { }
         } catch (e) { }
-    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority]);
+    }, [user, hasCheckedCloud, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, lastSaveTime]);
 
     // 日記獨立自動存檔（每次 diaryLog 變更時觸發）
     useEffect(() => {
@@ -1192,6 +1215,7 @@ export default function App() {
             setSoulAffinityCounts(s => ({ ...s, [opt.affinity]: (s[opt.affinity] || 0) + 1 }));
         }
 
+        recordGameAction(); // 紀錄遊戲行為
         setMiniGame(p => ({ ...p, status: 'result', points: pts }));
         playSoundEffect('success');
         updateDialogue(`絆 +${pts}！`);
@@ -1239,6 +1263,7 @@ export default function App() {
                 return { ...prev, evs: nextEVs };
             });
 
+            recordGameAction(); // 紀錄特訓成功
             const bonusStr = gotHPBonus ? "與體力" : "";
             updateDialogue(`經過訓練，${statName}${bonusStr}潛能提升了！`);
             logEvent(`特訓成功！${statName}${bonusStr}潛能 +10`);
@@ -1262,6 +1287,7 @@ export default function App() {
             setEvolutionBranch('WILD_' + pendingWildCapture.id);
             setEvolutionStage(1);
             setLastEvolutionTime(Date.now()); // 🔥 捕獲後務必重置進化時鐘，防止繼承舊寵物時間導致瞬間進化或暴斃
+            recordGameAction(); // 紀錄捕獲行為
             setStageTrainWins(0);            // 重置當前階級勝次
 
             // --- 🔹 重置冒險數值 (新怪獸新開場，且給予優質個體保底) 🔹 ---
@@ -1795,6 +1821,7 @@ export default function App() {
 
         logs.push({ msg: `🏆 戰鬥勝利！獲得 ${finalGain} 點成長。`, hpRatio: 1, iconId: myId });
         applyAdvGain(finalGain, logs, advCurrentHP, myId);
+        recordGameAction(); // 紀錄對戰勝利
         if (battleState.mode === 'wild' && enemy) {
             setTodayWildDefeated(n => n + 1);
             const priority = enemy.isElite ? 2 : 1;
@@ -1919,6 +1946,7 @@ export default function App() {
     };
 
     const handleA = () => {
+        if (isCloudLoading) return; // 雲端同步中禁止操作
         if (alertMsg) {
             setAlertMsg("");
             playBloop('pop');
@@ -2024,6 +2052,7 @@ export default function App() {
     };
 
     const handleB = (clickIdx = null) => {
+        if (isCloudLoading) return; // 雲端同步中禁止操作
         const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
         if (alertMsg) {
@@ -2226,6 +2255,7 @@ export default function App() {
     };
 
     const handleC = () => {
+        if (isCloudLoading) return; // 雲端同步中禁止操作
         if (alertMsg) {
             setAlertMsg("");
             playBloop('pop');
@@ -2324,6 +2354,7 @@ export default function App() {
                 setHunger(h => Math.min(100, h + 30));
                 setFeedCount(f => f + 1);
                 setTodayFeedCount(f => f + 1);
+                recordGameAction(); // 紀錄餵食
                 setVel(v => ({ x: v.x, y: -5.0 }));
                 updateDialogue("真好吃！");
                 logEvent("餵食了怪獸。");
@@ -2354,6 +2385,7 @@ export default function App() {
                     break;
                 }
                 setMood(m => Math.min(100, m + 20));
+                recordGameAction(); // 紀錄撫摸
                 setVel(v => ({ x: v.x, y: -4.0 }));
                 updateDialogue("好開心！");
                 logEvent("親密互動。");
@@ -3178,6 +3210,7 @@ export default function App() {
                 }
                 return next.filter((_, i) => i !== itemIdx);
             });
+            recordGameAction(); // 紀錄道具使用
             setSelectedItemIdx(0);
             // 延遲關閉 UI 回到主畫面方便觀看動畫
             setTimeout(() => {
@@ -3347,6 +3380,8 @@ export default function App() {
         // 🔥 VERY IMPORTANT: Remove localStorage data immediately!
         try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
         try { sessionStorage.removeItem('pixel_monster_save'); } catch (e) { }
+        
+        recordGameAction(); // 紀錄重啟行為
     };
 
 
@@ -3496,6 +3531,20 @@ export default function App() {
 
 
                 <div className="lcd-container">
+
+                    {/* 雲端載入遮罩 */}
+                    {isCloudLoading && (
+                        <div style={{
+                            position: 'absolute', inset: 0, zIndex: 10000,
+                            backgroundColor: 'rgba(157, 174, 138, 0.9)',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            color: '#111', fontSize: '12px', fontWeight: 'bold'
+                        }}>
+                            <div className="animate-spin text-2xl mb-2">☁️</div>
+                            <div>雲端同步中...</div>
+                            <div style={{ fontSize: '10px', opacity: 0.6, marginTop: '8px' }}>請稍候</div>
+                        </div>
+                    )}
 
                     {/* 二次確認介面 (LCD 內建) */}
                     {isConfirmingFarewell && (
