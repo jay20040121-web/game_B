@@ -19,7 +19,7 @@ import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } fr
 
 
 import { 
-    apiKey, modelName, PHYSICS, EVOLUTION_TIME, ADV_ITEMS, DIARY_ITEM, 
+    apiKey, modelName, PHYSICS, EVOLUTION_TIME, FINAL_LIFETIME, ADV_ITEMS, DIARY_ITEM, 
     DIARY_MESSAGES_TEMPLATE, ADV_BATTLE_RULES, RAW_Q_DATA, SOUL_QUESTIONS,
     getPetDailyMessage, DIARY_STORAGE_KEY, loadDiaryData, saveDiaryData, getSmartMove
 } from './src/data/gameConfig';
@@ -2240,7 +2240,7 @@ export default function App() {
             const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
 
             if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['P1', 'P2', 'G1', 'G2', 'C', 'F_FAIL1', 'P1_SPECIAL', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
-                const lifespan = evolutionStage >= 4 ? 604800000 : EVOLUTION_TIME[2] * 2;
+                const lifespan = FINAL_LIFETIME;
                 if (elapsed >= lifespan) {
                     clearInterval(checkEvolutionInterval);
                     // D線抽籤：20% 機率靈魂重生
