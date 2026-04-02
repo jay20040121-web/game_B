@@ -86,3 +86,4 @@ backups/
 !monsterData.js
 !styles.css
 !assets/
+config.json
