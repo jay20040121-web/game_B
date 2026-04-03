@@ -327,11 +327,18 @@ export default function App() {
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
 
-    // --- 🛠️ 偵錯系統狀態 (Debug System) ---
-    const isLocalhost = window.location.hostname === 'localhost' ||
+    // --- 🛠️ 偵錯系統與環境隔離 (Environment Isolation) ---
+    const isLocalhost = typeof window !== "undefined" && (
+        window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1' ||
         window.location.hostname === '' ||
-        window.location.protocol === 'file:';
+        window.location.protocol === 'file:'
+    );
+
+    // 🔹 數據隔離關鍵參數：本地開發使用 dev_ 前綴
+    const FIRESTORE_COLLECTION = isLocalhost ? 'dev_users' : 'users';
+    const PEER_PREFIX = isLocalhost ? "gameB_v1_dev_" : "gameB_v1_";
+
     const [showDebug, setShowDebug] = useState(false);
     const [debugOverrides, setDebugOverrides] = useState({
         evolutionMs: null,
@@ -481,7 +488,7 @@ export default function App() {
     // PeerJS 核心連線邏輯 & 穩定性強化
     // =========================================
 
-    const PEER_PREFIX = "gameB_v1_";
+    // 🔹 已移除硬編碼，現在使用頂部定義的動態 PEER_PREFIX
 
     // 統一重置 PvP 狀態與連線 (避免卡死)
     const cleanupPvp = (msg = null, destroyPeer = true) => {
@@ -734,7 +741,8 @@ export default function App() {
             // 【重要】對資料進行深度克隆並移除 undefined (Firestore 不支援 undefined)
             const cleanData = JSON.parse(JSON.stringify(saveData));
 
-            const savePromise = db.collection('users').doc(user.uid).set(cleanData);
+            // 使用環境隔離的集合名稱 (正式: users / 開發: dev_users)
+            const savePromise = db.collection(FIRESTORE_COLLECTION).doc(user.uid).set(cleanData);
 
             await Promise.race([savePromise, timeoutPromise]);
 
@@ -763,7 +771,8 @@ export default function App() {
         updateDialogue("☁️ 正在檢查雲端同步狀態...", true);
         setIsCloudLoading(true);
         try {
-            const doc = await db.collection('users').doc(currentUser.uid).get();
+            // 使用環境隔離的集合名稱 (正式: users / 開發: dev_users)
+            const doc = await db.collection(FIRESTORE_COLLECTION).doc(currentUser.uid).get();
             const localStr = localStorage.getItem('pixel_monster_save');
             let localData = localStr ? JSON.parse(localStr) : null;
 
@@ -2306,8 +2315,8 @@ export default function App() {
             return;
         }
         if (isPvpMode) {
-            if (matchStatus === 'searching') {
-                cleanupPvp("取消搜尋。");
+            if (matchStatus !== 'matched') {
+                cleanupPvp("離開連線大廳。");
             } else {
                 updateDialogue("對戰中無法逃跑！", true);
             }
