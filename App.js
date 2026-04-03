@@ -4401,7 +4401,8 @@ export default function App() {
                                         className="absolute"
                                         style={{
                                             left: pos.x, top: pos.y,
-                                            transform: `translate(-50%, -50%)${!isDead && isSpinning ? ' rotate(180deg)' : ''}`,
+                                            transform: `translate(-50%, -50%) ${!isDead && isSpinning ? 'rotate(180deg)' : ''} ${vel.x < 0 ? 'scaleX(-1)' : 'scaleX(1)'}`,
+                                            transition: 'transform 0.1s ease-out', // 讓翻轉稍微平滑一點
                                             animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none'
                                         }}
                                     >
