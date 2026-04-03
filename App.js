@@ -3171,6 +3171,7 @@ export default function App() {
                 basePower: prev.basePower + points * 2
             };
         });
+        recordGameAction(); // ✨ 修正：確保冒險獲取的戰力能觸發雲端同步
     };
 
     // --- 物品使用邏輯 ---
@@ -3301,6 +3302,7 @@ export default function App() {
             return { ...prev, moves: nextMoves };
         });
         setPendingSkillLearn(null);
+        recordGameAction(); // ✨ 修正：確保學習招式後能觸發雲端同步
         playBloop('success');
         updateDialogue("學會了新招式！");
     };
