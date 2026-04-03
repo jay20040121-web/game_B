@@ -2817,7 +2817,7 @@ export default function App() {
                 } else if (['A', 'B', 'C'].includes(evolutionBranch)) {
                     // ★ 已在 A/B/C 一般線（Stage>=2）：三線互通
                     if (evolutionStage === 3 && h < 50 && m < 50) {
-                        nextBranch = 'DRAGON'; // Stage 3→4 特殊龍進化
+                        nextBranch = 'FAIL_ABC'; // Stage 3→4 一般線失敗進化 (3D獸)
                     } else if (m >= 50 && h >= 50) {
                         nextBranch = Math.random() < 0.5 ? 'A' : 'B';
                     } else if (m >= 50) {
@@ -3020,7 +3020,7 @@ export default function App() {
             eType = eStatsRef.types;
             const isBaby = evolutionStage < 2;
             const isElite = Math.random() < 0.12 && !isBaby;
-            eLevel = Math.max(1, isElite ? level + 5 : Math.floor(level * (0.8 + Math.random() * 0.4)));
+            eLevel = Math.min(100, Math.min(level, isElite ? level : Math.floor(level * (0.8 + Math.random() * 0.4))));
 
             // 野生怪隨機分配 IV 與 性格修正
             const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
@@ -3049,7 +3049,7 @@ export default function App() {
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
             };
         } else if (mode === 'pvp' && pvpOpponentData) {
-            eLevel = pvpOpponentData?.stats?.level || level;
+            eLevel = Math.min(100, pvpOpponentData?.stats?.level || level);
             const enemyData = pvpOpponentData;
 
             // 使用對手傳來的原始數據，完全排除本地進化或模式修正
@@ -3077,7 +3077,7 @@ export default function App() {
             };
         } else {
             enemyData = generateTrainerOpponent(evolutionStage);
-            eLevel = level + 2; // 訓練家略強
+            eLevel = Math.min(100, level); // 訓練家與玩家等級持平
             const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
             const eNatureMods = getNatureMods(eNature);
             const eIVs = { hp: 20, atk: 20, def: 20, spd: 20 };
@@ -3522,7 +3522,8 @@ export default function App() {
             if (branch === 'GR_VILEPLUME_SOUL') return 45;    // Vileplume
             if (branch === 'GR_VICTREEBEL_SOUL') return 71;   // Victreebel
             if (branch === 'GR_EXEGGUTOR_SOUL') return 103;   // Exeggutor
-            if (branch === 'DRAGON') return 137; // Dratini
+            if (branch === 'FAIL_ABC') return 137; // 3D獸 (一般線失敗分支)
+            if (branch === 'DRAGON') return 147; // 迷你龍 (靈魂龍進化)
             if (branch === 'G1') return 94;  // 耿鬼（G 線最終）
             if (branch === 'G2') return 65;  // 胡地（G 線最終）
             if (branch === 'P1_SPECIAL') return 82; // Magneton
