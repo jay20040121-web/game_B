@@ -7919,10 +7919,26 @@ function App() {
         const docRef = db.collection('pvp_leaderboard').doc(uid);
         const myId = getMonsterId();
 
+        // 📅 取得今天的日期字串 (台北時間)
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }); // "YYYY-MM-DD"
+
         try {
             await db.runTransaction(async (transaction) => {
                 const sfDoc = await transaction.get(docRef);
-                let data = sfDoc.exists ? sfDoc.data() : { wins: 0, losses: 0, monsterId: myId, displayName: user.displayName || "未知玩家" };
+                let data = sfDoc.exists ? sfDoc.data() : { 
+                    wins: 0, 
+                    losses: 0, 
+                    monsterId: myId, 
+                    displayName: user.displayName || "未知玩家",
+                    lastResetDate: todayStr
+                };
+
+                // 🔄 每日重置邏輯：如果日期變了，清空勝負紀錄
+                if (data.lastResetDate !== todayStr) {
+                    data.wins = 0;
+                    data.losses = 0;
+                    data.lastResetDate = todayStr;
+                }
 
                 if (isWin) data.wins += 1;
                 else data.losses += 1;
@@ -7931,7 +7947,8 @@ function App() {
                 data.displayName = user.displayName || "未知玩家";
                 
                 const total = data.wins + data.losses;
-                const winRate = data.wins / total;
+                const winRate = data.wins / (total || 1);
+                // 評分公式優化：包含勝場權重與勝率加成
                 data.score = (data.wins * 10) + (total * 2) + (winRate * 50);
                 data.winRate = winRate;
                 data.lastUpdated = window.firebase.firestore.FieldValue.serverTimestamp();
@@ -7952,10 +7969,15 @@ function App() {
         }
         
         setIsLeaderboardLoading(true);
-        setLeaderboardPage(0); // 新增：每次讀取重置到第一頁
+        setLeaderboardPage(0);
+
+        // 📅 取得今天的日期字串 (台北時間) 進行過濾
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+
         try {
-            console.log("Fetching top 50 scores...");
+            console.log(`Fetching top 50 scores for ${todayStr}...`);
             const snapshot = await db.collection('pvp_leaderboard')
+                .where('lastResetDate', '==', todayStr) // 🔹 只讀取今天的紀錄
                 .orderBy('score', 'desc')
                 .limit(50)
                 .get();
