@@ -1076,7 +1076,7 @@ export default function App() {
         setLastSaveTime(Date.now());
     };
 
-    // Autosave when essential states change
+    // 1️⃣ 本地存檔：負責頻繁更新 localStorage (包含每秒跳動的數值)
     useEffect(() => {
         try {
             const currentData = {
@@ -1087,27 +1087,29 @@ export default function App() {
                 advStats, inventory, lastAdvTime,
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
                 todayHasEvolved, todaySpecialEvent, todayEventPriority,
-                lastSaveTime: lastSaveTime, // 使用鎖定的時間戳記
-                ownerUid: user?.uid || null // 標記所有者
+                lastSaveTime: lastSaveTime,
+                ownerUid: user?.uid || null
             };
-            
             const currentDataStr = JSON.stringify(currentData);
-            
-            // 如果內容沒變，就不存檔 (避免開啟網頁就刷掉時間)
             if (currentDataStr === lastSavedDataRef.current) return;
 
-            try {
-                localStorage.setItem('pixel_monster_save', currentDataStr);
-                lastSavedDataRef.current = currentDataStr;
-
-                // 只有在登入且確認過雲端進度後，才啟動自動同步
-                if (user && hasCheckedCloud) {
-                    const timer = setTimeout(() => saveToCloud(JSON.parse(currentDataStr)), 5000);
-                    return () => clearTimeout(timer);
-                }
-            } catch (e) { }
+            localStorage.setItem('pixel_monster_save', currentDataStr);
+            lastSavedDataRef.current = currentDataStr;
         } catch (e) { }
-    }, [user, hasCheckedCloud, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, lastSaveTime]);
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, lastSaveTime]);
+
+    // 2️⃣ 雲端同步：獨立監控重大行為，不受 hunger/mood 跳動影響
+    useEffect(() => {
+        if (user && hasCheckedCloud && lastSaveTime > 0) {
+            // 只有當重大動作發生 (lastSaveTime 變更) 時，才排程同步
+            // 使用較短的 2 秒延遲，且不會被 hunger 衰減給中斷
+            const timer = setTimeout(() => {
+                const latestData = JSON.parse(lastSavedDataRef.current || '{}');
+                saveToCloud(latestData);
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [user, hasCheckedCloud, lastSaveTime]);
 
     // 日記獨立自動存檔（每次 diaryLog 變更時觸發）
     useEffect(() => {
