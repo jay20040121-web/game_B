@@ -4327,7 +4327,7 @@ export default function App() {
                                     )}
 
                                     {miniGame && (
-                                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-start pt-8 pointer-events-none">
+                                        <div className="absolute inset-0 z-60 flex flex-col items-center justify-start pt-8 pointer-events-none">
                                             {miniGame.type === 'reaction' && (
                                                 <>
                                                     {miniGame.status === 'ready' && <span className="text-[20px] font-bold animate-pulse text-[#111]">READY?</span>}
