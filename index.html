@@ -7407,6 +7407,14 @@ const playBloop = (type) => {
  */
 const SAVE_VERSION = 12;
 
+// --- 🔹 環境偵測：判斷是否在 LINE/FB/IG 等 In-App Browser 🔹 ---
+const isInAppBrowser = typeof navigator !== "undefined" && (
+    /line/i.test(navigator.userAgent) ||
+    /fbav/i.test(navigator.userAgent) ||
+    /instagram/i.test(navigator.userAgent) ||
+    /micromessenger/i.test(navigator.userAgent)
+);
+
 
 
 const loadSaveData = () => {
@@ -8145,32 +8153,55 @@ function App() {
     const loginWithGoogle = async () => {
         if (!auth || !googleProvider) {
             console.error("Firebase not initialized", { auth, googleProvider });
-            setAlertMsg("系統尚未啟動: Firebase 初始化失敗。請確認網路連線或稍後再試。");
+            setAlertMsg("系統尚未啟動: Firebase 初始化失敗。");
+            return;
+        }
+
+        // --- 🚩 偵測到 In-App Browser 時主動提醒 ---
+        if (isInAppBrowser) {
+            updateDialogue("⚠️ 偵測到 LINE/FB 內部瀏覽器。\nGoogle 不支援在此登入。", true);
+            setAlertMsg("請點擊右上角 [...] 並選擇「使用瀏覽器開啟」再登入。");
+            playBloop('fail');
             return;
         }
 
         updateDialogue("⚡ 正在連結 Google 伺服器...", true);
         try {
-            // 使用更積極的錯誤補救方案
+            // 首先嘗試彈出視窗 (Popup)
             const result = await auth.signInWithPopup(googleProvider);
             if (result.user) {
                 updateDialogue(`🎉 登入成功: ${result.user.displayName}`, false);
                 setAlertMsg(`成功連動帳號: ${result.user.displayName}`);
                 playBloop('success');
-                // 延遲重整以確保資料夾載入
                 setTimeout(() => loadFromCloud(result.user), 1000);
-            } else {
-                updateDialogue("⚠️ 登入已取消或找不到使用者資訊。", true);
             }
         } catch (e) {
             console.error("☁️ Login Error:", e);
+            
+            // --- 🚨 核心修正：處理 disallowed_useragent (Google 政策阻擋) ---
+            if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
+                // 嘗試轉為 Redirect 模式，這在某些行動瀏覽器較穩定
+                updateDialogue("正在切換至重新導向登入模式...", true);
+                try {
+                    await auth.signInWithRedirect(googleProvider);
+                    return; // 程序會跳轉網頁
+                } catch (reErr) {
+                    console.error("Redirect Error:", reErr);
+                }
+            }
+
             let errMsg = e.message;
             if (e.code === 'auth/popup-closed-by-user') errMsg = "登入視窗被關閉了。";
-            if (e.code === 'auth/unauthorized-domain') errMsg = "此網域尚未被授權，請檢查 Firebase 設定。";
-            if (e.code === 'auth/operation-not-allowed') errMsg = "請在 Firebase 控制台啟用 Google 登入方法。";
-
-            updateDialogue(`❌ 登入失敗: ${errMsg}`, true);
-            setAlertMsg(`登入失敗: ${errMsg}`);
+            if (e.code === 'auth/unauthorized-domain') errMsg = "網域尚未授權，請至 Firebase 設定。";
+            
+            // 針對政策阻擋的特別說明
+            if (e.message.includes('disallowed_useragent') || e.code?.includes('disallowed-user-agent')) {
+                updateDialogue("❌ Google 政策限制：請點擊右上角「...」並選「使用瀏覽器開啟」。", true);
+                setAlertMsg("此瀏覽器環境不符合 Google 安全政策。");
+            } else {
+                updateDialogue(`❌ 登入失敗: ${errMsg}`, true);
+                setAlertMsg(`登入失敗: ${errMsg}`);
+            }
         }
     };
 
