@@ -612,7 +612,7 @@ export default function App() {
                 type: 'INIT',
                 data: {
                     id: myId,
-                    name: "網路玩家",
+                    name: user?.displayName || "網路玩家",
                     stats: { hp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, level: pLevel },
                     type: pType,
                     moves: pMoves
