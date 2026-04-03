@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 
 <head>
@@ -31,9 +31,10 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback } = React;
-        const { motion } = window.Motion || { motion: { div: "div" } };
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+        const { motion } = window.Motion || { motion: { div: 'div' } };
 
+/* --- Source: monsterData.js --- */
 // Generated from PokeAPI (zh-Hant)
 
 const MONSTER_NAMES = {
@@ -6789,191 +6790,36 @@ const calcFinalStat = (type, speciesId, iv, ev, level, natureMod = 1.0) => {
 };
 
 
-/* --- SpriteRenderer.js --- */
-
-// ==========================================
-// 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
-// ==========================================
-const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
-    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/${id}.gif` : `assets/sprites/${id}.png`);
-
-    useEffect(() => {
-        setImgSrc(animated ? `assets/animated/${id}.gif` : `assets/sprites/${id}.png`);
-    }, [id, animated]);
-
-    if (!id) return null;
-
-    const baseSize = 68;
-    const targetSize = baseSize * scale;
-
-    return (
-        <div 
-            className={`dithered-monster-container ${className}`}
-            style={{ 
-                width: `${targetSize}px`, 
-                height: `${targetSize}px`,
-                minWidth: `${targetSize}px`,
-                minHeight: `${targetSize}px`,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexShrink: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'visible',
-            }}
-        >
-            <img 
-                src={imgSrc}
-                className="pixel-rendering"
-                style={{ 
-                    filter: 'grayscale(1) contrast(2) brightness(0.6)',
-                    mixBlendMode: 'multiply',
-                    width: '100%',
-                    height: '100%',
-                    minWidth: '100%',
-                    minHeight: '100%',
-                    objectFit: 'contain',
-                    imageRendering: 'pixelated',
-                    opacity: 1.0,
-                    pointerEvents: 'none',
-                    // GIF 特殊定位：修正縮放後「浮在空中」的問題
-                    transform: (imgSrc.toLowerCase().endsWith('.gif')) 
-                        ? 'scale(0.55) translateY(0)' 
-                        : 'none',
-                    transformOrigin: 'bottom center'
-                }}
-                alt="Monster Sprite"
-                onError={() => {
-                    if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`assets/sprites/${id}.png`);
-                    }
-                }}
-            />
-        </div>
-    );
+/* --- Source: src/utils/firebase.js --- */
+// Firebase Initialization (Compat for UMD)
+const firebaseConfig = {
+    apiKey: "AIzaSyC4dn9ugKWNRGhaMpSiTV40GnuH-cDyvVI",
+    authDomain: "gamea-42ecd.firebaseapp.com",
+    projectId: "gamea-42ecd",
+    storageBucket: "gamea-42ecd.firebasestorage.app",
+    messagingSenderId: "68349892976",
+    appId: "1:68349892976:web:b0f572af58cfa6bdb397b5",
+    measurementId: "G-VJ5K0P6321"
 };
 
-// ==========================================
-// 背面 4-Color 網點運算引擎
-// ==========================================
-const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
-    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/back/${id}.gif` : `assets/back_sprites/${id}.png`);
+// 安全檢查：確保在瀏覽器環境且 firebase 已載入
+let auth = null;
+let db = null;
+let googleProvider = null;
 
-    useEffect(() => {
-        setImgSrc(animated ? `assets/animated/back/${id}.gif` : `assets/back_sprites/${id}.png`);
-    }, [id, animated]);
-
-    if (!id) return null;
-
-    const baseSize = 68;
-    const targetSize = baseSize * scale;
-
-    return (
-        <div 
-            className={`dithered-monster-container ${className}`}
-            style={{ 
-                width: `${targetSize}px`, 
-                height: `${targetSize}px`,
-                minWidth: `${targetSize}px`,
-                minHeight: `${targetSize}px`,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                flexShrink: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'visible',
-            }}
-        >
-            <img 
-                src={imgSrc}
-                className="pixel-rendering"
-                style={{ 
-                    filter: 'grayscale(1) contrast(2) brightness(0.6)',
-                    mixBlendMode: 'multiply',
-                    width: '100%',
-                    height: '100%',
-                    minWidth: '100%',
-                    minHeight: '100%',
-                    objectFit: 'contain',
-                    imageRendering: 'pixelated',
-                    opacity: 1.0,
-                    pointerEvents: 'none',
-                    // GIF 特殊定位：與正面一致
-                    transform: (imgSrc.toLowerCase().endsWith('.gif')) 
-                        ? 'scale(0.55) translateY(0)' 
-                        : 'none',
-                    transformOrigin: 'bottom center'
-                }}
-                alt="Monster Back Sprite"
-                onError={() => {
-                    if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`assets/back_sprites/${id}.png`);
-                    }
-                }}
-            />
-        </div>
-    );
-};
-
-// ==========================================
-// 點陣圖及動畫共用資源
-// ==========================================
-const ICONS = {
-    status: ["  3     ", "  33    ", " 333  3 ", " 3333 33", "33333333", "33333333", "        ", "        "],
-    feed: ["   33   ", "  3333  ", " 333333 ", "33333333", "33333333", " 333333 ", "  3333  ", "   33   "],
-    clean: ["        ", "   33   ", "  3333  ", " 333333 ", "33333333", "33333333", " 333333 ", "        "],
-    pet: ["   33   ", "  3333  ", "  33 33 ", " 33  33 ", " 3   33 ", " 3   3  ", "  3 3   ", "   3    "],
-    train: [" 33  33 ", " 333333 ", "   33   ", " 333333 ", "   33   ", " 333333 ", " 33  33 ", "        "],
-    focus: ["   33   ", "  3333  ", " 333333 ", "   33   ", "  33    ", " 33     ", " 3      ", "        "],
-    mail: ["        ", "33333333", "33    33", "3 3  3 3", "3  33  3", "3      3", "33333333", "        "],
-    info: ["   33   ", "  3333  ", "  3333  ", "   33   ", "        ", "   33   ", "  3333  ", "   33   "],
-    heart: ["  33 33 ", " 3333 33", "33333333", "33333333", " 333333 ", " 333333 ", "  3333  ", "   33   "],
-    redHeart: ["  RR RR ", " RRRR RR", "RRRRRRRR", "RRRRRRRR", " RRRRRR ", " RRRRRR ", "  RRRR  ", "   RR   "],
-    ghost: [" 333333 ", "33333333", "333  333", "333  333", "33333333", "33333333", " 3 3 3 3", " 3 3 3 3"],
-    runaway: ["        ", " 3  3   ", "333 333 ", " 3  3   ", "        ", "  3  3  ", "  33 33 ", "   3 3  "],
-    footprint: [
-        " 3   3 ", // Toes
-        "  3 3  ", 
-        "  333  ", // Pad
-        " 33333 ",
-        "  333  "
-    ]
-};
-
-const COLOR_MAP = {
-    'R': '#ff5252'
-};
-
-// --- CSS Animations for Battle ---
-const BATTLE_STYLES = `
-@keyframes damage-flash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.1; }
+if (typeof window !== "undefined" && window.firebase) {
+    if (!window.firebase.apps.length) {
+        window.firebase.initializeApp(firebaseConfig);
+    }
+    auth = window.firebase.auth();
+    db = window.firebase.firestore();
+    googleProvider = new window.firebase.auth.GoogleAuthProvider();
 }
-.damage-flash {
-    animation: damage-flash 0.1s linear infinite;
-}
-`;
 
-const PixelArt = ({ sprite, className = "", scale = 2 }) => {
-    if (!sprite) return null;
-    const size = sprite.length;
-    return (
-        <div className={`pixel-rendering ${className}`} style={{ width: size * scale, height: size * scale, display: 'inline-block' }}>
-            <svg viewBox={`0 0 ${size} ${size}`} width="100%" height="100%" style={{ display: 'block' }}>
-                {sprite.map((row, y) =>
-                    row.split('').map((char, x) => (char !== ' ' && char !== '.') && (
-                        <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={COLOR_MAP[char] || '#000000'} />
-                    ))
-                )}
-            </svg>
-        </div>
-    );
-};
+//[Sync] Named Export Removed
 
 
-
-/* --- gameConfig.js --- */
+/* --- Source: src/data/gameConfig.js --- */
 const apiKey = "";
 const modelName = "gemini-2.5-flash-preview-09-2025";
 
@@ -7155,205 +7001,370 @@ const generateSoulQuestions = () => {
 };
 const SOUL_QUESTIONS = generateSoulQuestions();
 
+//[Sync] Named Export Removed
 
 
-/* --- battleEngine.js --- */
-const checkPreTurnStatus = (state, rng = Math.random) => {
-    if (!state.status) return { canAct: true, message: null };
-    
-    let nextStatus = state.status;
-    let nextTurns = state.statusTurns || 0;
+/* --- Source: src/components/SpriteRenderer.js --- */
+//[Sync] Import Removed
+// ==========================================
+// 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
+// ==========================================
+const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
+    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/${id}.gif` : `assets/sprites/${id}.png`);
 
-    if (state.status === 'sleep') {
-        if (state.statusTurns <= 0) {
-            return { canAct: true, message: "經過一番掙扎，終於醒來了！", nextStatus: null, nextTurns: 0 };
-        } else {
-            return { canAct: false, message: "正在呼呼大睡...", nextStatus: 'sleep', nextTurns: state.statusTurns - 1 };
-        }
-    }
-    
-    if (state.status === 'freeze') {
-        if (rng() < 0.2) {
-            return { canAct: true, message: "身上的冰塊融化了！", nextStatus: null, nextTurns: 0 };
-        } else {
-            return { canAct: false, message: "因為被冰凍了而無法行動。", nextStatus: 'freeze', nextTurns: state.statusTurns };
-        }
-    }
-    
-    if (state.status === 'paralysis') {
-        if (rng() < 0.25) {
-            return { canAct: false, message: "因為麻痺而無法動彈！", nextStatus: 'paralysis', nextTurns: state.statusTurns };
-        }
-    }
+    useEffect(() => {
+        setImgSrc(animated ? `assets/animated/${id}.gif` : `assets/sprites/${id}.png`);
+    }, [id, animated]);
 
-    if (state.status === 'confusion') {
-        if (state.statusTurns <= 0) {
-            return { canAct: true, message: "頭部不再發暈，清醒過來了！", nextStatus: null, nextTurns: 0 };
-        } else {
-            const nextT = state.statusTurns - 1;
-            if (rng() < 0.33) {
-                return { canAct: false, message: "因混亂而攻擊了自己！", selfDamage: true, nextStatus: 'confusion', nextTurns: nextT };
-            }
-            return { canAct: true, message: "處於混亂中...", nextStatus: 'confusion', nextTurns: nextT };
-        }
-    }
-    
-    return { canAct: true, message: null, nextStatus, nextTurns };
+    if (!id) return null;
+
+    const baseSize = 68;
+    const targetSize = baseSize * scale;
+
+    return (
+        <div 
+            className={`dithered-monster-container ${className}`}
+            style={{ 
+                width: `${targetSize}px`, 
+                height: `${targetSize}px`,
+                minWidth: `${targetSize}px`,
+                minHeight: `${targetSize}px`,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'visible',
+            }}
+        >
+            <img 
+                src={imgSrc}
+                className="pixel-rendering"
+                style={{ 
+                    filter: 'grayscale(1) contrast(2) brightness(0.6)',
+                    mixBlendMode: 'multiply',
+                    width: '100%',
+                    height: '100%',
+                    minWidth: '100%',
+                    minHeight: '100%',
+                    objectFit: 'contain',
+                    imageRendering: 'pixelated',
+                    opacity: 1.0,
+                    pointerEvents: 'none',
+                    // GIF 特殊定位：修正縮放後「浮在空中」的問題
+                    transform: (imgSrc.toLowerCase().endsWith('.gif')) 
+                        ? 'scale(0.55) translateY(0)' 
+                        : 'none',
+                    transformOrigin: 'bottom center'
+                }}
+                alt="Monster Sprite"
+                onError={() => {
+                    if (imgSrc.toLowerCase().endsWith('.gif')) {
+                        setImgSrc(`assets/sprites/${id}.png`);
+                    }
+                }}
+            />
+        </div>
+    );
 };
 
-const applyMoveEffects = (move, targetState, sourceState, rng = Math.random) => {
-    let messageObjs = [];
-    
-    // 1. Ailment (異常狀態附加)
-    if (move.ailment && move.ailment !== 'none' && !targetState.status) {
-        let chance = move.ailment_chance || 100;
-        if (rng() * 100 < chance) {
-            targetState.status = move.ailment;
-            
-            const ailmentMap = {
-                'burn': "被燒傷了！",
-                'paralysis': "被麻痺了！",
-                'poison': "中毒了！",
-                'sleep': "陷入了沉睡！",
-                'freeze': "被冰凍了！",
-                'confusion': "混亂了！",
-                'leech-seed': "被種下了種子！",
-                'trap': "被束縛住了！"
-            };
-            
-            // 設定持續回合
-            if (move.ailment === 'sleep') targetState.statusTurns = Math.floor(rng() * 3) + 1;
-            else if (move.ailment === 'confusion') targetState.statusTurns = Math.floor(rng() * 3) + 2; // 2~4 回合
-            else if (move.ailment === 'leech-seed' || move.ailment === 'trap') targetState.statusTurns = 5; // 預設 5 回合
-            
-            messageObjs.push({
-                text: ailmentMap[move.ailment] || `陷入了 ${move.ailment} 狀態！`,
-                targetType: 'target'
-            });
-        }
-    }
-    
-    // 2. Flinch (畏縮)
-    if (move.flinch_chance && move.flinch_chance > 0) {
-        if (rng() * 100 < move.flinch_chance) {
-            if (!targetState.status) {
-                targetState.flinch = true; 
-            }
-        }
-    }
+// ==========================================
+// 背面 4-Color 網點運算引擎
+// ==========================================
+const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
+    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/back/${id}.gif` : `assets/back_sprites/${id}.png`);
 
-    // 3. Stat changes (能力階級)
-    if (move.stat_changes && move.stat_changes.length > 0) {
-        let chance = move.stat_chance || 100;
-        if (chance === 0) chance = 100;
-        
-        if (rng() * 100 <= chance) {
-            const isSelf = move.stat_target === 'self';
-            let targetObj = isSelf ? sourceState : targetState;
-            
-            move.stat_changes.forEach(sc => {
-                const stat = sc.stat; 
-                if (!targetObj.statStages) targetObj.statStages = { atk: 0, def: 0, spd: 0 };
-                
-                let oldStage = targetObj.statStages[stat] || 0;
-                let newStage = Math.max(-6, Math.min(6, oldStage + sc.change));
-                targetObj.statStages[stat] = newStage;
-                
-                const statNameMap = { atk: "攻擊", def: "防禦", spd: "速度" };
-                const sName = statNameMap[stat] || stat;
-                if (newStage > oldStage) {
-                    messageObjs.push({ text: `${sName} 提升了！`, targetType: isSelf ? 'source' : 'target' });
-                } else if (newStage < oldStage) {
-                    messageObjs.push({ text: `${sName} 下降了！`, targetType: isSelf ? 'source' : 'target' });
-                }
-            });
-        }
-    }
-    
-    // 4. Drain & Recoil (吸血與反作用力) - 回傳到外界處理
-    let drainPct = move.drain || 0;
-    let recoilPct = move.recoil || 0;
-    
-    return { messages: messageObjs, drainPct, recoilPct };
+    useEffect(() => {
+        setImgSrc(animated ? `assets/animated/back/${id}.gif` : `assets/back_sprites/${id}.png`);
+    }, [id, animated]);
+
+    if (!id) return null;
+
+    const baseSize = 68;
+    const targetSize = baseSize * scale;
+
+    return (
+        <div 
+            className={`dithered-monster-container ${className}`}
+            style={{ 
+                width: `${targetSize}px`, 
+                height: `${targetSize}px`,
+                minWidth: `${targetSize}px`,
+                minHeight: `${targetSize}px`,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'visible',
+            }}
+        >
+            <img 
+                src={imgSrc}
+                className="pixel-rendering"
+                style={{ 
+                    filter: 'grayscale(1) contrast(2) brightness(0.6)',
+                    mixBlendMode: 'multiply',
+                    width: '100%',
+                    height: '100%',
+                    minWidth: '100%',
+                    minHeight: '100%',
+                    objectFit: 'contain',
+                    imageRendering: 'pixelated',
+                    opacity: 1.0,
+                    pointerEvents: 'none',
+                    // GIF 特殊定位：與正面一致
+                    transform: (imgSrc.toLowerCase().endsWith('.gif')) 
+                        ? 'scale(0.55) translateY(0)' 
+                        : 'none',
+                    transformOrigin: 'bottom center'
+                }}
+                alt="Monster Back Sprite"
+                onError={() => {
+                    if (imgSrc.toLowerCase().endsWith('.gif')) {
+                        setImgSrc(`assets/back_sprites/${id}.png`);
+                    }
+                }}
+            />
+        </div>
+    );
 };
 
-const processPostTurnStatus = (state, maxHp, rng = Math.random) => {
-    if (!state.status) return { dmg: 0, heal: 0, message: null };
-    
-    let nextStatus = state.status;
-    let nextTurns = state.statusTurns || 0;
-
-    if (state.status === 'burn') {
-        let dmg = Math.max(1, Math.floor(maxHp / 16));
-        return { dmg, heal: 0, message: "受到了燒傷的傷害。", nextStatus, nextTurns };
-    }
-    if (state.status === 'poison') {
-        let dmg = Math.max(1, Math.floor(maxHp / 8));
-        return { dmg, heal: 0, message: "受到了劇毒的傷害。", nextStatus, nextTurns };
-    }
-    if (state.status === 'leech-seed') {
-        if (state.statusTurns <= 0) { 
-            return { dmg: 0, heal: 0, message: "寄生種子枯萎了。", nextStatus: null, nextTurns: 0 }; 
-        }
-        let dmg = Math.max(1, Math.floor(maxHp / 8));
-        return { dmg, heal: dmg, message: "被寄生種子吸收了生命。", nextStatus, nextTurns: state.statusTurns - 1 };
-    }
-    if (state.status === 'trap') {
-        if (state.statusTurns <= 0) { 
-            return { dmg: 0, heal: 0, message: "束縛被解開了。", nextStatus: null, nextTurns: 0 }; 
-        }
-        let dmg = Math.max(1, Math.floor(maxHp / 16));
-        return { dmg, heal: 0, message: "受到束縛的傷害。", nextStatus, nextTurns: state.statusTurns - 1 };
-    }
-    return { dmg: 0, heal: 0, message: null, nextStatus, nextTurns };
+// ==========================================
+// 點陣圖及動畫共用資源
+// ==========================================
+const ICONS = {
+    status: ["  3     ", "  33    ", " 333  3 ", " 3333 33", "33333333", "33333333", "        ", "        "],
+    feed: ["   33   ", "  3333  ", " 333333 ", "33333333", "33333333", " 333333 ", "  3333  ", "   33   "],
+    clean: ["        ", "   33   ", "  3333  ", " 333333 ", "33333333", "33333333", " 333333 ", "        "],
+    pet: ["   33   ", "  3333  ", "  33 33 ", " 33  33 ", " 3   33 ", " 3   3  ", "  3 3   ", "   3    "],
+    train: [" 33  33 ", " 333333 ", "   33   ", " 333333 ", "   33   ", " 333333 ", " 33  33 ", "        "],
+    focus: ["   33   ", "  3333  ", " 333333 ", "   33   ", "  33    ", " 33     ", " 3      ", "        "],
+    mail: ["        ", "33333333", "33    33", "3 3  3 3", "3  33  3", "3      3", "33333333", "        "],
+    info: ["   33   ", "  3333  ", "  3333  ", "   33   ", "        ", "   33   ", "  3333  ", "   33   "],
+    heart: ["  33 33 ", " 3333 33", "33333333", "33333333", " 333333 ", " 333333 ", "  3333  ", "   33   "],
+    redHeart: ["  RR RR ", " RRRR RR", "RRRRRRRR", "RRRRRRRR", " RRRRRR ", " RRRRRR ", "  RRRR  ", "   RR   "],
+    ghost: [" 333333 ", "33333333", "333  333", "333  333", "33333333", "33333333", " 3 3 3 3", " 3 3 3 3"],
+    runaway: ["        ", " 3  3   ", "333 333 ", " 3  3   ", "        ", "  3  3  ", "  33 33 ", "   3 3  "],
+    footprint: [
+        " 3   3 ", // Toes
+        "  3 3  ", 
+        "  333  ", // Pad
+        " 33333 ",
+        "  333  "
+    ]
 };
 
-const getStatMultiplier = (stage) => {
-    if (!stage || stage === 0) return 1.0;
-    // 使用指數成長曲線 (1.5 倍率)，讓數值變化更有感
-    if (stage > 0) {
-        return Math.pow(1.5, stage);
-    } else {
-        return Math.pow(0.66, -stage);
-    }
+const COLOR_MAP = {
+    'R': '#ff5252'
 };
 
-
-/* --- firebase.js --- */
-// Firebase Initialization (Compat for UMD)
-const firebaseConfig = {
-    apiKey: "AIzaSyC4dn9ugKWNRGhaMpSiTV40GnuH-cDyvVI",
-    authDomain: "gamea-42ecd.firebaseapp.com",
-    projectId: "gamea-42ecd",
-    storageBucket: "gamea-42ecd.firebasestorage.app",
-    messagingSenderId: "68349892976",
-    appId: "1:68349892976:web:b0f572af58cfa6bdb397b5",
-    measurementId: "G-VJ5K0P6321"
-};
-
-// 安全檢查：確保在瀏覽器環境且 firebase 已載入
-let auth = null;
-let db = null;
-let googleProvider = null;
-
-if (typeof window !== "undefined" && window.firebase) {
-    if (!window.firebase.apps.length) {
-        window.firebase.initializeApp(firebaseConfig);
-    }
-    auth = window.firebase.auth();
-    db = window.firebase.firestore();
-    googleProvider = new window.firebase.auth.GoogleAuthProvider();
+// --- CSS Animations for Battle ---
+const BATTLE_STYLES = `
+@keyframes damage-flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.1; }
 }
+.damage-flash {
+    animation: damage-flash 0.1s linear infinite;
+}
+`;
+
+const PixelArt = ({ sprite, className = "", scale = 2 }) => {
+    if (!sprite) return null;
+    const size = sprite.length;
+    return (
+        <div className={`pixel-rendering ${className}`} style={{ width: size * scale, height: size * scale, display: 'inline-block' }}>
+            <svg viewBox={`0 0 ${size} ${size}`} width="100%" height="100%" style={{ display: 'block' }}>
+                {sprite.map((row, y) =>
+                    row.split('').map((char, x) => (char !== ' ' && char !== '.') && (
+                        <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={COLOR_MAP[char] || '#000000'} />
+                    ))
+                )}
+            </svg>
+        </div>
+    );
+};
+
+//[Sync] Named Export Removed
 
 
+/* --- Source: src/components/MonsterDex.js --- */
+//[Sync] Import Removed
+//[Sync] Import Removed
+// 📖 圖鑑分類定義 (DEX_GROUPS)
+// 根據 App.js 的 getMonsterId 與 evolutionBranch 邏輯整理
+const DEX_GROUPS = [
+    {
+        id: 'standard',
+        name: '一般進化線',
+        lines: [
+            { name: '尼多王分支 (勇猛)', stages: ["132", "32", "33", "34"], reqs: ["-", "培育: 飽足度 > 80", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '尼多后分支 (柔美)', stages: ["132", "29", "30", "31"], reqs: ["-", "培育: 心情值 > 80", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '拉達分支 (平凡)', stages: ["132", "19", "20"], reqs: ["-", "培育: 一般隨機", "進化: 訓練勝次 > 8"] }
+        ]
+    },
+    {
+        id: 'soul_fire',
+        name: '靈魂進化 - 火',
+        lines: [
+            { name: '噴火龍線', stages: ["4", "5", "6"], reqs: ["靈魂綁定: 火", "進化: 訓練勝次 > 30", "進化: 訓練勝次 > 50"] },
+            { name: '九尾線', stages: ["37", "38"], reqs: ["靈魂綁定: 火 & 飽足與心情 > 50", "進化: 訓練勝次 > 50"] },
+            { name: '風速狗線', stages: ["58", "59"], reqs: ["靈魂綁定: 火 & 性格熱血", "進化: 訓練勝次 > 50"] },
+            { name: '烈焰馬線', stages: ["77", "78"], reqs: ["靈魂綁定: 火 & 性格無厘頭", "進化: 訓練勝次 > 50"] },
+            { name: '嘎啦嘎啦線', stages: ["104", "105"], reqs: ["靈魂綁定: 火 & 性格頑固", "進化: 訓練勝次 > 50"] }
+        ]
+    },
+    {
+        id: 'soul_water',
+        name: '靈魂進化 - 水',
+        lines: [
+            { name: '水箭龜線', stages: ["7", "8", "9"], reqs: ["靈魂綁定: 水", "進化: 訓練勝次 > 30", "進化: 訓練勝次 > 50"] },
+            { name: '快龍線', stages: ["147", "148", "149"], reqs: ["靈魂綁定: 水 & 訓練勝次 > 8", "進化: 訓練勝次 > 30", "進化: 訓練勝次 > 50"] },
+            { name: '暴鯉龍線', stages: ["129", "130"], reqs: ["靈魂綁定: 水 & 隨機分支", "進化: 訓練勝次 > 50"] },
+            { name: '刺甲貝線', stages: ["90", "91"], reqs: ["靈魂綁定: 水 & 隨機分支", "進化: 訓練勝次 > 50"] }
+        ]
+    },
+    {
+        id: 'soul_grass',
+        name: '靈魂進化 - 草',
+        lines: [
+            { name: '妙蛙花線', stages: ["1", "2", "3"], reqs: ["靈魂綁定: 草", "進化: 訓練勝次 > 30", "進化: 訓練勝次 > 50"] },
+            { name: '霸王花線', stages: ["43", "44", "45"], reqs: ["靈魂綁定: 草 & 飽足與心情 > 50", "進化: 訓練勝次 > 30", "進化: 訓練勝次 > 50"] },
+            { name: '大食花線', stages: ["69", "70", "71"], reqs: ["靈魂綁定: 草 & 性格理性", "進化: 訓練勝次 > 30", "進化: 訓練勝次 > 50"] }
+        ]
+    },
+    {
+        id: 'soul_bug',
+        name: '靈魂進化 - 蟲',
+        lines: [
+            { name: '巴大蝶線', stages: ["10", "11", "12"], reqs: ["靈魂綁定: 蟲 & 心情 > 50", "進化: 心情 > 50", "進化: 心情 > 50"] },
+            { name: '大針蜂線', stages: ["13", "14", "15"], reqs: ["靈魂綁定: 蟲 & 飽足 > 50", "進化: 飽足 > 50", "進化: 飽足 > 50"] },
+            { name: '摩魯蛾線', stages: ["48", "49"], reqs: ["靈魂綁定: 蟲 & 屬性平均", "進化: 屬性平均"] }
+        ]
+    },
+    {
+        id: 'mystery',
+        name: '神祕進化線',
+        lines: [
+            { name: '耿鬼線', stages: ["92", "93", "94"], reqs: ["死亡機率重生", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '胡地線', stages: ["63", "64", "65"], reqs: ["死亡機率重生", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '毒/電分支', stages: ["109", "110", "82"], reqs: ["培育隨機", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '毒/水分支', stages: ["88", "89", "55"], reqs: ["培育隨機", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] }
+        ]
+    },
+    {
+        id: 'wild',
+        name: '野外冒險線',
+        lines: [
+            { name: '大比鳥線', stages: ["16", "17", "18"], reqs: ["野外捕捉", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '阿柏怪線', stages: ["23", "24"], reqs: ["野外捕捉", "進化: 訓練勝次 > 8"] },
+            { name: '穿山王線', stages: ["27", "28"], reqs: ["野外捕捉", "進化: 訓練勝次 > 8"] },
+            { name: '叉字蝠線', stages: ["41", "42", "169"], reqs: ["野外捕捉", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '棄世猴線', stages: ["56", "57", "979"], reqs: ["野外捕捉", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '隆隆岩線', stages: ["74", "75", "76"], reqs: ["野外捕捉", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] },
+            { name: '蚊香泳士線', stages: ["60", "61", "62"], reqs: ["野外捕捉", "進化: 訓練勝次 > 8", "進化: 訓練勝次 > 30"] }
+        ]
+    }
+];
+
+const MonsterDex = ({ unlockedDex = [], monsterNames = {}, onClose }) => {
+    const [currentGroupIdx, setCurrentGroupIdx] = useState(0);
+    const [selectedEntry, setSelectedEntry] = useState(null); // { lineIdx, stageIdx }
+
+    const currentGroup = DEX_GROUPS[currentGroupIdx];
+
+    // [A] 鍵：切換下一個分類
+    const cycleGroup = () => {
+        const nextIdx = (currentGroupIdx + 1) % DEX_GROUPS.length;
+        setCurrentGroupIdx(nextIdx);
+        setSelectedEntry(null);
+    };
+
+    const handleEntryClick = (lineIdx, stageIdx) => {
+        setSelectedEntry({ lineIdx, stageIdx });
+    };
+
+    return (
+        <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
+            {/* Header */}
+            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
+                <span>怪獸圖鑑: {currentGroup.name}</span>
+                <span className="text-[10px] opacity-70 cursor-pointer" onClick={onClose}>[C] 離開</span>
+            </div>
+
+            {/* Grid Container */}
+            <div className="flex-1 w-full flex flex-col gap-2 overflow-y-auto px-1 custom-scrollbar">
+                {currentGroup.lines.map((line, lIdx) => (
+                    <div key={lIdx} className="border-b border-[#383a37]/30 pb-2">
+                        <div className="text-[9px] font-black opacity-60 mb-1">{line.name}</div>
+                        <div className="flex gap-2 justify-start items-center">
+                            {line.stages.map((sid, sIdx) => {
+                                const isUnlocked = unlockedDex.includes(sid) || unlockedDex.includes(Number(sid));
+                                const isSelected = selectedEntry?.lineIdx === lIdx && selectedEntry?.stageIdx === sIdx;
+                                return (
+                                    <div 
+                                        key={sIdx} 
+                                        className={`relative w-12 h-12 border-2 rounded flex items-center justify-center cursor-pointer transition-all
+                                            ${isSelected ? 'bg-[#383a37] border-[#1a1a1a]' : 'bg-[#ccd6be] border-[#383a37]/30'}`}
+                                        onClick={() => handleEntryClick(lIdx, sIdx)}
+                                    >
+                                        <div style={{ filter: isUnlocked ? 'none' : 'brightness(0)', opacity: isUnlocked ? 1 : 0.8 }}>
+                                            <DitheredSprite id={sid} scale={1} animated={isUnlocked} />
+                                        </div>
+                                        {isSelected && <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Footer / Selected Info */}
+            <div className="w-full min-h-[70px] bg-[#383a37] text-[#8fa07e] p-2 mt-2 rounded flex flex-col justify-center gap-1">
+                {selectedEntry ? (
+                    <>
+                        <div className="text-[11px] font-black flex justify-between">
+                            <span>{unlockedDex.includes(currentGroup.lines[selectedEntry.lineIdx].stages[selectedEntry.stageIdx]) 
+                                ? monsterNames[currentGroup.lines[selectedEntry.lineIdx].stages[selectedEntry.stageIdx]] 
+                                : "???"}</span>
+                            <span className="text-[9px] opacity-50"># {currentGroup.lines[selectedEntry.lineIdx].stages[selectedEntry.stageIdx]}</span>
+                        </div>
+                        <div className="text-[9px] leading-tight">
+                            {currentGroup.lines[selectedEntry.lineIdx].reqs[selectedEntry.stageIdx]}
+                        </div>
+                    </>
+                ) : (
+                    <div className="text-[9px] opacity-50 text-center italic">點擊怪獸或按 [B] 查看進化條件</div>
+                )}
+            </div>
+
+            {/* Hint */}
+            <div className="text-[9px] font-black text-center text-[#1a1a1a] mt-1 opacity-70 underline decoration-dotted w-full" onClick={cycleGroup}>
+                {"[A] 切換分類  [B] 查看細節  [C] 關閉"}
+            </div>
+            
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #383a37; border-radius: 10px; }
+            `}</style>
+        </div>
+    );
+};
+
+//[Sync] Export default Removed
+MonsterDex;
 
 
-
-
-
-
-
-
+/* --- Source: App.js --- */
+//[Sync] Import Removed
+//[Sync] Import Removed
+//[Sync] Import Removed
+//[Sync] Import Removed
+//[Sync] Import Removed
+//[Sync] Import Removed
 // Web Audio API 8-bit 音效產生器
 const playBloop = (type) => {
     try {
@@ -7602,6 +7613,7 @@ const DebugPanel = ({
     );
 };
 
+//[Sync] Export default Removed
 function App() {
     const [initialData] = useState(() => loadSaveData());
 
@@ -7925,10 +7937,10 @@ function App() {
         try {
             await db.runTransaction(async (transaction) => {
                 const sfDoc = await transaction.get(docRef);
-                let data = sfDoc.exists ? sfDoc.data() : { 
-                    wins: 0, 
-                    losses: 0, 
-                    monsterId: myId, 
+                let data = sfDoc.exists ? sfDoc.data() : {
+                    wins: 0,
+                    losses: 0,
+                    monsterId: myId,
                     displayName: user.displayName || "未知玩家",
                     lastResetDate: todayStr
                 };
@@ -7943,9 +7955,9 @@ function App() {
                 if (isWin) data.wins += 1;
                 else data.losses += 1;
 
-                data.monsterId = myId; 
+                data.monsterId = myId;
                 data.displayName = user.displayName || "未知玩家";
-                
+
                 const total = data.wins + data.losses;
                 const winRate = data.wins / (total || 1);
                 // 評分公式優化：包含勝場權重與勝率加成
@@ -7961,13 +7973,13 @@ function App() {
     const fetchLeaderboard = async () => {
         const timestamp = new Date().toLocaleTimeString();
         console.log(`[${timestamp}] 🚀 Leaderboard button clicked!`);
-        
+
         if (!db) {
             console.error("Firestore (db) is missing!");
             updateDialogue("資料庫尚未就緒，請檢查 Firebase 設定...");
             return;
         }
-        
+
         setIsLeaderboardLoading(true);
         setLeaderboardPage(0);
 
@@ -7981,7 +7993,7 @@ function App() {
                 .orderBy('score', 'desc')
                 .limit(50)
                 .get();
-            
+
             const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             console.log(`Success! Found ${list.length} players.`);
             setLeaderboard(list);
@@ -8225,7 +8237,7 @@ function App() {
                 }
             } else {
                 updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
-                setHasCheckedCloud(true); 
+                setHasCheckedCloud(true);
                 setIsCloudLoading(false);
                 // 只有當本地資料為「訪客 (無 ownerUid)」或是「本人」時，才建立初始備份
                 if (localData) saveToCloud(localData);
@@ -8233,7 +8245,7 @@ function App() {
         } catch (e) {
             console.error("☁️ Cloud Load Error:", e);
             updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
-            setHasCheckedCloud(true); 
+            setHasCheckedCloud(true);
             setIsCloudLoading(false);
         }
     };
@@ -8277,7 +8289,7 @@ function App() {
             }
         } catch (e) {
             console.error("☁️ Login Error:", e);
-            
+
             // --- 🚨 核心修正：處理 disallowed_useragent (Google 政策阻擋) ---
             if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
                 // 嘗試轉為 Redirect 模式，這在某些行動瀏覽器較穩定
@@ -8293,7 +8305,7 @@ function App() {
             let errMsg = e.message;
             if (e.code === 'auth/popup-closed-by-user') errMsg = "登入視窗被關閉了。";
             if (e.code === 'auth/unauthorized-domain') errMsg = "網域尚未授權，請至 Firebase 設定。";
-            
+
             // 針對政策阻擋的特別說明
             if (e.message.includes('disallowed_useragent') || e.code?.includes('disallowed-user-agent')) {
                 updateDialogue("❌ Google 政策限制：請點擊右上角「...」並選「使用瀏覽器開啟」。", true);
@@ -8310,8 +8322,8 @@ function App() {
         try {
             await auth.signOut();
             // 登出時執行本地存檔清理，防止跨帳號衝突
-            try { 
-                localStorage.removeItem('pixel_monster_save'); 
+            try {
+                localStorage.removeItem('pixel_monster_save');
                 sessionStorage.removeItem('pixel_monster_save');
             } catch (e) { }
             playBloop('pop');
@@ -8365,6 +8377,41 @@ function App() {
     const [todayEventPriority, setTodayEventPriority] = useState(getInit('todayEventPriority', 0));
     const [lastDiaryDate, setLastDiaryDate] = useState(getInit('lastDiaryDate', getTodayStr()));
     const [isDiaryOpen, setIsDiaryOpen] = useState(false);
+
+    // --- 📖 圖鑑系統狀態 ---
+    const [unlockedDex, setUnlockedDex] = useState(() => {
+        try {
+            const saved = localStorage.getItem('unlockedDex');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Failed to load unlockedDex:", e);
+            return [];
+        }
+    });
+    const [statusTab, setStatusTab] = useState('info'); // 'info' (數值) | 'dex' (圖鑑)
+
+    // 儲存圖鑑
+    useEffect(() => {
+        localStorage.setItem('unlockedDex', JSON.stringify(unlockedDex));
+    }, [unlockedDex]);
+
+    // 加入圖鑑助手
+    const addToDex = (id) => {
+        const sid = String(id);
+        setUnlockedDex(prev => {
+            if (prev.includes(sid)) return prev;
+            console.log(`✨ 解鎖圖鑑: ${sid}`);
+            return [...prev, sid];
+        });
+    };
+
+    // 初始化與變更時解鎖當前怪獸
+    useEffect(() => {
+        if (!isBooting && !isDead) {
+            addToDex(getMonsterId());
+        }
+    }, [isBooting, evolutionStage, evolutionBranch, isDead]);
+
     const [diaryViewDate, setDiaryViewDate] = useState(null); // null = 今天
 
 
@@ -8764,6 +8811,8 @@ function App() {
 
     const confirmWildCapture = (confirm) => {
         if (confirm && pendingWildCapture) {
+            // 成功捕捉，加入圖鑑
+            addToDex(pendingWildCapture.id);
             setEvolutionBranch('WILD_' + pendingWildCapture.id);
             setEvolutionStage(1);
             setLastEvolutionTime(Date.now()); // 🔥 捕獲後務必重置進化時鐘，防止繼承舊寵物時間導致瞬間進化或暴斃
@@ -9479,7 +9528,13 @@ function App() {
             playBloop('pop');
             return;
         }
-        if (isStatusUIOpen || isAdvMode) return;
+        if (isStatusUIOpen) {
+            // A 鍵：在狀態 UI 內切換分頁 (數值 <-> 圖鑑)
+            setStatusTab(prev => prev === 'info' ? 'dex' : 'info');
+            playBloop('pop');
+            return;
+        }
+        if (isAdvMode) return;
         if (isInventoryOpen) {
             if (isUsingItem) return; // 使用中禁止切換
             if (inventory.length > 0) {
@@ -9786,6 +9841,12 @@ function App() {
             playBloop('fail');
             return;
         }
+        if (isStatusUIOpen) {
+            setIsStatusUIOpen(false);
+            setStatusTab('info'); // 關閉時重置分頁
+            updateDialogue("吼吼吼～");
+            return;
+        }
         if (isConfirmingReplace) {
             setIsConfirmingReplace(false);
             setSkillSelectIdx(0);
@@ -9799,6 +9860,7 @@ function App() {
         }
         if (isStatusUIOpen) {
             setIsStatusUIOpen(false);
+            setStatusTab('info'); // 關閉時重置分頁
             updateDialogue("吼吼吼～");
             return;
         }
@@ -10273,6 +10335,9 @@ function App() {
                     setTodayHasEvolved(true);
 
                     setEvolutionStage(evolutionStage + 1);
+                    // 紀錄新階級到圖鑑
+                    addToDex(evolvedId);
+
                     setEvolutionBranch(nextBranch);
                     setLastEvolutionTime(Date.now());
                     setStageTrainWins(0);
@@ -10869,7 +10934,7 @@ function App() {
         // 🔥 VERY IMPORTANT: Remove localStorage data immediately!
         try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
         try { sessionStorage.removeItem('pixel_monster_save'); } catch (e) { }
-        
+
         recordGameAction(); // 紀錄重啟行為
     };
 
@@ -11099,7 +11164,7 @@ function App() {
                                     leaderboard.slice(leaderboardPage * 5, (leaderboardPage * 5) + 5).map((item, idx) => (
                                         <div key={item.id} className="bg-[#8fa07e]/30 border-2 border-[#1a1a1a]/20 p-1 flex items-center gap-2 h-[42px] relative overflow-hidden">
                                             <div className="w-6 text-[12px] font-black italic opacity-40">
-                                                #{ (leaderboardPage * 5) + idx + 1 }
+                                                #{(leaderboardPage * 5) + idx + 1}
                                             </div>
                                             <div className="w-10 h-10 flex items-center justify-center bg-[#1a1a1a]/5 border border-[#1a1a1a]/20 shrink-0">
                                                 <DitheredSprite id={item.monsterId || 132} scale={0.85} />
@@ -11244,10 +11309,10 @@ function App() {
                                             <div className="text-[10px] font-bold text-[#1a1a1a] truncate w-[60px] leading-tight">{battleState?.enemy?.name}</div>
                                             {battleState?.enemy?.status && (
                                                 <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.enemy.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                        battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                            battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                                battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                                    battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                    battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                        battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                            battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
                                                     }`}>
                                                     {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.enemy.status] || '狀'}
                                                 </span>
@@ -11269,10 +11334,10 @@ function App() {
                                         <div className="flex items-center gap-1">
                                             {battleState?.player?.status && (
                                                 <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.player.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                        battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                            battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                                battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                                    battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                    battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                        battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                            battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
                                                     }`}>
                                                     {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.player.status] || '狀'}
                                                 </span>
@@ -11304,8 +11369,8 @@ function App() {
                                                         <div
                                                             key={idx}
                                                             className={`border-2 flex items-center justify-center transition-all ${isSelected
-                                                                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0'
-                                                                    : 'border-[#1a1a1a] bg-white/20'
+                                                                ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0'
+                                                                : 'border-[#1a1a1a] bg-white/20'
                                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                                         >
                                                             {move ? move.name : '---'}
@@ -11469,85 +11534,109 @@ function App() {
                     {/* 狀態資訊 (單頁版) */}
                     {isStatusUIOpen && (
                         <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
-                            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
-                                <span>狀態資訊</span>
-                                <span>[C] 關閉</span>
+                            {/* 🏷️ 分頁標籤 */}
+                            <div className="w-full flex border-b-2 border-[#383a37] mb-1">
+                                <div
+                                    className={`flex-1 text-center py-1 text-[11px] font-black cursor-pointer ${statusTab === 'info' ? 'bg-[#383a37] text-[#8fa07e]' : 'bg-transparent text-[#383a37]'}`}
+                                    onClick={() => setStatusTab('info')}
+                                >
+                                    數值狀態
+                                </div>
+                                <div
+                                    className={`flex-1 text-center py-1 text-[11px] font-black cursor-pointer ${statusTab === 'dex' ? 'bg-[#383a37] text-[#8fa07e]' : 'bg-transparent text-[#383a37]'}`}
+                                    onClick={() => setStatusTab('dex')}
+                                >
+                                    怪獸圖鑑
+                                </div>
                             </div>
 
-                            <div className="flex-1 w-full flex flex-col gap-1.5 px-1 justify-start pb-1">
-                                <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-[#1a1a1a]">
-                                    <span>屬性: {(() => {
-                                        const sid = getMonsterId();
-                                        const types = SPECIES_BASE_STATS[String(sid)]?.types || ['normal'];
-                                        return types.map(t => ({
-                                            fire: '火', water: '水', grass: '草', bug: '蟲', dragon: '龍',
-                                            flying: '飛', poison: '毒', ground: '地', rock: '岩',
-                                            psychic: '超', ice: '冰', ghost: '鬼', fighting: '鬥',
-                                            electric: '電', steel: '鋼', dark: '惡', normal: '普',
-                                            fairy: '妖'
-                                        }[t] || t)).join(' / ');
-                                    })()}</span>
-                                    <span>性格: {(() => {
-                                        const tagEntries = Object.entries(soulTagCounts);
-                                        const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
-                                        // 必須大於 0 才是覺醒狀態
-                                        if (best[1] <= 0) return '未覺醒';
-                                        return NATURE_CONFIG[best[0]]?.name || '神祕';
-                                    })()}</span>
-                                </div>
+                            {statusTab === 'info' ? (
+                                <div className="flex-1 w-full flex flex-col">
+                                    <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
+                                        <span>狀態資訊</span>
+                                        <span className="cursor-pointer" onClick={() => setIsStatusUIOpen(false)}>[C] 關閉</span>
+                                    </div>
 
-                                <div className="flex flex-col gap-0.5">
-                                    {[
-                                        { label: '飽足度', val: hunger, color: '#e67e22' },
-                                        { label: '心情值', val: mood, color: '#f1c40f' },
-                                        { label: '羈絆值', val: Math.min(100, (bondValue / 100) * 100), color: '#e74c3c', text: bondValue }
-                                    ].map((s, i) => (
-                                        <div key={i} className="flex flex-col gap-0.5">
-                                            <div className="flex justify-between text-[10px] font-black text-[#1a1a1a] leading-tight">
-                                                <span>{s.label}</span>
-                                                <span>{s.text !== undefined ? s.text : `${Math.floor(s.val)}%`}</span>
-                                            </div>
-                                            <div className="w-full h-2 bg-[#ccd6be] border border-[#383a37] rounded-sm overflow-hidden">
-                                                <div className="h-full transition-all duration-300" style={{ width: `${s.text !== undefined ? Math.min(100, (s.text / 150) * 100) : s.val}%`, backgroundColor: s.color }} />
-                                            </div>
+                                    <div className="flex-1 w-full flex flex-col gap-1.5 px-1 justify-start pb-1">
+                                        <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-[#1a1a1a]">
+                                            <span>屬性: {(() => {
+                                                const sid = getMonsterId();
+                                                const types = SPECIES_BASE_STATS[String(sid)]?.types || ['normal'];
+                                                return types.map(t => ({
+                                                    fire: '火', water: '水', grass: '草', bug: '蟲', dragon: '龍',
+                                                    flying: '飛', poison: '毒', ground: '地', rock: '岩',
+                                                    psychic: '超', ice: '冰', ghost: '鬼', fighting: '鬥',
+                                                    electric: '電', steel: '鋼', dark: '惡', normal: '普',
+                                                    fairy: '妖'
+                                                }[t] || t)).join(' / ');
+                                            })()}</span>
+                                            <span>性格: {(() => {
+                                                const tagEntries = Object.entries(soulTagCounts);
+                                                const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
+                                                if (best[1] <= 0) return '未覺醒';
+                                                return NATURE_CONFIG[best[0]]?.name || '神祕';
+                                            })()}</span>
                                         </div>
-                                    ))}
+
+                                        <div className="flex flex-col gap-0.5">
+                                            {[
+                                                { label: '飽足度', val: hunger, color: '#e67e22' },
+                                                { label: '心情值', val: mood, color: '#f1c40f' },
+                                                { label: '羈絆值', val: Math.min(100, (bondValue / 100) * 100), color: '#e74c3c', text: bondValue }
+                                            ].map((s, i) => (
+                                                <div key={i} className="flex flex-col gap-0.5">
+                                                    <div className="flex justify-between text-[10px] font-black text-[#1a1a1a] leading-tight">
+                                                        <span>{s.label}</span>
+                                                        <span>{s.text !== undefined ? s.text : `${Math.floor(s.val)}%`}</span>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-[#ccd6be] border border-[#383a37] rounded-sm overflow-hidden">
+                                                        <div className="h-full transition-all duration-300" style={{ width: `${s.text !== undefined ? Math.min(100, (s.text / 150) * 100) : s.val}%`, backgroundColor: s.color }} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 bg-[#869675] px-1.5 py-1 rounded border border-[#383a37] mt-0.5">
+                                            {(() => {
+                                                const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
+                                                const sid = getMonsterId();
+                                                const dominantTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
+                                                const nMods = { atk: 1.0, def: 1.0, spd: 1.0 };
+                                                if (dominantTag === 'passionate') { nMods.atk = 1.1; nMods.def = 0.9; }
+                                                else if (dominantTag === 'stubborn') { nMods.def = 1.1; nMods.spd = 0.9; }
+                                                else if (dominantTag === 'rational') { nMods.spd = 1.1; nMods.atk = 0.9; }
+                                                else if (dominantTag === 'nonsense') { nMods.spd = 1.1; nMods.def = 0.9; }
+
+                                                const fHP = calcFinalStat('hp', sid, advStats.ivs.hp, advStats.evs.hp, level);
+                                                const fATK = calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level, nMods.atk);
+                                                const fDEF = calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def);
+                                                const fSPD = calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd);
+
+                                                return (
+                                                    <>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">血量: {fHP} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.hp)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">攻擊: {fATK} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.atk)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">防禦: {fDEF} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.def)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">速度: {fSPD} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.spd)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">等級: {level}</div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">戰力: {advStats.basePower}</div>
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        <div className="text-[10px] font-black text-center text-[#1a1a1a] mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
+                                            累計特訓勝次: {trainWins} 次
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 bg-[#869675] px-1.5 py-1 rounded border border-[#383a37] mt-0.5">
-                                    {(() => {
-                                        const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
-                                        const sid = getMonsterId();
-                                        const dominantTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                                        const nMods = { atk: 1.0, def: 1.0, spd: 1.0 };
-                                        if (dominantTag === 'passionate') { nMods.atk = 1.1; nMods.def = 0.9; }
-                                        else if (dominantTag === 'stubborn') { nMods.def = 1.1; nMods.spd = 0.9; }
-                                        else if (dominantTag === 'rational') { nMods.spd = 1.1; nMods.atk = 0.9; }
-                                        else if (dominantTag === 'nonsense') { nMods.spd = 1.1; nMods.def = 0.9; }
-
-                                        const fHP = calcFinalStat('hp', sid, advStats.ivs.hp, advStats.evs.hp, level);
-                                        const fATK = calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level, nMods.atk);
-                                        const fDEF = calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def);
-                                        const fSPD = calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd);
-
-                                        return (
-                                            <>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">血量: {fHP} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.hp)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">攻擊: {fATK} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.atk)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">防禦: {fDEF} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.def)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">速度: {fSPD} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.spd)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">等級: {level}</div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">戰力: {advStats.basePower}</div>
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-
-
-                                <div className="text-[10px] font-black text-center text-[#1a1a1a] mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
-                                    累計特訓勝次: {trainWins} 次
-                                </div>
-                            </div>
+                            ) : (
+                                <MonsterDex
+                                    unlockedDex={unlockedDex}
+                                    monsterNames={MONSTER_NAMES}
+                                    onClose={() => setIsStatusUIOpen(false)}
+                                />
+                            )}
                         </div>
                     )}
 
@@ -12011,7 +12100,8 @@ function App() {
 }
 
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
+
+                const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
 </body>

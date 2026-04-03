@@ -16,6 +16,7 @@ import {
 } from './monsterData';
 
 import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } from './src/components/SpriteRenderer';
+import MonsterDex from './src/components/MonsterDex';
 
 
 import {
@@ -597,10 +598,10 @@ export default function App() {
         try {
             await db.runTransaction(async (transaction) => {
                 const sfDoc = await transaction.get(docRef);
-                let data = sfDoc.exists ? sfDoc.data() : { 
-                    wins: 0, 
-                    losses: 0, 
-                    monsterId: myId, 
+                let data = sfDoc.exists ? sfDoc.data() : {
+                    wins: 0,
+                    losses: 0,
+                    monsterId: myId,
                     displayName: user.displayName || "未知玩家",
                     lastResetDate: todayStr
                 };
@@ -615,9 +616,9 @@ export default function App() {
                 if (isWin) data.wins += 1;
                 else data.losses += 1;
 
-                data.monsterId = myId; 
+                data.monsterId = myId;
                 data.displayName = user.displayName || "未知玩家";
-                
+
                 const total = data.wins + data.losses;
                 const winRate = data.wins / (total || 1);
                 // 評分公式優化：包含勝場權重與勝率加成
@@ -633,13 +634,13 @@ export default function App() {
     const fetchLeaderboard = async () => {
         const timestamp = new Date().toLocaleTimeString();
         console.log(`[${timestamp}] 🚀 Leaderboard button clicked!`);
-        
+
         if (!db) {
             console.error("Firestore (db) is missing!");
             updateDialogue("資料庫尚未就緒，請檢查 Firebase 設定...");
             return;
         }
-        
+
         setIsLeaderboardLoading(true);
         setLeaderboardPage(0);
 
@@ -653,7 +654,7 @@ export default function App() {
                 .orderBy('score', 'desc')
                 .limit(50)
                 .get();
-            
+
             const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             console.log(`Success! Found ${list.length} players.`);
             setLeaderboard(list);
@@ -897,7 +898,7 @@ export default function App() {
                 }
             } else {
                 updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
-                setHasCheckedCloud(true); 
+                setHasCheckedCloud(true);
                 setIsCloudLoading(false);
                 // 只有當本地資料為「訪客 (無 ownerUid)」或是「本人」時，才建立初始備份
                 if (localData) saveToCloud(localData);
@@ -905,7 +906,7 @@ export default function App() {
         } catch (e) {
             console.error("☁️ Cloud Load Error:", e);
             updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
-            setHasCheckedCloud(true); 
+            setHasCheckedCloud(true);
             setIsCloudLoading(false);
         }
     };
@@ -949,7 +950,7 @@ export default function App() {
             }
         } catch (e) {
             console.error("☁️ Login Error:", e);
-            
+
             // --- 🚨 核心修正：處理 disallowed_useragent (Google 政策阻擋) ---
             if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
                 // 嘗試轉為 Redirect 模式，這在某些行動瀏覽器較穩定
@@ -965,7 +966,7 @@ export default function App() {
             let errMsg = e.message;
             if (e.code === 'auth/popup-closed-by-user') errMsg = "登入視窗被關閉了。";
             if (e.code === 'auth/unauthorized-domain') errMsg = "網域尚未授權，請至 Firebase 設定。";
-            
+
             // 針對政策阻擋的特別說明
             if (e.message.includes('disallowed_useragent') || e.code?.includes('disallowed-user-agent')) {
                 updateDialogue("❌ Google 政策限制：請點擊右上角「...」並選「使用瀏覽器開啟」。", true);
@@ -982,8 +983,8 @@ export default function App() {
         try {
             await auth.signOut();
             // 登出時執行本地存檔清理，防止跨帳號衝突
-            try { 
-                localStorage.removeItem('pixel_monster_save'); 
+            try {
+                localStorage.removeItem('pixel_monster_save');
                 sessionStorage.removeItem('pixel_monster_save');
             } catch (e) { }
             playBloop('pop');
@@ -1037,6 +1038,41 @@ export default function App() {
     const [todayEventPriority, setTodayEventPriority] = useState(getInit('todayEventPriority', 0));
     const [lastDiaryDate, setLastDiaryDate] = useState(getInit('lastDiaryDate', getTodayStr()));
     const [isDiaryOpen, setIsDiaryOpen] = useState(false);
+
+    // --- 📖 圖鑑系統狀態 ---
+    const [unlockedDex, setUnlockedDex] = useState(() => {
+        try {
+            const saved = localStorage.getItem('unlockedDex');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error("Failed to load unlockedDex:", e);
+            return [];
+        }
+    });
+    const [statusTab, setStatusTab] = useState('info'); // 'info' (數值) | 'dex' (圖鑑)
+
+    // 儲存圖鑑
+    useEffect(() => {
+        localStorage.setItem('unlockedDex', JSON.stringify(unlockedDex));
+    }, [unlockedDex]);
+
+    // 加入圖鑑助手
+    const addToDex = (id) => {
+        const sid = String(id);
+        setUnlockedDex(prev => {
+            if (prev.includes(sid)) return prev;
+            console.log(`✨ 解鎖圖鑑: ${sid}`);
+            return [...prev, sid];
+        });
+    };
+
+    // 初始化與變更時解鎖當前怪獸
+    useEffect(() => {
+        if (!isBooting && !isDead) {
+            addToDex(getMonsterId());
+        }
+    }, [isBooting, evolutionStage, evolutionBranch, isDead]);
+
     const [diaryViewDate, setDiaryViewDate] = useState(null); // null = 今天
 
 
@@ -1436,6 +1472,8 @@ export default function App() {
 
     const confirmWildCapture = (confirm) => {
         if (confirm && pendingWildCapture) {
+            // 成功捕捉，加入圖鑑
+            addToDex(pendingWildCapture.id);
             setEvolutionBranch('WILD_' + pendingWildCapture.id);
             setEvolutionStage(1);
             setLastEvolutionTime(Date.now()); // 🔥 捕獲後務必重置進化時鐘，防止繼承舊寵物時間導致瞬間進化或暴斃
@@ -2151,7 +2189,13 @@ export default function App() {
             playBloop('pop');
             return;
         }
-        if (isStatusUIOpen || isAdvMode) return;
+        if (isStatusUIOpen) {
+            // A 鍵：在狀態 UI 內切換分頁 (數值 <-> 圖鑑)
+            setStatusTab(prev => prev === 'info' ? 'dex' : 'info');
+            playBloop('pop');
+            return;
+        }
+        if (isAdvMode) return;
         if (isInventoryOpen) {
             if (isUsingItem) return; // 使用中禁止切換
             if (inventory.length > 0) {
@@ -2458,6 +2502,12 @@ export default function App() {
             playBloop('fail');
             return;
         }
+        if (isStatusUIOpen) {
+            setIsStatusUIOpen(false);
+            setStatusTab('info'); // 關閉時重置分頁
+            updateDialogue("吼吼吼～");
+            return;
+        }
         if (isConfirmingReplace) {
             setIsConfirmingReplace(false);
             setSkillSelectIdx(0);
@@ -2471,6 +2521,7 @@ export default function App() {
         }
         if (isStatusUIOpen) {
             setIsStatusUIOpen(false);
+            setStatusTab('info'); // 關閉時重置分頁
             updateDialogue("吼吼吼～");
             return;
         }
@@ -2945,6 +2996,9 @@ export default function App() {
                     setTodayHasEvolved(true);
 
                     setEvolutionStage(evolutionStage + 1);
+                    // 紀錄新階級到圖鑑
+                    addToDex(evolvedId);
+
                     setEvolutionBranch(nextBranch);
                     setLastEvolutionTime(Date.now());
                     setStageTrainWins(0);
@@ -3541,7 +3595,7 @@ export default function App() {
         // 🔥 VERY IMPORTANT: Remove localStorage data immediately!
         try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
         try { sessionStorage.removeItem('pixel_monster_save'); } catch (e) { }
-        
+
         recordGameAction(); // 紀錄重啟行為
     };
 
@@ -3771,7 +3825,7 @@ export default function App() {
                                     leaderboard.slice(leaderboardPage * 5, (leaderboardPage * 5) + 5).map((item, idx) => (
                                         <div key={item.id} className="bg-[#8fa07e]/30 border-2 border-[#1a1a1a]/20 p-1 flex items-center gap-2 h-[42px] relative overflow-hidden">
                                             <div className="w-6 text-[12px] font-black italic opacity-40">
-                                                #{ (leaderboardPage * 5) + idx + 1 }
+                                                #{(leaderboardPage * 5) + idx + 1}
                                             </div>
                                             <div className="w-10 h-10 flex items-center justify-center bg-[#1a1a1a]/5 border border-[#1a1a1a]/20 shrink-0">
                                                 <DitheredSprite id={item.monsterId || 132} scale={0.85} />
@@ -3916,10 +3970,10 @@ export default function App() {
                                             <div className="text-[10px] font-bold text-[#1a1a1a] truncate w-[60px] leading-tight">{battleState?.enemy?.name}</div>
                                             {battleState?.enemy?.status && (
                                                 <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.enemy.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                        battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                            battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                                battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                                    battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                    battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                        battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                            battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
                                                     }`}>
                                                     {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.enemy.status] || '狀'}
                                                 </span>
@@ -3941,10 +3995,10 @@ export default function App() {
                                         <div className="flex items-center gap-1">
                                             {battleState?.player?.status && (
                                                 <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.player.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                        battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                            battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                                battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                                    battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                                    battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                        battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                            battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
                                                     }`}>
                                                     {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.player.status] || '狀'}
                                                 </span>
@@ -3976,8 +4030,8 @@ export default function App() {
                                                         <div
                                                             key={idx}
                                                             className={`border-2 flex items-center justify-center transition-all ${isSelected
-                                                                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0'
-                                                                    : 'border-[#1a1a1a] bg-white/20'
+                                                                ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0'
+                                                                : 'border-[#1a1a1a] bg-white/20'
                                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                                         >
                                                             {move ? move.name : '---'}
@@ -4141,85 +4195,109 @@ export default function App() {
                     {/* 狀態資訊 (單頁版) */}
                     {isStatusUIOpen && (
                         <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
-                            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
-                                <span>狀態資訊</span>
-                                <span>[C] 關閉</span>
+                            {/* 🏷️ 分頁標籤 */}
+                            <div className="w-full flex border-b-2 border-[#383a37] mb-1">
+                                <div
+                                    className={`flex-1 text-center py-1 text-[11px] font-black cursor-pointer ${statusTab === 'info' ? 'bg-[#383a37] text-[#8fa07e]' : 'bg-transparent text-[#383a37]'}`}
+                                    onClick={() => setStatusTab('info')}
+                                >
+                                    數值狀態
+                                </div>
+                                <div
+                                    className={`flex-1 text-center py-1 text-[11px] font-black cursor-pointer ${statusTab === 'dex' ? 'bg-[#383a37] text-[#8fa07e]' : 'bg-transparent text-[#383a37]'}`}
+                                    onClick={() => setStatusTab('dex')}
+                                >
+                                    怪獸圖鑑
+                                </div>
                             </div>
 
-                            <div className="flex-1 w-full flex flex-col gap-1.5 px-1 justify-start pb-1">
-                                <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-[#1a1a1a]">
-                                    <span>屬性: {(() => {
-                                        const sid = getMonsterId();
-                                        const types = SPECIES_BASE_STATS[String(sid)]?.types || ['normal'];
-                                        return types.map(t => ({
-                                            fire: '火', water: '水', grass: '草', bug: '蟲', dragon: '龍',
-                                            flying: '飛', poison: '毒', ground: '地', rock: '岩',
-                                            psychic: '超', ice: '冰', ghost: '鬼', fighting: '鬥',
-                                            electric: '電', steel: '鋼', dark: '惡', normal: '普',
-                                            fairy: '妖'
-                                        }[t] || t)).join(' / ');
-                                    })()}</span>
-                                    <span>性格: {(() => {
-                                        const tagEntries = Object.entries(soulTagCounts);
-                                        const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
-                                        // 必須大於 0 才是覺醒狀態
-                                        if (best[1] <= 0) return '未覺醒';
-                                        return NATURE_CONFIG[best[0]]?.name || '神祕';
-                                    })()}</span>
-                                </div>
+                            {statusTab === 'info' ? (
+                                <div className="flex-1 w-full flex flex-col">
+                                    <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
+                                        <span>狀態資訊</span>
+                                        <span className="cursor-pointer" onClick={() => setIsStatusUIOpen(false)}>[C] 關閉</span>
+                                    </div>
 
-                                <div className="flex flex-col gap-0.5">
-                                    {[
-                                        { label: '飽足度', val: hunger, color: '#e67e22' },
-                                        { label: '心情值', val: mood, color: '#f1c40f' },
-                                        { label: '羈絆值', val: Math.min(100, (bondValue / 100) * 100), color: '#e74c3c', text: bondValue }
-                                    ].map((s, i) => (
-                                        <div key={i} className="flex flex-col gap-0.5">
-                                            <div className="flex justify-between text-[10px] font-black text-[#1a1a1a] leading-tight">
-                                                <span>{s.label}</span>
-                                                <span>{s.text !== undefined ? s.text : `${Math.floor(s.val)}%`}</span>
-                                            </div>
-                                            <div className="w-full h-2 bg-[#ccd6be] border border-[#383a37] rounded-sm overflow-hidden">
-                                                <div className="h-full transition-all duration-300" style={{ width: `${s.text !== undefined ? Math.min(100, (s.text / 150) * 100) : s.val}%`, backgroundColor: s.color }} />
-                                            </div>
+                                    <div className="flex-1 w-full flex flex-col gap-1.5 px-1 justify-start pb-1">
+                                        <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-[#1a1a1a]">
+                                            <span>屬性: {(() => {
+                                                const sid = getMonsterId();
+                                                const types = SPECIES_BASE_STATS[String(sid)]?.types || ['normal'];
+                                                return types.map(t => ({
+                                                    fire: '火', water: '水', grass: '草', bug: '蟲', dragon: '龍',
+                                                    flying: '飛', poison: '毒', ground: '地', rock: '岩',
+                                                    psychic: '超', ice: '冰', ghost: '鬼', fighting: '鬥',
+                                                    electric: '電', steel: '鋼', dark: '惡', normal: '普',
+                                                    fairy: '妖'
+                                                }[t] || t)).join(' / ');
+                                            })()}</span>
+                                            <span>性格: {(() => {
+                                                const tagEntries = Object.entries(soulTagCounts);
+                                                const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
+                                                if (best[1] <= 0) return '未覺醒';
+                                                return NATURE_CONFIG[best[0]]?.name || '神祕';
+                                            })()}</span>
                                         </div>
-                                    ))}
+
+                                        <div className="flex flex-col gap-0.5">
+                                            {[
+                                                { label: '飽足度', val: hunger, color: '#e67e22' },
+                                                { label: '心情值', val: mood, color: '#f1c40f' },
+                                                { label: '羈絆值', val: Math.min(100, (bondValue / 100) * 100), color: '#e74c3c', text: bondValue }
+                                            ].map((s, i) => (
+                                                <div key={i} className="flex flex-col gap-0.5">
+                                                    <div className="flex justify-between text-[10px] font-black text-[#1a1a1a] leading-tight">
+                                                        <span>{s.label}</span>
+                                                        <span>{s.text !== undefined ? s.text : `${Math.floor(s.val)}%`}</span>
+                                                    </div>
+                                                    <div className="w-full h-2 bg-[#ccd6be] border border-[#383a37] rounded-sm overflow-hidden">
+                                                        <div className="h-full transition-all duration-300" style={{ width: `${s.text !== undefined ? Math.min(100, (s.text / 150) * 100) : s.val}%`, backgroundColor: s.color }} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 bg-[#869675] px-1.5 py-1 rounded border border-[#383a37] mt-0.5">
+                                            {(() => {
+                                                const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
+                                                const sid = getMonsterId();
+                                                const dominantTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
+                                                const nMods = { atk: 1.0, def: 1.0, spd: 1.0 };
+                                                if (dominantTag === 'passionate') { nMods.atk = 1.1; nMods.def = 0.9; }
+                                                else if (dominantTag === 'stubborn') { nMods.def = 1.1; nMods.spd = 0.9; }
+                                                else if (dominantTag === 'rational') { nMods.spd = 1.1; nMods.atk = 0.9; }
+                                                else if (dominantTag === 'nonsense') { nMods.spd = 1.1; nMods.def = 0.9; }
+
+                                                const fHP = calcFinalStat('hp', sid, advStats.ivs.hp, advStats.evs.hp, level);
+                                                const fATK = calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level, nMods.atk);
+                                                const fDEF = calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def);
+                                                const fSPD = calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd);
+
+                                                return (
+                                                    <>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">血量: {fHP} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.hp)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">攻擊: {fATK} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.atk)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">防禦: {fDEF} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.def)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">速度: {fSPD} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.spd)})</span></div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">等級: {level}</div>
+                                                        <div className="text-[10px] font-black text-[#1a1a1a]">戰力: {advStats.basePower}</div>
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        <div className="text-[10px] font-black text-center text-[#1a1a1a] mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
+                                            累計特訓勝次: {trainWins} 次
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 bg-[#869675] px-1.5 py-1 rounded border border-[#383a37] mt-0.5">
-                                    {(() => {
-                                        const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
-                                        const sid = getMonsterId();
-                                        const dominantTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                                        const nMods = { atk: 1.0, def: 1.0, spd: 1.0 };
-                                        if (dominantTag === 'passionate') { nMods.atk = 1.1; nMods.def = 0.9; }
-                                        else if (dominantTag === 'stubborn') { nMods.def = 1.1; nMods.spd = 0.9; }
-                                        else if (dominantTag === 'rational') { nMods.spd = 1.1; nMods.atk = 0.9; }
-                                        else if (dominantTag === 'nonsense') { nMods.spd = 1.1; nMods.def = 0.9; }
-
-                                        const fHP = calcFinalStat('hp', sid, advStats.ivs.hp, advStats.evs.hp, level);
-                                        const fATK = calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level, nMods.atk);
-                                        const fDEF = calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def);
-                                        const fSPD = calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd);
-
-                                        return (
-                                            <>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">血量: {fHP} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.hp)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">攻擊: {fATK} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.atk)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">防禦: {fDEF} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.def)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">速度: {fSPD} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.spd)})</span></div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">等級: {level}</div>
-                                                <div className="text-[10px] font-black text-[#1a1a1a]">戰力: {advStats.basePower}</div>
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-
-
-                                <div className="text-[10px] font-black text-center text-[#1a1a1a] mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
-                                    累計特訓勝次: {trainWins} 次
-                                </div>
-                            </div>
+                            ) : (
+                                <MonsterDex
+                                    unlockedDex={unlockedDex}
+                                    monsterNames={MONSTER_NAMES}
+                                    onClose={() => setIsStatusUIOpen(false)}
+                                />
+                            )}
                         </div>
                     )}
 
