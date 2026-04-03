@@ -1231,7 +1231,7 @@ export default function App() {
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
-        const thresh = debugOverrides.evolutionMs ?? (EVOLUTION_TIME[evolutionStage] || 120000);
+        const thresh = debugOverrides.evolutionMs ?? (EVOLUTION_TIME[evolutionStage] || FINAL_LIFETIME);
 
         // Total drop phase logic: Ensure it drops 100 units over the entire phase
         const TARGET_DROP_PER_STAGE = 100;
