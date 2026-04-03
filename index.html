@@ -9347,12 +9347,14 @@ function App() {
             playBloop('pop');
             return;
         }
-        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp') && battleState.phase === 'player_action') {
-            // Bug Fix #3: 游標只在有效招式間循環，避免選到空格浪費操作
-            const numMoves = battleState.player?.moves?.length || 1;
-            setBattleState(prev => ({ ...prev, menuIdx: ((prev.menuIdx || 0) + 1) % numMoves }));
-            playBloop('pop');
-            return;
+        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp')) {
+            if (battleState.phase === 'player_action') {
+                // Bug Fix #3: 游標只在有效招式間循環，避免選到空格浪費操作
+                const numMoves = battleState.player?.moves?.length || 1;
+                setBattleState(prev => ({ ...prev, menuIdx: ((prev.menuIdx || 0) + 1) % numMoves }));
+                playBloop('pop');
+            }
+            return; // 戰鬥期間攔截 A 鍵，防止穿透
         }
         if (pendingWildCapture && !isAdvStreaming) {
             confirmWildCapture(false); // A 鍵一律為 NO
@@ -9440,35 +9442,25 @@ function App() {
             playBloop('pop');
             return;
         }
-        if (isPvpMode && matchStatus === 'matched' && battleState.active && battleState.phase === 'player_action') {
-            const currentIdx = battleState.menuIdx || 0;
-            const move = battleState.player?.moves?.[currentIdx];
-            if (move) {
-                executeBattleTurn('attack', move);
-            } else {
-                const tempLogs = [...battleState.logs, "尚未裝備技能！"];
-                setBattleState(prev => ({ ...prev, logs: tempLogs.slice(-5) }));
-                playBloop('fail');
+        if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer')) {
+            if (battleState.phase === 'player_action') {
+                const currentIdx = battleState.menuIdx || 0;
+                const move = battleState.player?.moves?.[currentIdx];
+                if (move) {
+                    executeBattleTurn('attack', move);
+                } else {
+                    const errorMsg = battleState.mode === 'pvp' ? "尚未裝備技能！" : "該格子尚未裝備技能！";
+                    const tempLogs = [...battleState.logs, errorMsg];
+                    setBattleState(prev => ({ ...prev, logs: tempLogs.slice(-5) }));
+                    playBloop('fail');
+                }
             }
-            return;
+            return; // 核心修正：只要是對戰中，任何 phase 都應攔截 B 鍵，防止穿透到背景選單執行 cleanupPvp
         }
         if (isDiaryOpen) {
             // B 鍵：關閉日記
             setIsDiaryOpen(false);
             playBloop('pop');
-            return;
-        }
-        if (battleState.active && battleState.mode === 'trainer' && battleState.phase === 'player_action') {
-            const currentIdx = battleState.menuIdx || 0;
-            const move = battleState.player?.moves?.[currentIdx];
-            if (move) {
-                executeBattleTurn('attack', move);
-            } else {
-                // 如果空發
-                const tempLogs = [...battleState.logs, "該格子尚未裝備技能！"];
-                setBattleState(prev => ({ ...prev, logs: tempLogs.slice(-5) }));
-                playBloop('fail');
-            }
             return;
         }
         if (isConfirmingReplace) {
