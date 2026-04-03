@@ -3751,8 +3751,8 @@ export default function App() {
                                             <div className="w-6 text-[12px] font-black italic opacity-40">
                                                 #{ (leaderboardPage * 5) + idx + 1 }
                                             </div>
-                                            <div className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a]/5 border border-[#1a1a1a]/20 shrink-0">
-                                                <DitheredSprite id={item.monsterId || 132} scale={0.5} />
+                                            <div className="w-10 h-10 flex items-center justify-center bg-[#1a1a1a]/5 border border-[#1a1a1a]/20 shrink-0">
+                                                <DitheredSprite id={item.monsterId || 132} scale={0.85} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="text-[10px] truncate leading-none mb-0.5">{item.displayName}</div>
