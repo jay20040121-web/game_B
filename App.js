@@ -471,6 +471,10 @@ export default function App() {
 
     // --- Firebase 帳號與雲端同步狀態 ---
     const [user, setUser] = useState(null);
+    const [leaderboard, setLeaderboard] = useState([]);
+    const [leaderboardPage, setLeaderboardPage] = useState(0); // 新增：分頁狀態
+    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+    const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
     const [isCloudSyncing, setIsCloudSyncing] = useState(false);
     const [isCloudLoading, setIsCloudLoading] = useState(false);
     const [hasCheckedCloud, setHasCheckedCloud] = useState(false);
@@ -580,6 +584,71 @@ export default function App() {
     };
 
     // 加入/建立 密碼房間
+    // --- PVP 排行榜邏輯 (Modular App.js) ---
+    const updatePvpStats = async (isWin) => {
+        if (!user || !db) return;
+        const uid = user.uid;
+        const docRef = db.collection('pvp_leaderboard').doc(uid);
+        const myId = getMonsterId();
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const sfDoc = await transaction.get(docRef);
+                let data = sfDoc.exists ? sfDoc.data() : { wins: 0, losses: 0, monsterId: myId, displayName: user.displayName || "未知玩家" };
+
+                if (isWin) data.wins += 1;
+                else data.losses += 1;
+
+                data.monsterId = myId; 
+                data.displayName = user.displayName || "未知玩家";
+                
+                const total = data.wins + data.losses;
+                const winRate = data.wins / total;
+                data.score = (data.wins * 10) + (total * 2) + (winRate * 50);
+                data.winRate = winRate;
+                data.lastUpdated = window.firebase.firestore.FieldValue.serverTimestamp();
+
+                transaction.set(docRef, data, { merge: true });
+            });
+        } catch (e) { console.error("Leaderboard update failed:", e); }
+    };
+
+    const fetchLeaderboard = async () => {
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`[${timestamp}] 🚀 Leaderboard button clicked!`);
+        
+        if (!db) {
+            console.error("Firestore (db) is missing!");
+            updateDialogue("資料庫尚未就緒，請檢查 Firebase 設定...");
+            return;
+        }
+        
+        setIsLeaderboardLoading(true);
+        setLeaderboardPage(0); // 新增：每次讀取重置到第一頁
+        try {
+            console.log("Fetching top 50 scores...");
+            const snapshot = await db.collection('pvp_leaderboard')
+                .orderBy('score', 'desc')
+                .limit(50)
+                .get();
+            
+            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`Success! Found ${list.length} players.`);
+            setLeaderboard(list);
+            setIsLeaderboardOpen(true);
+        } catch (e) {
+            console.error("Firebase Error:", e);
+            updateDialogue("讀取失敗！(通常是需要建立 Firestore 索引，請查看控制台)...");
+        } finally {
+            setIsLeaderboardLoading(false);
+        }
+    };
+
+    // 暴露給全域以便測試
+    useEffect(() => {
+        window.fetchLeaderboardTest = fetchLeaderboard;
+    }, []);
+
     const joinPvpRoom = (pwd) => {
         if (!pwd || pwd.trim() === "") {
             setAlertMsg("請輸入房間密碼");
@@ -1942,6 +2011,7 @@ export default function App() {
             setMatchStatus('idle');
             setBattleState(prev => ({ ...prev, active: false }));
             updateDialogue("對戰勝利！獲得 10 點戰力！");
+            if (user) updatePvpStats(true); // 更新排行榜
             logEvent("在一場精彩的連線對決中獲得了勝利，戰力 +10。");
             playBloop('success');
             return; // PvP 模式不進入冒險流程
@@ -1979,6 +2049,7 @@ export default function App() {
             setMatchStatus('idle');
             setBattleState(prev => ({ ...prev, active: false }));
             updateDialogue("對戰結束，獲得 5 點戰力！");
+            if (user) updatePvpStats(false); // 更新排行榜 (敗場)
             logEvent("在一場連線對決中落敗，獲得了 5 點戰力的鼓勵。");
             playBloop('fail');
             return; // PvP 模式不進入冒險流程
@@ -2010,6 +2081,11 @@ export default function App() {
         if (isCloudLoading) return; // 雲端同步中禁止操作
         if (alertMsg) {
             setAlertMsg("");
+            playBloop('pop');
+            return;
+        }
+        if (isLeaderboardOpen) {
+            setLeaderboardPage(prev => (prev + 1) % 10);
             playBloop('pop');
             return;
         }
@@ -2308,6 +2384,11 @@ export default function App() {
     };
 
     const handleC = () => {
+        if (isLeaderboardOpen) {
+            setIsLeaderboardOpen(false);
+            playBloop('pop');
+            return;
+        }
         if (isCloudLoading) return; // 雲端同步中禁止操作
         if (alertMsg) {
             setAlertMsg("");
@@ -3647,6 +3728,58 @@ export default function App() {
                     )}
                     <div className="lcd-grid-overlay"></div>
 
+                    {/* --- 👑 整合式行動排行榜 (LCD Integrated) --- */}
+                    {isLeaderboardOpen && (
+                        <div className="absolute inset-0 bg-[#9dae8a] z-[500] flex flex-col items-center p-2 font-bold select-none animate-fade-in text-[#1a1a1a]">
+                            {/* 標題欄 */}
+                            <div className="w-full bg-[#383a37] text-[#9dae8a] px-2 py-1 flex justify-between items-center mb-1 shadow-sm">
+                                <span className="text-[10px] tracking-tighter font-black flex items-center gap-1">
+                                    🏆 全球英雄榜 [P{leaderboardPage + 1}/10]
+                                </span>
+                            </div>
+
+                            {/* 排行列表 (每頁 5 筆) */}
+                            <div className="flex-1 w-full space-y-1 mt-1">
+                                {isLeaderboardLoading ? (
+                                    <div className="flex flex-col items-center justify-center h-full gap-2 opacity-60">
+                                        <div className="animate-spin text-xl">⏳</div>
+                                        <div className="text-[10px]">資料同步中...</div>
+                                    </div>
+                                ) : (
+                                    leaderboard.slice(leaderboardPage * 5, (leaderboardPage * 5) + 5).map((item, idx) => (
+                                        <div key={item.id} className="bg-[#8fa07e]/30 border-2 border-[#1a1a1a]/20 p-1 flex items-center gap-2 h-[42px] relative overflow-hidden">
+                                            <div className="w-6 text-[12px] font-black italic opacity-40">
+                                                #{ (leaderboardPage * 5) + idx + 1 }
+                                            </div>
+                                            <div className="w-8 h-8 flex items-center justify-center bg-[#1a1a1a]/5 border border-[#1a1a1a]/20 shrink-0">
+                                                <DitheredSprite id={item.monsterId || 132} scale={0.5} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[10px] truncate leading-none mb-0.5">{item.displayName}</div>
+                                                <div className="flex gap-2 text-[8px] opacity-70">
+                                                    <span>W:{item.wins}</span>
+                                                    <span>L:{item.losses}</span>
+                                                    <span>{((item.winRate || 0) * 100).toFixed(0)}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                                {!isLeaderboardLoading && leaderboard.length === 0 && (
+                                    <div className="flex flex-col items-center justify-center h-full text-[10px] opacity-40">
+                                        尚無紀錄...
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 底部按鍵提示 */}
+                            <div className="w-full border-t border-[#1a1a1a]/20 pt-1 mt-1 flex justify-between items-center text-[8px] font-black opacity-80">
+                                <span className="animate-pulse">▶ A: 下一頁</span>
+                                <span>● C: 退出</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 技能學習/替換介面 (Skill Learn UI) */}
                     {pendingSkillLearn && !isAdvMode && !isPvpMode && !battleState.active && (
                         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-center p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
@@ -3865,6 +3998,13 @@ export default function App() {
                                                 </div>
 
                                                 <div className="w-full grid grid-cols-1 gap-2">
+                                                    <button
+                                                        onClick={fetchLeaderboard}
+                                                        disabled={matchStatus === 'searching'}
+                                                        className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#8e44ad] text-white shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none mb-1'}`}
+                                                    >
+                                                        👑 全球排行榜
+                                                    </button>
                                                     <button
                                                         onClick={() => (matchStatus !== 'searching') && joinPvpRoom(pvpRoomPassword)}
                                                         disabled={matchStatus === 'searching'}
