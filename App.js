@@ -4401,13 +4401,22 @@ export default function App() {
                                         className="absolute"
                                         style={{
                                             left: pos.x, top: pos.y,
-                                            transform: `translate(-50%, -50%) ${!isDead && isSpinning ? 'rotate(180deg)' : ''} ${vel.x < 0 ? 'scaleX(1)' : 'scaleX(-1)'}`,
-                                            transition: 'transform 0.1s ease-out', // 讓翻轉稍微平滑一點
-                                            animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none'
+                                            transform: 'translate(-50%, -50%)',
+                                            animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none',
+                                            zIndex: 40
                                         }}
                                     >
-                                        {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterId(); return null; })()}
-                                        <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterId()} />
+                                        <div style={{
+                                            transform: `${!isDead && isSpinning ? 'rotate(180deg)' : ''} ${vel.x < 0 ? 'scaleX(1)' : 'scaleX(-1)'}`,
+                                            transformOrigin: 'center center',
+                                            transition: 'transform 0.15s ease-out', // 稍微平滑化轉向過程
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterId(); return null; })()}
+                                            <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterId()} />
+                                        </div>
                                     </div>
 
                                     {/* 死亡後提示文字 */}
