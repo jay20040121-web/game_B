@@ -25,97 +25,11 @@ import {
 } from './src/data/gameConfig';
 
 import { auth, db, googleProvider } from './src/utils/firebase';
-
-
-// Web Audio API 8-bit 音效產生器
-const playBloop = (type) => {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        if (type === 'success') {
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(600, ctx.currentTime);
-            osc.frequency.setValueAtTime(900, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.3);
-        } else if (type === 'heartbeat') {
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(120, ctx.currentTime);
-            osc.frequency.setValueAtTime(80, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.08, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.2);
-        } else if (type === 'pop') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(1200, ctx.currentTime);
-            gain.gain.setValueAtTime(0.03, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.05);
-        } else {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(250, ctx.currentTime);
-            osc.frequency.setValueAtTime(150, ctx.currentTime + 0.2);
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.4);
-        }
-    } catch (e) { }
-};
-
-/**
- * 🐉 Pixel Monster - 日記系統完整版 (Diary System Complete v11)
- * --------------------------------------------------------
- * 特色：對戰日記系統、專屬靈魂個性對話、大事優先權紀錄、
- *       全方位的防呆機制與動態成長系統。
- */
-const SAVE_VERSION = 12;
-
-// --- 🔹 環境偵測：判斷是否在 LINE/FB/IG 等 In-App Browser 🔹 ---
-const isInAppBrowser = typeof navigator !== "undefined" && (
-    /line/i.test(navigator.userAgent) ||
-    /fbav/i.test(navigator.userAgent) ||
-    /instagram/i.test(navigator.userAgent) ||
-    /micromessenger/i.test(navigator.userAgent)
-);
+import { playBloop } from './src/utils/audioSystem';
+import { SAVE_VERSION, isInAppBrowser, loadSaveData } from './src/utils/storageSystem';
 
 
 
-const loadSaveData = () => {
-    try {
-        const str = localStorage.getItem('pixel_monster_save');
-        if (str) {
-            const data = JSON.parse(str);
-
-            // 版本不符 → 自動清除舊存檔，全新開始
-            if (data.saveVersion !== SAVE_VERSION) {
-                try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
-                return null;
-            }
-
-            if (data.lastSaveTime && !data.isDead && data.evolutionStage < 4) {
-                const offlineMs = Date.now() - data.lastSaveTime;
-                const stageThresh = { 1: 10800000, 2: 21600000, 3: 86400000 }[data.evolutionStage] || 86400000;
-                const dropPerMs = 100 / stageThresh;
-                const offlineDrop = offlineMs * dropPerMs;
-
-                if (data.hunger !== undefined) data.hunger = Math.max(0, data.hunger - offlineDrop);
-                if (data.mood !== undefined) data.mood = Math.max(0, data.mood - offlineDrop);
-            }
-            return data;
-        }
-    } catch (e) { }
-    return null;
-};
 
 
 
