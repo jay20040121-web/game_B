@@ -27,6 +27,7 @@ import {
 import { auth, db, googleProvider } from './src/utils/firebase';
 import { playBloop } from './src/utils/audioSystem';
 import { SAVE_VERSION, isInAppBrowser, loadSaveData } from './src/utils/storageSystem';
+import { isLocalhost, FIRESTORE_COLLECTION, PEER_PREFIX } from './src/utils/envConfig';
 
 
 
@@ -86,17 +87,7 @@ export default function App() {
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
 
-    // --- 🛠️ 偵錯系統與環境隔離 (Environment Isolation) ---
-    const isLocalhost = typeof window !== "undefined" && (
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname === '' ||
-        window.location.protocol === 'file:'
-    );
 
-    // 🔹 數據隔離關鍵參數：本地開發使用 dev_ 前綴
-    const FIRESTORE_COLLECTION = isLocalhost ? 'dev_users' : 'users';
-    const PEER_PREFIX = isLocalhost ? "gameB_v1_dev_" : "gameB_v1_";
 
     const [showDebug, setShowDebug] = useState(false);
     const [debugOverrides, setDebugOverrides] = useState({
