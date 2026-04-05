@@ -1072,24 +1072,22 @@ export default function App() {
                 handleAdvGather(tempLog, myId);
             }
         } else {
-            // --- 根據進化階段 (evolutionStage) 調整機率準則 ---
-            if (evolutionStage === 1) {
-                // Stage 1 (幼年期)：不遇訓練師，50% 野怪 / 50% 探索
-                if (r < 0.50) {
-                    bStateToTrigger = generateBattleState('wild', myId);
-                } else {
-                    handleAdvGather(tempLog, myId);
-                }
+            // --- 根據玩家等級 (derivedLevel) 調整機率 ---
+            // 低等級時尋找物資的探索機率極高，高等級時逐漸轉換為戰鬥
+            // 等級 1：探索 80% / 野怪 20% / 訓練師 0%
+            // 等級 50 及以上：探索 0% / 野怪 30% / 訓練師 70%
+            const levelRatio = Math.min(1, Math.max(0, (derivedLevel - 1) / 49)); // 1級為0，50級(含)以上為1
+            
+            const gatherProb = 0.80 * (1 - levelRatio); // 探索機率 (80% -> 0%)
+            const trainerProb = 0.70 * levelRatio;      // 訓練師機率 (0% -> 70%)
+            const wildProb = 1 - gatherProb - trainerProb; // 野怪機率 (20% -> 30%)
+
+            if (r < wildProb) {
+                bStateToTrigger = generateBattleState('wild', myId);
+            } else if (r < wildProb + trainerProb) {
+                bStateToTrigger = generateBattleState('trainer', myId);
             } else {
-                // Stage 2+ (成長期之後)：大幅增加戰鬥頻率
-                // 60% 野怪 / 30% 訓練師 / 10% 探索
-                if (r < 0.60) {
-                    bStateToTrigger = generateBattleState('wild', myId);
-                } else if (r < 0.90) {
-                    bStateToTrigger = generateBattleState('trainer', myId);
-                } else {
-                    handleAdvGather(tempLog, myId);
-                }
+                handleAdvGather(tempLog, myId);
             }
         }
 
@@ -2726,14 +2724,34 @@ export default function App() {
         setFeedCount(0);
         setDeathBranch(null); // 重置 D線籤
 
-        // --- 修正戰力繼承邏輯 ---
+        // --- 修正戰力與技能繼承邏輯 ---
         // 取得死前戰力的 10% 漲幅作為遺產，加上基礎 100 戰力
         const prevBasePower = latestStats.current.advStats?.basePower || 100;
         const inheritedPower = Math.floor((prevBasePower - 100) * 0.1); // 繼承 10% 的努力成果，而非總戰力
+        
         // 判斷下一代初始招式
         const nextId = savedDeathBranch === 'G1' ? "92" : (savedDeathBranch === 'G2' ? "63" : "132");
         const nextStarterMove = nextId === "92" ? 'lick' : (nextId === "63" ? 'confusion' : 'tackle');
         const nextBonusId = ['ember', 'water_gun', 'vine_whip', 'quick_attack'][Math.floor(Math.random() * 4)];
+
+        // 完美繼承招式處理：避免與新生自帶招式衝突，並且最多只保留 4 招
+        const prevMoves = latestStats.current.advStats?.moves || [];
+        let combinedMoves = [nextStarterMove]; // 保證必定擁有當前物種的基本招式
+        
+        // 完美匯入前代技能
+        prevMoves.forEach(mv => {
+            if (!combinedMoves.includes(mv)) {
+                combinedMoves.push(mv);
+            }
+        });
+
+        // 若還有空間且未持有 bonus 招式，再發送 bonus
+        if (combinedMoves.length < 4 && !combinedMoves.includes(nextBonusId)) {
+            combinedMoves.push(nextBonusId);
+        }
+
+        // 把長度限制在最大四招內
+        combinedMoves = combinedMoves.slice(0, 4);
 
         setAdvStats({
             basePower: 100 + inheritedPower,
@@ -2744,13 +2762,13 @@ export default function App() {
                 spd: Math.floor(Math.random() * 32)
             },
             evs: { hp: 0, atk: 0, def: 0, spd: 0 },
-            bonusMoveId: nextBonusId,
-            moves: [nextStarterMove, nextBonusId].filter(Boolean)
+            bonusMoveId: nextBonusId, // 記錄原本隨機出的，但不一定在 moves 陣列中
+            moves: combinedMoves
         });
 
         // 給予玩家反饋提示
-        if (inheritedPower > 0) {
-            updateDialogue(`獲得了 ${inheritedPower} 點前代戰力遺產！`, true);
+        if (inheritedPower > 0 || prevMoves.length > 0) {
+            updateDialogue(`繼承了前代的招式與 ${inheritedPower} 點戰力！`, true);
         } else {
             updateDialogue("新的一天開始了！", true);
         }
