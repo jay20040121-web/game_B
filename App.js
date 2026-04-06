@@ -36,6 +36,8 @@ import { SAVE_VERSION, isInAppBrowser, loadSaveData } from './src/utils/storageS
 import { isLocalhost, FIRESTORE_COLLECTION, PEER_PREFIX } from './src/utils/envConfig';
 import { processBattleTurn } from './src/utils/battleTurnSystem';
 import { usePvpConnection } from './src/utils/usePvpConnection';
+import { getMonsterId } from './src/utils/monsterIdMapper';
+import { useLeaderboard } from './src/utils/useLeaderboard';
 
 
 
@@ -176,7 +178,7 @@ export default function App() {
         if (derivedLevel > previousLevelRef.current) {
             // 確保依賴存在 (由 monsterData.js 或相關 bundle 注入)
             if (typeof SPECIES_BASE_STATS === "object" && typeof SKILL_DATABASE === "object") {
-                const myId = typeof getMonsterId === "function" ? getMonsterId() : 132;
+                const myId = getMonsterIdWrapped();
                 const speciesData = SPECIES_BASE_STATS[String(myId)];
                 const myType = speciesData?.types || ['normal'];
                 let targetType = 'normal';
@@ -216,10 +218,6 @@ export default function App() {
 
     // --- Firebase 帳號與雲端同步狀態 ---
     const [user, setUser] = useState(null);
-    const [leaderboard, setLeaderboard] = useState([]);
-    const [leaderboardPage, setLeaderboardPage] = useState(0); // 新增：分頁狀態
-    const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
-    const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
     const [isCloudSyncing, setIsCloudSyncing] = useState(false);
     const [isCloudLoading, setIsCloudLoading] = useState(false);
     const [hasCheckedCloud, setHasCheckedCloud] = useState(false);
@@ -229,100 +227,17 @@ export default function App() {
 
     // Cleanups removed
 
-    // 加入/建立 密碼房間
-    // --- PVP 排行榜邏輯 (Modular App.js) ---
-    const updatePvpStats = async (isWin) => {
-        if (!user || !db) return;
-        const uid = user.uid;
-        const docRef = db.collection('pvp_leaderboard').doc(uid);
-        const myId = getMonsterId();
+    // --- PVP 排行榜邏輯 (已模組化至 useLeaderboard) ---
+    // (updatePvpStats, fetchLeaderboard 與排行榜 state 由 hook 提供，於下方解構使用)
 
-        // 📅 取得今天的日期字串 (台北時間)
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' }); // "YYYY-MM-DD"
-
-        try {
-            await db.runTransaction(async (transaction) => {
-                const sfDoc = await transaction.get(docRef);
-                let data = sfDoc.exists ? sfDoc.data() : { 
-                    wins: 0, 
-                    losses: 0, 
-                    monsterId: myId, 
-                    displayName: user.displayName || "未知玩家",
-                    lastResetDate: todayStr
-                };
-
-                // 🔄 每日重置邏輯：如果日期變了，清空勝負紀錄
-                if (data.lastResetDate !== todayStr) {
-                    data.wins = 0;
-                    data.losses = 0;
-                    data.lastResetDate = todayStr;
-                }
-
-                if (isWin) data.wins += 1;
-                else data.losses += 1;
-
-                data.monsterId = myId; 
-                data.displayName = user.displayName || "未知玩家";
-                
-                const total = data.wins + data.losses;
-                const winRate = data.wins / (total || 1);
-                // 評分公式優化：包含勝場權重與勝率加成
-                data.score = (data.wins * 10) + (total * 2) + (winRate * 50);
-                data.winRate = winRate;
-                data.lastUpdated = window.firebase.firestore.FieldValue.serverTimestamp();
-
-                transaction.set(docRef, data, { merge: true });
-            });
-        } catch (e) { console.error("Leaderboard update failed:", e); }
-    };
-
-    const fetchLeaderboard = async () => {
-        const timestamp = new Date().toLocaleTimeString();
-        console.log(`[${timestamp}] 🚀 Leaderboard button clicked!`);
-        
-        if (!db) {
-            console.error("Firestore (db) is missing!");
-            updateDialogue("資料庫尚未就緒，請檢查 Firebase 設定...");
-            return;
-        }
-        
-        setIsLeaderboardLoading(true);
-        setLeaderboardPage(0);
-
-        // 📅 取得今天的日期字串 (台北時間) 進行過濾
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
-
-        try {
-            console.log(`Fetching top 50 scores for ${todayStr}...`);
-            const snapshot = await db.collection('pvp_leaderboard')
-                .where('lastResetDate', '==', todayStr) // 🔹 只讀取今天的紀錄
-                .orderBy('score', 'desc')
-                .limit(50)
-                .get();
-            
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`Success! Found ${list.length} players.`);
-            setLeaderboard(list);
-            setIsLeaderboardOpen(true);
-        } catch (e) {
-            console.error("Firebase Error:", e);
-            updateDialogue("讀取失敗！(通常是需要建立 Firestore 索引，請查看控制台)...");
-        } finally {
-            setIsLeaderboardLoading(false);
-        }
-    };
-
-    // 暴露給全域以便測試
-    useEffect(() => {
-        window.fetchLeaderboardTest = fetchLeaderboard;
-    }, []);
+    // --- Handlers removed ---
 
     // Handlers removed
 
     // 取得自身的戰鬥數值用於 INIT 傳送
     function generateMyBattleStats() {
         const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
-        const speciesId = getMonsterId();
+        const speciesId = getMonsterIdWrapped();
 
         // --- 性格修正系統 (Nature Modifiers) ---
         const getNatureMods = (tag) => {
@@ -1045,7 +960,7 @@ export default function App() {
 
         setIsAdvMode(true);
         setAdvCurrentHP(1);
-        const myId = getMonsterId();
+        const myId = getMonsterIdWrapped();
 
         // --- 起始播報隊列 ---
         const introLines = [
@@ -1061,7 +976,7 @@ export default function App() {
     };
 
     const executeAdventureEvent = () => {
-        const myId = getMonsterId();
+        const myId = getMonsterIdWrapped();
         const r = Math.random();
         let bStateToTrigger = null;
         let tempLog = [];
@@ -1216,7 +1131,7 @@ export default function App() {
 
 
     const resolveBattleWin = (finalGain, enemy) => {
-        const myId = getMonsterId();
+        const myId = getMonsterIdWrapped();
         const logs = [];
 
         logs.push({ msg: `🏆 戰鬥勝利！獲得 ${finalGain} 點成長。`, hpRatio: 1, iconId: myId });
@@ -2187,7 +2102,7 @@ export default function App() {
                 setTimeout(() => {
                     const now = new Date();
                     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                    const evolvedId = getMonsterId(nextBranch, evolutionStage + 1);
+                    const evolvedId = getMonsterIdWrapped(nextBranch, evolutionStage + 1);
                     const evolvedName = MONSTER_NAMES[evolvedId] || nextBranch;
                     updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
                     setTodayHasEvolved(true);
@@ -2323,7 +2238,7 @@ export default function App() {
     };
     function generateBattleState(mode, myId, pvpOpponentData = null) {
         const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
-        const speciesId = getMonsterId();
+        const speciesId = getMonsterIdWrapped();
 
         // --- 性格修正系統 (Nature Modifiers) ---
         const getNatureMods = (tag) => {
@@ -2815,112 +2730,17 @@ export default function App() {
 
 
 
-    const getMonsterId = (branch = evolutionBranch, stage = evolutionStage) => {
-        if (branch.startsWith('WILD_')) {
-            return parseInt(branch.split('_')[1]);
-        }
-        if (isDead) return 92; // Gastly
+    // getMonsterId 已模組化至 src/utils/monsterIdMapper.js
+    // 包裝函式保持相同的呼叫介面，補入原本使用 closure 取得的 state 參數
+    const getMonsterIdWrapped = (branch = evolutionBranch, stage = evolutionStage) =>
+        getMonsterId(branch, stage, isDead, bondValue, soulTagCounts);
 
-        if (stage === 1) {
-            if (branch === 'G1') return 92; // Gastly
-            if (branch === 'G2') return 63; // Abra
-            return 132; // Ditto
-        }
 
-        if (stage === 2) {
-            if (branch.startsWith('B_') && branch.endsWith('_SOUL')) return 10; // Caterpie
-            if (branch === 'F_SOUL') return 4;  // Charmander
-            if (branch === 'F_VULPIX_SOUL') return 37; // Vulpix
-            if (branch === 'W_SQUIRTLE_SOUL' || branch === 'W_SOUL') return 7;  // Squirtle
-            if (branch === 'W_DRATINI_SOUL') return 147; // Dratini
-            if (branch === 'GR_SOUL') return 1; // Bulbasaur
-            if (branch === 'GR_ODDISH_SOUL') return 43; // Oddish
-            if (branch === 'G1') return 93;  // 鬼斯通
-            if (branch === 'G2') return 64;  // 勇吉拉
-            if (branch === 'P1') return 109; // 瓦斯彈
-            if (branch === 'P2') return 88;  // 臭泥
-            if (branch === 'F') return 66;  // 腕力
-            if (branch === 'A') return 32;  // 尼多朗
-            if (branch === 'B') return 29;  // 尼多蘭
-            return 19; // Rattata (C 線)
-        }
-        if (stage === 3) {
-            if (branch === 'B_M_SOUL' || branch === 'B_SOUL') return 11; // Metapod
-            if (branch === 'B_H_SOUL') return 14; // Kakuna
-            if (branch === 'B_E_SOUL') return 48; // Venonat
-            if (branch === 'F_CHARMELEON_SOUL') return 5;  // Charmeleon
-            if (branch === 'F_CUBONE_SOUL') return 104;    // Cubone
-            if (branch === 'F_GROWLITHE_SOUL') return 58;  // Growlithe
-            if (branch === 'F_PONYTA_SOUL') return 77;     // Ponyta
-            if (branch === 'F_NINETALES_SOUL') return 38;  // Ninetales
-            if (branch === 'W_WARTORTLE_SOUL' || branch === 'W_SOUL') return 8;  // Wartortle
-            if (branch === 'W_DRAGONAIR_SOUL') return 148; // Dragonair
-            if (branch === 'W_HORSEA_SOUL') return 116; // Horsea
-            if (branch === 'W_MAGIKARP_SOUL') return 129; // Magikarp
-            if (branch === 'GR_IVYSAUR_SOUL' || branch === 'GR_SOUL') return 2; // Ivysaur
-            if (branch === 'GR_PARAS_SOUL') return 46;     // Paras
-            if (branch === 'GR_BELLSPROUT_SOUL') return 69; // Bellsprout
-            if (branch === 'GR_EXEGGCUTE_SOUL') return 102; // Exeggcute
-            if (branch === 'GR_GLOOM_SOUL') return 44;     // Gloom
-            if (branch === 'G1') return 94;  // 耿鬼
-            if (branch === 'G2') return 65;  // 胡地
-            if (branch === 'P1_SPECIAL') return 82; // Magneton
-            if (branch === 'P1') return 110; // 雙彈瓦斯
-            if (branch === 'P2_SPECIAL') return 54; // Psyduck
-            if (branch === 'P2') return 89;  // 臭臭泥
-            if (branch === 'F_FAIL1') return 106; // 飛腿郎
-            if (branch === 'F') return 67;  // 豪力
-            if (branch === 'A') return 33;  // 尼多利諾
-            if (branch === 'B') return 30;  // 尼多娜
-            return 20; // Raticate (C 線，Stage 3 壽終)
-        }
-        if (stage === 4) {
-            if (branch === 'B_M2_SOUL' || branch === 'B_M_SOUL' || branch === 'B_SOUL') return 12; // Butterfree
-            if (branch === 'B_H2_SOUL') return 15; // Beedrill
-            if (branch === 'B_E2_SOUL') return 49; // Venomoth
-            if (branch === 'F_CHARIZARD_SOUL') return 6;   // Charizard
-            if (branch === 'F_MAGMAR_SOUL') return 126;    // Magmar
-            if (branch === 'F_MAROWAK_SOUL') return 105;   // Marowak
-            if (branch === 'F_ARCANINE_SOUL') return 59;   // Arcanine
-            if (branch === 'F_RAPIDASH_SOUL') return 78;   // Rapidash
-            if (branch === 'W_BLASTOISE_SOUL' || branch === 'W_SOUL') return 9;  // Blastoise
-            if (branch === 'W_DRAGONITE_SOUL') return 149; // Dragonite
-            if (branch === 'W_GYARADOS_SOUL') return 130;  // Gyarados
-            if (branch === 'W_LAPRAS_SOUL') return 131;    // Lapras
-            if (branch === 'W_SEADRA_SOUL') return 117;    // Seadra
-            if (branch === 'GR_VENUSAUR_SOUL' || branch === 'GR_SOUL') return 3; // Venusaur
-            if (branch === 'GR_PARASECT_SOUL') return 47;     // Parasect
-            if (branch === 'GR_VILEPLUME_SOUL') return 45;    // Vileplume
-            if (branch === 'GR_VICTREEBEL_SOUL') return 71;   // Victreebel
-            if (branch === 'GR_EXEGGUTOR_SOUL') return 103;   // Exeggutor
-            if (branch === 'FAIL_ABC') return 137; // 3D獸 (一般線失敗分支)
-            if (branch === 'DRAGON') return 147; // 迷你龍 (靈魂龍進化)
-            if (branch === 'G1') return 94;  // 耿鬼（G 線最終）
-            if (branch === 'G2') return 65;  // 胡地（G 線最終）
-            if (branch === 'P1_SPECIAL') return 82; // Magneton
-            if (branch === 'P1') return 110; // 雙彈瓦斯（P 線最終）
-            if (branch === 'P2_SPECIAL') return 55; // Golduck
-            if (branch === 'P2') return 89;  // 臭臭泥（P 線最終）
-            if (branch === 'F_FAIL2') return 107; // 快拳郎
-            if (branch === 'F') return 68;  // 怪力
-            if (branch === 'A') return 34;  // 尼多王
-            if (branch === 'B') return 31;  // 尼多后
-            return 20; // Raticate（C 線已在 Stage 3 壽終）
-        }
 
-        if (stage === 4) {
-            // Check for special Mew condition: Bond >= 80 and high gentle tag (from soul_evolution_chains.txt)
-            const topTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-            if (bondValue >= 80 && topTag === 'gentle') return 151; // Mew
-        }
-        if (stage === 5) return 249; // Lugia
-        if (stage === 6) return 384; // Rayquaza
 
-        return 132;
-    };
 
     const pvp = usePvpConnection({
-        updateDialogue, setBattleState, getMonsterId, executeBattleTurn, generateMyBattleStats, setAlertMsg, playBloop, user, generateBattleState
+        updateDialogue, setBattleState, getMonsterId: getMonsterIdWrapped, executeBattleTurn, generateMyBattleStats, setAlertMsg, playBloop, user, generateBattleState
     });
     const {
         isPvpMode, setIsPvpMode, matchStatus, setMatchStatus, matchStatusRef, syncMatchStatus,
@@ -2931,6 +2751,14 @@ export default function App() {
         peerInstance, connInstance, isHost, pvpRemoteMoveRef,
         cleanupPvp, initPeer, joinPvpRoom, quickMatch
     } = pvp;
+
+    // --- PVP 排行榜 (已模組化至 useLeaderboard) ---
+    const {
+        leaderboard, leaderboardPage, setLeaderboardPage,
+        isLeaderboardOpen, setIsLeaderboardOpen,
+        isLeaderboardLoading,
+        fetchLeaderboard, updatePvpStats
+    } = useLeaderboard({ user, getMonsterId: getMonsterIdWrapped, updateDialogue });
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
@@ -3077,7 +2905,7 @@ export default function App() {
                     {/* 狀態查詢 Overlay */}
                     <StatusOverlay
                         isStatusUIOpen={isStatusUIOpen}
-                        getMonsterId={getMonsterId}
+                        getMonsterId={getMonsterIdWrapped}
                         soulTagCounts={soulTagCounts}
                         hunger={hunger}
                         mood={mood}
@@ -3276,8 +3104,8 @@ export default function App() {
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}>
-                                            {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterId(); return null; })()}
-                                            <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterId()} />
+                                            {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterIdWrapped(); return null; })()}
+                                            <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()} />
                                         </div>
                                     </div>
 
