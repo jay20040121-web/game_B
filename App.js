@@ -99,6 +99,10 @@ export default function App() {
 
 
 
+    const [isInteractMenuOpen, setIsInteractMenuOpen] = useState(false);
+    const [interactMenuIdx, setInteractMenuIdx] = useState(0);
+    const [isInteractAnimating, setIsInteractAnimating] = useState(false);
+
     const [showDebug, setShowDebug] = useState(false);
     const [debugOverrides, setDebugOverrides] = useState({
         evolutionMs: null,
@@ -729,9 +733,8 @@ export default function App() {
 
     const menuItems = [
         { id: 'status', sprite: ICONS.status, label: '狀態(可觀看寵物成長資訊)' },
-        { id: 'feed', sprite: ICONS.feed, label: '餵食(提升寵物飽足度)' },
+        { id: 'interact', sprite: ICONS.feed, label: '互動(餵食或撫摸寵物)' },
         { id: 'talk', sprite: ICONS.heart, label: '談心(根據喜好改變寵物特性)' },
-        { id: 'pet', sprite: ICONS.pet, label: '撫摸(提升寵物心情)' },
         { id: 'train', sprite: ICONS.train, label: '特訓(提升寵物戰鬥力)' },
         { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)' },
         { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)' },
@@ -1263,7 +1266,7 @@ export default function App() {
     };
 
     const handleA = () => {
-        if (isCloudLoading) return; // 雲端同步中禁止操作
+        if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
         if (alertMsg) {
             setAlertMsg("");
             playBloop('pop');
@@ -1357,6 +1360,13 @@ export default function App() {
             return;
         }
         if (isEvolving) return;
+        if (isInteractMenuOpen) {
+            setInteractMenuIdx(prev => (prev + 1) % 3);
+            const labels = ["餵食", "撫摸", "結束互動"];
+            updateDialogue(`選擇：${labels[(interactMenuIdx + 1) % 3]}`);
+            playBloop('pop');
+            return;
+        }
         const next = (activeIndex + 1) % menuItems.length;
         setActiveIndex(next);
         updateDialogue(menuItems[next].label);
@@ -1376,7 +1386,7 @@ export default function App() {
     };
 
     const handleB = (clickIdx = null) => {
-        if (isCloudLoading) return; // 雲端同步中禁止操作
+        if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
         const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
         if (alertMsg) {
@@ -1559,6 +1569,25 @@ export default function App() {
             return;
         }
 
+        if (isInteractMenuOpen) {
+            if (interactMenuIdx === 0 || interactMenuIdx === 1) { // 餵食 或 撫摸
+                const action = interactMenuIdx === 0 ? 'feed' : 'pet';
+                setIsInteractMenuOpen(false); // 暫時關閉以看表演
+                setIsInteractAnimating(true); // 鎖定操作
+                executeAction(action);
+                // 1.5 秒後自動恢復子選單並解除鎖定
+                setTimeout(() => {
+                    setIsInteractAnimating(false);
+                    setIsInteractMenuOpen(true);
+                }, 1500);
+            } else { // 結束互動
+                setIsInteractMenuOpen(false);
+                updateDialogue("結束互動。");
+                playBloop('pop');
+            }
+            return;
+        }
+
         if (activeIndex === -1) {
             setVel(v => ({ x: v.x, y: -4.0 }));
             updateDialogue("抓到你了！");
@@ -1569,13 +1598,8 @@ export default function App() {
     };
 
     const handleC = () => {
+        if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
         if (isLeaderboardOpen) {
-            setIsLeaderboardOpen(false);
-            playBloop('pop');
-            return;
-        }
-        if (isCloudLoading) return; // 雲端同步中禁止操作
-        if (alertMsg) {
             setAlertMsg("");
             playBloop('pop');
             return;
@@ -1643,6 +1667,12 @@ export default function App() {
             updateDialogue("吼吼吼～");
             return;
         }
+        if (isInteractMenuOpen) {
+            setIsInteractMenuOpen(false);
+            updateDialogue("吼吼吼～");
+            playBloop('pop');
+            return;
+        }
         if (isConfirmingFarewell) {
             setIsConfirmingFarewell(false);
             updateDialogue("吼吼吼～");
@@ -1665,6 +1695,11 @@ export default function App() {
 
     const executeAction = (id) => {
         switch (id) {
+            case 'interact':
+                setIsInteractMenuOpen(true);
+                setInteractMenuIdx(0);
+                updateDialogue("選擇互動方式：", true);
+                break;
             case 'feed':
                 if (hunger >= 100) {
                     updateDialogue("我吃不下了...");
@@ -2915,6 +2950,38 @@ export default function App() {
                         calcFinalStat={calcFinalStat}
                         getIVGrade={getIVGrade}
                     />
+
+                    {/* === 🤝 互動系統子選單 UI (滿版升級) === */}
+                    {isInteractMenuOpen && (
+                        <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" 
+                             style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
+                            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[11px] px-2 py-1.5 flex justify-center items-center mb-4 font-black">
+                                <span>互動系統</span>
+                            </div>
+
+                            <div className="flex-1 w-full flex flex-col gap-2 px-4 justify-center pb-4">
+                                {["🍖 餵食 (飽食度)", "✋ 撫摸 (心情度)", "❌ 結束互動"].map((label, idx) => (
+                                    <div 
+                                        key={idx}
+                                        className={`text-[10px] p-2.5 flex items-center gap-3 font-black border-2 ${
+                                            interactMenuIdx === idx 
+                                            ? 'bg-[#383a37] text-[#8fa07e] border-[#383a37] shadow-[2px_2px_0_rgba(0,0,0,0.1)]' 
+                                            : 'text-[#1a1a1a] border-transparent'
+                                        }`}
+                                    >
+                                        <span style={{ visibility: interactMenuIdx === idx ? 'visible' : 'hidden' }}>▶</span>
+                                        {label}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="absolute bottom-6 w-full text-center px-4">
+                                <div className="text-[9px] font-black text-[#1a1a1a] opacity-60 border-t-2 border-[#383a37]/20 pt-2">
+                                    使用 [A] 切換選項，[B] 執行動作
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* 我的背包 */}
                     <InventoryOverlay
