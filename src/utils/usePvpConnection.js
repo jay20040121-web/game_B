@@ -108,7 +108,7 @@ export const usePvpConnection = (deps) => {
                 // 客戶端接收主機端算好的結果，直接套用
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
-                    const { stepQueue, playerHpAfter, enemyHpAfter, turnId, playerSnap, enemySnap } = payload.data;
+                    const { stepQueue, playerHpAfter, enemyHpAfter, turnId } = payload.data;
                     
                     // 防呆：如果回合序號對不上，可能發生了嚴重的延遲或封包遺失
                     if (turnId !== undefined && turnId !== prev.turn) {
@@ -118,24 +118,6 @@ export const usePvpConnection = (deps) => {
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
                     
-                    // 利用快照進行最終狀態對稱校準 (Surgical Sync)
-                    // 核心修正：我們只同步 HP 與狀態等揮發性數值，嚴禁覆蓋本地的技能 (moves) 與 ID，防止 UI 渲染層變灰
-                    const syncedPlayer = playerSnap ? { 
-                        ...prev.player, 
-                        ...playerSnap, 
-                        moves: prev.player.moves, 
-                        id: prev.player.id, 
-                        name: prev.player.name 
-                    } : { ...prev.player };
-
-                    const syncedEnemy = enemySnap ? { 
-                        ...prev.enemy, 
-                        ...enemySnap, 
-                        moves: prev.enemy.moves, 
-                        id: prev.enemy.id, 
-                        name: prev.enemy.name 
-                    } : { ...prev.enemy };
-
                     return {
                         ...prev,
                         phase: 'action_streaming',
@@ -143,10 +125,8 @@ export const usePvpConnection = (deps) => {
                         activeMsg: first.text || "",
                         lastStep: first,
                         flashTarget: null,
-                        player: syncedPlayer,
-                        enemy: syncedEnemy,
-                        playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : syncedPlayer.hp,
-                        enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : syncedEnemy.hp,
+                        playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : prev.player.hp,
+                        enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : prev.enemy.hp,
                         // 播報期間維持當前回合 ID
                         turn: turnId !== undefined ? turnId : prev.turn
                     };

@@ -273,12 +273,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     type: 'RESULT', 
                     data: { 
                         stepQueue: flippedQueue,
-                        // 發送當前的回合序號以便對齊
                         turnId: prev.turn,
-                        // 房主的 player 是 客戶端的 enemy
-                        enemySnap: { ...updatedPlayer }, 
-                        // 房主的 enemy 是 客戶端的 player
-                        playerSnap: { ...updatedEnemy },
                         playerHpAfter: updatedEnemy.hp, 
                         enemyHpAfter: updatedPlayer.hp
                     } 

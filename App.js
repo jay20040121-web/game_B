@@ -1148,23 +1148,9 @@ export default function App() {
                     // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
                     
-                    // 核心確保：在進入下一回合前，強制將數值校準至由計算引擎算出的終點 HpAfter
-                    // 同時防護 moves 不會因為不可預期的狀態更新而遺失 (Surgical Merge)
-                    const finalPlayer = { 
-                        ...prev.player, 
-                        hp: finalPlayerHp,
-                        moves: prev.player.moves,
-                        id: prev.player.id,
-                        name: prev.player.name
-                    };
-                    
-                    const finalEnemy = { 
-                        ...prev.enemy, 
-                        hp: finalEnemyHp,
-                        moves: prev.enemy.moves,
-                        id: prev.enemy.id,
-                        name: prev.enemy.name
-                    };
+                    // 利用計算結果進行最終 HP 校準，同時百分之百保留本地所有其他屬性 (如 moves)
+                    const finalPlayer = { ...prev.player, hp: finalPlayerHp };
+                    const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
 
                     return { 
                         ...prev, 
