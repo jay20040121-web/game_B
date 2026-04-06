@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
-const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
+const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silhouette = false }) => {
     const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/${id}.gif` : `assets/sprites/${id}.png`);
 
     useEffect(() => {
@@ -35,7 +35,9 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true }) =>
                 src={imgSrc}
                 className="pixel-rendering"
                 style={{ 
-                    filter: 'grayscale(1) contrast(2) brightness(0.6)',
+                    filter: silhouette 
+                        ? 'brightness(0) contrast(100)' 
+                        : 'grayscale(1) contrast(2) brightness(0.6)',
                     mixBlendMode: 'multiply',
                     width: '100%',
                     height: '100%',

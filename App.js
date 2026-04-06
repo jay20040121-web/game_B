@@ -4,6 +4,7 @@ import InventoryOverlay from './src/components/InventoryOverlay';
 import StatusOverlay from './src/components/StatusOverlay';
 import LeaderboardOverlay from './src/components/LeaderboardOverlay';
 import SkillLearnOverlay from './src/components/SkillLearnOverlay';
+import { MonsterpediaOverlay } from './src/components/MonsterpediaOverlay';
 import React, { useState, useEffect, useRef } from 'react';
 import './styles.css';
 import {
@@ -18,7 +19,8 @@ import {
     NATURE_CONFIG,
     getTypeMultiplier,
     generateMoves,
-    calcFinalStat
+    calcFinalStat,
+    OBTAINABLE_MONSTER_IDS
 } from './monsterData';
 
 import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } from './src/components/SpriteRenderer';
@@ -102,6 +104,25 @@ export default function App() {
     const [isInteractMenuOpen, setIsInteractMenuOpen] = useState(false);
     const [interactMenuIdx, setInteractMenuIdx] = useState(0);
     const [isInteractAnimating, setIsInteractAnimating] = useState(false);
+
+    // 圖鑑系統狀態
+    const [ownedMonsters, setOwnedMonsters] = useState(getInit('ownedMonsters', []));
+    const [isPediaOpen, setIsPediaOpen] = useState(false);
+    const [pediaIdx, setPediaIdx] = useState(0);
+    const [isPediaDetailOpen, setIsPediaDetailOpen] = useState(false);
+
+    // 解鎖圖鑑函式
+    const unlockMonster = (id) => {
+        if (!id) return;
+        const idStr = String(id);
+        setOwnedMonsters(prev => {
+            if (prev.includes(idStr)) return prev;
+            const newList = [...prev, idStr];
+            logEvent(`解鎖了新的圖鑑：${MONSTER_NAMES[idStr] || idStr}`);
+            recordGameAction(); // 確保解鎖後觸發存檔
+            return newList;
+        });
+    };
 
     const [showDebug, setShowDebug] = useState(false);
     const [debugOverrides, setDebugOverrides] = useState({
@@ -656,6 +677,7 @@ export default function App() {
                 advStats, inventory, lastAdvTime,
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
                 todayHasEvolved, todaySpecialEvent, todayEventPriority,
+                ownedMonsters,
                 lastSaveTime: lastSaveTime,
                 ownerUid: user?.uid || null
             };
@@ -665,7 +687,7 @@ export default function App() {
             localStorage.setItem('pixel_monster_save', currentDataStr);
             lastSavedDataRef.current = currentDataStr;
         } catch (e) { }
-    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, lastSaveTime]);
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, lastSaveTime]);
 
     // 2️⃣ 雲端同步：獨立監控重大行為，不受 hunger/mood 跳動影響
     useEffect(() => {
@@ -738,6 +760,7 @@ export default function App() {
         { id: 'train', sprite: ICONS.train, label: '特訓(提升寵物戰鬥力)' },
         { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)' },
         { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)' },
+        { id: 'pedia', sprite: ICONS.footprint, label: '圖鑑(查看已收集的像素怪獸)' },
         { id: 'info', sprite: ICONS.info, label: '背包(裝著戰利品與寵物的回憶)' },
     ];
 
@@ -931,6 +954,7 @@ export default function App() {
             });
 
             updateDialogue(`✨ ${pendingWildCapture.name} 成為了你的新夥伴！`);
+            unlockMonster(pendingWildCapture.id);
         } else {
             updateDialogue("保持現狀也很不錯。");
         }
@@ -1331,6 +1355,16 @@ export default function App() {
             updateDialogue("吼吼吼～");
             return;
         }
+        if (isPediaOpen) {
+            if (isPediaDetailOpen) {
+                setIsPediaDetailOpen(false);
+            } else {
+                const monsterCount = OBTAINABLE_MONSTER_IDS.length;
+                setPediaIdx(prev => (prev + 1) % monsterCount);
+            }
+            playBloop('pop');
+            return;
+        }
         if (isBooting) {
             setIsBooting(false);
             const isFreshStart = !initialData || (interactionCount === 0 && trainWins === 0);
@@ -1588,6 +1622,23 @@ export default function App() {
             return;
         }
 
+        if (isPediaOpen) {
+            if (isPediaDetailOpen) {
+                setIsPediaDetailOpen(false);
+            } else {
+                const monsterId = OBTAINABLE_MONSTER_IDS[pediaIdx];
+                if (ownedMonsters.includes(String(monsterId))) {
+                    setIsPediaDetailOpen(true);
+                } else {
+                    updateDialogue("尚未解鎖此怪獸的詳細資訊...", true);
+                    playBloop('fail');
+                    return;
+                }
+            }
+            playBloop('success');
+            return;
+        }
+
         if (activeIndex === -1) {
             setVel(v => ({ x: v.x, y: -4.0 }));
             updateDialogue("抓到你了！");
@@ -1673,6 +1724,15 @@ export default function App() {
             playBloop('pop');
             return;
         }
+        if (isPediaOpen) {
+            if (isPediaDetailOpen) {
+                setIsPediaDetailOpen(false);
+            } else {
+                setIsPediaOpen(false);
+            }
+            playBloop('pop');
+            return;
+        }
         if (isConfirmingFarewell) {
             setIsConfirmingFarewell(false);
             updateDialogue("吼吼吼～");
@@ -1695,6 +1755,12 @@ export default function App() {
 
     const executeAction = (id) => {
         switch (id) {
+            case 'pedia':
+                setIsPediaOpen(true);
+                setPediaIdx(0);
+                setIsPediaDetailOpen(false);
+                updateDialogue("圖鑑系統開啟。", true);
+                break;
             case 'interact':
                 setIsInteractMenuOpen(true);
                 setInteractMenuIdx(0);
@@ -2148,6 +2214,7 @@ export default function App() {
                     setStageTrainWins(0);
                     setIsEvolving(false);
                     updateDialogue("進化成功！");
+                    unlockMonster(evolvedId);
                 }, 2500);
             }
         }, 500);
@@ -2770,6 +2837,13 @@ export default function App() {
     const getMonsterIdWrapped = (branch = evolutionBranch, stage = evolutionStage) =>
         getMonsterId(branch, stage, isDead, bondValue, soulTagCounts);
 
+    // 啟動時或更換怪獸時自動解鎖圖鑑
+    useEffect(() => {
+        if (!isBooting && !isDead) {
+            unlockMonster(getMonsterIdWrapped());
+        }
+    }, [isBooting, evolutionBranch, evolutionStage, isDead]);
+
 
 
 
@@ -2949,6 +3023,17 @@ export default function App() {
                         trainWins={trainWins}
                         calcFinalStat={calcFinalStat}
                         getIVGrade={getIVGrade}
+                    />
+
+                    {/* 怪獸圖鑑 */}
+                    <MonsterpediaOverlay
+                        isOpen={isPediaOpen}
+                        onClose={() => setIsPediaOpen(false)}
+                        ownedMonsters={ownedMonsters}
+                        monsterNames={MONSTER_NAMES}
+                        obtainableIds={OBTAINABLE_MONSTER_IDS}
+                        selectedIndex={pediaIdx}
+                        isDetailOpen={isPediaDetailOpen}
                     />
 
                     {/* === 🤝 互動系統子選單 UI (滿版升級) === */}

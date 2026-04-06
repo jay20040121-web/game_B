@@ -1,44 +1,57 @@
-// Web Audio API 8-bit 音效產生器
+// Web Audio API 8-bit 音效產生器 (使用 Singleton 以避免建立過多 Context 導致故障)
+let audioCtx = null;
+
 export const playBloop = (type) => {
     try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // 瀏覽器安全規定：必須在使用者互動後 resume
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+
         if (type === 'success') {
             osc.type = 'square';
-            osc.frequency.setValueAtTime(600, ctx.currentTime);
-            osc.frequency.setValueAtTime(900, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.3);
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.setValueAtTime(900, now + 0.1);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
         } else if (type === 'heartbeat') {
             osc.type = 'square';
-            osc.frequency.setValueAtTime(120, ctx.currentTime);
-            osc.frequency.setValueAtTime(80, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.08, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.2);
+            osc.frequency.setValueAtTime(120, now);
+            osc.frequency.setValueAtTime(80, now + 0.1);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
         } else if (type === 'pop') {
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(1200, ctx.currentTime);
-            gain.gain.setValueAtTime(0.03, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.05);
+            osc.frequency.setValueAtTime(1200, now);
+            gain.gain.setValueAtTime(0.03, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
         } else {
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(250, ctx.currentTime);
-            osc.frequency.setValueAtTime(150, ctx.currentTime + 0.2);
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.4);
+            osc.frequency.setValueAtTime(250, now);
+            osc.frequency.setValueAtTime(150, now + 0.2);
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
         }
-    } catch (e) { }
+    } catch (e) {
+        console.warn("Audio Context Error:", e);
+    }
 };
