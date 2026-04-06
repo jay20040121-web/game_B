@@ -8696,11 +8696,13 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
 
     const finalBattleState = {
         ...prev,
-        turn: prev.turn + 1,
+        // 修正：播報期間不應提前增加 turn，統一由 App.js 播報結束後累加，防止跳號
+        turn: prev.turn, 
         phase: 'action_streaming',
         stepQueue: nextQueue.slice(1),
         activeMsg: nextQueue[0]?.text || "",
         lastStep: nextQueue[0] || null,
+        // 核心修正：確保 player/enemy 完整繼承所有原始屬性 (包含 moves)，只更新 status 為起始值
         player: { ...prev.player, status: updatedPlayer.status, statusTurns: updatedPlayer.statusTurns },
         enemy: { ...prev.enemy, status: updatedEnemy.status, statusTurns: updatedEnemy.statusTurns },
         playerHpAfter: updatedPlayer.hp,
@@ -8722,7 +8724,8 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
                     type: 'RESULT', 
                     data: { 
                         stepQueue: flippedQueue,
-                        turnId: prev.turn + 1,
+                        // 發送當前的回合序號以便對齊
+                        turnId: prev.turn,
                         // 房主的 player 是 客戶端的 enemy
                         enemySnap: { ...updatedPlayer }, 
                         // 房主的 enemy 是 客戶端的 player
@@ -9179,17 +9182,20 @@ const usePvpConnection = (deps) => {
                     const { stepQueue, playerHpAfter, enemyHpAfter, turnId, playerSnap, enemySnap } = payload.data;
                     
                     // 防呆：如果回合序號對不上，可能發生了嚴重的延遲或封包遺失
-                    if (turnId !== undefined && turnId !== prev.turn + 1) {
-                        console.warn(`[PVP] 回合序號不符！本地 ${prev.turn + 1} vs 收到 ${turnId}`);
-                        // 雖然不符，但為了不卡死，在客戶端仍盡量跟隨主機的腳步
+                    if (turnId !== undefined && turnId !== prev.turn) {
+                        console.warn(`[PVP] 回合序號不符！本地 ${prev.turn} vs 收到 ${turnId}`);
                     }
 
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
                     
                     // 利用快照進行最終狀態對齊 (Checksum)
+                    // 核心修正：如果快照遺失了技能 (moves)，則從本地 prev 中找回，確保 UI 不會呈現空白
                     const syncedPlayer = playerSnap ? { ...playerSnap } : { ...prev.player };
+                    if (!syncedPlayer.moves && prev.player.moves) syncedPlayer.moves = prev.player.moves;
+
                     const syncedEnemy = enemySnap ? { ...enemySnap } : { ...prev.enemy };
+                    if (!syncedEnemy.moves && prev.enemy.moves) syncedEnemy.moves = prev.enemy.moves;
 
                     return {
                         ...prev,
@@ -9202,7 +9208,8 @@ const usePvpConnection = (deps) => {
                         enemy: syncedEnemy,
                         playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : syncedPlayer.hp,
                         enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : syncedEnemy.hp,
-                        turn: turnId !== undefined ? turnId : prev.turn + 1
+                        // 播報期間維持當前回合 ID
+                        turn: turnId !== undefined ? turnId : prev.turn
                     };
                 });
             }
@@ -10469,7 +10476,24 @@ function App() {
 
                     // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
-                    return { ...prev, phase: nextPhase, activeMsg: "", turn: prev.turn + 1, flashTarget: null };
+                    
+                    // 核心確保：在進入下一回合前，強制將數值校準至由計算引擎算出的終點 HpAfter
+                    // 同時防護 moves 不會因為不可預期的狀態更新而遺失
+                    const finalPlayer = { ...prev.player, hp: finalPlayerHp };
+                    if (!finalPlayer.moves && prev.player.moves) finalPlayer.moves = prev.player.moves;
+                    
+                    const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
+                    if (!finalEnemy.moves && prev.enemy.moves) finalEnemy.moves = prev.enemy.moves;
+
+                    return { 
+                        ...prev, 
+                        phase: nextPhase, 
+                        activeMsg: "", 
+                        turn: prev.turn + 1, 
+                        flashTarget: null,
+                        player: finalPlayer,
+                        enemy: finalEnemy
+                    };
 
                 }
             });

@@ -1147,7 +1147,24 @@ export default function App() {
 
                     // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
-                    return { ...prev, phase: nextPhase, activeMsg: "", turn: prev.turn + 1, flashTarget: null };
+                    
+                    // 核心確保：在進入下一回合前，強制將數值校準至由計算引擎算出的終點 HpAfter
+                    // 同時防護 moves 不會因為不可預期的狀態更新而遺失
+                    const finalPlayer = { ...prev.player, hp: finalPlayerHp };
+                    if (!finalPlayer.moves && prev.player.moves) finalPlayer.moves = prev.player.moves;
+                    
+                    const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
+                    if (!finalEnemy.moves && prev.enemy.moves) finalEnemy.moves = prev.enemy.moves;
+
+                    return { 
+                        ...prev, 
+                        phase: nextPhase, 
+                        activeMsg: "", 
+                        turn: prev.turn + 1, 
+                        flashTarget: null,
+                        player: finalPlayer,
+                        enemy: finalEnemy
+                    };
 
                 }
             });

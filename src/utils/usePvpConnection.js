@@ -111,17 +111,20 @@ export const usePvpConnection = (deps) => {
                     const { stepQueue, playerHpAfter, enemyHpAfter, turnId, playerSnap, enemySnap } = payload.data;
                     
                     // 防呆：如果回合序號對不上，可能發生了嚴重的延遲或封包遺失
-                    if (turnId !== undefined && turnId !== prev.turn + 1) {
-                        console.warn(`[PVP] 回合序號不符！本地 ${prev.turn + 1} vs 收到 ${turnId}`);
-                        // 雖然不符，但為了不卡死，在客戶端仍盡量跟隨主機的腳步
+                    if (turnId !== undefined && turnId !== prev.turn) {
+                        console.warn(`[PVP] 回合序號不符！本地 ${prev.turn} vs 收到 ${turnId}`);
                     }
 
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
                     
                     // 利用快照進行最終狀態對齊 (Checksum)
+                    // 核心修正：如果快照遺失了技能 (moves)，則從本地 prev 中找回，確保 UI 不會呈現空白
                     const syncedPlayer = playerSnap ? { ...playerSnap } : { ...prev.player };
+                    if (!syncedPlayer.moves && prev.player.moves) syncedPlayer.moves = prev.player.moves;
+
                     const syncedEnemy = enemySnap ? { ...enemySnap } : { ...prev.enemy };
+                    if (!syncedEnemy.moves && prev.enemy.moves) syncedEnemy.moves = prev.enemy.moves;
 
                     return {
                         ...prev,
@@ -134,7 +137,8 @@ export const usePvpConnection = (deps) => {
                         enemy: syncedEnemy,
                         playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : syncedPlayer.hp,
                         enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : syncedEnemy.hp,
-                        turn: turnId !== undefined ? turnId : prev.turn + 1
+                        // 播報期間維持當前回合 ID
+                        turn: turnId !== undefined ? turnId : prev.turn
                     };
                 });
             }

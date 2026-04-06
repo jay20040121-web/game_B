@@ -245,11 +245,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
     const finalBattleState = {
         ...prev,
-        turn: prev.turn + 1,
+        // 修正：播報期間不應提前增加 turn，統一由 App.js 播報結束後累加，防止跳號
+        turn: prev.turn, 
         phase: 'action_streaming',
         stepQueue: nextQueue.slice(1),
         activeMsg: nextQueue[0]?.text || "",
         lastStep: nextQueue[0] || null,
+        // 核心修正：確保 player/enemy 完整繼承所有原始屬性 (包含 moves)，只更新 status 為起始值
         player: { ...prev.player, status: updatedPlayer.status, statusTurns: updatedPlayer.statusTurns },
         enemy: { ...prev.enemy, status: updatedEnemy.status, statusTurns: updatedEnemy.statusTurns },
         playerHpAfter: updatedPlayer.hp,
@@ -271,7 +273,8 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     type: 'RESULT', 
                     data: { 
                         stepQueue: flippedQueue,
-                        turnId: prev.turn + 1,
+                        // 發送當前的回合序號以便對齊
+                        turnId: prev.turn,
                         // 房主的 player 是 客戶端的 enemy
                         enemySnap: { ...updatedPlayer }, 
                         // 房主的 enemy 是 客戶端的 player
