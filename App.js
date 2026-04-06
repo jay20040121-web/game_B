@@ -1149,12 +1149,22 @@ export default function App() {
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
                     
                     // 核心確保：在進入下一回合前，強制將數值校準至由計算引擎算出的終點 HpAfter
-                    // 同時防護 moves 不會因為不可預期的狀態更新而遺失
-                    const finalPlayer = { ...prev.player, hp: finalPlayerHp };
-                    if (!finalPlayer.moves && prev.player.moves) finalPlayer.moves = prev.player.moves;
+                    // 同時防護 moves 不會因為不可預期的狀態更新而遺失 (Surgical Merge)
+                    const finalPlayer = { 
+                        ...prev.player, 
+                        hp: finalPlayerHp,
+                        moves: prev.player.moves,
+                        id: prev.player.id,
+                        name: prev.player.name
+                    };
                     
-                    const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
-                    if (!finalEnemy.moves && prev.enemy.moves) finalEnemy.moves = prev.enemy.moves;
+                    const finalEnemy = { 
+                        ...prev.enemy, 
+                        hp: finalEnemyHp,
+                        moves: prev.enemy.moves,
+                        id: prev.enemy.id,
+                        name: prev.enemy.name
+                    };
 
                     return { 
                         ...prev, 
@@ -1447,9 +1457,9 @@ export default function App() {
         }
         if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer')) {
             if (battleState.phase === 'player_action') {
-                // 防抖：1秒內不允許重複提交動作
+                // 防抖：0.4秒內不允許重複提交動作 (提高對戰流暢度)
                 const now = Date.now();
-                if (isPvpMode && (now - (window.lastPvpActionTime || 0) < 1000)) return;
+                if (isPvpMode && (now - (window.lastPvpActionTime || 0) < 400)) return;
                 window.lastPvpActionTime = now;
 
                 const currentIdx = battleState.menuIdx || 0;

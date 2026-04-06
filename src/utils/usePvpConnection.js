@@ -118,13 +118,23 @@ export const usePvpConnection = (deps) => {
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
                     
-                    // 利用快照進行最終狀態對齊 (Checksum)
-                    // 核心修正：如果快照遺失了技能 (moves)，則從本地 prev 中找回，確保 UI 不會呈現空白
-                    const syncedPlayer = playerSnap ? { ...playerSnap } : { ...prev.player };
-                    if (!syncedPlayer.moves && prev.player.moves) syncedPlayer.moves = prev.player.moves;
+                    // 利用快照進行最終狀態對稱校準 (Surgical Sync)
+                    // 核心修正：我們只同步 HP 與狀態等揮發性數值，嚴禁覆蓋本地的技能 (moves) 與 ID，防止 UI 渲染層變灰
+                    const syncedPlayer = playerSnap ? { 
+                        ...prev.player, 
+                        ...playerSnap, 
+                        moves: prev.player.moves, 
+                        id: prev.player.id, 
+                        name: prev.player.name 
+                    } : { ...prev.player };
 
-                    const syncedEnemy = enemySnap ? { ...enemySnap } : { ...prev.enemy };
-                    if (!syncedEnemy.moves && prev.enemy.moves) syncedEnemy.moves = prev.enemy.moves;
+                    const syncedEnemy = enemySnap ? { 
+                        ...prev.enemy, 
+                        ...enemySnap, 
+                        moves: prev.enemy.moves, 
+                        id: prev.enemy.id, 
+                        name: prev.enemy.name 
+                    } : { ...prev.enemy };
 
                     return {
                         ...prev,

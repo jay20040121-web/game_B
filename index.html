@@ -9189,13 +9189,23 @@ const usePvpConnection = (deps) => {
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
                     
-                    // 利用快照進行最終狀態對齊 (Checksum)
-                    // 核心修正：如果快照遺失了技能 (moves)，則從本地 prev 中找回，確保 UI 不會呈現空白
-                    const syncedPlayer = playerSnap ? { ...playerSnap } : { ...prev.player };
-                    if (!syncedPlayer.moves && prev.player.moves) syncedPlayer.moves = prev.player.moves;
+                    // 利用快照進行最終狀態對稱校準 (Surgical Sync)
+                    // 核心修正：我們只同步 HP 與狀態等揮發性數值，嚴禁覆蓋本地的技能 (moves) 與 ID，防止 UI 渲染層變灰
+                    const syncedPlayer = playerSnap ? { 
+                        ...prev.player, 
+                        ...playerSnap, 
+                        moves: prev.player.moves, 
+                        id: prev.player.id, 
+                        name: prev.player.name 
+                    } : { ...prev.player };
 
-                    const syncedEnemy = enemySnap ? { ...enemySnap } : { ...prev.enemy };
-                    if (!syncedEnemy.moves && prev.enemy.moves) syncedEnemy.moves = prev.enemy.moves;
+                    const syncedEnemy = enemySnap ? { 
+                        ...prev.enemy, 
+                        ...enemySnap, 
+                        moves: prev.enemy.moves, 
+                        id: prev.enemy.id, 
+                        name: prev.enemy.name 
+                    } : { ...prev.enemy };
 
                     return {
                         ...prev,
@@ -10478,12 +10488,22 @@ function App() {
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
                     
                     // 核心確保：在進入下一回合前，強制將數值校準至由計算引擎算出的終點 HpAfter
-                    // 同時防護 moves 不會因為不可預期的狀態更新而遺失
-                    const finalPlayer = { ...prev.player, hp: finalPlayerHp };
-                    if (!finalPlayer.moves && prev.player.moves) finalPlayer.moves = prev.player.moves;
+                    // 同時防護 moves 不會因為不可預期的狀態更新而遺失 (Surgical Merge)
+                    const finalPlayer = { 
+                        ...prev.player, 
+                        hp: finalPlayerHp,
+                        moves: prev.player.moves,
+                        id: prev.player.id,
+                        name: prev.player.name
+                    };
                     
-                    const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
-                    if (!finalEnemy.moves && prev.enemy.moves) finalEnemy.moves = prev.enemy.moves;
+                    const finalEnemy = { 
+                        ...prev.enemy, 
+                        hp: finalEnemyHp,
+                        moves: prev.enemy.moves,
+                        id: prev.enemy.id,
+                        name: prev.enemy.name
+                    };
 
                     return { 
                         ...prev, 
@@ -10776,9 +10796,9 @@ function App() {
         }
         if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer')) {
             if (battleState.phase === 'player_action') {
-                // 防抖：1秒內不允許重複提交動作
+                // 防抖：0.4秒內不允許重複提交動作 (提高對戰流暢度)
                 const now = Date.now();
-                if (isPvpMode && (now - (window.lastPvpActionTime || 0) < 1000)) return;
+                if (isPvpMode && (now - (window.lastPvpActionTime || 0) < 400)) return;
                 window.lastPvpActionTime = now;
 
                 const currentIdx = battleState.menuIdx || 0;
