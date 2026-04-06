@@ -118,8 +118,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         const isPlayer = side === 'player';
         const attacker = isPlayer ? updatedPlayer : updatedEnemy;
         const defender = isPlayer ? updatedEnemy : updatedPlayer;
-        const attackerName = isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name;
-        const defenderName = isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你');
+        // 在 PVP 模式下，動態帶入各自的名字，避免雙方看到硬編碼的「你」
+        let attackerName = isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name;
+        let defenderName = isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你');
+        
+        if (prev.mode === 'pvp') {
+            attackerName = isPlayer ? (updatedPlayer.name || '玩家') : (updatedEnemy.name || '對手');
+            defenderName = isPlayer ? (updatedEnemy.name || '對手') : (updatedPlayer.name || '玩家');
+        }
 
         const preCheck = checkPreTurnStatus(attacker, rFunc);
         attacker.status = preCheck.nextStatus;

@@ -1651,6 +1651,7 @@ export default function App() {
     const handleC = () => {
         if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
         if (isLeaderboardOpen) {
+            setIsLeaderboardOpen(false);
             setAlertMsg("");
             playBloop('pop');
             return;

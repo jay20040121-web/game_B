@@ -144,7 +144,7 @@ export const usePvpConnection = (deps) => {
         updateDialogue("發現對手，正在建立通訊...", true);
         const conn = peerInstance.current.connect(targetId);
         connInstance.current = conn;
-        isHost.current = true;
+        isHost.current = false; // Challenger (B) is NOT the host
         setupConnectionHandlers(conn);
     };
 
@@ -155,17 +155,25 @@ export const usePvpConnection = (deps) => {
             try { peerInstance.current.destroy(); } catch (e) { }
         }
 
-        // 設定 12 秒連線超時警告，防止畫面上卡在 searching
+        // 設定 15 秒連線超時警告
+        // 房主 (A) 成功到 open 後就不再倒數，避免痴痴等待時被踢出
+        // 挑戰者 (B) 則保留完整的配對超時機制
         const connectionTimeout = setTimeout(() => {
             if (matchStatusRef.current === 'searching' || matchStatusRef.current === 'matching') {
                 cleanupPvp("連線超時，請檢查密碼或請對方重新開啟。");
             }
-        }, 12000);
+        }, 15000);
 
         const peer = customId ? new window.Peer(customId) : new window.Peer();
 
         peer.on('open', (id) => {
             setMyPeerId(id);
+            // 如果我們是房主 (開房的人，role 不是 B)，已成功連上信號伺服器，可以無限期等待挑戰者
+            if (role !== 'B') {
+                clearTimeout(connectionTimeout);
+                updateDialogue(`房間建立完成！\n等待對手輸入密碼 ${pvpRoomPassword} ...`, true);
+            }
+            
             // 如果我是挑戰者 (B)，開啟後立即連向 A
             if (role === 'B') {
                 const targetId = customId.replace(/_B$/, '_A');
@@ -202,7 +210,7 @@ export const usePvpConnection = (deps) => {
                 return;
             }
             connInstance.current = conn;
-            isHost.current = false;
+            isHost.current = true; // Room creator (A) IS the host
             setupConnectionHandlers(conn);
         });
 
