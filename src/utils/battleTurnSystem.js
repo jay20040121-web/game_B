@@ -267,7 +267,19 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         const connRef = connInstance.current;
         setTimeout(() => {
             try {
-                connRef.send({ type: 'RESULT', data: { stepQueue: flippedQueue } });
+                connRef.send({ 
+                    type: 'RESULT', 
+                    data: { 
+                        stepQueue: flippedQueue,
+                        turnId: prev.turn + 1,
+                        // 房主的 player 是 客戶端的 enemy
+                        enemySnap: { ...updatedPlayer }, 
+                        // 房主的 enemy 是 客戶端的 player
+                        playerSnap: { ...updatedEnemy },
+                        playerHpAfter: updatedEnemy.hp, 
+                        enemyHpAfter: updatedPlayer.hp
+                    } 
+                });
             } catch (e) { console.error("PVP Result Send Error:", e); }
         }, 0);
     }

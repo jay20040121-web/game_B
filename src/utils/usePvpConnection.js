@@ -108,9 +108,21 @@ export const usePvpConnection = (deps) => {
                 // 客戶端接收主機端算好的結果，直接套用
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
-                    const { stepQueue, playerHpAfter, enemyHpAfter } = payload.data;
+                    const { stepQueue, playerHpAfter, enemyHpAfter, turnId, playerSnap, enemySnap } = payload.data;
+                    
+                    // 防呆：如果回合序號對不上，可能發生了嚴重的延遲或封包遺失
+                    if (turnId !== undefined && turnId !== prev.turn + 1) {
+                        console.warn(`[PVP] 回合序號不符！本地 ${prev.turn + 1} vs 收到 ${turnId}`);
+                        // 雖然不符，但為了不卡死，在客戶端仍盡量跟隨主機的腳步
+                    }
+
                     if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
+                    
+                    // 利用快照進行最終狀態對齊 (Checksum)
+                    const syncedPlayer = playerSnap ? { ...playerSnap } : { ...prev.player };
+                    const syncedEnemy = enemySnap ? { ...enemySnap } : { ...prev.enemy };
+
                     return {
                         ...prev,
                         phase: 'action_streaming',
@@ -118,8 +130,11 @@ export const usePvpConnection = (deps) => {
                         activeMsg: first.text || "",
                         lastStep: first,
                         flashTarget: null,
-                        playerHpAfter: playerHpAfter,
-                        enemyHpAfter: enemyHpAfter
+                        player: syncedPlayer,
+                        enemy: syncedEnemy,
+                        playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : syncedPlayer.hp,
+                        enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : syncedEnemy.hp,
+                        turn: turnId !== undefined ? turnId : prev.turn + 1
                     };
                 });
             }
@@ -195,7 +210,13 @@ export const usePvpConnection = (deps) => {
             console.error("PeerJS Error:", err);
 
             let errMsg = "通訊伺服器錯誤。";
-            if (err.type === 'unavailable-id') errMsg = "房間識別碼衝突，請稍後再試。";
+            if (err.type === 'unavailable-id') {
+                if (customId && customId.endsWith('_B')) {
+                    errMsg = "該密碼房間目前已客滿 (已有 2 名玩家)，請更換密碼。";
+                } else {
+                    errMsg = "房間識別碼衝突，請稍後再試。";
+                }
+            }
             if (err.type === 'network') errMsg = "網路連線中斷。";
             if (err.type === 'peer-unavailable') errMsg = "找不到對手房號，請確認對方已開好房間。";
 
@@ -239,6 +260,11 @@ export const usePvpConnection = (deps) => {
         setPvpRoomPassword(rand);
         joinPvpRoom(rand);
     };
+
+    // 視窗關閉前確實銷毀連線
+    window.addEventListener('beforeunload', () => {
+        if (peerInstance.current) peerInstance.current.destroy();
+    });
 
     return {
         // States

@@ -1430,6 +1430,11 @@ export default function App() {
         }
         if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer')) {
             if (battleState.phase === 'player_action') {
+                // 防抖：1秒內不允許重複提交動作
+                const now = Date.now();
+                if (isPvpMode && (now - (window.lastPvpActionTime || 0) < 1000)) return;
+                window.lastPvpActionTime = now;
+
                 const currentIdx = battleState.menuIdx || 0;
                 const move = battleState.player?.moves?.[currentIdx];
                 if (move) {
@@ -2869,6 +2874,19 @@ export default function App() {
         isLeaderboardLoading,
         fetchLeaderboard, updatePvpStats
     } = useLeaderboard({ user, getMonsterId: getMonsterIdWrapped, updateDialogue });
+
+    // --- PVP 殭屍對局檢測 (Zombie Match Detector) ---
+    useEffect(() => {
+        if (!isPvpMode || battleState.phase !== 'waiting_opponent') return;
+        const timer = setTimeout(() => {
+            if (isPvpMode && battleState.phase === 'waiting_opponent') {
+                cleanupPvp("對手失去響應，對局強制結束。");
+                setAlertMsg("與對手通訊逾時");
+                playBloop('fail');
+            }
+        }, 25000); // 25秒超時防呆
+        return () => clearTimeout(timer);
+    }, [isPvpMode, battleState.phase]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
