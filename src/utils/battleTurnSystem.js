@@ -162,14 +162,6 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             return;
         }
 
-        if (!isStatusMove && result.dmg > 0) {
-            nextQueue.push({
-                type: 'damage', target: isPlayer ? 'enemy' : 'player',
-                value: result.dmg, text: `對 ${defenderName} 造成了 ${result.dmg} 點傷害！${result.msg}`
-            });
-            defender.hp = Math.max(0, defender.hp - result.dmg);
-        }
-
         const effects = applyMoveEffects(move, defender, attacker, rFunc);
         effects.messages.forEach(m => {
             const targetName = m.targetType === 'source' ? attackerName : defenderName;
@@ -177,21 +169,32 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         });
 
         if (!isStatusMove && result.dmg > 0) {
+            const actualDmg = Math.min(defender.hp, result.dmg);
+            nextQueue.push({
+                type: 'damage', target: isPlayer ? 'enemy' : 'player',
+                value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`
+            });
+            defender.hp = Math.max(0, defender.hp - actualDmg);
+
             if (effects.recoilPct > 0) {
-                const recoilDmg = Math.floor(result.dmg * effects.recoilPct);
-                nextQueue.push({
-                    type: 'damage', target: isPlayer ? 'player' : 'enemy',
-                    value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！`
-                });
-                attacker.hp = Math.max(0, attacker.hp - recoilDmg);
+                const recoilDmg = Math.floor(actualDmg * effects.recoilPct);
+                if (recoilDmg > 0) {
+                    nextQueue.push({
+                        type: 'damage', target: isPlayer ? 'player' : 'enemy',
+                        value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！`
+                    });
+                    attacker.hp = Math.max(0, attacker.hp - recoilDmg);
+                }
             }
             if (effects.drainPct > 0) {
-                const drainHeal = Math.floor(result.dmg * effects.drainPct);
-                nextQueue.push({
-                    type: 'heal', target: isPlayer ? 'player' : 'enemy',
-                    value: drainHeal, text: `${attackerName} 吸收了生命值！`
-                });
-                attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
+                const drainHeal = Math.floor(actualDmg * effects.drainPct);
+                if (drainHeal > 0) {
+                    nextQueue.push({
+                        type: 'heal', target: isPlayer ? 'player' : 'enemy',
+                        value: drainHeal, text: `${attackerName} 吸收了生命值！`
+                    });
+                    attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
+                }
             }
         }
     };
@@ -211,19 +214,25 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         if (updatedPlayer.hp > 0) addMoveExecution('player', playerMove);
     }
 
+    // 針對 PVP 模式優化播報名稱
+    const pName = (prev.mode === 'pvp') ? (updatedPlayer.name || '玩家') : (updatedPlayer.id === 151 ? '夢幻' : '你');
+    const eName = updatedEnemy.name || '對手';
+
     const pPost = processPostTurnStatus(updatedPlayer, updatedPlayer.maxHp, rFunc);
     updatedPlayer.status = pPost.nextStatus;
     updatedPlayer.statusTurns = pPost.nextTurns;
     if (pPost.message) {
         if (pPost.dmg > 0) {
-            nextQueue.push({ type: 'damage', target: 'player', value: pPost.dmg, text: `你${pPost.message}` });
-            updatedPlayer.hp = Math.max(0, updatedPlayer.hp - pPost.dmg);
+            const actualDmg = Math.min(updatedPlayer.hp, pPost.dmg);
+            nextQueue.push({ type: 'damage', target: 'player', value: actualDmg, text: `${pName}${pPost.message}` });
+            updatedPlayer.hp = Math.max(0, updatedPlayer.hp - actualDmg);
             if (pPost.heal > 0 && updatedEnemy.hp > 0) {
-                nextQueue.push({ type: 'heal', target: 'enemy', value: pPost.heal, text: `${updatedEnemy.name} 吸收了生命精華！` });
-                updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + pPost.heal);
+                const actualHeal = actualDmg;
+                nextQueue.push({ type: 'heal', target: 'enemy', value: actualHeal, text: `${eName} 從${pName}那裡吸收了生命精華！` });
+                updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + actualHeal);
             }
         } else {
-            nextQueue.push({ type: 'msg', text: `你${pPost.message}` });
+            nextQueue.push({ type: 'msg', text: `${pName}${pPost.message}` });
         }
     }
 
@@ -232,14 +241,16 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     updatedEnemy.statusTurns = ePost.nextTurns;
     if (ePost.message) {
         if (ePost.dmg > 0) {
-            nextQueue.push({ type: 'damage', target: 'enemy', value: ePost.dmg, text: `${updatedEnemy.name}${ePost.message}` });
-            updatedEnemy.hp = Math.max(0, updatedEnemy.hp - ePost.dmg);
+            const actualDmg = Math.min(updatedEnemy.hp, ePost.dmg);
+            nextQueue.push({ type: 'damage', target: 'enemy', value: actualDmg, text: `${eName}${ePost.message}` });
+            updatedEnemy.hp = Math.max(0, updatedEnemy.hp - actualDmg);
             if (ePost.heal > 0 && updatedPlayer.hp > 0) {
-                nextQueue.push({ type: 'heal', target: 'player', value: ePost.heal, text: `你從寄生中恢復了生命！` });
-                updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + ePost.heal);
+                const actualHeal = actualDmg;
+                nextQueue.push({ type: 'heal', target: 'player', value: actualHeal, text: `${pName} 從${eName}那裡恢復了生命！` });
+                updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + actualHeal);
             }
         } else {
-            nextQueue.push({ type: 'msg', text: `${updatedEnemy.name}${ePost.message}` });
+            nextQueue.push({ type: 'msg', text: `${eName}${ePost.message}` });
         }
     }
 
@@ -251,9 +262,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         stepQueue: nextQueue.slice(1),
         activeMsg: nextQueue[0]?.text || "",
         lastStep: nextQueue[0] || null,
-        // 核心修正：確保 player/enemy 完整繼承所有原始屬性 (包含 moves)，只更新 status 為起始值
-        player: { ...prev.player, status: updatedPlayer.status, statusTurns: updatedPlayer.statusTurns },
-        enemy: { ...prev.enemy, status: updatedEnemy.status, statusTurns: updatedEnemy.statusTurns },
+        // 核心修正：確保 player/enemy 完整繼承所有更新後的屬性 (包含 statStages), 但 HP 保持在起始點供動畫播放
+        player: { ...updatedPlayer, hp: prev.player.hp },
+        enemy: { ...updatedEnemy, hp: prev.enemy.hp },
         playerHpAfter: updatedPlayer.hp,
         enemyHpAfter: updatedEnemy.hp
     };
@@ -274,8 +285,12 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     data: { 
                         stepQueue: flippedQueue,
                         turnId: prev.turn,
+                        playerHpBefore: prev.enemy.hp,
+                        enemyHpBefore: prev.player.hp,
                         playerHpAfter: updatedEnemy.hp, 
-                        enemyHpAfter: updatedPlayer.hp
+                        enemyHpAfter: updatedPlayer.hp,
+                        playerStatStagesAfter: updatedEnemy.statStages,
+                        enemyStatStagesAfter: updatedPlayer.statStages
                     } 
                 });
             } catch (e) { console.error("PVP Result Send Error:", e); }

@@ -108,7 +108,13 @@ export const usePvpConnection = (deps) => {
                 // 客戶端接收主機端算好的結果，直接套用
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
-                    const { stepQueue, playerHpAfter, enemyHpAfter, turnId } = payload.data;
+                    const { 
+                        stepQueue, 
+                        playerHpAfter, enemyHpAfter, 
+                        playerHpBefore, enemyHpBefore,
+                        playerStatStagesAfter, enemyStatStagesAfter,
+                        turnId 
+                    } = payload.data;
                     
                     // 防呆：如果回合序號對不上，可能發生了嚴重的延遲或封包遺失
                     if (turnId !== undefined && turnId !== prev.turn) {
@@ -125,6 +131,17 @@ export const usePvpConnection = (deps) => {
                         activeMsg: first.text || "",
                         lastStep: first,
                         flashTarget: null,
+                        // 修正：在播放動畫前，先將 HP 基準線與能力階級與主機對齊，防止動畫過程出現跳號或計算不一
+                        player: { 
+                            ...prev.player, 
+                            hp: playerHpBefore !== undefined ? playerHpBefore : prev.player.hp,
+                            statStages: playerStatStagesAfter || prev.player.statStages 
+                        },
+                        enemy: { 
+                            ...prev.enemy, 
+                            hp: enemyHpBefore !== undefined ? enemyHpBefore : prev.enemy.hp,
+                            statStages: enemyStatStagesAfter || prev.enemy.statStages
+                        },
                         playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : prev.player.hp,
                         enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : prev.enemy.hp,
                         // 播報期間維持當前回合 ID
