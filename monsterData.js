@@ -6737,6 +6737,45 @@ export const OBTAINABLE_MONSTER_IDS = [
     384            // 烈空坐
 ].map(String);
 
+export const TRAINER_POOLS = {
+    1: [
+        { id: 132, name: '百變怪', type: 'normal' },
+        { id: 92, name: '鬼斯', type: 'poison' },
+        { id: 63, name: '凱西', type: 'psychic' }
+    ],
+    2: [
+        { id: 4, name: '小火龍', type: 'fire' },
+        { id: 7, name: '傑尼龜', type: 'water' },
+        { id: 1, name: '妙蛙種子', type: 'grass' },
+        { id: 10, name: '綠毛蟲', type: 'bug' },
+        { id: 19, name: '小拉達', type: 'normal' }
+    ],
+    3: [
+        { id: 5, name: '火恐龍', type: 'fire' },
+        { id: 8, name: '卡咪龜', type: 'water' },
+        { id: 2, name: '妙蛙草', type: 'grass' },
+        { id: 11, name: '鐵甲蛹', type: 'bug' },
+        { id: 20, name: '拉達', type: 'normal' }
+    ],
+    4: [
+        { id: 6, name: '噴火龍', type: 'fire' },
+        { id: 9, name: '水箭龜', type: 'water' },
+        { id: 3, name: '妙蛙花', type: 'grass' },
+        { id: 12, name: '巴大蝶', type: 'bug' },
+        { id: 149, name: '快龍', type: 'flying' }
+    ],
+    5: [
+        { id: 249, name: '洛奇亞', type: 'flying' },
+        { id: 94, name: '耿鬼', type: 'ghost' },
+        { id: 130, name: '暴鯉龍', type: 'water' }
+    ],
+    6: [
+        { id: 384, name: '烈空坐', type: 'flying' },
+        { id: 151, name: '夢幻', type: 'psychic' },
+        { id: 65, name: '胡地', type: 'psychic' }
+    ]
+};
+
 export const TYPE_CHART = {
     fire: { bug: 2.0, grass: 2.0, water: 0.5, rock: 0.5, fire: 0.5, ice: 2.0, dragon: 0.5, steel: 2.0 },
     water: { fire: 2.0, rock: 2.0, ground: 2.0, grass: 0.5, water: 0.5, dragon: 0.5 },

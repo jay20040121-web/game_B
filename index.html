@@ -6773,6 +6773,45 @@ const OBTAINABLE_MONSTER_IDS = [
     384            // 烈空坐
 ].map(String);
 
+const TRAINER_POOLS = {
+    1: [
+        { id: 132, name: '百變怪', type: 'normal' },
+        { id: 92, name: '鬼斯', type: 'poison' },
+        { id: 63, name: '凱西', type: 'psychic' }
+    ],
+    2: [
+        { id: 4, name: '小火龍', type: 'fire' },
+        { id: 7, name: '傑尼龜', type: 'water' },
+        { id: 1, name: '妙蛙種子', type: 'grass' },
+        { id: 10, name: '綠毛蟲', type: 'bug' },
+        { id: 19, name: '小拉達', type: 'normal' }
+    ],
+    3: [
+        { id: 5, name: '火恐龍', type: 'fire' },
+        { id: 8, name: '卡咪龜', type: 'water' },
+        { id: 2, name: '妙蛙草', type: 'grass' },
+        { id: 11, name: '鐵甲蛹', type: 'bug' },
+        { id: 20, name: '拉達', type: 'normal' }
+    ],
+    4: [
+        { id: 6, name: '噴火龍', type: 'fire' },
+        { id: 9, name: '水箭龜', type: 'water' },
+        { id: 3, name: '妙蛙花', type: 'grass' },
+        { id: 12, name: '巴大蝶', type: 'bug' },
+        { id: 149, name: '快龍', type: 'flying' }
+    ],
+    5: [
+        { id: 249, name: '洛奇亞', type: 'flying' },
+        { id: 94, name: '耿鬼', type: 'ghost' },
+        { id: 130, name: '暴鯉龍', type: 'water' }
+    ],
+    6: [
+        { id: 384, name: '烈空坐', type: 'flying' },
+        { id: 151, name: '夢幻', type: 'psychic' },
+        { id: 65, name: '胡地', type: 'psychic' }
+    ]
+};
+
 const TYPE_CHART = {
     fire: { bug: 2.0, grass: 2.0, water: 0.5, rock: 0.5, fire: 0.5, ice: 2.0, dragon: 0.5, steel: 2.0 },
     water: { fire: 2.0, rock: 2.0, ground: 2.0, grass: 0.5, water: 0.5, dragon: 0.5 },
@@ -8613,14 +8652,6 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
             return;
         }
 
-        if (!isStatusMove && result.dmg > 0) {
-            nextQueue.push({
-                type: 'damage', target: isPlayer ? 'enemy' : 'player',
-                value: result.dmg, text: `對 ${defenderName} 造成了 ${result.dmg} 點傷害！${result.msg}`
-            });
-            defender.hp = Math.max(0, defender.hp - result.dmg);
-        }
-
         const effects = applyMoveEffects(move, defender, attacker, rFunc);
         effects.messages.forEach(m => {
             const targetName = m.targetType === 'source' ? attackerName : defenderName;
@@ -8628,21 +8659,32 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
         });
 
         if (!isStatusMove && result.dmg > 0) {
+            const actualDmg = Math.min(defender.hp, result.dmg);
+            nextQueue.push({
+                type: 'damage', target: isPlayer ? 'enemy' : 'player',
+                value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`
+            });
+            defender.hp = Math.max(0, defender.hp - actualDmg);
+
             if (effects.recoilPct > 0) {
-                const recoilDmg = Math.floor(result.dmg * effects.recoilPct);
-                nextQueue.push({
-                    type: 'damage', target: isPlayer ? 'player' : 'enemy',
-                    value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！`
-                });
-                attacker.hp = Math.max(0, attacker.hp - recoilDmg);
+                const recoilDmg = Math.floor(actualDmg * effects.recoilPct);
+                if (recoilDmg > 0) {
+                    nextQueue.push({
+                        type: 'damage', target: isPlayer ? 'player' : 'enemy',
+                        value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！`
+                    });
+                    attacker.hp = Math.max(0, attacker.hp - recoilDmg);
+                }
             }
             if (effects.drainPct > 0) {
-                const drainHeal = Math.floor(result.dmg * effects.drainPct);
-                nextQueue.push({
-                    type: 'heal', target: isPlayer ? 'player' : 'enemy',
-                    value: drainHeal, text: `${attackerName} 吸收了生命值！`
-                });
-                attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
+                const drainHeal = Math.floor(actualDmg * effects.drainPct);
+                if (drainHeal > 0) {
+                    nextQueue.push({
+                        type: 'heal', target: isPlayer ? 'player' : 'enemy',
+                        value: drainHeal, text: `${attackerName} 吸收了生命值！`
+                    });
+                    attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
+                }
             }
         }
     };
@@ -8662,19 +8704,25 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
         if (updatedPlayer.hp > 0) addMoveExecution('player', playerMove);
     }
 
+    // 針對 PVP 模式優化播報名稱
+    const pName = (prev.mode === 'pvp') ? (updatedPlayer.name || '玩家') : (updatedPlayer.id === 151 ? '夢幻' : '你');
+    const eName = updatedEnemy.name || '對手';
+
     const pPost = processPostTurnStatus(updatedPlayer, updatedPlayer.maxHp, rFunc);
     updatedPlayer.status = pPost.nextStatus;
     updatedPlayer.statusTurns = pPost.nextTurns;
     if (pPost.message) {
         if (pPost.dmg > 0) {
-            nextQueue.push({ type: 'damage', target: 'player', value: pPost.dmg, text: `你${pPost.message}` });
-            updatedPlayer.hp = Math.max(0, updatedPlayer.hp - pPost.dmg);
+            const actualDmg = Math.min(updatedPlayer.hp, pPost.dmg);
+            nextQueue.push({ type: 'damage', target: 'player', value: actualDmg, text: `${pName}${pPost.message}` });
+            updatedPlayer.hp = Math.max(0, updatedPlayer.hp - actualDmg);
             if (pPost.heal > 0 && updatedEnemy.hp > 0) {
-                nextQueue.push({ type: 'heal', target: 'enemy', value: pPost.heal, text: `${updatedEnemy.name} 吸收了生命精華！` });
-                updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + pPost.heal);
+                const actualHeal = actualDmg;
+                nextQueue.push({ type: 'heal', target: 'enemy', value: actualHeal, text: `${eName} 從${pName}那裡吸收了生命精華！` });
+                updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + actualHeal);
             }
         } else {
-            nextQueue.push({ type: 'msg', text: `你${pPost.message}` });
+            nextQueue.push({ type: 'msg', text: `${pName}${pPost.message}` });
         }
     }
 
@@ -8683,14 +8731,16 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
     updatedEnemy.statusTurns = ePost.nextTurns;
     if (ePost.message) {
         if (ePost.dmg > 0) {
-            nextQueue.push({ type: 'damage', target: 'enemy', value: ePost.dmg, text: `${updatedEnemy.name}${ePost.message}` });
-            updatedEnemy.hp = Math.max(0, updatedEnemy.hp - ePost.dmg);
+            const actualDmg = Math.min(updatedEnemy.hp, ePost.dmg);
+            nextQueue.push({ type: 'damage', target: 'enemy', value: actualDmg, text: `${eName}${ePost.message}` });
+            updatedEnemy.hp = Math.max(0, updatedEnemy.hp - actualDmg);
             if (ePost.heal > 0 && updatedPlayer.hp > 0) {
-                nextQueue.push({ type: 'heal', target: 'player', value: ePost.heal, text: `你從寄生中恢復了生命！` });
-                updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + ePost.heal);
+                const actualHeal = actualDmg;
+                nextQueue.push({ type: 'heal', target: 'player', value: actualHeal, text: `${pName} 從${eName}那裡恢復了生命！` });
+                updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + actualHeal);
             }
         } else {
-            nextQueue.push({ type: 'msg', text: `${updatedEnemy.name}${ePost.message}` });
+            nextQueue.push({ type: 'msg', text: `${eName}${ePost.message}` });
         }
     }
 
@@ -8702,9 +8752,9 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
         stepQueue: nextQueue.slice(1),
         activeMsg: nextQueue[0]?.text || "",
         lastStep: nextQueue[0] || null,
-        // 核心修正：確保 player/enemy 完整繼承所有原始屬性 (包含 moves)，只更新 status 為起始值
-        player: { ...prev.player, status: updatedPlayer.status, statusTurns: updatedPlayer.statusTurns },
-        enemy: { ...prev.enemy, status: updatedEnemy.status, statusTurns: updatedEnemy.statusTurns },
+        // 核心修正：確保 player/enemy 完整繼承所有更新後的屬性 (包含 statStages), 但 HP 保持在起始點供動畫播放
+        player: { ...updatedPlayer, hp: prev.player.hp },
+        enemy: { ...updatedEnemy, hp: prev.enemy.hp },
         playerHpAfter: updatedPlayer.hp,
         enemyHpAfter: updatedEnemy.hp
     };
@@ -8725,8 +8775,12 @@ const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) =
                     data: { 
                         stepQueue: flippedQueue,
                         turnId: prev.turn,
+                        playerHpBefore: prev.enemy.hp,
+                        enemyHpBefore: prev.player.hp,
                         playerHpAfter: updatedEnemy.hp, 
-                        enemyHpAfter: updatedPlayer.hp
+                        enemyHpAfter: updatedPlayer.hp,
+                        playerStatStagesAfter: updatedEnemy.statStages,
+                        enemyStatStagesAfter: updatedPlayer.statStages
                     } 
                 });
             } catch (e) { console.error("PVP Result Send Error:", e); }
@@ -9174,7 +9228,13 @@ const usePvpConnection = (deps) => {
                 // 客戶端接收主機端算好的結果，直接套用
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
-                    const { stepQueue, playerHpAfter, enemyHpAfter, turnId } = payload.data;
+                    const { 
+                        stepQueue, 
+                        playerHpAfter, enemyHpAfter, 
+                        playerHpBefore, enemyHpBefore,
+                        playerStatStagesAfter, enemyStatStagesAfter,
+                        turnId 
+                    } = payload.data;
                     
                     // 防呆：如果回合序號對不上，可能發生了嚴重的延遲或封包遺失
                     if (turnId !== undefined && turnId !== prev.turn) {
@@ -9191,6 +9251,17 @@ const usePvpConnection = (deps) => {
                         activeMsg: first.text || "",
                         lastStep: first,
                         flashTarget: null,
+                        // 修正：在播放動畫前，先將 HP 基準線與能力階級與主機對齊，防止動畫過程出現跳號或計算不一
+                        player: { 
+                            ...prev.player, 
+                            hp: playerHpBefore !== undefined ? playerHpBefore : prev.player.hp,
+                            statStages: playerStatStagesAfter || prev.player.statStages 
+                        },
+                        enemy: { 
+                            ...prev.enemy, 
+                            hp: enemyHpBefore !== undefined ? enemyHpBefore : prev.enemy.hp,
+                            statStages: enemyStatStagesAfter || prev.enemy.statStages
+                        },
                         playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : prev.player.hp,
                         enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : prev.enemy.hp,
                         // 播報期間維持當前回合 ID
@@ -11644,15 +11715,7 @@ function App() {
 
     // --- 🔹 戰鬥引擎與對手生成 🔹 ---
     const generateTrainerOpponent = (stage) => {
-        const stageMap = {
-            1: [{ id: 132, name: '百變怪', type: 'normal' }, { id: 92, name: '鬼斯', type: 'poison' }, { id: 63, name: '凱西', type: 'psychic' }],
-            2: [{ id: 4, name: '小火龍', type: 'fire' }, { id: 7, name: '傑尼龜', type: 'water' }, { id: 1, name: '妙蛙種子', type: 'grass' }, { id: 10, name: '綠毛蟲', type: 'bug' }, { id: 19, name: '小拉達', type: 'normal' }],
-            3: [{ id: 5, name: '火恐龍', type: 'fire' }, { id: 8, name: '卡咪龜', type: 'water' }, { id: 2, name: '妙蛙草', type: 'grass' }, { id: 11, name: '鐵殼蛹', type: 'bug' }, { id: 20, name: '拉達', type: 'normal' }],
-            4: [{ id: 6, name: '噴火龍', type: 'fire' }, { id: 9, name: '水箭龜', type: 'water' }, { id: 3, name: '妙蛙花', type: 'grass' }, { id: 12, name: '巴大蝶', type: 'bug' }, { id: 149, name: '快龍', type: 'flying' }],
-            5: [{ id: 249, name: '洛奇亞', type: 'flying' }, { id: 150, name: '超夢', type: 'psychic' }, { id: 144, name: '急凍鳥', type: 'flying' }],
-            6: [{ id: 384, name: '烈空坐', type: 'flying' }, { id: 151, name: '夢幻', type: 'psychic' }, { id: 250, name: '鳳王', type: 'fire' }]
-        };
-        const pool = stageMap[stage] || stageMap[1];
+        const pool = TRAINER_POOLS[stage] || TRAINER_POOLS[1];
         const base = pool[Math.floor(Math.random() * pool.length)];
 
         const modifiers = [
