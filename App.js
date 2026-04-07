@@ -1340,7 +1340,7 @@ export default function App() {
             playBloop('pop');
             return;
         }
-        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp')) {
+        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament')) {
             if (battleState.phase === 'player_action') {
                 // Bug Fix #3: 游標只在有效招式間循環，避免選到空格浪費操作
                 const numMoves = battleState.player?.moves?.length || 1;
@@ -1452,7 +1452,7 @@ export default function App() {
             playBloop('pop');
             return;
         }
-        if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer')) {
+        if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer' || battleState.mode === 'tournament')) {
             if (battleState.phase === 'player_action') {
                 // 防抖：0.4秒內不允許重複提交動作 (提高對戰流暢度)
                 const now = Date.now();
@@ -1707,7 +1707,7 @@ export default function App() {
             playBloop('pop');
             return;
         }
-        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp') && battleState.phase === 'player_action') {
+        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') && battleState.phase === 'player_action') {
             // 返回上層選單（因為目前沒有上層，所以提示無法返回或不做事）
             const tempLogs = [...battleState.logs, "無法返回！"];
             setBattleState(prev => ({ ...prev, logs: tempLogs.slice(-5) }));
@@ -2894,7 +2894,8 @@ export default function App() {
     // --- 聯盟大賽 (Tournament System) ---
     const tournament = useTournament({ 
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
-        advStats, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS
+        advStats, soulTagCounts, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
+        pendingSkillLearn
     });
 
     // --- PVP 殭屍對局檢測 (Zombie Match Detector) ---
@@ -3017,19 +3018,6 @@ export default function App() {
                         leaderboard={leaderboard}
                     />
 
-                    {/* 技能學習/替換介面 (Skill Learn UI) */}
-                    <SkillLearnOverlay
-                        pendingSkillLearn={pendingSkillLearn}
-                        isAdvMode={isAdvMode}
-                        isPvpMode={isPvpMode}
-                        battleState={battleState}
-                        isConfirmingReplace={isConfirmingReplace}
-                        advStats={advStats}
-                        tempReplaceIdx={tempReplaceIdx}
-                        SKILL_DATABASE={SKILL_DATABASE}
-                        skillSelectIdx={skillSelectIdx}
-                        handleB={handleB}
-                    />
 
                     {/* 淘汰賽系統 Overlay */}
                     <TournamentOverlay
@@ -3147,6 +3135,20 @@ export default function App() {
                         soulTagCounts={soulTagCounts}
                         lockedAffinity={lockedAffinity}
                         handleBUp={() => {}}
+                    />
+
+                    {/* 技能學習/替換介面 (Skill Learn UI) - Moved to bottom for max priority */}
+                    <SkillLearnOverlay
+                        pendingSkillLearn={pendingSkillLearn}
+                        isAdvMode={isAdvMode}
+                        isPvpMode={isPvpMode}
+                        battleState={battleState}
+                        isConfirmingReplace={isConfirmingReplace}
+                        advStats={advStats}
+                        tempReplaceIdx={tempReplaceIdx}
+                        SKILL_DATABASE={SKILL_DATABASE}
+                        skillSelectIdx={skillSelectIdx}
+                        handleB={handleB}
                     />
 
                     <div className="logical-canvas flex flex-col items-center justify-between pointer-events-none">

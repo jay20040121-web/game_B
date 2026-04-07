@@ -6910,13 +6910,13 @@ function BattleAdventureOverlay({
     isAdvStreaming,
     pendingWildCapture
 }) {
-    if (!isAdvMode && !isPvpMode) return null;
+    if (!isAdvMode && !isPvpMode && battleState.mode !== 'tournament') return null;
 
     return (
         <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{ backgroundColor: battleState.active ? '#9dae8a' : 'rgba(157, 174, 138, 0.98)' }}>
             <div className="w-full bg-[#383a37] text-[#8fa07e] text-[10px] px-2 py-1 flex justify-between items-center mb-1">
-                <span>{isPvpMode ? '宇宙連線對戰' : '冒險模式'} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
-                <span>{isPvpMode ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
+                <span>{isPvpMode || battleState.mode === 'tournament' ? '宇宙連線對戰' : '冒險模式'} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
+                <span>{isPvpMode || battleState.mode === 'tournament' ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
             </div>
 
             {battleState.active ? (
@@ -6978,7 +6978,7 @@ function BattleAdventureOverlay({
 
                     {/* Dialogue Box & Menu Area */}
                     <div className="absolute bottom-1 left-1 right-1 h-[55px] bg-[#8fa07e] border-[3px] border-[#383a37] rounded-sm p-1 flex flex-col shadow-inner z-30">
-                        {(battleState.mode === 'trainer' || battleState.mode === 'pvp') && battleState.phase === 'player_action' ? (
+                        {(battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') && battleState.phase === 'player_action' ? (
                             <div className="grid grid-cols-2 gap-1 h-full font-bold text-[10px] text-[#1a1a1a]">
                                 {[0, 1, 2, 3].map((idx) => {
                                     const move = battleState.player?.moves?.[idx];
@@ -7702,10 +7702,11 @@ function SkillLearnOverlay({
     skillSelectIdx,
     handleB
 }) {
-    if (!pendingSkillLearn || isAdvMode || isPvpMode || battleState?.active) return null;
+    // 移除 battleState?.active 限制，改為由大賽邏輯自行控制暫停
+    if (!pendingSkillLearn || isAdvMode || isPvpMode) return null;
 
     return (
-        <div className="absolute inset-0 z-[120] flex flex-col items-center justify-center p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
+        <div className="absolute inset-0 z-[10000] flex flex-col items-center justify-center p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
             {/* 二次確認 Modal */}
             {isConfirmingReplace && (
                 <div style={{
@@ -9568,6 +9569,7 @@ function useTournament({
     evolutionStage, 
     myMonsterId,
     advStats, 
+    soulTagCounts,
     leaderboard,
     updateDialogue,
     battleState,
@@ -9575,7 +9577,8 @@ function useTournament({
     setAdvStats,
     setInventory,
     playBloop,
-    ADV_ITEMS // from gameConfig
+    ADV_ITEMS, // from gameConfig
+    pendingSkillLearn
 }) {
     const [isTournamentOpen, setIsTournamentOpen] = useState(false);
     const [tPhase, setTPhase] = useState('idle'); // idle, intro, bracket, battle_intro, fighting, mvp, champion, rewards
@@ -9584,14 +9587,14 @@ function useTournament({
 
     // Listen for battle conclusion
     useEffect(() => {
-        if (tPhase === 'fighting' && !battleState?.active) {
+        if (tPhase === 'fighting' && !battleState?.active && !pendingSkillLearn) {
             if (battleState?.player?.hp > 0 && battleState?.enemy?.hp <= 0) {
                 handleTournamentWin();
             } else {
                 handleTournamentLoss();
             }
         }
-    }, [battleState?.active, tPhase]);
+    }, [battleState?.active, tPhase, battleState?.player?.hp, battleState?.enemy?.hp, pendingSkillLearn]);
     
     // 生成這輪賽事的 15 名對手
     const generateOpponents = () => {
@@ -9675,6 +9678,8 @@ function useTournament({
 
     // 推進大賽階段
     const nextTournamentPhase = () => {
+        if (pendingSkillLearn) return; // 如果正在學技能，攔截大賽轉場
+
         if (tPhase === 'intro') {
             setTPhase('bracket');
         } else if (tPhase === 'bracket') {
@@ -9699,13 +9704,49 @@ function useTournament({
         }
     };
 
-    const getPlayerStat = (key) => calcFinalStat(key, advStats.id || myMonsterId, advStats.ivs[key], advStats.evs[key], derivedLevel);
-
     const startTournamentBattle = () => {
-        // 從對手名單裡面挑選目前的敵人 (16強 -> idx: 0, 8強 -> idx: 1, 4強 -> idx: 2, 決賽 -> idx: 3)
         const enemy = opponents[currentRound - 1]; 
+        const myId = String(advStats.id || myMonsterId);
+
+        // --- 性格修正系統 (Nature Modifiers) 同步自 App.js ---
+        const getNatureMods = (tag) => {
+            const mods = { hp: 1.0, atk: 1.0, def: 1.0, spd: 1.0 };
+            const conf = NATURE_CONFIG[tag];
+            if (conf) {
+                if (conf.buff) mods[conf.buff] = 1.1;
+                if (conf.nerf) mods[conf.nerf] = 0.9;
+            }
+            return mods;
+        };
+
+        const tagEntries = Object.entries(soulTagCounts || {});
+        const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
+        const pTag = best[1] > 0 ? best[0] : 'none';
+        const pNatureMods = getNatureMods(pTag);
+
+        const pMaxHP = calcFinalStat('hp', myId, advStats.ivs.hp, advStats.evs.hp, derivedLevel, pNatureMods.hp);
+        const pATK = calcFinalStat('atk', myId, advStats.ivs.atk, advStats.evs.atk, derivedLevel, pNatureMods.atk);
+        const pDEF = calcFinalStat('def', myId, advStats.ivs.def, advStats.evs.def, derivedLevel, pNatureMods.def);
+        const pSPD = calcFinalStat('spd', myId, advStats.ivs.spd, advStats.evs.spd, derivedLevel, pNatureMods.spd);
+
+        // --- 技能匯入核心邏輯 (帶入 4 招) ---
+        let playerMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
         
-        let playerHp = getPlayerStat('hp'); // 大賽皆從滿血開始
+        // 如果寵物學會的技能不足 4 個，自動從其屬性對應的招式庫中補齊 (仿照冒險模式)
+        if (playerMoves.length < 4) {
+            const myTypes = (SPECIES_BASE_STATS[myId]?.types) || ['normal'];
+            const autoGeneratedIds = generateMoves(myId, derivedLevel);
+            autoGeneratedIds.forEach(gid => {
+                const skillObj = SKILL_DATABASE[gid];
+                if (playerMoves.length < 4 && skillObj && !playerMoves.find(m => m.id === gid)) {
+                    playerMoves.push(skillObj);
+                }
+            });
+        }
+        
+        if (playerMoves.length === 0) {
+            playerMoves.push(SKILL_DATABASE.tackle || { id: 'tackle', name: '撞擊', power: 40, type: 'normal' });
+        }
 
         const newBattleState = {
             active: true,
@@ -9713,26 +9754,28 @@ function useTournament({
             turn: 1,
             phase: 'intro',
             player: {
-                id: advStats.id || myMonsterId,
+                id: myId,
                 name: "您的怪獸",
-                hp: playerHp,
-                maxHp: playerHp,
-                atk: getPlayerStat('atk'),
-                def: getPlayerStat('def'),
-                spd: getPlayerStat('spd'),
+                hp: pMaxHP,
+                maxHp: pMaxHP,
+                atk: pATK,
+                def: pDEF,
+                spd: pSPD,
                 level: derivedLevel,
-                type: (SPECIES_BASE_STATS[String(advStats.id || myMonsterId)]?.types?.[0]) || 'normal',
-                moves: advStats.moves.map(m => (typeof m === 'string' ? { id: m } : m)), // 需要根據 SKILL_DATABASE mapping，App.js戰鬥系統會處理？
+                type: (SPECIES_BASE_STATS[myId]?.types) || ['normal'],
+                moves: playerMoves,
                 status: null,
                 statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 }
             },
-            enemy: { ...enemy.monster }, // copy stats
+            enemy: { 
+                ...enemy.monster,
+                moves: enemy.monster.moves.map(id => SKILL_DATABASE[id]).filter(Boolean)
+            }, 
             logs: [`【大會廣播】：當前戰鬥開始！`],
             stepQueue: [],
-            isPlayerTurn: true,
-            menuIdx: 0,
             activeMsg: "",
             flashTarget: null,
+            menuIdx: 0,
             tournamentEnemyInfo: enemy // 附加供UI使用
         };
         
@@ -11097,7 +11140,7 @@ function App() {
             playBloop('pop');
             return;
         }
-        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp')) {
+        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament')) {
             if (battleState.phase === 'player_action') {
                 // Bug Fix #3: 游標只在有效招式間循環，避免選到空格浪費操作
                 const numMoves = battleState.player?.moves?.length || 1;
@@ -11209,7 +11252,7 @@ function App() {
             playBloop('pop');
             return;
         }
-        if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer')) {
+        if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer' || battleState.mode === 'tournament')) {
             if (battleState.phase === 'player_action') {
                 // 防抖：0.4秒內不允許重複提交動作 (提高對戰流暢度)
                 const now = Date.now();
@@ -11464,7 +11507,7 @@ function App() {
             playBloop('pop');
             return;
         }
-        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp') && battleState.phase === 'player_action') {
+        if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') && battleState.phase === 'player_action') {
             // 返回上層選單（因為目前沒有上層，所以提示無法返回或不做事）
             const tempLogs = [...battleState.logs, "無法返回！"];
             setBattleState(prev => ({ ...prev, logs: tempLogs.slice(-5) }));
@@ -12651,7 +12694,8 @@ function App() {
     // --- 聯盟大賽 (Tournament System) ---
     const tournament = useTournament({ 
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
-        advStats, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS
+        advStats, soulTagCounts, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
+        pendingSkillLearn
     });
 
     // --- PVP 殭屍對局檢測 (Zombie Match Detector) ---
@@ -12774,19 +12818,6 @@ function App() {
                         leaderboard={leaderboard}
                     />
 
-                    {/* 技能學習/替換介面 (Skill Learn UI) */}
-                    <SkillLearnOverlay
-                        pendingSkillLearn={pendingSkillLearn}
-                        isAdvMode={isAdvMode}
-                        isPvpMode={isPvpMode}
-                        battleState={battleState}
-                        isConfirmingReplace={isConfirmingReplace}
-                        advStats={advStats}
-                        tempReplaceIdx={tempReplaceIdx}
-                        SKILL_DATABASE={SKILL_DATABASE}
-                        skillSelectIdx={skillSelectIdx}
-                        handleB={handleB}
-                    />
 
                     {/* 淘汰賽系統 Overlay */}
                     <TournamentOverlay
@@ -12904,6 +12935,20 @@ function App() {
                         soulTagCounts={soulTagCounts}
                         lockedAffinity={lockedAffinity}
                         handleBUp={() => {}}
+                    />
+
+                    {/* 技能學習/替換介面 (Skill Learn UI) - Moved to bottom for max priority */}
+                    <SkillLearnOverlay
+                        pendingSkillLearn={pendingSkillLearn}
+                        isAdvMode={isAdvMode}
+                        isPvpMode={isPvpMode}
+                        battleState={battleState}
+                        isConfirmingReplace={isConfirmingReplace}
+                        advStats={advStats}
+                        tempReplaceIdx={tempReplaceIdx}
+                        SKILL_DATABASE={SKILL_DATABASE}
+                        skillSelectIdx={skillSelectIdx}
+                        handleB={handleB}
                     />
 
                     <div className="logical-canvas flex flex-col items-center justify-between pointer-events-none">

@@ -12,10 +12,11 @@ export function SkillLearnOverlay({
     skillSelectIdx,
     handleB
 }) {
-    if (!pendingSkillLearn || isAdvMode || isPvpMode || battleState?.active) return null;
+    // 移除 battleState?.active 限制，改為由大賽邏輯自行控制暫停
+    if (!pendingSkillLearn || isAdvMode || isPvpMode) return null;
 
     return (
-        <div className="absolute inset-0 z-[120] flex flex-col items-center justify-center p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
+        <div className="absolute inset-0 z-[10000] flex flex-col items-center justify-center p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
             {/* 二次確認 Modal */}
             {isConfirmingReplace && (
                 <div style={{

@@ -20,13 +20,13 @@ export function BattleAdventureOverlay({
     isAdvStreaming,
     pendingWildCapture
 }) {
-    if (!isAdvMode && !isPvpMode) return null;
+    if (!isAdvMode && !isPvpMode && battleState.mode !== 'tournament') return null;
 
     return (
         <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{ backgroundColor: battleState.active ? '#9dae8a' : 'rgba(157, 174, 138, 0.98)' }}>
             <div className="w-full bg-[#383a37] text-[#8fa07e] text-[10px] px-2 py-1 flex justify-between items-center mb-1">
-                <span>{isPvpMode ? '宇宙連線對戰' : '冒險模式'} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
-                <span>{isPvpMode ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
+                <span>{isPvpMode || battleState.mode === 'tournament' ? '宇宙連線對戰' : '冒險模式'} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
+                <span>{isPvpMode || battleState.mode === 'tournament' ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
             </div>
 
             {battleState.active ? (
@@ -88,7 +88,7 @@ export function BattleAdventureOverlay({
 
                     {/* Dialogue Box & Menu Area */}
                     <div className="absolute bottom-1 left-1 right-1 h-[55px] bg-[#8fa07e] border-[3px] border-[#383a37] rounded-sm p-1 flex flex-col shadow-inner z-30">
-                        {(battleState.mode === 'trainer' || battleState.mode === 'pvp') && battleState.phase === 'player_action' ? (
+                        {(battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') && battleState.phase === 'player_action' ? (
                             <div className="grid grid-cols-2 gap-1 h-full font-bold text-[10px] text-[#1a1a1a]">
                                 {[0, 1, 2, 3].map((idx) => {
                                     const move = battleState.player?.moves?.[idx];
