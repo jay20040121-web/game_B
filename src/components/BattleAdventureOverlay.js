@@ -13,7 +13,7 @@ export function BattleAdventureOverlay({
     setPvpRoomPassword,
     fetchLeaderboard,
     joinPvpRoom,
-    quickMatch,
+    startTournament,
     advLogRef,
     advLog,
     advCurrentHP,
@@ -163,11 +163,11 @@ export function BattleAdventureOverlay({
                                     </div>
 
                                     <button
-                                        onClick={() => (matchStatus !== 'searching') && quickMatch()}
+                                        onClick={() => (matchStatus !== 'searching') && startTournament()}
                                         disabled={matchStatus === 'searching'}
                                         className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ffca28] text-[#1a1a1a] shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
                                     >
-                                        🚀 快速配對
+                                        🏆 聯盟大賽
                                     </button>
                                 </div>
 

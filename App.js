@@ -41,7 +41,8 @@ import { processBattleTurn } from './src/utils/battleTurnSystem';
 import { usePvpConnection } from './src/utils/usePvpConnection';
 import { getMonsterId } from './src/utils/monsterIdMapper';
 import { useLeaderboard } from './src/utils/useLeaderboard';
-
+import { useTournament } from './src/utils/useTournament';
+import { TournamentOverlay } from './src/components/TournamentOverlay';
 
 
 
@@ -1077,7 +1078,7 @@ export default function App() {
             } else if (battleState.phase === 'combat') {
                 timer = setTimeout(() => executeBattleTurn('attack'), 1500);
             }
-        } else if (battleState.mode === 'trainer' || battleState.mode === 'pvp') {
+        } else if (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') {
             if (battleState.phase === 'intro') {
                 timer = setTimeout(() => setBattleState(p => ({ ...p, phase: 'player_action' })), 2000);
             }
@@ -1220,6 +1221,11 @@ export default function App() {
 
         logs.push({ msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: 1 });
 
+        if (battleState.mode === 'tournament') {
+            setBattleState(prev => ({ ...prev, active: false }));
+            return;
+        }
+
         if (battleState.mode === 'pvp') {
             setAdvStats(prev => ({
                 ...prev,
@@ -1258,6 +1264,10 @@ export default function App() {
     };
 
     const resolveBattleLoss = (isRun = false) => {
+        if (battleState.mode === 'tournament') {
+            setBattleState(prev => ({ ...prev, active: false }));
+            return;
+        }
         if (battleState.mode === 'pvp') {
             setAdvStats(prev => ({
                 ...prev,
@@ -2881,6 +2891,12 @@ export default function App() {
         fetchLeaderboard, updatePvpStats
     } = useLeaderboard({ user, getMonsterId: getMonsterIdWrapped, updateDialogue });
 
+    // --- 聯盟大賽 (Tournament System) ---
+    const tournament = useTournament({ 
+        user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
+        advStats, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS
+    });
+
     // --- PVP 殭屍對局檢測 (Zombie Match Detector) ---
     useEffect(() => {
         if (!isPvpMode || battleState.phase !== 'waiting_opponent') return;
@@ -3015,6 +3031,17 @@ export default function App() {
                         handleB={handleB}
                     />
 
+                    {/* 淘汰賽系統 Overlay */}
+                    <TournamentOverlay
+                        isTournamentOpen={tournament.isTournamentOpen}
+                        tPhase={tournament.tPhase}
+                        currentRound={tournament.currentRound}
+                        opponents={tournament.opponents}
+                        nextTournamentPhase={tournament.nextTournamentPhase}
+                        myMonsterId={getMonsterIdWrapped()}
+                        playerName={user?.displayName || '玩家'}
+                    />
+
                     {/* 冒險或連線對戰系統 Overlay */}
                     <BattleAdventureOverlay
                         isAdvMode={isAdvMode}
@@ -3028,7 +3055,10 @@ export default function App() {
                         setPvpRoomPassword={setPvpRoomPassword}
                         fetchLeaderboard={fetchLeaderboard}
                         joinPvpRoom={joinPvpRoom}
-                        quickMatch={quickMatch}
+                        startTournament={() => {
+                            setIsPvpMode(false);
+                            tournament.startTournament();
+                        }}
                         advLogRef={advLogRef}
                         advLog={advLog}
                         advCurrentHP={advCurrentHP}

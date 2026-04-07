@@ -263,14 +263,7 @@ export const usePvpConnection = (deps) => {
         initPeer(hostId);
     };
 
-    // 快速配對 (隨機挑選公共房間)
-    const quickMatch = () => {
-        // 公共頻道池
-        const pool = ["101", "202", "303", "505", "777", "888", "999"];
-        const rand = pool[Math.floor(Math.random() * pool.length)];
-        setPvpRoomPassword(rand);
-        joinPvpRoom(rand);
-    };
+
 
     // 視窗關閉前確實銷毀連線
     window.addEventListener('beforeunload', () => {
@@ -294,6 +287,6 @@ export const usePvpConnection = (deps) => {
         // Refs
         peerInstance, connInstance, isHost, pvpRemoteMoveRef,
         // Methods
-        cleanupPvp, initPeer, joinPvpRoom, quickMatch
+        cleanupPvp, initPeer, joinPvpRoom
     };
 };
