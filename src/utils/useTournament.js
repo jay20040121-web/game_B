@@ -128,6 +128,7 @@ export function useTournament({
         } else if (tPhase === 'fighting') { // fighting 只是中繼，實際由戰鬥系統通知我們勝負
             // 此處不作用
         } else if (tPhase === 'mvp') {
+            // 已棄用，改由 handleTournamentWin 直接跳轉
             if (currentRound >= 4) {
                 setTPhase('champion');
             } else {
@@ -136,6 +137,8 @@ export function useTournament({
             }
         } else if (tPhase === 'champion') {
             setTPhase('rewards');
+        } else if (tPhase === 'lost') {
+            closeTournament();
         } else if (tPhase === 'rewards') {
             giveChampionReward();
             closeTournament();
@@ -226,13 +229,19 @@ export function useTournament({
             ...prev,
             basePower: Math.min(9999, prev.basePower + 10)
         }));
-        setTPhase('mvp');
+
+        // 直接判定進入下一輪或冠軍，移除 mvp 特寫以防止轉場卡死
+        if (currentRound >= 4) {
+            setTPhase('champion');
+        } else {
+            setCurrentRound(prev => prev + 1);
+            setTPhase('bracket');
+        }
         playBloop('success');
     };
 
     const handleTournamentLoss = () => {
-        updateDialogue("很遺憾被淘汰了，再接再厲！");
-        closeTournament();
+        setTPhase('lost');
         playBloop('fail');
     };
 

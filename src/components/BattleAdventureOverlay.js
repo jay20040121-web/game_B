@@ -4,6 +4,7 @@ import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 export function BattleAdventureOverlay({
     isAdvMode,
     isPvpMode,
+    isTournamentOpen,
     battleState,
     matchStatus,
     advCD,
@@ -20,12 +21,14 @@ export function BattleAdventureOverlay({
     isAdvStreaming,
     pendingWildCapture
 }) {
-    if (!isAdvMode && !isPvpMode && battleState.mode !== 'tournament') return null;
+    // 嚴格檢查：如果是大賽模式且戰鬥未開始，或者是其他模式未開啟，就隱藏 (避免洩漏大廳/冒險介面)
+    if (battleState.mode === 'tournament' && !battleState.active) return null;
+    if (!isAdvMode && !isPvpMode && (battleState.mode !== 'tournament' || !isTournamentOpen)) return null;
 
     return (
         <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{ backgroundColor: battleState.active ? '#9dae8a' : 'rgba(157, 174, 138, 0.98)' }}>
             <div className="w-full bg-[#383a37] text-[#8fa07e] text-[10px] px-2 py-1 flex justify-between items-center mb-1">
-                <span>{isPvpMode || battleState.mode === 'tournament' ? '宇宙連線對戰' : '冒險模式'} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
+                <span>{battleState.mode === 'tournament' ? '聯盟大賽' : (isPvpMode ? '宇宙連線對戰' : '冒險模式')} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
                 <span>{isPvpMode || battleState.mode === 'tournament' ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
             </div>
 

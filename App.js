@@ -1518,6 +1518,14 @@ export default function App() {
             if (!isGenerating) handleRestart();
             return;
         }
+
+        // --- 聯盟大賽手動轉場 ---
+        if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'champion', 'lost', 'rewards'].includes(tournament.tPhase)) {
+            tournament.nextTournamentPhase();
+            playBloop('success');
+            return;
+        }
+
         if (isEvolving || isAdvMode) {
             // --- 戰鬥播報模式 (Step-by-Step) --- 
             // ❌ 已將手動 B 鍵推進移除，由 useEffect 自動播放引擎接手
@@ -3034,6 +3042,7 @@ export default function App() {
                     <BattleAdventureOverlay
                         isAdvMode={isAdvMode}
                         isPvpMode={isPvpMode}
+                        isTournamentOpen={tournament.isTournamentOpen}
                         battleState={battleState}
                         matchStatus={matchStatus}
                         advCD={advCD}
