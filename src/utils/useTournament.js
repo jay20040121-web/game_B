@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { OBTAINABLE_MONSTER_IDS, SPECIES_BASE_STATS, generateMoves, calcFinalStat, MONSTER_NAMES, SKILL_DATABASE, NATURE_CONFIG } from '../../monsterData';
 
+// 🔹 訓練家擬人化名稱池
+const TRAINER_NAMES_POOL = [
+    "小智", "小茂", "小霞", "小剛", "阿弘", "奈奈", "阿龍", "阿渡", "大吾", "米可利",
+    "竹蘭", "阿戴克", "艾莉絲", "卡露乃", "丹帝", "妮莫", "派帕", "牡丹", "青綠", "赤紅",
+    "葉子", "小響", "小銀", "克麗絲", "小悠", "小遙", "小光", "透子", "透也", "鳴依",
+    "共平", "莎莉娜", "卡勒姆", "美月", "朗日", "小勝", "小健", "馬志士", "莉佳", "娜姿",
+    "夏伯", "坂木", "阿桔", "志米", "朵拉塞娜", "雁鎧", "芙蓉", "波妮", "源治"
+];
+
 export function useTournament({ 
     user, 
     derivedLevel, 
@@ -20,7 +29,7 @@ export function useTournament({
 }) {
     const [isTournamentOpen, setIsTournamentOpen] = useState(false);
     const [tPhase, setTPhase] = useState('idle'); // idle, intro, bracket, battle_intro, fighting, mvp, champion, rewards
-    const [opponents, setOpponents] = useState([]);
+    const [bracket, setBracket] = useState([]); // 存儲當前輪次的選單 (16, 8, 4, 2)
     const [currentRound, setCurrentRound] = useState(1); // 1 = 16強, 2 = 8強, 3 = 4強, 4 = 決賽
 
     // Listen for battle conclusion
@@ -28,30 +37,39 @@ export function useTournament({
         if (tPhase === 'fighting' && !battleState?.active && !pendingSkillLearn) {
             if (battleState?.player?.hp > 0 && battleState?.enemy?.hp <= 0) {
                 handleTournamentWin();
-            } else {
+            } else if (battleState?.enemy?.hp > 0 && battleState?.player?.hp <= 0) {
                 handleTournamentLoss();
             }
         }
     }, [battleState?.active, tPhase, battleState?.player?.hp, battleState?.enemy?.hp, pendingSkillLearn]);
     
-    // 生成這輪賽事的 15 名對手
-    const generateOpponents = () => {
+    // 生成這輪賽事的初始 16 強名單 (玩家 + 15 名電腦)
+    const generateInitialBracket = () => {
         const generated = [];
-        const lbArray = Array.isArray(leaderboard) ? leaderboard : [];
+        // 🔹 玩家本人永遠位於索引 0
+        generated.push({
+            isPlayer: true,
+            playerName: "您",
+            monster: null // 戰鬥時動態抓取最新 state
+        });
+
+        const lbArray = Array.isArray(leaderboard) ? leaderboard.filter(p => p.id !== user?.uid) : [];
+        
+        let aiNames = [...TRAINER_NAMES_POOL].sort(() => Math.random() - 0.5);
+        let aiNameIdx = 0;
         
         for (let i = 0; i < 15; i++) {
-            // 從排行榜拉取前 N 名的資料如果可用
             const lbData = lbArray[i];
-            
             let id, level, type, maxHp, atk, def, spd, moves, name, playerName;
             
             if (lbData && lbData.monsterId) {
                 id = lbData.monsterId;
                 playerName = lbData.displayName || "神秘訓練家";
-                level = Math.max(1, Math.min(derivedLevel, derivedLevel - 2 + Math.floor(Math.random() * 5))); // 相近等級，不超過本人太多
+                level = Math.max(1, Math.min(100, derivedLevel - 1 + Math.floor(Math.random() * 3))); 
             } else {
                 id = OBTAINABLE_MONSTER_IDS[Math.floor(Math.random() * OBTAINABLE_MONSTER_IDS.length)];
-                playerName = `AI訓練家${Math.floor(Math.random() * 900) + 100}`;
+                playerName = aiNames[aiNameIdx] || `訓練家 ${Math.floor(Math.random() * 900) + 100}`;
+                aiNameIdx++;
                 level = Math.max(1, Math.min(derivedLevel, derivedLevel - 2 + Math.floor(Math.random() * 5))); 
             }
 
@@ -59,7 +77,6 @@ export function useTournament({
             name = MONSTER_NAMES?.[String(id)] || `怪獸#${id}`;
             type = species.types?.[0] || 'normal';
             
-            // Generate standard enemy stats for the level
             const ivs = { hp: 15, atk: 15, def: 15, spd: 15 };
             const evs = { hp: 0, atk: 0, def: 0, spd: 0 };
             
@@ -67,10 +84,11 @@ export function useTournament({
             atk = calcFinalStat('atk', id, ivs.atk, evs.atk, level);
             def = calcFinalStat('def', id, ivs.def, evs.def, level);
             spd = calcFinalStat('spd', id, ivs.spd, evs.spd, level);
-            moves = generateMoves(id, level);
+            moves = generateMoves(4, species.types);
 
             generated.push({
-                idx: i,
+                isPlayer: false,
+                idx: i + 1,
                 playerName,
                 monster: {
                     id: String(id),
@@ -88,7 +106,35 @@ export function useTournament({
                 }
             });
         }
+        console.log(`[Tournament] Initial bracket generated with ${lbArray.length} leaderboard players.`);
         return generated;
+    };
+
+    // 模擬 AI 分組之間的對戰結果，產生下一輪名單
+    const advanceBracket = (currentBracket) => {
+        const nextBracket = [];
+        // 每兩個一組進行比賽
+        for (let i = 0; i < currentBracket.length; i += 2) {
+            const p1 = currentBracket[i];
+            const p2 = currentBracket[i + 1];
+
+            if (p1.isPlayer) {
+                // 玩家分組由實際對戰決定，此時呼叫 advanceBracket 代表玩家已贏
+                nextBracket.push(p1);
+            } else if (p2 && p2.isPlayer) {
+                 // 玩家在第二位 (理論上本系統玩家固定在 index 0，但做個防呆)
+                nextBracket.push(p2);
+            } else if (p1 && p2) {
+                // AI vs AI: 根據等級決定勝率，等級高者優勢大
+                const p1Power = p1.monster.level + Math.random() * 10;
+                const p2Power = p2.monster.level + Math.random() * 10;
+                nextBracket.push(p1Power >= p2Power ? p1 : p2);
+            } else {
+                // 單剩一人直接晉級
+                nextBracket.push(p1);
+            }
+        }
+        return nextBracket;
     };
 
     const startTournament = () => {
@@ -101,7 +147,8 @@ export function useTournament({
             }
             setIsTournamentOpen(true);
             setTPhase('intro');
-            setOpponents(generateOpponents());
+            const initial = generateInitialBracket();
+            setBracket(initial);
             setCurrentRound(1); // 16強起步
         } catch (err) {
             window.alert(`大賽引擎發生錯誤: ${err.message}`);
@@ -148,7 +195,14 @@ export function useTournament({
     };
 
     const startTournamentBattle = () => {
-        const enemy = opponents[currentRound - 1]; 
+        // 🔹 淘汰賽機制：對手永遠是當前對戰樹中離玩家最近的電腦 (index 1)
+        const enemy = bracket[1]; 
+        if (!enemy) {
+            console.error("[Tournament] No enemy found at bracket[1].");
+            handleTournamentWin(); // 防呆直接晉級
+            return;
+        }
+
         const myId = String(advStats.id || myMonsterId);
 
         // --- 性格修正系統 (Nature Modifiers) 同步自 App.js ---
@@ -232,10 +286,11 @@ export function useTournament({
             basePower: Math.min(9999, prev.basePower + 10)
         }));
 
-        // 直接判定進入下一輪或冠軍，移除 mvp 特寫以防止轉場卡死
         if (currentRound >= 4) {
             setTPhase('champion');
         } else {
+            // 🔹 玩家贏了，進入下一階段並模擬 AI 勝負
+            setBracket(prev => advanceBracket(prev));
             setCurrentRound(prev => prev + 1);
             setTPhase('bracket');
         }
@@ -263,7 +318,7 @@ export function useTournament({
                     if (prev.length >= 99) return prev;
                     return [...prev, { ...item, count: 1 }];
                 });
-                updateDialogue(`🎉 取得聯盟大賽冠軍！獲得了稀有獎品：${item.name}！戰力額外 +50！`);
+                updateDialogue(`取得了冠軍，獲得獎品 : ${item.name}`);
             }
         }
         setAdvStats(prev => ({
@@ -275,7 +330,7 @@ export function useTournament({
     return {
         isTournamentOpen,
         tPhase,
-        opponents,
+        opponents: bracket, // 🔹 維持原本名稱以與 UI 對接，但內部邏輯改為對戰樹
         currentRound,
         startTournament,
         closeTournament,

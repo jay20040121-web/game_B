@@ -40,22 +40,26 @@ export function TournamentOverlay({
                             {(() => {
                                 const numMatches = Math.pow(2, 4 - currentRound);
                                 const matches = [];
-                                // 第一組永遠是玩家
-                                matches.push({ p1: `👉 ${playerName || '玩家'} 👈`, p2: opponents[currentRound - 1]?.playerName || 'NPC', highlight: true });
-                                // 其他組為 AI 模擬
-                                for (let i = 1; i < numMatches; i++) {
-                                    const base = 4 + (i * 2);
+                                
+                                for (let i = 0; i < numMatches; i++) {
+                                    const p1 = opponents[i * 2];
+                                    const p2 = opponents[i * 2 + 1];
+                                    
+                                    const p1Name = p1?.isPlayer ? `👉 ${p1.playerName} 👈` : (p1?.playerName || "???");
+                                    const p2Name = p2?.isPlayer ? `👉 ${p2.playerName} 👈` : (p2?.playerName || "???");
+                                    
                                     matches.push({ 
-                                        p1: opponents[base % opponents.length]?.playerName || `大師_${base}`, 
-                                        p2: opponents[(base + 1) % opponents.length]?.playerName || `訓練家_${base + 1}`,
-                                        highlight: false 
+                                        p1: p1Name,
+                                        p2: p2Name,
+                                        highlight: p1?.isPlayer || p2?.isPlayer
                                     });
                                 }
+
                                 return matches.map((m, idx) => (
                                     <div key={idx} className={`flex justify-between items-center text-[9px] px-2 py-1 border border-black/30 ${m.highlight ? 'bg-[#ffca28] text-black font-black' : 'text-gray-400 bg-black/10'}`}>
-                                        <span className="w-[40%] text-center truncate">{m.p1}</span>
-                                        <span className="text-[8px] opacity-50">VS</span>
-                                        <span className="w-[40%] text-center truncate">{m.p2}</span>
+                                        <span className="w-[48%] text-center truncate">{m.p1}</span>
+                                        <span className="text-[7px] opacity-50">VS</span>
+                                        <span className="w-[48%] text-center truncate">{m.p2}</span>
                                     </div>
                                 ));
                             })()}
@@ -64,16 +68,16 @@ export function TournamentOverlay({
                 </div>
             )}
 
-            {tPhase === 'battle_intro' && opponents[currentRound - 1] && (
+            {tPhase === 'battle_intro' && opponents[1] && (
                 <div className="w-full flex-1 flex flex-col justify-between p-2 py-8 animate-[pullIn_0.5s_ease-out]">
                     <div className="flex items-center justify-start w-full bg-white/10 p-2 rounded-r-full shadow-lg transform -translate-x-[20%] animate-[slideRight_0.5s_forwards]">
                         <div className="scale-125 mr-4">
-                            <DitheredSprite id={opponents[currentRound - 1].monster.id} scale={2} />
+                            {opponents[1].monster && <DitheredSprite id={opponents[1].monster.id} scale={2} />}
                         </div>
                         <div className="flex flex-col text-white">
                             <span className="text-[10px] uppercase text-gray-300">OPPONENT</span>
-                            <span className="text-[12px] font-black text-[#ff5252]">{opponents[currentRound - 1].playerName}</span>
-                            <span className="text-[9px]">{opponents[currentRound - 1].monster.name} - Lv.{opponents[currentRound - 1].monster.level}</span>
+                            <span className="text-[12px] font-black text-[#ff5252]">{opponents[1].playerName}</span>
+                            <span className="text-[9px]">{opponents[1].monster?.name} - Lv.{opponents[1].monster?.level}</span>
                         </div>
                     </div>
 
@@ -142,8 +146,8 @@ export function TournamentOverlay({
             {/* 手動前進提示 */}
             {['intro', 'bracket', 'battle_intro'].includes(tPhase) && (
                 <div className="absolute bottom-12 animate-bounce flex flex-col items-center">
-                    <div className="text-white/60 text-[10px] font-bold tracking-[0.2em] mb-1">
-                        PRESS B TO CONTINUE
+                    <div className="text-[#ffca28] text-[10px] font-bold tracking-[0.2em] mb-1 animate-pulse">
+                        按 B 鍵確認下一步
                     </div>
                     <div className="w-12 h-1 bg-white/20 rounded-full overflow-hidden">
                         <div className="h-full bg-[#ff5252] animate-[loading_1s_infinite] w-full"></div>

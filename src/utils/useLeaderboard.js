@@ -83,9 +83,8 @@ export function useLeaderboard({ user, getMonsterId, updateDialogue }) {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 
         try {
-            console.log(`Fetching top 50 scores for ${todayStr}...`);
+            console.log(`Fetching all-time top 50 scores...`);
             const snapshot = await db.collection('pvp_leaderboard')
-                .where('lastResetDate', '==', todayStr) // 🔹 只讀取今天的紀錄
                 .orderBy('score', 'desc')
                 .limit(50)
                 .get();
