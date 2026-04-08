@@ -112,6 +112,8 @@ export function useTournament({
     const closeTournament = () => {
         setIsTournamentOpen(false);
         setTPhase('idle');
+        // 重置戰鬥狀態，防止大賽模式殘留導致其他系統 (如冒險、PvP) 的 UI 判定出錯
+        setBattleState(prev => ({ ...prev, active: false, mode: 'wild', logs: [] }));
     };
 
     // 推進大賽階段

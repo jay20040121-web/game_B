@@ -22,8 +22,11 @@ export function BattleAdventureOverlay({
     pendingWildCapture
 }) {
     // 嚴格檢查：如果是大賽模式且戰鬥未開始，或者是其他模式未開啟，就隱藏 (避免洩漏大廳/冒險介面)
-    if (battleState.mode === 'tournament' && !battleState.active) return null;
-    if (!isAdvMode && !isPvpMode && (battleState.mode !== 'tournament' || !isTournamentOpen)) return null;
+    // 但如果玩家主動開啟了冒險或 PvP 模式，則不應該被大賽的殘留狀態阻擋
+    if (!isAdvMode && !isPvpMode) {
+        if (battleState.mode === 'tournament' && !battleState.active) return null;
+        if (battleState.mode !== 'tournament' || !isTournamentOpen) return null;
+    }
 
     return (
         <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{ backgroundColor: battleState.active ? '#9dae8a' : 'rgba(157, 174, 138, 0.98)' }}>
