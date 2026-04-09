@@ -9260,16 +9260,20 @@ function useLeaderboard({ user, getMonsterId, updateDialogue }) {
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 
         try {
-            console.log(`Fetching today's (${todayStr}) top 50 scores...`);
-            // 🔹 核心修正：僅讀取今日有對戰過 (lastResetDate 相符) 的紀錄
+            console.log(`Fetching today's (${todayStr}) players...`);
+            // 🔹 採取「客戶端排序」方案：避開 Firebase 複合索引 (Composite Index) 的限制
+            // 僅進行日期過濾，不進行多欄位排序，這樣就不需要去控制台建立索引
             const snapshot = await db.collection('pvp_leaderboard')
                 .where('lastResetDate', '==', todayStr)
-                .orderBy('score', 'desc')
-                .limit(50)
                 .get();
 
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`Success! Found ${list.length} active players today.`);
+            let list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // 在 JavaScript 端進行排序與限制前 50 名
+            list.sort((a, b) => (b.score || 0) - (a.score || 0));
+            list = list.slice(0, 50);
+
+            console.log(`Success! Found ${list.length} active players today (client-side sorted).`);
             setLeaderboard(list);
             
             if (!silent) {
