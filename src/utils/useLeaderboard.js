@@ -66,38 +66,50 @@ export function useLeaderboard({ user, getMonsterId, updateDialogue }) {
     };
 
     // 讀取今日排行榜
-    const fetchLeaderboard = async () => {
+    // 讀取今日排行榜
+    const fetchLeaderboard = async ({ silent = false } = {}) => {
         const timestamp = new Date().toLocaleTimeString();
-        console.log(`[${timestamp}] 🚀 Leaderboard button clicked!`);
+        console.log(`[${timestamp}] 🚀 Leaderboard fetch triggered (silent: ${silent})`);
 
         if (!db) {
             console.error("Firestore (db) is missing!");
-            updateDialogue("資料庫尚未就緒，請檢查 Firebase 設定...");
+            if (!silent) updateDialogue("資料庫尚未就緒，請檢查 Firebase 設定...");
             return;
         }
 
-        setIsLeaderboardLoading(true);
-        setLeaderboardPage(0);
+        if (!silent) {
+            setIsLeaderboardLoading(true);
+            setLeaderboardPage(0);
+        }
 
         // 📅 取得今天的日期字串 (台北時間) 進行過濾
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 
         try {
-            console.log(`Fetching all-time top 50 scores...`);
+            console.log(`Fetching today's (${todayStr}) players...`);
+            // 🔹 採取「客戶端排序」方案：避開 Firebase 複合索引 (Composite Index) 的限制
+            // 僅進行日期過濾，不進行多欄位排序，這樣就不需要去控制台建立索引
             const snapshot = await db.collection('pvp_leaderboard')
-                .orderBy('score', 'desc')
-                .limit(50)
+                .where('lastResetDate', '==', todayStr)
                 .get();
 
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            console.log(`Success! Found ${list.length} players.`);
+            let list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // 在 JavaScript 端進行排序與限制前 50 名
+            list.sort((a, b) => (b.score || 0) - (a.score || 0));
+            list = list.slice(0, 50);
+
+            console.log(`Success! Found ${list.length} active players today (client-side sorted).`);
             setLeaderboard(list);
-            setIsLeaderboardOpen(true);
+            
+            if (!silent) {
+                setIsLeaderboardOpen(true);
+            }
         } catch (e) {
             console.error("Firebase Error:", e);
-            updateDialogue("讀取失敗！(通常是需要建立 Firestore 索引，請查看控制台)...");
+            if (!silent) updateDialogue("讀取失敗！(通常是需要建立 Firestore 索引，請查看控制台)...");
         } finally {
-            setIsLeaderboardLoading(false);
+            if (!silent) setIsLeaderboardLoading(false);
         }
     };
 

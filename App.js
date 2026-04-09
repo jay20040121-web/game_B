@@ -2902,7 +2902,7 @@ export default function App() {
     // 🔹 當使用者登入成功且排行榜尚未讀取時，自動預載資料以供大賽系統使用
     useEffect(() => {
         if (user && leaderboard.length === 0 && !isLeaderboardLoading) {
-            fetchLeaderboard();
+            fetchLeaderboard({ silent: true });
         }
     }, [user]);
 
