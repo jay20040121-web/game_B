@@ -8664,6 +8664,52 @@ const applyMoveEffects = (move, targetState, sourceState, rng = Math.random) => 
     // 4. Drain & Recoil (吸血與反作用力) - 回傳到外界處理
     let drainPct = move.drain || 0;
     let recoilPct = move.recoil || 0;
+
+    // 5. Power-based self-effects (平衡性：高威力副作用與低威力增益)
+    if (move.power >= 100) {
+        // 高威力副作用：攻擊力下降
+        let change = -1;
+        if (move.power >= 150) change = -4;
+        else if (move.power >= 131) change = -3;
+        else if (move.power >= 111) change = -2;
+        
+        if (!sourceState.statStages) sourceState.statStages = { atk: 0, def: 0, spd: 0 };
+        let oldStage = sourceState.statStages.atk || 0;
+        let newStage = Math.max(-6, oldStage + change);
+        sourceState.statStages.atk = newStage;
+        
+        if (newStage < oldStage) {
+            messageObjs.push({ text: `攻擊力大幅下降了！`, targetType: 'source' });
+        }
+    } else if (move.power > 0 && move.power <= 60) {
+        // 低威力增益：隨機屬性提升
+        let trigger = false;
+        let change = 1;
+        
+        if (move.power <= 30) {
+            trigger = true;
+            change = 2;
+        } else if (move.power <= 50) {
+            trigger = true;
+        } else if (rng() < 0.5) { // 51~60: 50% 機率
+            trigger = true;
+        }
+        
+        if (trigger) {
+            const stats = ['atk', 'def', 'spd'];
+            const stat = stats[Math.floor(rng() * stats.length)];
+            if (!sourceState.statStages) sourceState.statStages = { atk: 0, def: 0, spd: 0 };
+            
+            let oldStage = sourceState.statStages[stat] || 0;
+            let newStage = Math.min(6, oldStage + change);
+            sourceState.statStages[stat] = newStage;
+            
+            if (newStage > oldStage) {
+                const statNameMap = { atk: "攻擊", def: "防禦", spd: "速度" };
+                messageObjs.push({ text: `${statNameMap[stat]}提升了！`, targetType: 'source' });
+            }
+        }
+    }
     
     return { messages: messageObjs, drainPct, recoilPct };
 };
