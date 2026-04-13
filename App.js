@@ -1919,7 +1919,7 @@ export default function App() {
                     setTimeout(() => {
                         let words = dLine
                             ? "靈魂不滅...我還會回來的..."
-                            : (evolutionStage >= 5 ? "我的靈魂永遠與你同在，搭檔。" : "謝謝你陪我走到最後一刻...");
+                            : "謝謝你陪我走到最後一刻...";
                         setFinalWords(words);
                         setIsGenerating(false);
                         updateDialogue(words);
@@ -2047,12 +2047,12 @@ export default function App() {
                     } else if (evolutionBranch.startsWith('B_') && evolutionBranch.endsWith('_SOUL')) {
                         // 蟲系獨立進化判斷 (B_SOUL, B_M_SOUL, 等)
                         if (evolutionStage === 2) {
-                            if (m > 50) nextBranch = 'B_M_SOUL';
-                            else if (h > 50) nextBranch = 'B_H_SOUL';
+                            if (m >= 50) nextBranch = 'B_M_SOUL';
+                            else if (h >= 50) nextBranch = 'B_H_SOUL';
                             else nextBranch = 'B_E_SOUL';
                         } else if (evolutionStage === 3) {
-                            if (m > 50) nextBranch = 'B_M2_SOUL';
-                            else if (h > 50) nextBranch = 'B_H2_SOUL';
+                            if (m >= 50) nextBranch = 'B_M2_SOUL';
+                            else if (h >= 50) nextBranch = 'B_H2_SOUL';
                             else nextBranch = 'B_E2_SOUL';
                         } else {
                             nextBranch = evolutionBranch;

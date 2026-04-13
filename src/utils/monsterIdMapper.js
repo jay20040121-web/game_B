@@ -110,8 +110,5 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
         return 20; // Raticate（C 線已在 Stage 3 壽終）
     }
 
-    if (stage === 5) return 249; // Lugia
-    if (stage === 6) return 384; // Rayquaza
-
     return 132;
 }

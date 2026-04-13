@@ -7843,7 +7843,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                 style={{ 
                     filter: silhouette 
                         ? 'brightness(0) contrast(100)' 
-                        : 'saturate(0.25) brightness(0.5) contrast(1.1)',
+                        : 'saturate(1.0) brightness(0.5) contrast(1.1)',
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
@@ -7904,7 +7904,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                 src={imgSrc}
                 className="pixel-rendering"
                 style={{ 
-                    filter: 'saturate(0.25) brightness(0.5) contrast(1.1)',
+                    filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
@@ -9118,9 +9118,6 @@ function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulTagCount
 
         return 20; // Raticate（C 線已在 Stage 3 壽終）
     }
-
-    if (stage === 5) return 249; // Lugia
-    if (stage === 6) return 384; // Rayquaza
 
     return 132;
 }
@@ -11820,7 +11817,7 @@ function App() {
                     setTimeout(() => {
                         let words = dLine
                             ? "靈魂不滅...我還會回來的..."
-                            : (evolutionStage >= 5 ? "我的靈魂永遠與你同在，搭檔。" : "謝謝你陪我走到最後一刻...");
+                            : "謝謝你陪我走到最後一刻...";
                         setFinalWords(words);
                         setIsGenerating(false);
                         updateDialogue(words);
@@ -11948,12 +11945,12 @@ function App() {
                     } else if (evolutionBranch.startsWith('B_') && evolutionBranch.endsWith('_SOUL')) {
                         // 蟲系獨立進化判斷 (B_SOUL, B_M_SOUL, 等)
                         if (evolutionStage === 2) {
-                            if (m > 50) nextBranch = 'B_M_SOUL';
-                            else if (h > 50) nextBranch = 'B_H_SOUL';
+                            if (m >= 50) nextBranch = 'B_M_SOUL';
+                            else if (h >= 50) nextBranch = 'B_H_SOUL';
                             else nextBranch = 'B_E_SOUL';
                         } else if (evolutionStage === 3) {
-                            if (m > 50) nextBranch = 'B_M2_SOUL';
-                            else if (h > 50) nextBranch = 'B_H2_SOUL';
+                            if (m >= 50) nextBranch = 'B_M2_SOUL';
+                            else if (h >= 50) nextBranch = 'B_H2_SOUL';
                             else nextBranch = 'B_E2_SOUL';
                         } else {
                             nextBranch = evolutionBranch;

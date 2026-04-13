@@ -85,8 +85,8 @@ export function BattleAdventureOverlay({
 
                     {/* 戰鬥播報對話框 (Transient Overlay) */}
                     {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && battleState?.activeMsg && (
-                        <div className="absolute w-[68%] left-[16%] top-[40%] bg-white border-[2px] border-black p-1.5 z-[150] shadow-[4px_4px_0_rgba(0,0,0,0.2)]">
-                            <div className="text-[9px] font-black text-black leading-tight break-words text-center">
+                        <div className="absolute w-[68%] left-[16%] top-[40%] bg-[#b8c8a8] border-[3px] border-[#1a1a1a] p-1.5 z-[150] shadow-[4px_4px_0_rgba(0,0,0,0.3)]">
+                            <div className="text-[9px] font-black text-[#1a1a1a] leading-tight break-words text-center">
                                 {battleState?.activeMsg}
                             </div>
                         </div>
@@ -103,8 +103,8 @@ export function BattleAdventureOverlay({
                                         <div
                                             key={idx}
                                             className={`border-2 flex items-center justify-center transition-all ${isSelected
-                                                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0'
-                                                    : 'border-[#1a1a1a] bg-white/20'
+                                                    ? 'border-[#1a1a1a] bg-[#383a37] text-[#8fa07e] invert-0'
+                                                    : 'border-[#1a1a1a] bg-[#ccd6be]/20'
                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                         >
                                             {move ? move.name : '---'}
@@ -142,7 +142,7 @@ export function BattleAdventureOverlay({
                                         maxLength={6}
                                         disabled={matchStatus === 'searching'}
                                         onChange={e => setPvpRoomPassword(e.target.value)}
-                                        className={`w-full border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal ${matchStatus === 'searching' ? 'bg-gray-200 opacity-50' : 'bg-[#f8fcf0]'}`}
+                                        className={`w-full border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal ${matchStatus === 'searching' ? 'bg-gray-200 opacity-50' : 'bg-[#ccd6be]'}`}
                                     />
                                 </div>
 

@@ -23,7 +23,7 @@ export function SkillLearnOverlay({
                     position: 'absolute', inset: 0, zIndex: 9999,
                     backgroundColor: 'rgba(157, 174, 138, 0.98)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', textAlign: 'center', padding: '15px'
+                    color: '#1a1a1a', textAlign: 'center', padding: '15px'
                 }}>
                     <div style={{
                         width: '180px', padding: '15px', border: '4px solid #111', backgroundColor: '#8fa07e',
@@ -40,13 +40,13 @@ export function SkillLearnOverlay({
                                 onClick={() => handleB(0)}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                             >
-                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 0 ? '#ff5252' : '#7a8a6a', color: skillSelectIdx === 0 ? '#fff' : '#444', fontSize: '10px', boxShadow: skillSelectIdx === 0 ? '0 0 8px #ff5252' : 'none' }}>{skillSelectIdx === 0 ? '▶ ' : ''}是</div>
+                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 0 ? '#ff5252' : '#7a8a6a', color: skillSelectIdx === 0 ? '#fff' : '#1a1a1a', fontSize: '10px', boxShadow: skillSelectIdx === 0 ? '0 0 8px #ff5252' : 'none' }}>{skillSelectIdx === 0 ? '▶ ' : ''}是</div>
                             </div>
                             <div
                                 onClick={() => handleB(1)}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                             >
-                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 1 ? '#ffca28' : '#7a8a6a', color: skillSelectIdx === 1 ? '#1a1a1a' : '#444', fontSize: '10px', boxShadow: skillSelectIdx === 1 ? '0 0 8px #ffca28' : 'none' }}>{skillSelectIdx === 1 ? '▶ ' : ''}否</div>
+                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 1 ? '#ffca28' : '#7a8a6a', color: skillSelectIdx === 1 ? '#1a1a1a' : '#1a1a1a', fontSize: '10px', boxShadow: skillSelectIdx === 1 ? '0 0 8px #ffca28' : 'none' }}>{skillSelectIdx === 1 ? '▶ ' : ''}否</div>
                             </div>
                         </div>
                     </div>
