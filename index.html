@@ -10119,7 +10119,16 @@ function App() {
                     const foreignTypes = allTypes.filter(t => !myType.includes(t));
                     targetType = foreignTypes.length > 0 ? foreignTypes[Math.floor(Math.random() * foreignTypes.length)] : 'normal';
                 } else {
-                    targetType = myType[Math.floor(Math.random() * myType.length)];
+                    // 放寬學習限制：70% 機率抽本系，30% 機率抽全屬性隨機招式
+                    const isStab = Math.random() < 0.7;
+                    if (isStab) {
+                        targetType = myType[Math.floor(Math.random() * myType.length)];
+                    } else {
+                        const allTypes = Object.keys(TYPE_MAP || {
+                            'normal':'普','fire':'火','water':'水','grass':'草','electric':'電','ice':'冰','fighting':'鬥','poison':'毒','ground':'地','flying':'飛','psychic':'超','bug':'蟲','rock':'岩','ghost':'鬼','dragon':'龍','steel':'鋼','dark':'惡','fairy':'妖'
+                        });
+                        targetType = allTypes[Math.floor(Math.random() * allTypes.length)];
+                    }
                 }
 
                 const candidateIds = Object.keys(SKILL_DATABASE).filter(k => SKILL_DATABASE[k].type === targetType);
