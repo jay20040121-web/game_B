@@ -6975,8 +6975,8 @@ function BattleAdventureOverlay({
 
                     {/* 戰鬥播報對話框 (Transient Overlay) */}
                     {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && battleState?.activeMsg && (
-                        <div className="absolute w-[68%] left-[16%] top-[40%] bg-white border-[2px] border-black p-1.5 z-[150] shadow-[4px_4px_0_rgba(0,0,0,0.2)]">
-                            <div className="text-[9px] font-black text-black leading-tight break-words text-center">
+                        <div className="absolute w-[68%] left-[16%] top-[40%] bg-[#b8c8a8] border-[3px] border-[#1a1a1a] p-1.5 z-[150] shadow-[4px_4px_0_rgba(0,0,0,0.3)]">
+                            <div className="text-[9px] font-black text-[#1a1a1a] leading-tight break-words text-center">
                                 {battleState?.activeMsg}
                             </div>
                         </div>
@@ -6993,8 +6993,8 @@ function BattleAdventureOverlay({
                                         <div
                                             key={idx}
                                             className={`border-2 flex items-center justify-center transition-all ${isSelected
-                                                    ? 'border-[#1a1a1a] bg-[#1a1a1a] text-[#8fa07e] invert-0'
-                                                    : 'border-[#1a1a1a] bg-white/20'
+                                                    ? 'border-[#1a1a1a] bg-[#383a37] text-[#8fa07e] invert-0'
+                                                    : 'border-[#1a1a1a] bg-[#ccd6be]/20'
                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                         >
                                             {move ? move.name : '---'}
@@ -7032,7 +7032,7 @@ function BattleAdventureOverlay({
                                         maxLength={6}
                                         disabled={matchStatus === 'searching'}
                                         onChange={e => setPvpRoomPassword(e.target.value)}
-                                        className={`w-full border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal ${matchStatus === 'searching' ? 'bg-gray-200 opacity-50' : 'bg-[#f8fcf0]'}`}
+                                        className={`w-full border-2 border-[#1a1a1a] p-1.5 text-[11px] outline-none font-mono text-center tracking-[0.2em] font-black placeholder:tracking-normal ${matchStatus === 'searching' ? 'bg-gray-200 opacity-50' : 'bg-[#ccd6be]'}`}
                                     />
                                 </div>
 
@@ -7719,7 +7719,7 @@ function SkillLearnOverlay({
                     position: 'absolute', inset: 0, zIndex: 9999,
                     backgroundColor: 'rgba(157, 174, 138, 0.98)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', textAlign: 'center', padding: '15px'
+                    color: '#1a1a1a', textAlign: 'center', padding: '15px'
                 }}>
                     <div style={{
                         width: '180px', padding: '15px', border: '4px solid #111', backgroundColor: '#8fa07e',
@@ -7736,13 +7736,13 @@ function SkillLearnOverlay({
                                 onClick={() => handleB(0)}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                             >
-                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 0 ? '#ff5252' : '#7a8a6a', color: skillSelectIdx === 0 ? '#fff' : '#444', fontSize: '10px', boxShadow: skillSelectIdx === 0 ? '0 0 8px #ff5252' : 'none' }}>{skillSelectIdx === 0 ? '▶ ' : ''}是</div>
+                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 0 ? '#ff5252' : '#7a8a6a', color: skillSelectIdx === 0 ? '#fff' : '#1a1a1a', fontSize: '10px', boxShadow: skillSelectIdx === 0 ? '0 0 8px #ff5252' : 'none' }}>{skillSelectIdx === 0 ? '▶ ' : ''}是</div>
                             </div>
                             <div
                                 onClick={() => handleB(1)}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                             >
-                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 1 ? '#ffca28' : '#7a8a6a', color: skillSelectIdx === 1 ? '#1a1a1a' : '#444', fontSize: '10px', boxShadow: skillSelectIdx === 1 ? '0 0 8px #ffca28' : 'none' }}>{skillSelectIdx === 1 ? '▶ ' : ''}否</div>
+                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 1 ? '#ffca28' : '#7a8a6a', color: skillSelectIdx === 1 ? '#1a1a1a' : '#1a1a1a', fontSize: '10px', boxShadow: skillSelectIdx === 1 ? '0 0 8px #ffca28' : 'none' }}>{skillSelectIdx === 1 ? '▶ ' : ''}否</div>
                             </div>
                         </div>
                     </div>
@@ -12888,7 +12888,7 @@ function App() {
                             position: 'absolute', inset: 0, zIndex: 9999,
                             backgroundColor: 'rgba(157, 174, 138, 0.95)',
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            color: 'white', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
+                            color: '#1a1a1a', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
                         }}>
                             <div style={{
                                 width: '180px', padding: '15px', border: '4px solid #111', backgroundColor: '#8fa07e',
@@ -13086,10 +13086,10 @@ function App() {
                                     <div className="mt-4 pointer-events-auto flex flex-col items-center gap-2">
                                         {user ? (
                                             <div className="flex flex-col items-center">
-                                                <div className="text-[9px] text-[#444] mb-1">已登入: {user.displayName}</div>
+                                                <div className="text-[9px] text-[#383a37] mb-1">已登入: {user.displayName}</div>
                                                 <button
                                                     onClick={logoutGoogle}
-                                                    className="bg-[#eee] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.2)] active:translate-y-[1px]"
+                                                    className="bg-[#ccd6be] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.1)] active:translate-y-[1px]"
                                                 >
                                                     登出帳號
                                                 </button>
@@ -13125,7 +13125,7 @@ function App() {
                                     {user && (
                                         <div className="absolute right-4 top-2 flex items-center gap-1">
                                             <div className={`w-[6px] h-[6px] rounded-full ${isCloudSyncing ? 'bg-[#ff5252] animate-pulse' : 'bg-[#4caf50]'}`} />
-                                            <span className="text-[8px] text-[#444] font-bold">
+                                            <span className="text-[8px] text-[#383a37] font-bold">
                                                 {isCloudSyncing ? '同步中...' : '雲端存檔已同步'}
                                             </span>
                                         </div>
