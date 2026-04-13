@@ -37,8 +37,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                 style={{ 
                     filter: silhouette 
                         ? 'brightness(0) contrast(100)' 
-                        : 'grayscale(1) contrast(2) brightness(0.6)',
-                    mixBlendMode: 'multiply',
+                        : 'saturate(0.25) brightness(0.5) contrast(1.1)',
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
@@ -99,8 +98,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                 src={imgSrc}
                 className="pixel-rendering"
                 style={{ 
-                    filter: 'grayscale(1) contrast(2) brightness(0.6)',
-                    mixBlendMode: 'multiply',
+                    filter: 'saturate(0.25) brightness(0.5) contrast(1.1)',
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
