@@ -615,7 +615,7 @@ export default function App() {
     const lastAliveMonsterIdRef = useRef(132);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
-    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 151) + 1);
+    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 149) + 1);
 
     // 啟動畫面心跳聲
     useEffect(() => {
@@ -2764,7 +2764,7 @@ export default function App() {
         const savedDeathBranch = latestStats.current.deathBranch;
 
         setIsBooting(true); // 觸發啟動彩蛋畫面
-        setBootMonsterId(Math.floor(Math.random() * 151) + 1); // 隨機一隻開場怪獸
+        setBootMonsterId(Math.floor(Math.random() * 149) + 1); // 重新開機隨機抽一個 ID
 
         setHunger(60);
         setMood(50);

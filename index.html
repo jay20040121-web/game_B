@@ -186,12 +186,7 @@ const MONSTER_NAMES = {
     "147": "迷你龍",
     "148": "哈克龍",
     "149": "快龍",
-    "150": "超夢",
-    "151": "夢幻",
     "169": "叉字蝠",
-    "249": "洛奇亞",
-    "250": "鳳王",
-    "384": "烈空坐",
     "979": "棄世猴"
 };
 
@@ -1604,24 +1599,6 @@ const SPECIES_BASE_STATS = {
             "flying"
         ]
     },
-    "150": {
-        "hp": 106,
-        "atk": 154,
-        "def": 90,
-        "spd": 130,
-        "types": [
-            "psychic"
-        ]
-    },
-    "151": {
-        "hp": 100,
-        "atk": 100,
-        "def": 100,
-        "spd": 100,
-        "types": [
-            "psychic"
-        ]
-    },
     "169": {
         "hp": 85,
         "atk": 90,
@@ -1629,36 +1606,6 @@ const SPECIES_BASE_STATS = {
         "spd": 130,
         "types": [
             "poison",
-            "flying"
-        ]
-    },
-    "249": {
-        "hp": 106,
-        "atk": 90,
-        "def": 154,
-        "spd": 110,
-        "types": [
-            "psychic",
-            "flying"
-        ]
-    },
-    "250": {
-        "hp": 106,
-        "atk": 130,
-        "def": 154,
-        "spd": 90,
-        "types": [
-            "fire",
-            "flying"
-        ]
-    },
-    "384": {
-        "hp": 105,
-        "atk": 150,
-        "def": 90,
-        "spd": 95,
-        "types": [
-            "dragon",
             "flying"
         ]
     },
@@ -6778,9 +6725,7 @@ const OBTAINABLE_MONSTER_IDS = [
     60, 61, 62,    // 蚊香蝌蚪線 (Wild)
 
     // --- 8. 傳說與幻之怪獸 (End Game) ---
-    151,           // 夢幻
-    249,           // 洛奇亞
-    384            // 烈空坐
+    // 已移除夢幻、洛奇亞、烈空坐以防法律糾紛
 ].map(String);
 
 const TRAINER_POOLS = {
@@ -6811,13 +6756,13 @@ const TRAINER_POOLS = {
         { id: 149, name: '快龍', type: 'flying' }
     ],
     5: [
-        { id: 249, name: '洛奇亞', type: 'flying' },
+        { id: 9, name: '水箭龜', type: 'water' }, // 原：洛奇亞
         { id: 94, name: '耿鬼', type: 'ghost' },
         { id: 130, name: '暴鯉龍', type: 'water' }
     ],
     6: [
-        { id: 384, name: '烈空坐', type: 'flying' },
-        { id: 151, name: '夢幻', type: 'psychic' },
+        { id: 6, name: '噴火龍', type: 'fire' },  // 原：烈空坐
+        { id: 3, name: '妙蛙花', type: 'grass' }, // 原：夢幻
         { id: 65, name: '胡地', type: 'psychic' }
     ]
 };
@@ -10618,7 +10563,7 @@ function App() {
     const lastAliveMonsterIdRef = useRef(132);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
-    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 151) + 1);
+    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 149) + 1);
 
     // 啟動畫面心跳聲
     useEffect(() => {
@@ -12767,7 +12712,7 @@ function App() {
         const savedDeathBranch = latestStats.current.deathBranch;
 
         setIsBooting(true); // 觸發啟動彩蛋畫面
-        setBootMonsterId(Math.floor(Math.random() * 151) + 1); // 隨機一隻開場怪獸
+        setBootMonsterId(Math.floor(Math.random() * 149) + 1); // 重新開機隨機抽一個 ID
 
         setHunger(60);
         setMood(50);
