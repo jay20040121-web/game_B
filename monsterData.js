@@ -2439,7 +2439,8 @@ export const SKILL_DATABASE = {
         "id": "drain_punch",
         "name": "吸取拳",
         "type": "fighting",
-        "power": 75
+        "power": 75,
+        "drain": 0.5
     },
     "vital_throw": {
         "id": "vital_throw",
@@ -2627,7 +2628,8 @@ export const SKILL_DATABASE = {
         "id": "oblivion_wing",
         "name": "死亡之翼",
         "type": "flying",
-        "power": 80
+        "power": 80,
+        "drain": 0.75
     },
     "air_slash": {
         "id": "air_slash",
@@ -3310,7 +3312,8 @@ export const SKILL_DATABASE = {
         "id": "leech_life",
         "name": "吸血",
         "type": "bug",
-        "power": 80
+        "power": 80,
+        "drain": 0.5
     },
     "x_scissor": {
         "id": "x_scissor",
@@ -4012,7 +4015,8 @@ export const SKILL_DATABASE = {
         "id": "bitter_blade",
         "name": "悔念剑",
         "type": "fire",
-        "power": 90
+        "power": 90,
+        "drain": 0.5
     },
     "blaze_kick": {
         "id": "blaze_kick",
@@ -4664,13 +4668,15 @@ export const SKILL_DATABASE = {
         "id": "giga_drain",
         "name": "終極吸取",
         "type": "grass",
-        "power": 75
+        "power": 75,
+        "drain": 0.5
     },
     "horn_leech": {
         "id": "horn_leech",
         "name": "木角",
         "type": "grass",
-        "power": 75
+        "power": 75,
+        "drain": 0.5
     },
     "trop_kick": {
         "id": "trop_kick",
@@ -4741,7 +4747,8 @@ export const SKILL_DATABASE = {
         "id": "mega_drain",
         "name": "超級吸取",
         "type": "grass",
-        "power": 40
+        "power": 40,
+        "drain": 0.5
     },
     "leafage": {
         "id": "leafage",
@@ -4773,7 +4780,8 @@ export const SKILL_DATABASE = {
         "id": "absorb",
         "name": "吸取",
         "type": "grass",
-        "power": 20
+        "power": 20,
+        "drain": 0.5
     },
     "zippy_zap": {
         "id": "zippy_zap",
@@ -4992,7 +5000,8 @@ export const SKILL_DATABASE = {
         "id": "parabolic_charge",
         "name": "拋物面充電",
         "type": "electric",
-        "power": 65
+        "power": 65,
+        "drain": 0.5
     },
     "shock_wave": {
         "id": "shock_wave",
@@ -6083,7 +6092,8 @@ export const SKILL_DATABASE = {
         "id": "draining_kiss",
         "name": "吸取之吻",
         "type": "fairy",
-        "power": 50
+        "power": 50,
+        "drain": 0.75
     },
     "disarming_voice": {
         "id": "disarming_voice",

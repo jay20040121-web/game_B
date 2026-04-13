@@ -34,7 +34,8 @@ const ADV_ITEMS = [
     { id: '013', skillId: 'minimize', name: "縮小秘笈書", desc: "讓怪獸學會招式「縮小」(速度+2)", rarity: 4 },
     { id: '014', skillId: 'harden', name: "變硬秘笈書", desc: "讓怪獸學會招式「變硬」(防禦+2)", rarity: 3 },
     { id: '015', skillId: 'double_team', name: "影子分身秘笈書", desc: "讓怪獸學會招式「影子分身」(速度+2)", rarity: 4 },
-    { id: '016', skillId: 'swords_dance', name: "劍舞秘笈書", desc: "讓怪獸學會招式「劍舞」(攻擊+2)", rarity: 5 }
+    { id: '016', skillId: 'swords_dance', name: "劍舞秘笈書", desc: "讓怪獸學會招式「劍舞」(攻擊+2)", rarity: 5 },
+    { id: '017', skillId: 'leech_life', name: "吸血秘笈書", desc: "讓怪獸學會招式「吸血」(傷害 50% 轉為恢復)", rarity: 5 }
 ];
 
 // ==========================================
