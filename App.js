@@ -2990,7 +2990,7 @@ export default function App() {
                             position: 'absolute', inset: 0, zIndex: 9999,
                             backgroundColor: 'rgba(157, 174, 138, 0.95)',
                             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            color: 'white', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
+                            color: '#1a1a1a', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
                         }}>
                             <div style={{
                                 width: '180px', padding: '15px', border: '4px solid #111', backgroundColor: '#8fa07e',
@@ -3188,10 +3188,10 @@ export default function App() {
                                     <div className="mt-4 pointer-events-auto flex flex-col items-center gap-2">
                                         {user ? (
                                             <div className="flex flex-col items-center">
-                                                <div className="text-[9px] text-[#444] mb-1">已登入: {user.displayName}</div>
+                                                <div className="text-[9px] text-[#383a37] mb-1">已登入: {user.displayName}</div>
                                                 <button
                                                     onClick={logoutGoogle}
-                                                    className="bg-[#eee] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.2)] active:translate-y-[1px]"
+                                                    className="bg-[#ccd6be] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.1)] active:translate-y-[1px]"
                                                 >
                                                     登出帳號
                                                 </button>
@@ -3227,7 +3227,7 @@ export default function App() {
                                     {user && (
                                         <div className="absolute right-4 top-2 flex items-center gap-1">
                                             <div className={`w-[6px] h-[6px] rounded-full ${isCloudSyncing ? 'bg-[#ff5252] animate-pulse' : 'bg-[#4caf50]'}`} />
-                                            <span className="text-[8px] text-[#444] font-bold">
+                                            <span className="text-[8px] text-[#383a37] font-bold">
                                                 {isCloudSyncing ? '同步中...' : '雲端存檔已同步'}
                                             </span>
                                         </div>
