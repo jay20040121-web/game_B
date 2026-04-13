@@ -6813,32 +6813,80 @@ export const calculateDamage = (atk, def, power, multiplier = 1.0) => {
     return Math.max(1, Math.floor(baseDamage * multiplier * (0.9 + Math.random() * 0.2)));
 };
 
-export const generateMoves = (stage, types, forcedBonusId = null) => {
-    const speciesTypes = Array.isArray(types) ? types : [types];
-    const movePool = [];
+export const generateMoves = (stage, types, forcedBonusId = null, level = 1, isAi = true) => {
+    const typeList = Array.isArray(types) ? types : [types];
     
-    speciesTypes.forEach(t => {
-        const ids = TYPE_SKILLS[t] || TYPE_SKILLS['normal'];
-        movePool.push(...ids);
-    });
-    
-    const getEarlyBonus = () => {
-        if (forcedBonusId && SKILL_DATABASE[forcedBonusId]) return forcedBonusId;
-        return null; 
+    // --- 威力過濾邏輯 (Power Gating) ---
+    // 限制 AI 技能強度，避免前期秒殺玩家
+    let maxPower = 999;
+    if (level <= 10) maxPower = 40;
+    else if (level <= 20) maxPower = 60;
+    else if (level <= 40) maxPower = 80;
+    else if (level <= 60) maxPower = 100;
+    else if (level <= 80) maxPower = 120;
+
+    const allSkillIds = Object.keys(SKILL_DATABASE);
+
+    // 取得過濾後的池子
+    const getPool = (tFilter, powerLimit) => 
+        allSkillIds.filter(id => {
+            const s = SKILL_DATABASE[id];
+            if (!s) return false;
+            if (powerLimit !== undefined && s.power > powerLimit) return false;
+            if (tFilter === 'all') return true;
+            return Array.isArray(tFilter) ? tFilter.includes(s.type) : s.type === tFilter;
+        });
+
+    const stabPool = getPool(typeList, maxPower);
+    const coveragePool = getPool('all', maxPower);
+    const normalPool = getPool('normal', maxPower);
+
+    const shuffle = (arr) => {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
     };
 
+    let selectedIds = [];
     if (stage <= 1) {
-        const primaryTypeId = TYPE_SKILLS[speciesTypes[0]]?.[0] || 'tackle';
-        return [primaryTypeId, getEarlyBonus()].filter(Boolean);
+        // 第一階通常只會有基本招式
+        const primaryTypeId = TYPE_SKILLS[typeList[0]]?.[0] || 'tackle';
+        selectedIds = [primaryTypeId, forcedBonusId].filter(Boolean);
+    } else {
+        const count = stage === 2 ? 2 : (stage === 3 ? 3 : 4);
+        
+        // 抽取邏輯
+        for (let i = 0; i < count; i++) {
+            // 第一招保證本系（或是玩家自己學招時全本系，除非是 AI 特殊生成）
+            const isStabTurn = (i === 0) || !isAi || (Math.random() < 0.7);
+            const currentPool = isStabTurn ? stabPool : coveragePool;
+            
+            let available = currentPool.filter(id => !selectedIds.includes(id));
+            
+            // 備援：若該威力限制下沒招了，回退到 normal 或全池
+            if (available.length === 0) available = normalPool.filter(id => !selectedIds.includes(id));
+            if (available.length === 0) available = coveragePool.filter(id => !selectedIds.includes(id));
+
+            if (available.length > 0) {
+                selectedIds.push(shuffle(available)[0]);
+            }
+        }
     }
 
-    let selectedIds = [];
-    if (stage === 2) selectedIds = ['tackle', movePool[0] || 'quick_attack'];
-    else if (stage === 3) selectedIds = ['tackle', movePool[0] || 'quick_attack', movePool[1] || movePool[0] || 'quick_attack'];
-    else selectedIds = movePool.slice(0, 4);
+    // --- 保底一招攻擊招式 (Power > 0) ---
+    // AI 如果抽到 4 招輔助技會變太弱，所以強制保底一招傷害技
+    const hasDamageMove = selectedIds.some(id => (SKILL_DATABASE[id]?.power || 0) > 0);
+    if (!hasDamageMove && selectedIds.length > 0) {
+        const damageAvailable = shuffle(coveragePool.filter(id => (SKILL_DATABASE[id]?.power || 0) > 0));
+        if (damageAvailable.length > 0) {
+            selectedIds[selectedIds.length - 1] = damageAvailable[0];
+        }
+    }
 
-    const uniqueIds = Array.from(new Set(selectedIds)).filter(id => SKILL_DATABASE[id]);
-    return uniqueIds.slice(0, 4);
+    return Array.from(new Set(selectedIds)).slice(0, 4);
 };
 
 export const calcFinalStat = (type, speciesId, iv, ev, level, natureMod = 1.0) => {

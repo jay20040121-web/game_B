@@ -2442,7 +2442,7 @@ export default function App() {
             eSPD = calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel, eNatureMods.spd);
 
             const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
-            const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
+            const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
             return {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: {
@@ -2467,7 +2467,7 @@ export default function App() {
             eSPD = (enemyData?.stats?.spd) || 90;
             eType = enemyData?.type || 'normal';
             // 重要：一定要使用傳過來的招式，而非本地生成的
-            const eMoves = (enemyData?.moves || generateMoves(1, eType)).map(id => SKILL_DATABASE[id]).filter(Boolean);
+            const eMoves = (enemyData?.moves || generateMoves(1, eType, null, eLevel, true)).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `連線成功！${enemyData?.name || '神祕對手'} (Lv.${eLevel}) 降臨！`;
             return {
@@ -2500,7 +2500,7 @@ export default function App() {
             // Bug Fix #2: 從 SPECIES_BASE_STATS 讀取正確的雙屬性陣列，而非使用 stageMap 的硬編碼單屬性字串
             const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
             eType = eStatsRef.types;
-            const eMoves = generateMoves(evolutionStage, eType).map(id => SKILL_DATABASE[id]).filter(Boolean);
+            const eMoves = generateMoves(evolutionStage, eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
             return {
