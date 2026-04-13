@@ -11906,7 +11906,44 @@ function App() {
                     } else {
                         nextBranch = evolutionBranch; // 已是最終型態
                     }
+                } else if (['G1', 'G2'].includes(evolutionBranch)) {
+                    // D 線完全封閉，沿原線繼續 (優先度高於靈魂進化，防止凱西被劫持)
+                    nextBranch = evolutionBranch;
+
+                } else if (evolutionBranch === 'F' || evolutionBranch === 'F_FAIL1' || evolutionBranch === 'F_FAIL2') {
+                    // ★ 已在 F 線：鎖定在 F 線內，不可換線
+                    if (evolutionBranch === 'F') {
+                        if (sWins >= requiredWins) {
+                            nextBranch = 'F'; // 達標，繼續正規 F
+                        } else if (evolutionStage === 2) {
+                            nextBranch = 'F_FAIL1'; // Stage2 訓練不足 → 飛腿郎
+                        } else if (evolutionStage === 3) {
+                            nextBranch = 'F_FAIL2'; // Stage3 訓練不足 → 快拳郎
+                        } else {
+                            nextBranch = 'F';
+                        }
+                    } else {
+                        nextBranch = evolutionBranch; // F_FAIL1/F_FAIL2 維持
+                    }
+
+                } else if (evolutionBranch === 'P1' || evolutionBranch === 'P1_SPECIAL') {
+                    // ★ 已在 P1 線：鎖定在 P1 線內
+                    if (evolutionBranch === 'P1' && evolutionStage === 2 && m > 80) {
+                        nextBranch = 'P1_SPECIAL'; // 毒瓦斯 → 三合一磁怪（特殊）
+                    } else {
+                        nextBranch = evolutionBranch; // 其餘維持原線
+                    }
+
+                } else if (evolutionBranch === 'P2' || evolutionBranch === 'P2_SPECIAL') {
+                    // ★ 已在 P2 線：鎖定在 P2 線內
+                    if (evolutionBranch === 'P2' && evolutionStage === 2 && m > 80) {
+                        nextBranch = 'P2_SPECIAL'; // 臭泥 → 可達鴨（特殊）
+                    } else {
+                        nextBranch = evolutionBranch; // P2_SPECIAL 維持原線 → Stage 4 哥達鴨
+                    }
+
                 } else if (soulNext || evolutionBranch.endsWith('_SOUL')) {
+
                     // 靈魂進化線最高優先
                     if (soulNext) {
                         nextBranch = soulNext;
@@ -12068,42 +12105,6 @@ function App() {
                     } else {
                         nextBranch = evolutionBranch; // Stage >= 2 後延續自己的靈魂線
                     }
-                } else if (['G1', 'G2'].includes(evolutionBranch)) {
-                    // D 線完全封閉，沿原線繼續
-                    nextBranch = evolutionBranch;
-
-                } else if (evolutionBranch === 'F' || evolutionBranch === 'F_FAIL1' || evolutionBranch === 'F_FAIL2') {
-                    // ★ 已在 F 線：鎖定在 F 線內，不可換線
-                    if (evolutionBranch === 'F') {
-                        if (sWins >= requiredWins) {
-                            nextBranch = 'F'; // 達標，繼續正規 F
-                        } else if (evolutionStage === 2) {
-                            nextBranch = 'F_FAIL1'; // Stage2 訓練不足 → 飛腿郎
-                        } else if (evolutionStage === 3) {
-                            nextBranch = 'F_FAIL2'; // Stage3 訓練不足 → 快拳郎
-                        } else {
-                            nextBranch = 'F';
-                        }
-                    } else {
-                        nextBranch = evolutionBranch; // F_FAIL1/F_FAIL2 維持
-                    }
-
-                } else if (evolutionBranch === 'P1' || evolutionBranch === 'P1_SPECIAL') {
-                    // ★ 已在 P1 線：鎖定在 P1 線內
-                    if (evolutionBranch === 'P1' && evolutionStage === 2 && m > 80) {
-                        nextBranch = 'P1_SPECIAL'; // 毒瓦斯 → 三合一磁怪（特殊）
-                    } else {
-                        nextBranch = evolutionBranch; // 其餘維持原線
-                    }
-
-                } else if (evolutionBranch === 'P2' || evolutionBranch === 'P2_SPECIAL') {
-                    // ★ 已在 P2 線：鎖定在 P2 線內
-                    if (evolutionBranch === 'P2' && evolutionStage === 2 && m > 80) {
-                        nextBranch = 'P2_SPECIAL'; // 臭泥 → 可達鴨（特殊）
-                    } else {
-                        nextBranch = evolutionBranch; // P2_SPECIAL 維持原線 → Stage 4 哥達鴨
-                    }
-
                 } else if (evolutionStage === 1) {
                     // ★ Stage 0→1（百變怪 Stage）：所有線可互通，依條件首次分支
                     if (sWins >= requiredWins) {
