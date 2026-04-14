@@ -3483,7 +3483,7 @@ export default function App() {
                     <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 4px 15px rgba(0,0,0,0.8)', zIndex: 100 }} />
                 </div>
 
-                <div className="mt-12 w-full flex justify-between px-4 mb-2">
+                <div className="mt-7 w-full flex justify-between px-4 mb-2">
                     {[
                         { key: 'A', name: '選擇' },
                         { key: 'B', name: '確定' },
