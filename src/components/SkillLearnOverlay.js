@@ -82,7 +82,10 @@ export function SkillLearnOverlay({
                             const isSelected = skillSelectIdx === idx;
                             return (
                                 <div key={idx} className={`w-full flex justify-between items-center p-1.5 border-2 transition-all duration-200 ${isSelected ? 'bg-[#383a37] text-white border-[#1a1a1a] scale-105 z-10 shadow-[2px_2px_0_#1a1a1a]' : 'bg-[#9dae8a] text-[#1a1a1a] border-[#383a37]/50'}`}>
-                                    <span className="text-[10px] font-black">{isSelected ? '▶ ' : ''}{moveDef?.name || '---'}</span>
+                                    <span className="text-[10px] font-black">
+                                        {isSelected ? '▶ ' : ''}{moveDef?.name || '---'} 
+                                        {moveDef && <span className="ml-1 opacity-60 text-[8px]">[{TYPE_MAP?.[moveDef.type] || '屬'}]</span>}
+                                    </span>
                                     {moveDef && (
                                         <span className="text-[8px] opacity-70">威力:{moveDef.power}</span>
                                     )}
