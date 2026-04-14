@@ -32,7 +32,7 @@ body {
 /* 限定 256x256 的實體顯示框 */
 .lcd-container {
     width: 256px;
-    height: 256px;
+    height: 286px;
     position: relative;
     background: #9dae8a;
     overflow: hidden;
@@ -56,7 +56,7 @@ body {
 /* 取消 scale，直接在 256x256 解析度操作以避免瀏覽器中文字體大小限制 */
 .logical-canvas {
     width: 256px;
-    height: 256px;
+    height: 286px;
     position: relative;
     color: #1a1a1a;
 }
