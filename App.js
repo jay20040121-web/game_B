@@ -3217,6 +3217,7 @@ export default function App() {
                         advStats={advStats}
                         tempReplaceIdx={tempReplaceIdx}
                         SKILL_DATABASE={SKILL_DATABASE}
+                        TYPE_MAP={TYPE_MAP}
                         skillSelectIdx={skillSelectIdx}
                         handleB={handleB}
                     />

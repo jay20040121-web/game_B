@@ -9,6 +9,7 @@ export function SkillLearnOverlay({
     advStats,
     tempReplaceIdx,
     SKILL_DATABASE,
+    TYPE_MAP,
     skillSelectIdx,
     handleB
 }) {
@@ -62,15 +63,7 @@ export function SkillLearnOverlay({
                     想學會 <span className="underline decoration-2">{pendingSkillLearn.skill.name}</span>
                 </div>
                 <div className="text-[9px] text-[#383a37] mb-2 text-center">
-                    ({pendingSkillLearn.skill.type === 'normal' ? '普' :
-                        pendingSkillLearn.skill.type === 'fire' ? '火' :
-                            pendingSkillLearn.skill.type === 'water' ? '水' :
-                                pendingSkillLearn.skill.type === 'grass' ? '草' :
-                                    pendingSkillLearn.skill.type === 'bug' ? '蟲' :
-                                        pendingSkillLearn.skill.type === 'flying' ? '飛' :
-                                            pendingSkillLearn.skill.type === 'electric' ? '電' :
-                                                pendingSkillLearn.skill.type === 'psychic' ? '超' :
-                                                    pendingSkillLearn.skill.type === 'ghost' ? '鬼' : '屬'} / 威力:{pendingSkillLearn.skill.power})
+                    ({TYPE_MAP?.[pendingSkillLearn.skill.type] || '屬'} / 威力:{pendingSkillLearn.skill.power})
                 </div>
 
                 {advStats.moves.length < 4 ? (
