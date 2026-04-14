@@ -3153,7 +3153,7 @@ export default function App() {
                     {isInteractMenuOpen && (
                         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" 
                              style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
-                            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[11px] px-2 py-1.5 flex justify-center items-center mb-4 font-black">
+                            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black">
                                 <span>互動系統</span>
                             </div>
 
