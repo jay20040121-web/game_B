@@ -13279,19 +13279,19 @@ function App() {
                             </div>
                         ) : (
                             <>
-                                <div className="w-full h-[24px] flex justify-between px-4 pt-2 z-20 shrink-0">
+                                <div className="w-full h-[28px] flex justify-between px-4 pt-1 z-20 shrink-0">
                                     {menuItems.slice(0, 4).map((item, idx) => (
-                                        <div key={item.id} className="pixel-rendering relative w-[24px] h-[24px] flex items-center justify-center" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
+                                        <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
                                             {/* 底層：原本的點陣圖 (作為讀取失敗或未設置時的保底) */}
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
+                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
                                             </div>
                                             {/* 上層：自定義圖片圖標 (M1-M8) */}
                                             {item.img && (
                                                 <img 
                                                     src={item.img} 
                                                     alt={item.id} 
-                                                    className="relative z-10 w-[16px] h-[16px] object-contain bg-[#9dae8a]" 
+                                                    className="relative z-10 w-[25px] h-[25px] object-contain bg-[#9dae8a]" 
                                                     onError={(e) => { e.target.style.display = 'none'; }} 
                                                 />
                                             )}
@@ -13441,19 +13441,19 @@ function App() {
                                     </span>
                                 </div>
 
-                                <div className="w-full h-[24px] flex justify-between px-4 pb-2 z-20 shrink-0">
+                                <div className="w-full h-[28px] flex justify-between px-4 pb-1 z-20 shrink-0">
                                     {menuItems.slice(4, 8).map((item, idx) => (
-                                        <div key={item.id} className="pixel-rendering relative w-[24px] h-[24px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
+                                        <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
                                             {/* 底層保底 */}
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
+                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
                                             </div>
                                             {/* 上層自定義圖片 */}
                                             {item.img && (
                                                 <img 
                                                     src={item.img} 
                                                     alt={item.id} 
-                                                    className="relative z-10 w-[16px] h-[16px] object-contain bg-[#9dae8a]" 
+                                                    className="relative z-10 w-[25px] h-[25px] object-contain bg-[#9dae8a]" 
                                                     onError={(e) => { e.target.style.display = 'none'; }} 
                                                 />
                                             )}
