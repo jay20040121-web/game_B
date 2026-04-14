@@ -3043,7 +3043,16 @@ export default function App() {
                         imageRendering: 'pixelated'
                     }}
                 >
-                    <div className="relative w-80 h-[620px] bg-gradient-to-br from-[#c8c8c8] to-[#6d6d6d] rounded-t-[50px] rounded-b-[70px] border-b-[16px] border-r-[12px] border-[#5a5a5a] shadow-[15px_15px_50px_rgba(0,0,0,0.8)] pt-[50px] pb-10 px-6 flex flex-col items-center">
+                    <div 
+                        className="relative w-80 h-[620px] pt-[50px] pb-10 px-6 flex flex-col items-center"
+                        style={{
+                            backgroundImage: "url('./assets/BG/BG_01.png')",
+                            backgroundSize: '100% 100%',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundColor: 'transparent'
+                        }}
+                    >
 
 
 
@@ -3486,29 +3495,39 @@ export default function App() {
                                 onMouseUp={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
                                 onMouseLeave={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
                                 className={`
-                                  w-[46px] h-[46px] rounded-full shadow-[0_4px_6px_rgba(0,0,0,0.6)]
+                                  w-[50px] h-[50px] rounded-full shadow-[0_4px_6px_rgba(0,0,0,0.6)]
                                   transition-all active:translate-y-[2px] active:shadow-sm
-                                  border-[3px] border-[#383a37] 
-                                  ${btn.key === 'A' ? 'bg-[#ffca28]' : btn.key === 'B' ? 'bg-[#ff5252]' : 'bg-[#00c853]'}
                                   ${btnPressed === btn.key ? 'brightness-75' : 'brightness-100'}
-                                  flex items-center justify-center text-[#212121] text-[18px] font-black
+                                  flex items-center justify-center
                                 `}
+                                style={{
+                                    backgroundImage: `url('./assets/BG/${btn.key}.png')`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    backgroundRepeat: 'no-repeat',
+                                    border: 'none'
+                                }}
                                 onClick={() => btn.key === 'A' ? handleA() : btn.key === 'B' ? handleB() : handleC()}
-                            > {btn.key} </button>
+                            ></button>
                             <span className="text-[12px] font-bold text-[#424242] tracking-widest mt-1">
                                 {btn.name}
                             </span>
                         </div>
                     ))}
                 </div>
-                <div className="w-full mt-8 px-4">
+                <div className="w-full mt-0 px-4 flex justify-center">
                     <button
                         onClick={isDead ? handleRestart : triggerFarewell}
                         disabled={!isDead && isGenerating}
-                        className="w-full bg-[#3d3d3d] text-[#ff5252] py-3 rounded-none text-[12px] font-bold tracking-widest disabled:opacity-50"
-                    >
-                        {isDead ? "重置系統" : (isGenerating ? "連結AI中..." : "終止生命")}
-                    </button>
+                        className={`w-[150px] h-[66px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
+                        style={{
+                            backgroundImage: "url('./assets/BG/ED.png')",
+                            backgroundSize: '100% 100%',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundColor: 'transparent',
+                        }}
+                    ></button>
                 </div>
             </div>
         </div>
