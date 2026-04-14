@@ -160,6 +160,7 @@ export default function App() {
     const [activeIndex, setActiveIndex] = useState(-1);
     const [dialogue, setDialogue] = useState("像素怪獸\n按A開始冒險"); // 初始顯示改為登入標語，點擊 A 後才切換回遊戲招呼語
     const [marqueeKey, setMarqueeKey] = useState(0);
+    const [loadedImages, setLoadedImages] = useState({}); // 追蹤哪些自定義圖標已成功載入
 
     const [isConfirmingFarewell, setIsConfirmingFarewell] = useState(false); // 二次確認開關
 
@@ -3308,21 +3309,28 @@ export default function App() {
                                 <div className="w-full h-[28px] flex justify-between px-4 pt-1 z-20 shrink-0">
                                     {menuItems.slice(0, 4).map((item, idx) => (
                                         <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
-                                            {/* 底層：原本的點陣圖 (作為讀取失敗或未設置時的保底) */}
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
-                                            </div>
+                                            {/* 底層：原本的點陣圖 (當沒有圖片或圖片載入失敗時顯示) */}
+                                            {!loadedImages[item.id] && (
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
+                                                </div>
+                                            )}
                                             {/* 上層：自定義圖片圖標 (M1-M8) */}
                                             {item.img && (
                                                 <img 
                                                     src={item.img} 
                                                     alt={item.id} 
-                                                    className="relative z-10 w-[25px] h-[25px] object-contain bg-[#9dae8a]" 
+                                                    className="relative z-10 w-[25px] h-[25px] object-contain" 
                                                     style={{ 
                                                         filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
-                                                        imageRendering: 'pixelated'
+                                                        imageRendering: 'pixelated',
+                                                        visibility: loadedImages[item.id] ? 'visible' : 'hidden'
                                                     }}
-                                                    onError={(e) => { e.target.style.display = 'none'; }} 
+                                                    onLoad={() => setLoadedImages(prev => ({ ...prev, [item.id]: true }))}
+                                                    onError={(e) => { 
+                                                        e.target.style.display = 'none';
+                                                        setLoadedImages(prev => ({ ...prev, [item.id]: false }));
+                                                    }} 
                                                 />
                                             )}
                                         </div>
@@ -3475,20 +3483,27 @@ export default function App() {
                                     {menuItems.slice(4, 8).map((item, idx) => (
                                         <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
                                             {/* 底層保底 */}
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
-                                            </div>
+                                            {!loadedImages[item.id] && (
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
+                                                </div>
+                                            )}
                                             {/* 上層自定義圖片 */}
                                             {item.img && (
                                                 <img 
                                                     src={item.img} 
                                                     alt={item.id} 
-                                                    className="relative z-10 w-[25px] h-[25px] object-contain bg-[#9dae8a]" 
+                                                    className="relative z-10 w-[25px] h-[25px] object-contain" 
                                                     style={{ 
                                                         filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
-                                                        imageRendering: 'pixelated'
+                                                        imageRendering: 'pixelated',
+                                                        visibility: loadedImages[item.id] ? 'visible' : 'hidden'
                                                     }}
-                                                    onError={(e) => { e.target.style.display = 'none'; }} 
+                                                    onLoad={() => setLoadedImages(prev => ({ ...prev, [item.id]: true }))}
+                                                    onError={(e) => { 
+                                                        e.target.style.display = 'none';
+                                                        setLoadedImages(prev => ({ ...prev, [item.id]: false }));
+                                                    }} 
                                                 />
                                             )}
                                         </div>
