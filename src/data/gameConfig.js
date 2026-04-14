@@ -97,7 +97,6 @@ const ADV_BATTLE_RULES = {
 
 // 智慧招式 AI：根據屬性相剋與威力選擇最佳招式
 const getSmartMove = (attacker, defender, moves) => {
-    // 過濾掉無效的招式物件，防止 crash
     const validMoves = (moves || []).filter(m => m && typeof m === 'object');
     if (validMoves.length === 0) return { name: '撞擊', power: 40, type: 'normal' };
     if (validMoves.length === 1) return validMoves[0];
@@ -106,17 +105,47 @@ const getSmartMove = (attacker, defender, moves) => {
     let maxScore = -1;
     
     for (const move of validMoves) {
-        // 確保屬性定義存在
         const moveType = move.type || 'normal';
         const defenderType = defender.type || ['normal'];
         
         const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(moveType, defenderType) : 1;
-        const score = (move.power || 40) * realMult;
+        
+        // --- 核心修正：區分傷害招式與狀態招式 ---
+        const movePower = move.power || 0;
+        const isStatus = movePower === 0;
+        let score = 0;
+
+        if (isStatus) {
+            // 狀態招式基礎得分設為 25 (低於多數攻擊招式的 40+)
+            score = 25 * realMult;
+
+            // 檢查能力值上限：如果該技能是自我強化且對應屬性已達 +6，則將分數設為 0
+            if (move.stat_changes && attacker.statStages) {
+                const isRedundant = move.stat_changes.some(sc => {
+                    // 檢查目標是自己且是正向增益
+                    const isSelfBuff = (move.stat_target === 'self' || !move.stat_target);
+                    if (isSelfBuff && sc.change > 0) {
+                        return (attacker.statStages[sc.stat] || 0) >= 6;
+                    }
+                    return false;
+                });
+                if (isRedundant) score = 0;
+            }
+        } else {
+            // 傷害招式權重：基礎威力 * 屬性相剋
+            score = movePower * realMult;
+        }
+
         if (score > maxScore) {
             maxScore = score;
             bestMove = move;
-        } else if (score === maxScore) {
-            if (Math.random() < 0.5) bestMove = move;
+        } else if (score === maxScore && score > 0) {
+            // 同分時，偏向隨機選擇，但稍微拉高攻擊招式的選中率 (70%)
+            if (!isStatus && Math.random() < 0.7) {
+                bestMove = move;
+            } else if (Math.random() < 0.5) {
+                bestMove = move;
+            }
         }
     }
     return bestMove;
