@@ -3318,6 +3318,10 @@ export default function App() {
                                                     src={item.img} 
                                                     alt={item.id} 
                                                     className="relative z-10 w-[25px] h-[25px] object-contain bg-[#9dae8a]" 
+                                                    style={{ 
+                                                        filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                                                        imageRendering: 'pixelated'
+                                                    }}
                                                     onError={(e) => { e.target.style.display = 'none'; }} 
                                                 />
                                             )}
@@ -3480,6 +3484,10 @@ export default function App() {
                                                     src={item.img} 
                                                     alt={item.id} 
                                                     className="relative z-10 w-[25px] h-[25px] object-contain bg-[#9dae8a]" 
+                                                    style={{ 
+                                                        filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                                                        imageRendering: 'pixelated'
+                                                    }}
                                                     onError={(e) => { e.target.style.display = 'none'; }} 
                                                 />
                                             )}
