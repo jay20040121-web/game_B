@@ -19,6 +19,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    overflow: hidden; /* 防止縮放時出現捲軸 */
 }
 
 /* == 核心視覺規範 == */

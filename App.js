@@ -101,6 +101,21 @@ export default function App() {
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
 
+    // --- 自動縮放系統 (Auto-Scaling) ---
+    const [displayScale, setDisplayScale] = useState(1);
+    useEffect(() => {
+        const handleResize = () => {
+            // 基準尺寸 320x620，保留一點邊距
+            const scaleW = window.innerWidth / 320;
+            const scaleH = (window.innerHeight - 20) / 620;
+            const scale = Math.min(scaleW, scaleH, 1.5); // 最大放大到 1.5 倍避免模糊
+            setDisplayScale(scale);
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
 
 
     const [isInteractMenuOpen, setIsInteractMenuOpen] = useState(false);
@@ -3017,7 +3032,18 @@ export default function App() {
                 updateDialogue={updateDialogue}
             />
 
-            <div className="relative w-80 h-[620px] bg-gradient-to-br from-[#c8c8c8] to-[#6d6d6d] rounded-t-[50px] rounded-b-[70px] border-b-[16px] border-r-[12px] border-[#5a5a5a] shadow-[15px_15px_50px_rgba(0,0,0,0.8)] pt-20 pb-10 px-6 flex flex-col items-center">
+            {/* --- 自動縮放包裝容器 (Responsive Wrapper) --- */}
+            <div className="fixed inset-0 flex items-center justify-center bg-[#1a1a1a] overflow-hidden">
+                <div 
+                    className="relative flex flex-col items-center pointer-events-auto"
+                    style={{ 
+                        transform: `scale(${displayScale})`, 
+                        transformOrigin: 'center center',
+                        transition: 'transform 0.1s ease-out',
+                        imageRendering: 'pixelated'
+                    }}
+                >
+                    <div className="relative w-80 h-[620px] bg-gradient-to-br from-[#c8c8c8] to-[#6d6d6d] rounded-t-[50px] rounded-b-[70px] border-b-[16px] border-r-[12px] border-[#5a5a5a] shadow-[15px_15px_50px_rgba(0,0,0,0.8)] pt-20 pb-10 px-6 flex flex-col items-center">
 
 
 
@@ -3486,6 +3512,8 @@ export default function App() {
                 </div>
             </div>
         </div>
+    </div>
+</div>
     );
 }
 
