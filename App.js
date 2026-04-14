@@ -3479,7 +3479,7 @@ export default function App() {
                                     </span>
                                 </div>
 
-                                <div className="w-full h-[28px] flex justify-between px-4 pb-4 z-20 shrink-0">
+                                <div className="w-full h-[28px] flex justify-between px-4 pb-12 z-20 shrink-0">
                                     {menuItems.slice(4, 8).map((item, idx) => (
                                         <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
                                             {/* 底層保底 */}
