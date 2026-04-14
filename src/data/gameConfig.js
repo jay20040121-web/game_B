@@ -110,14 +110,15 @@ const getSmartMove = (attacker, defender, moves) => {
         
         const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(moveType, defenderType) : 1;
         
-        // --- 核心修正：區分傷害招式與狀態招式 ---
+        // --- 核心修正 (v2)：區分傷害招式與狀態招式 ---
         const movePower = move.power || 0;
         const isStatus = movePower === 0;
         let score = 0;
 
         if (isStatus) {
-            // 狀態招式基礎得分設為 25 (低於多數攻擊招式的 40+)
-            score = 25 * realMult;
+            // 狀態招式不參與屬性相剋計算 (倍率強制為 1)
+            // 且基礎得分進一步降至 12 (確保威力只有 20 的低階攻擊招式也能優先選用)
+            score = 12 * 1;
 
             // 檢查能力值上限：如果該技能是自我強化且對應屬性已達 +6，則將分數設為 0
             if (move.stat_changes && attacker.statStages) {
