@@ -948,11 +948,39 @@ export default function App() {
             // 讓玩家在犧牲練度轉換新寵物時，能換到更高資質 (A~S 級) 的個體
             const randomHighIV = () => 25 + Math.floor(Math.random() * 7); // 25~31 (Grade A~S)
 
-            const startMoveId = ['92'].includes(String(pendingWildCapture.id)) ? 'lick' : (['63'].includes(String(pendingWildCapture.id)) ? 'confusion' : 'tackle');
-            const bonusId = ['ember', 'water_gun', 'vine_whip', 'quick_attack'][Math.floor(Math.random() * 4)];
+            // 取得捕捉時保留的等級 (預設為 1)
+            const capturedLevel = pendingWildCapture.level || 1;
+            const targetBasePower = (capturedLevel - 1) * 10 + 100;
+
+            // 根據物種 ID 尋找屬性
+            const speciesData = SPECIES_BASE_STATS[String(pendingWildCapture.id)] || { types: ['normal'] };
+            const types = speciesData.types || ['normal'];
+
+            // 判定怪獸的生物階級 (透過檢查 WILD_EVOLUTION_MAP 來推測)
+            const getBioStage = (id) => {
+                let stage = 1;
+                const idStr = String(id);
+                // 檢查是否為某人的進化型 (Stage 2 或 3)
+                const isStage2 = Object.values(WILD_EVOLUTION_MAP).some(v => String(v) === idStr);
+                if (isStage2) {
+                    stage = 2;
+                    // 再檢查 Stage 2 是否還有前身 (Stage 3)
+                    const stage1Id = Object.keys(WILD_EVOLUTION_MAP).find(k => String(WILD_EVOLUTION_MAP[k]) === idStr);
+                    if (stage1Id) {
+                        const isStage3 = Object.values(WILD_EVOLUTION_MAP).some(v => String(v) === String(stage1Id));
+                        if (isStage3) stage = 3;
+                    }
+                }
+                return stage;
+            };
+            const bioStage = getBioStage(pendingWildCapture.id);
+
+            // 使用最新的 generateMoves 系統生成招式 (取代舊有硬編碼邏輯)
+            // 捕捉到的怪獸視為 initialized，不給予強制 bonusId，完全由 generateMoves 根據等級與階級決定
+            const moves = generateMoves(bioStage, types, null, capturedLevel, false);
 
             setAdvStats({
-                basePower: 100, // 捕捉固定從 100 起跳 (Level 1)
+                basePower: targetBasePower,
                 ivs: {
                     hp: randomHighIV(),
                     atk: randomHighIV(),
@@ -960,9 +988,25 @@ export default function App() {
                     spd: randomHighIV()
                 },
                 evs: { hp: 0, atk: 0, def: 0, spd: 0 },
-                bonusMoveId: bonusId,
-                moves: [startMoveId, bonusId].filter(Boolean)
+                bonusMoveId: moves[1] || 'tackle', // 保留一招作為潛力參考
+                moves: moves
             });
+
+            // 🔥 強制重置等級偵測，確保新夥伴即刻生效且不觸發舊等級剩餘的學習
+            previousLevelRef.current = capturedLevel;
+
+            // --- 🔹 重置個性與狀態 (新夥伴新開始) 🔹 ---
+            setBondValue(0);
+            setTalkCount(0);
+            setLockedAffinity(null);
+            setSoulAffinityCounts({ fire: 0, water: 0, grass: 0, bug: 0 });
+            setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
+            setInteractionLogs([]);
+            setInteractionCount(0);
+            setHunger(60);
+            setMood(50);
+            setIsPooping(false);
+            setIsSleeping(false);
 
             updateDialogue(`✨ ${pendingWildCapture.name} 成為了你的新夥伴！`);
             unlockMonster(pendingWildCapture.id);
@@ -1225,7 +1269,7 @@ export default function App() {
         const catchRate = debugOverrides.catchRate ?? 0.1;
         if (battleState.mode === 'wild' && enemy && Math.random() < catchRate) {
             logs.push({ msg: `✨ 感覺 ${enemy.name || '它'} 想成為你的夥伴...`, hpRatio: 1 });
-            logs.push({ promptCapture: { id: enemy.id, name: enemy.name } });
+            logs.push({ promptCapture: { id: enemy.id, name: enemy.name, level: enemy.level } });
         }
 
         logs.push({ msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: 1 });
