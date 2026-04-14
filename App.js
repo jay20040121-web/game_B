@@ -780,14 +780,14 @@ export default function App() {
 
 
     const menuItems = [
-        { id: 'status', sprite: ICONS.status, label: '狀態(可觀看寵物成長資訊)' },
-        { id: 'interact', sprite: ICONS.feed, label: '互動(餵食或撫摸寵物)' },
-        { id: 'talk', sprite: ICONS.heart, label: '談心(根據喜好改變寵物特性)' },
-        { id: 'train', sprite: ICONS.train, label: '特訓(提升寵物戰鬥力)' },
-        { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)' },
-        { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)' },
-        { id: 'pedia', sprite: ICONS.footprint, label: '圖鑑(查看已收集的像素怪獸)' },
-        { id: 'info', sprite: ICONS.info, label: '背包(裝著戰利品與寵物的回憶)' },
+        { id: 'status', sprite: ICONS.status, label: '狀態(可觀看寵物成長資訊)', img: 'assets/BG/M1.png' },
+        { id: 'interact', sprite: ICONS.feed, label: '互動(餵食或撫摸寵物)', img: 'assets/BG/M2.png' },
+        { id: 'talk', sprite: ICONS.heart, label: '談心(根據喜好改變寵物特性)', img: 'assets/BG/M3.png' },
+        { id: 'train', sprite: ICONS.train, label: '特訓(提升寵物戰鬥力)', img: 'assets/BG/M4.png' },
+        { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)', img: 'assets/BG/M5.png' },
+        { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)', img: 'assets/BG/M6.png' },
+        { id: 'pedia', sprite: ICONS.footprint, label: '圖鑑(查看已收集的像素怪獸)', img: 'assets/BG/M7.png' },
+        { id: 'info', sprite: ICONS.info, label: '背包(裝著戰利品與寵物的回憶)', img: 'assets/BG/M8.png' },
     ];
 
     useEffect(() => {
@@ -3307,8 +3307,20 @@ export default function App() {
                             <>
                                 <div className="w-full h-[24px] flex justify-between px-4 pt-2 z-20 shrink-0">
                                     {menuItems.slice(0, 4).map((item, idx) => (
-                                        <div key={item.id} className="pixel-rendering" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
-                                            <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
+                                        <div key={item.id} className="pixel-rendering relative w-[24px] h-[24px] flex items-center justify-center" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
+                                            {/* 底層：原本的點陣圖 (作為讀取失敗或未設置時的保底) */}
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
+                                            </div>
+                                            {/* 上層：自定義圖片圖標 (M1-M8) */}
+                                            {item.img && (
+                                                <img 
+                                                    src={item.img} 
+                                                    alt={item.id} 
+                                                    className="relative z-10 w-[16px] h-[16px] object-contain bg-[#9dae8a]" 
+                                                    onError={(e) => { e.target.style.display = 'none'; }} 
+                                                />
+                                            )}
                                         </div>
                                     ))}
 
@@ -3457,8 +3469,20 @@ export default function App() {
 
                                 <div className="w-full h-[24px] flex justify-between px-4 pb-2 z-20 shrink-0">
                                     {menuItems.slice(4, 8).map((item, idx) => (
-                                        <div key={item.id} className="pixel-rendering" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
-                                            <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
+                                        <div key={item.id} className="pixel-rendering relative w-[24px] h-[24px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
+                                            {/* 底層保底 */}
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <PixelArt sprite={item.sprite} color="#1a1a1a" scale={2} />
+                                            </div>
+                                            {/* 上層自定義圖片 */}
+                                            {item.img && (
+                                                <img 
+                                                    src={item.img} 
+                                                    alt={item.id} 
+                                                    className="relative z-10 w-[16px] h-[16px] object-contain bg-[#9dae8a]" 
+                                                    onError={(e) => { e.target.style.display = 'none'; }} 
+                                                />
+                                            )}
                                         </div>
                                     ))}
                                 </div>
