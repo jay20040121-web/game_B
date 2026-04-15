@@ -165,7 +165,8 @@ export function useTournament({
 
     // 推進大賽階段
     const nextTournamentPhase = () => {
-        if (pendingSkillLearn) return; // 如果正在學技能，攔截大賽轉場
+        // 只有在非結局畫面 (champion/lost) 才攔截，確保結尾按 B 鍵能順利執行 closeTournament 關閉 Overlay
+        if (pendingSkillLearn && !['champion', 'lost'].includes(tPhase)) return; 
 
         if (tPhase === 'intro') {
             setTPhase('bracket');
@@ -185,11 +186,9 @@ export function useTournament({
                 setTPhase('bracket');
             }
         } else if (tPhase === 'champion') {
-            setTPhase('rewards');
-        } else if (tPhase === 'lost') {
-            closeTournament();
-        } else if (tPhase === 'rewards') {
             giveChampionReward();
+            closeTournament();
+        } else if (tPhase === 'lost') {
             closeTournament();
         }
     };

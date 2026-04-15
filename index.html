@@ -8172,7 +8172,6 @@ function TournamentOverlay({
                         <div className="flex flex-col text-white items-end text-right">
 
                             <span className="text-[12px] font-black text-[#ffca28]">{playerName || '玩家'}</span>
-
                         </div>
                         <div className="scale-125 ml-4">
                             <DitheredBackSprite id={myMonsterId} scale={2} />
@@ -8229,10 +8228,10 @@ function TournamentOverlay({
             {/* 手動前進提示 */}
             {['intro', 'bracket', 'battle_intro'].includes(tPhase) && (
                 <div className="absolute top-2 z-[130] animate-bounce flex flex-col items-center">
-                    <div className="text-[#ffca28] text-[10px] font-bold tracking-[0.2em] mb-1 animate-pulse">
+                    <div className="text-[#ffca28] text-[9px] font-bold tracking-[0.1em] mb-1 bg-black/60 px-2 py-0.5 rounded shadow-[0_0_5px_rgba(0,0,0,0.5)]">
                         按 B 鍵確認下一步
                     </div>
-                    <div className="w-12 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div className="w-10 h-1 bg-white/20 rounded-full overflow-hidden border border-black/30">
                         <div className="h-full bg-[#ff5252] animate-[loading_1s_infinite] w-full"></div>
                     </div>
                 </div>
@@ -9850,11 +9849,9 @@ function useTournament({
                 setTPhase('bracket');
             }
         } else if (tPhase === 'champion') {
-            setTPhase('rewards');
-        } else if (tPhase === 'lost') {
-            closeTournament();
-        } else if (tPhase === 'rewards') {
             giveChampionReward();
+            closeTournament();
+        } else if (tPhase === 'lost') {
             closeTournament();
         }
     };
@@ -11558,7 +11555,7 @@ function App() {
         }
 
         // --- 聯盟大賽手動轉場 ---
-        if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'champion', 'lost', 'rewards'].includes(tournament.tPhase)) {
+        if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'champion', 'lost'].includes(tournament.tPhase)) {
             tournament.nextTournamentPhase();
             playBloop('success');
             return;

@@ -1589,7 +1589,7 @@ export default function App() {
         }
 
         // --- 聯盟大賽手動轉場 ---
-        if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'champion', 'lost', 'rewards'].includes(tournament.tPhase)) {
+        if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'champion', 'lost'].includes(tournament.tPhase)) {
             tournament.nextTournamentPhase();
             playBloop('success');
             return;

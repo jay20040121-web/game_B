@@ -12,9 +12,12 @@ export function TournamentOverlay({
 }) {
     if (!isTournamentOpen) return null;
 
-    // We don't render battle UI here, because App.js will spawn BattleAdventureOverlay automatically 
-    // when battleState.active is true! We just render the between-match screens.
-    if (tPhase === 'fighting') return null;
+    // 戰鬥中與閒置狀態不顯現 Overlay
+    if (tPhase === 'fighting' || tPhase === 'idle') return null;
+
+    // 只有在特定階段才顯示黑色背景層 (防止狀態不同步時出現空黑屏)
+    const activePhases = ['intro', 'bracket', 'battle_intro', 'champion', 'lost'];
+    if (!activePhases.includes(tPhase)) return null;
 
     return (
         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-center bg-black/90 p-4 transition-opacity duration-500">
