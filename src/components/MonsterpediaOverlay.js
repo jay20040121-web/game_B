@@ -13,7 +13,7 @@ export const MonsterpediaOverlay = ({
     if (!isOpen) return null;
 
     const monsterIds = obtainableIds.length > 0 ? obtainableIds : Object.keys(monsterNames);
-    const itemsPerPage = 8; // 改為 2 行 (4x2 網格)
+    const itemsPerPage = 12; // 改為 3 行 (4x3 網格)
     const currentPage = Math.floor(selectedIndex / itemsPerPage);
     const pageStart = currentPage * itemsPerPage;
     const pageItems = monsterIds.slice(pageStart, pageStart + itemsPerPage);
