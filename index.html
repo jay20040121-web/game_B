@@ -7603,7 +7603,7 @@ const MonsterpediaOverlay = ({
     if (!isOpen) return null;
 
     const monsterIds = obtainableIds.length > 0 ? obtainableIds : Object.keys(monsterNames);
-    const itemsPerPage = 8; // 改為 2 行 (4x2 網格)
+    const itemsPerPage = 12; // 改為 3 行 (4x3 網格)
     const currentPage = Math.floor(selectedIndex / itemsPerPage);
     const pageStart = currentPage * itemsPerPage;
     const pageItems = monsterIds.slice(pageStart, pageStart + itemsPerPage);
@@ -8100,9 +8100,12 @@ function TournamentOverlay({
 }) {
     if (!isTournamentOpen) return null;
 
-    // We don't render battle UI here, because App.js will spawn BattleAdventureOverlay automatically 
-    // when battleState.active is true! We just render the between-match screens.
-    if (tPhase === 'fighting') return null;
+    // 戰鬥中與閒置狀態不顯現 Overlay
+    if (tPhase === 'fighting' || tPhase === 'idle') return null;
+
+    // 只有在特定階段才顯示黑色背景層 (防止狀態不同步時出現空黑屏)
+    const activePhases = ['intro', 'bracket', 'battle_intro', 'champion', 'lost'];
+    if (!activePhases.includes(tPhase)) return null;
 
     return (
         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-center bg-black/90 p-4 transition-opacity duration-500">
@@ -9829,7 +9832,8 @@ function useTournament({
 
     // 推進大賽階段
     const nextTournamentPhase = () => {
-        if (pendingSkillLearn) return; // 如果正在學技能，攔截大賽轉場
+        // 只有在非結局畫面 (champion/lost) 才攔截，確保結尾按 B 鍵能順利執行 closeTournament 關閉 Overlay
+        if (pendingSkillLearn && !['champion', 'lost'].includes(tPhase)) return; 
 
         if (tPhase === 'intro') {
             setTPhase('bracket');
