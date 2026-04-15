@@ -19,13 +19,12 @@ export function TournamentOverlay({
     return (
         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-center bg-black/90 p-4 transition-opacity duration-500">
             {tPhase === 'intro' && (
-                <div className="animate-pulse flex flex-col items-center">
-                    <h1 className="text-white text-xl font-black mb-4 tracking-widest text-center shadow-[0_0_10px_#fff]">
-                         數位怪獸<br/>聯盟大賽
-                    </h1>
-                    <div className="text-[#ffca28] text-[10px] uppercase font-bold animate-pulse">
-                        THE GRAND TOURNAMENT
-                    </div>
+                <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                    <img 
+                        src="assets/BG/聯盟大會開幕.png" 
+                        alt="Tournament Intro" 
+                        className="w-full h-full object-cover animate-fade-in"
+                    />
                 </div>
             )}
 
@@ -75,7 +74,7 @@ export function TournamentOverlay({
                             {opponents[1].monster && <DitheredSprite id={opponents[1].monster.id} scale={2} />}
                         </div>
                         <div className="flex flex-col text-white">
-                            <span className="text-[10px] uppercase text-gray-300">OPPONENT</span>
+
                             <span className="text-[12px] font-black text-[#ff5252]">{opponents[1].playerName}</span>
                             <span className="text-[9px]">{opponents[1].monster?.name} - Lv.{opponents[1].monster?.level}</span>
                         </div>
@@ -83,9 +82,8 @@ export function TournamentOverlay({
 
                     <div className="flex items-center justify-end w-full bg-white/10 p-2 rounded-l-full shadow-lg transform translate-x-[20%] animate-[slideLeft_0.5s_forwards_0.5s]">
                         <div className="flex flex-col text-white items-end text-right">
-                            <span className="text-[10px] uppercase text-gray-300">PLAYER</span>
+
                             <span className="text-[12px] font-black text-[#ffca28]">{playerName || '玩家'}</span>
-                            <span className="text-[9px]">您的怪獸</span>
                         </div>
                         <div className="scale-125 ml-4">
                             <DitheredBackSprite id={myMonsterId} scale={2} />
@@ -102,54 +100,50 @@ export function TournamentOverlay({
 
 
             {tPhase === 'champion' && (
-                <div className="flex flex-col items-center justify-center h-full animate-[sparkle_2s_infinite]">
-                    <div className="text-[#ffca28] text-2xl font-black mb-4 tracking-widest drop-shadow-[0_0_15px_#ffca28] text-center">
-                        🏆<br/>THE CHAMPION
-                    </div>
-                    <div className="scale-[2.0] my-8 drop-shadow-[0_0_30px_#fff]">
-                        <DitheredSprite id={myMonsterId} scale={3} />
-                    </div>
-                    <div className="text-white text-[12px] font-black text-center mt-2 bg-black/50 p-2 rounded">
-                        恭喜成為本屆聯盟大賽冠軍！
-                    </div>
-                    <div className="mt-8 flex flex-col items-center gap-2">
-                         <div className="animate-bounce text-[#ffca28] text-[10px] font-bold">[ 點按 A/B 領取獎勵 ]</div>
-                         {/* 保持 A 鍵可點擊性供觸摸螢幕玩家使用 */}
-                        <button onClick={nextTournamentPhase} className="bg-[#ffca28] text-black px-4 py-2 font-black text-[12px] rounded-sm shadow-[4px_4px_0_#fff] active:translate-y-1 active:translate-x-1 active:shadow-none">
-                            確認
-                        </button>
+                <div className="absolute inset-0 flex flex-col items-center overflow-hidden animate-fade-in">
+                    <img 
+                        src="assets/BG/獲得冠軍.png" 
+                        alt="Champion Background" 
+                        className="absolute inset-0 w-full h-full object-cover z-0"
+                    />
+                    <div className="relative z-10 flex flex-col items-center w-full h-full pt-3 pb-6 animate-[sparkle_2s_infinite]">
+                        <div className="scale-[2.0] drop-shadow-[0_0_30px_#fff]">
+                            <DitheredSprite id={myMonsterId} scale={3} />
+                        </div>
+                        
+                        <div className="mt-auto flex flex-col items-center w-full px-4">
+                            <div className="animate-bounce text-[#ffca28] text-[10px] font-bold">[ 點擊 B 鍵離開大會 ]</div>
+                        </div>
                     </div>
                 </div>
             )}
 
             {tPhase === 'lost' && (
-                <div className="flex flex-col items-center justify-center h-full animate-fade-in bg-red-900/40 w-full">
-                    <div className="text-[#ff5252] text-4xl font-black mb-4 tracking-tighter drop-shadow-[0_4px_10px_rgba(255,82,82,0.6)] text-center italic">
-                        DEFEAT
-                    </div>
-                    <div className="scale-[1.8] my-10 grayscale opacity-80">
-                        <DitheredSprite id={myMonsterId} scale={3} />
-                    </div>
-                    <div className="text-white text-[12px] font-black text-center mt-2 bg-black/60 p-3 rounded-lg border-2 border-[#ff5252]/50 max-w-[80%]">
-                        很遺憾被淘汰了...<br/>
-                        <span className="text-[10px] text-gray-400 font-normal">再接再厲，期待下一次更強的歸來！</span>
-                    </div>
-                    <div className="mt-10 flex flex-col items-center gap-2">
-                         <div className="animate-bounce text-white/80 text-[11px] font-bold">[ 點按 B 鍵返回 ]</div>
-                         <button onClick={nextTournamentPhase} className="bg-[#ff5252] text-white px-6 py-2 font-black text-[12px] rounded-sm shadow-[4px_4px_0_#1a1a1a] active:translate-y-1 active:translate-x-1 active:shadow-none">
-                            返回大廳
-                        </button>
+                <div className="absolute inset-0 flex flex-col items-center overflow-hidden animate-fade-in">
+                    <img 
+                        src="assets/BG/淘汰.png" 
+                        alt="Defeat Background" 
+                        className="absolute inset-0 w-full h-full object-cover z-0"
+                    />
+                    <div className="relative z-10 flex flex-col items-center w-full h-full pt-3 pb-6">
+                        <div className="scale-[2.0] grayscale opacity-80">
+                            <DitheredSprite id={myMonsterId} scale={3} />
+                        </div>
+                        
+                        <div className="mt-auto flex flex-col items-center w-full px-4">
+                            <div className="animate-bounce text-[#ffca28] text-[10px] font-bold">[ 點擊 B 鍵離開大會 ]</div>
+                        </div>
                     </div>
                 </div>
             )}
 
             {/* 手動前進提示 */}
             {['intro', 'bracket', 'battle_intro'].includes(tPhase) && (
-                <div className="absolute bottom-12 animate-bounce flex flex-col items-center">
-                    <div className="text-[#ffca28] text-[10px] font-bold tracking-[0.2em] mb-1 animate-pulse">
+                <div className="absolute top-2 z-[130] animate-bounce flex flex-col items-center">
+                    <div className="text-[#ffca28] text-[9px] font-bold tracking-[0.1em] mb-1 bg-black/60 px-2 py-0.5 rounded shadow-[0_0_5px_rgba(0,0,0,0.5)]">
                         按 B 鍵確認下一步
                     </div>
-                    <div className="w-12 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <div className="w-10 h-1 bg-white/20 rounded-full overflow-hidden border border-black/30">
                         <div className="h-full bg-[#ff5252] animate-[loading_1s_infinite] w-full"></div>
                     </div>
                 </div>
