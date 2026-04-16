@@ -7614,16 +7614,20 @@ const MonsterpediaOverlay = ({
     return (
         <div 
             className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2 animate-fade-in" 
-            style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}
+            style={{ 
+                backgroundImage: 'url("assets/BG/圖鑑系統背板.png")',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+            }}
         >
             {/* Header */}
-            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black shadow-md border-b-2 border-[#1a1a1a]">
+            <div className="w-full text-white text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
                 <span>像素怪獸圖鑑</span>
                 <span className="text-[10px] opacity-80">{ownedMonsters.length} / {monsterIds.length}</span>
             </div>
 
             {/* Grid */}
-            <div className="flex-1 w-full grid grid-cols-4 gap-1.5 overflow-hidden content-start px-1 py-1 bg-[#91a37c] rounded-sm border border-[#383a37]">
+            <div className="flex-1 w-full grid grid-cols-4 gap-1.5 overflow-hidden content-start px-1 py-1">
                 {pageItems.map((id, idx) => {
                     const globalIdx = pageStart + idx;
                     const isSelected = globalIdx === selectedIndex;
@@ -7632,9 +7636,8 @@ const MonsterpediaOverlay = ({
                     return (
                         <div 
                             key={id}
-                            className={`relative aspect-square border-2 flex items-center justify-center rounded-sm transition-all overflow-hidden
-                                ${isSelected ? 'border-[#ff5252] z-10 shadow-lg scale-110' : 'border-[#383a37] shadow-inner'}
-                                ${owned ? 'bg-[#f0f4e4]' : 'bg-[#383a37]'}`}
+                            className={`relative aspect-square flex items-center justify-center rounded-sm transition-all overflow-hidden
+                                ${isSelected ? 'border-2 border-[#ff5252] z-10 shadow-lg scale-110 translate-y-[5px]' : ''}`}
                         >
                             <DitheredSprite 
                                 id={id} 
@@ -7656,16 +7659,16 @@ const MonsterpediaOverlay = ({
             </div>
 
             {/* Footer / Selection Info */}
-            <div className="w-full mt-2 bg-[#869675] border border-[#383a37] p-1.5 rounded flex items-center justify-between shadow-md">
-                <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-[#1a1a1a] opacity-60">
+            <div className="w-full mt-2 p-1.5 flex items-center justify-between">
+                <div className="flex flex-col text-white">
+                    <span className="text-[10px] font-black opacity-60">
                         NO.{String(selectedId).padStart(3, '0')}
                     </span>
-                    <span className="text-[11px] font-black text-[#1a1a1a]">
+                    <span className="text-[11px] font-black">
                         {isOwned ? monsterNames[selectedId] : '??????'}
                     </span>
                 </div>
-                <div className="text-[9px] font-black text-[#383a37] flex flex-col items-end opacity-80">
+                <div className="text-[9px] font-black text-white flex flex-col items-end opacity-80">
                     <span>[A] 切換 [B] 詳細</span>
                     <span>[C] 返回</span>
                 </div>
