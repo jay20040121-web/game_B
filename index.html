@@ -10753,6 +10753,8 @@ function App() {
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
     const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 149) + 1);
+    const [bootMonsterPosIdx, setBootMonsterPosIdx] = useState(0); // 0:左上, 1:右上, 2:左下, 3:右下
+    const [isBootMonsterVisible, setIsBootMonsterVisible] = useState(true);
 
     // 啟動畫面心跳聲
     useEffect(() => {
@@ -10763,6 +10765,24 @@ function App() {
             }, 2000);
         }
         return () => clearInterval(timer);
+    }, [isBooting]);
+ 
+    // 啟動畫面怪獸跳槽動畫 (四個角落巡迴 + 倒掛效果)
+    useEffect(() => {
+        let timer;
+        if (isBooting) {
+            timer = setInterval(() => {
+                setIsBootMonsterVisible(false); // 觸發淡出
+                setTimeout(() => {
+                    setBootMonsterPosIdx(prev => (prev + 1) % 4);
+                    setBootMonsterId(Math.floor(Math.random() * 151) + 1); // 每次跳轉都更換怪獸 ID (1-151)
+                    setIsBootMonsterVisible(true); // 觸發淡入
+                }, 1000); // 1秒的淡出過渡
+            }, 10000); // 10秒一個週期
+        }
+        return () => {
+            if (timer) clearInterval(timer);
+        };
     }, [isBooting]);
 
     // 自動合併舊有重複物品以及確認名稱/描述同步最新的設定
@@ -13420,13 +13440,18 @@ function App() {
                         {isBooting ? (
                             <div className="absolute inset-0 z-50 overflow-hidden pointer-events-none">
                                 {/* 頂部文字 */}
-                                <div className="absolute top-[60px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2" style={{
+                                <div className="absolute top-[20px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2" style={{
                                     color: '#1a1a1a',
                                     whiteSpace: 'nowrap',
                                     textAlign: 'center'
                                 }}>
-                                    {/* 加大標題字體 */}
-                                    <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: '18px', fontWeight: '900', color: '#1a1a1a', letterSpacing: '0.1em' }}>像素怪獸</div>
+                                    {/* 替換標題字體為 LOGO 圖片 */}
+                                    <img 
+                                        src="assets/BG/LOGO.png" 
+                                        alt="LOGO" 
+                                        className="w-[180px] h-auto object-contain mb-1"
+                                        style={{ imageRendering: 'pixelated' }}
+                                    />
                                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>
                                         按 <span className="blink-anim">A</span> 開始冒險
                                     </div>
@@ -13454,12 +13479,33 @@ function App() {
                                     </div>
                                 </div>
 
-                                {/* 畫面中央偏下隨機怪獸 -> 修改為更靠近中央 */}
-                                <div className="absolute top-[35%] left-1/2 -translate-x-1/2 flex justify-center items-center" style={{ zIndex: 40 }}>
-                                    <div style={{ animation: 'egg-pulse 2s infinite ease-in-out' }}>
-                                        <DitheredSprite id={bootMonsterId} scale={2.5} />
-                                    </div>
-                                </div>
+                                {/* 畫面四個角落跳躍的怪獸 (帶有淡入淡出與倒掛效果) */}
+                                {(() => {
+                                    const positions = [
+                                        "top-4 left-4",    // 0: 左上
+                                        "top-4 right-4",   // 1: 右上
+                                        "bottom-4 left-4", // 2: 左下
+                                        "bottom-4 right-4" // 3: 右下
+                                    ];
+                                    const isTop = bootMonsterPosIdx < 2;
+                                    const isLeft = bootMonsterPosIdx % 2 === 0;
+                                    return (
+                                        <div 
+                                            className={`absolute ${positions[bootMonsterPosIdx]} flex justify-center items-center transition-opacity duration-1000`} 
+                                            style={{ 
+                                                zIndex: 40,
+                                                opacity: isBootMonsterVisible ? 1 : 0,
+                                                // 同時處理上下反轉(isTop)與左右鏡射(isLeft)
+                                                transform: `scale(${isLeft ? -2.5 : 2.5}, ${isTop ? -2.5 : 2.5})`, 
+                                                transformOrigin: 'center'
+                                            }}
+                                        >
+                                            <div style={{ animation: 'egg-pulse 2s infinite ease-in-out' }}>
+                                                <DitheredSprite id={bootMonsterId} scale={1} />
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         ) : (
                             <>
