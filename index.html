@@ -11897,6 +11897,7 @@ function App() {
 
     const handleC = () => {
         if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
+        if (alertMsg) return; // 警告視窗顯示時，C 鍵完全鎖定不執行任何動作
         if (isLeaderboardOpen) {
             setIsLeaderboardOpen(false);
             setAlertMsg("");
@@ -12004,12 +12005,22 @@ function App() {
     const executeAction = (id) => {
         switch (id) {
             case 'pedia':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                    setAlertMsg("此功能僅限在主畫面使用");
+                    playBloop('fail');
+                    return;
+                }
                 setIsPediaOpen(true);
                 setPediaIdx(0);
                 setIsPediaDetailOpen(false);
                 updateDialogue("圖鑑系統開啟。", true);
                 break;
             case 'interact':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                    setAlertMsg("此功能僅限在主畫面使用");
+                    playBloop('fail');
+                    return;
+                }
                 setIsInteractMenuOpen(true);
                 setInteractMenuIdx(0);
                 updateDialogue("選擇互動方式：", true);
@@ -12060,10 +12071,20 @@ function App() {
                 logEvent("親密互動。");
                 break;
             case 'status':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                    setAlertMsg("此功能僅限在主畫面使用");
+                    playBloop('fail');
+                    return;
+                }
                 setIsStatusUIOpen(true);
                 updateDialogue("查看狀態中...", true);
                 break;
             case 'train':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                    setAlertMsg("此功能僅限在主畫面使用");
+                    playBloop('fail');
+                    return;
+                }
                 recordGameAction(); // 進入特訓視為一動作
                 miniGameResultFired.current = false;
                 const roll = Math.random();
@@ -12085,6 +12106,11 @@ function App() {
                 setActiveIndex(-1);
                 break;
             case 'connect':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                    setAlertMsg("此功能僅限在主畫面使用");
+                    playBloop('fail');
+                    return;
+                }
                 cleanupPvp();
                 setIsPvpMode(true);
                 recordGameAction(); // 進入連線大廳預扣一動作
@@ -12093,11 +12119,21 @@ function App() {
                 logEvent(`進入連線大廳`);
                 break;
             case 'info':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                    setAlertMsg("此功能僅限在主畫面使用");
+                    playBloop('fail');
+                    return;
+                }
                 setIsInventoryOpen(true);
                 setSelectedItemIdx(0);
                 updateDialogue("查看背包中...", true);
                 break;
             case 'adventure':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                    setAlertMsg("此功能僅限在主畫面使用");
+                    playBloop('fail');
+                    return;
+                }
                 startAdventure();
                 break;
             default:
@@ -12890,7 +12926,7 @@ function App() {
 
     const triggerFarewell = () => {
         // 防呆：僅限主畫面使用 (防止在戰鬥、冒險、特訓、談心、選單中產生邏輯衝突)
-        if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+        if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
             setAlertMsg("此功能僅限在主畫面使用");
             playBloop('fail');
             return;
