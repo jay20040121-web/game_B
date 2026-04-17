@@ -1761,11 +1761,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -1780,11 +1780,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "spd",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -1799,11 +1799,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -1994,11 +1994,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -2287,23 +2287,23 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "spd",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -2687,11 +2687,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -3198,11 +3198,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -3217,15 +3217,15 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "spd",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -3656,11 +3656,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "spd",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -5102,11 +5102,11 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -5577,23 +5577,23 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "spd",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
@@ -5943,15 +5943,15 @@ export const SKILL_DATABASE = {
         "stat_changes": [
             {
                 "stat": "atk",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "def",
-                "change": 2
+                "change": 1
             },
             {
                 "stat": "spd",
-                "change": 2
+                "change": 1
             }
         ],
         "stat_chance": 100,
