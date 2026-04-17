@@ -9,16 +9,22 @@ export function InventoryOverlay({
     if (!isInventoryOpen) return null;
 
     return (
-        <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
-            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
+        <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ 
+            backgroundImage: 'url("assets/BG/共用底圖.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+        }}>
+            <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
+
+            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black relative z-10 shadow-sm">
                 <span>我的背包</span>
                 <span>[C] 關閉</span>
             </div>
 
-            <div className="flex-1 w-full flex flex-col gap-2 px-1 justify-start pb-2 overflow-hidden">
-                <div className="border-b-2 border-[#383a37] pb-1 flex justify-between items-center">
-                    <span className="text-[11px] font-black text-[#1a1a1a]">物品清單 ({inventory?.length || 0}/99)</span>
-                    <div className="text-[9px] font-bold text-[#383a37] animate-pulse">
+            <div className="flex-1 w-full flex flex-col gap-2 px-1 justify-start pb-2 overflow-hidden relative z-10">
+                <div className="border-b-2 border-white/20 pb-1 flex justify-between items-center">
+                    <span className="text-[11px] font-black text-white">物品清單 ({inventory?.length || 0}/99)</span>
+                    <div className="text-[9px] font-bold text-white/70 animate-pulse">
                         {(inventory?.length || 0) > 0 ? `${selectedItemIdx + 1} / ${inventory.length}` : '0/0'}
                     </div>
                 </div>
@@ -37,8 +43,8 @@ export function InventoryOverlay({
                                     return (
                                         <div
                                             key={idx}
-                                            className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center
-                                                ${isSelected ? 'bg-[#383a37] text-[#8fa07e] border-[#1a1a1a] scale-100 opacity-100 z-10' : 'bg-[#9dae8a] text-[#1a1a1a] border-[#383a37]/30 scale-90 opacity-40 blur-[0.5px]'}`}
+                                            className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center backdrop-blur-[2px]
+                                                ${isSelected ? 'bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] border-white/40 scale-100 opacity-100 z-10' : 'bg-white/10 text-white/50 border-white/10 scale-90 opacity-40 blur-[0.5px]'}`}
                                             style={{
                                                 transform: isPrev ? 'translateY(-5px)' : isNext ? 'translateY(5px)' : 'none'
                                             }}
@@ -63,7 +69,7 @@ export function InventoryOverlay({
                         <div className="text-center text-[11px] font-bold opacity-50">背包目前是空的</div>
                     )}
                 </div>
-                <div className="text-[9px] font-black text-center text-[#1a1a1a] mt-1 opacity-70 underline decoration-dotted">
+                <div className="text-[9px] font-black text-center text-white mt-1 opacity-70 underline decoration-dotted">
                     {"[A] 下一個  [B] 使用  [C] 關閉"}
                 </div>
             </div>

@@ -10,14 +10,20 @@ export function LeaderboardOverlay({
     if (!isLeaderboardOpen) return null;
 
     return (
-        <div className="absolute inset-0 bg-[#9dae8a] z-[500] flex flex-col items-center p-2 font-bold select-none animate-fade-in text-[#1a1a1a]">
-            <div className="w-full bg-[#383a37] text-[#9dae8a] px-2 py-1 flex justify-between items-center mb-1 shadow-sm">
+        <div className="absolute inset-0 z-[500] flex flex-col items-center p-2 font-bold select-none animate-fade-in text-white" style={{ 
+            backgroundImage: 'url("assets/BG/共用底圖.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+        }}>
+            <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
+
+            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] px-2 py-1 flex justify-between items-center mb-1 relative z-10 shadow-sm">
                 <span className="text-[10px] tracking-tighter font-black flex items-center gap-1">
                     🏆 全球英雄榜 [P{leaderboardPage + 1}/10]
                 </span>
             </div>
 
-            <div className="flex-1 w-full space-y-1 mt-1">
+            <div className="flex-1 w-full space-y-1 mt-1 relative z-10">
                 {isLeaderboardLoading ? (
                     <div className="flex flex-col items-center justify-center h-full gap-2 opacity-60">
                         <div className="animate-spin text-xl">⏳</div>
@@ -25,11 +31,11 @@ export function LeaderboardOverlay({
                     </div>
                 ) : (
                     leaderboard.slice(leaderboardPage * 5, (leaderboardPage * 5) + 5).map((item, idx) => (
-                        <div key={item.id} className="bg-[#8fa07e]/30 border-2 border-[#1a1a1a]/20 p-1 flex items-center gap-2 h-[42px] relative overflow-hidden">
-                            <div className="w-6 text-[12px] font-black italic opacity-40">
+                        <div key={item.id} className="bg-white/10 border-2 border-white/20 p-1 flex items-center gap-2 h-[42px] relative overflow-hidden backdrop-blur-[1px]">
+                            <div className="w-6 text-[12px] font-black italic text-white/40">
                                 #{(leaderboardPage * 5) + idx + 1}
                             </div>
-                            <div className="w-10 h-10 flex items-center justify-center bg-[#1a1a1a]/5 border border-[#1a1a1a]/20 shrink-0">
+                            <div className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/20 shrink-0">
                                 <DitheredSprite id={item.monsterId || 132} scale={0.85} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -50,7 +56,7 @@ export function LeaderboardOverlay({
                 )}
             </div>
 
-            <div className="w-full border-t border-[#1a1a1a]/20 pt-1 mt-1 flex justify-between items-center text-[8px] font-black opacity-80">
+            <div className="w-full border-t border-white/20 pt-1 mt-1 flex justify-between items-center text-[8px] font-black opacity-80 relative z-10">
                 <span className="animate-pulse">▶ A: 下一頁</span>
                 <span>● C: 退出</span>
             </div>
