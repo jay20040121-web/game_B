@@ -13306,7 +13306,7 @@ function App() {
                         isDetailOpen={isPediaDetailOpen}
                     />
 
-                    {/* === 🤝 互動系統子選單 UI (滿版升級) === */}
+                    {/* === 🤝 互動系統子選單 UI (精緻捲軸版) === */}
                     {isInteractMenuOpen && (
                         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" 
                              style={{ 
@@ -13320,24 +13320,54 @@ function App() {
                                 <span>互動系統</span>
                             </div>
 
-                            <div className="flex-1 w-full flex flex-col gap-2 px-4 justify-center pb-4 relative z-10">
-                                {["🍖 餵食 (飽食度)", "✋ 撫摸 (心情度)", "❌ 結束互動"].map((label, idx) => (
-                                    <div 
-                                        key={idx}
-                                        className={`text-[10px] p-2.5 flex items-center gap-3 font-black border-2 ${
-                                            interactMenuIdx === idx 
-                                            ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-[#383a37]/50 shadow-[2px_2px_0_rgba(0,0,0,0.1)]' 
-                                            : 'text-white border-transparent'
-                                        }`}
-                                    >
-                                        <span style={{ visibility: interactMenuIdx === idx ? 'visible' : 'hidden' }}>▶</span>
-                                        {label}
-                                    </div>
-                                ))}
+                            <div className="flex-1 w-full flex flex-col gap-2 px-1 justify-center pb-4 relative z-10 overflow-hidden">
+                                {(() => {
+                                    const options = [
+                                        { label: "🍖 餵食 (飽食度)", desc: "提供美味的肉類，快速補充體力並提升好感。" },
+                                        { label: "✋ 撫摸 (心情度)", desc: "溫和地互動，能夠安撫怪獸的心情並建立連結。" },
+                                        { label: "❌ 結束互動", desc: "完成目前的互動，返回主畫面休息。" }
+                                    ];
+
+                                    return options.map((opt, idx) => {
+                                        const isSelected = interactMenuIdx === idx;
+                                        const isNext = (interactMenuIdx + 1) % options.length === idx;
+                                        const isPrev = (interactMenuIdx - 1 + options.length) % options.length === idx;
+
+                                        if (!isSelected && !isNext && !isPrev) return null;
+
+                                        return (
+                                            <div 
+                                                key={idx}
+                                                className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center backdrop-blur-[2px]
+                                                    ${isSelected 
+                                                        ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-white/40 scale-100 opacity-100 z-10' 
+                                                        : 'bg-white/10 text-white/50 border-white/10 scale-90 opacity-40 blur-[0.5px]'
+                                                    }`}
+                                                style={{
+                                                    transform: isPrev ? 'translateY(-5px)' : isNext ? 'translateY(5px)' : 'none'
+                                                }}
+                                            >
+                                                <div className="text-[12px] font-black">
+                                                    {opt.label}
+                                                </div>
+                                                {isSelected && (
+                                                    <div className="mt-2 flex flex-col items-center animate-fade-in">
+                                                        <div className="text-[9px] leading-tight px-3 py-1 bg-black/20 rounded-sm mb-2 text-white/90">
+                                                            {opt.desc}
+                                                        </div>
+                                                        <div className="text-[9px] font-black bg-[#ff5252] text-white px-3 py-0.5 rounded-full border border-white/30 animate-pulse shadow-sm">
+                                                            [B] 確認執行
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    });
+                                })()}
                             </div>
 
                             <div className="absolute bottom-6 w-full text-center px-4 z-10">
-                                <div className="text-[9px] font-black text-white opacity-60 border-t-2 border-[#383a37]/20 pt-2">
+                                <div className="text-[9px] font-black text-white opacity-60 border-t-2 border-white/10 pt-2">
                                     使用 [A] 切換選項，[B] 執行動作
                                 </div>
                             </div>
