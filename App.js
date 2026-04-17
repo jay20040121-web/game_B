@@ -3188,19 +3188,25 @@ export default function App() {
                     {/* === 🤝 互動系統子選單 UI (滿版升級) === */}
                     {isInteractMenuOpen && (
                         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" 
-                             style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
-                            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black">
+                             style={{ 
+                                 backgroundImage: 'url("assets/BG/共用底圖.png")',
+                                 backgroundSize: 'cover',
+                                 backgroundPosition: 'center'
+                             }}>
+                            <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
+
+                            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
                                 <span>互動系統</span>
                             </div>
 
-                            <div className="flex-1 w-full flex flex-col gap-2 px-4 justify-center pb-4">
+                            <div className="flex-1 w-full flex flex-col gap-2 px-4 justify-center pb-4 relative z-10">
                                 {["🍖 餵食 (飽食度)", "✋ 撫摸 (心情度)", "❌ 結束互動"].map((label, idx) => (
                                     <div 
                                         key={idx}
                                         className={`text-[10px] p-2.5 flex items-center gap-3 font-black border-2 ${
                                             interactMenuIdx === idx 
-                                            ? 'bg-[#383a37] text-[#8fa07e] border-[#383a37] shadow-[2px_2px_0_rgba(0,0,0,0.1)]' 
-                                            : 'text-[#1a1a1a] border-transparent'
+                                            ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-[#383a37]/50 shadow-[2px_2px_0_rgba(0,0,0,0.1)]' 
+                                            : 'text-white border-transparent'
                                         }`}
                                     >
                                         <span style={{ visibility: interactMenuIdx === idx ? 'visible' : 'hidden' }}>▶</span>
@@ -3209,8 +3215,8 @@ export default function App() {
                                 ))}
                             </div>
 
-                            <div className="absolute bottom-6 w-full text-center px-4">
-                                <div className="text-[9px] font-black text-[#1a1a1a] opacity-60 border-t-2 border-[#383a37]/20 pt-2">
+                            <div className="absolute bottom-6 w-full text-center px-4 z-10">
+                                <div className="text-[9px] font-black text-white opacity-60 border-t-2 border-[#383a37]/20 pt-2">
                                     使用 [A] 切換選項，[B] 執行動作
                                 </div>
                             </div>

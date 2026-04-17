@@ -7593,19 +7593,19 @@ function LeaderboardOverlay({
 
 const EVO_REQS = {
     // --- 核心與起始 ---
-    "132": "進化方向：\n格鬥系：特訓\n毒系：不照顧\n火/水/草/蟲魂：羈絆80+\n一般線：心情或飢餓影響",
+    "132": "進化方向：\n格鬥系：特訓\n毒系：不照顧\n火/水/草/蟲魂：羈絆80以上\n一般線：心情或飢餓影響",
 
     // --- 火系靈魂線 ---
-    "4": "進化方向：\n火恐龍：心情 80+\n卡拉卡拉：其餘情況",
-    "5": "進化方向：\n噴火龍：心情/飽足 50+ 且 性格熱情/固執\n鴨嘴火龍：心情 < 50 且 固執個性\n嘎啦嘎啦：其餘情況",
+    "4": "進化方向：\n火恐龍：心情 80+\n嘎啦嘎啦：心情 < 80",
+    "5": "進化方向：\n噴火龍：心情/飢餓 50+ 且 性格熱情/頑固\n鴨嘴火龍：心情 < 50 且 頑固個性",
     "6": "已經是最終狀態",
-    "37": "進化方向：\n卡蒂狗：心情/飽足 50+ 且 性格熱情/固執\n小火馬：性格理性/無俚頭\n九尾：其餘情況",
+    "37": "進化方向：\n九尾：無特殊條件",
     "38": "已經是最終狀態",
     "58": "進化方向：\n風速狗：無特殊條件",
     "59": "已經是最終狀態",
     "77": "進化方向：\n烈焰馬：無特殊條件",
     "78": "已經是最終狀態",
-    "104": "進化方向：\n噴火龍：心情/飽足 50+ 且 性格熱情/固執\n鴨嘴火龍：心情 < 50 且 固執個性\n嘎啦嘎啦：其餘情況",
+    "104": "進化方向：\n嘎啦嘎啦：無特殊條件",
     "105": "已經是最終狀態",
     "126": "已經是最終狀態",
 
@@ -7613,58 +7613,58 @@ const EVO_REQS = {
     "7": "進化方向：\n卡咪龜：無特殊條件",
     "8": "進化方向：\n水箭龜：無特殊條件",
     "9": "已經是最終狀態",
-    "147": "進化方向：\n哈克龍：心情/飽足 50+ 且 特訓勝場 30+\n墨海馬：性格理性/溫和\n鯉魚王：其餘情況",
+    "147": "進化方向：\n哈克龍：心情/飢餓 50+ 且 特訓勝場 30+",
     "148": "進化方向：\n快龍：無特殊條件",
     "149": "已經是最終狀態",
-    "116": "進化方向：\n拉普拉斯：心情 50+ 且 性格理性/溫和\n海刺龍：其餘情況",
+    "116": "進化方向：\n海刺龍：無特殊條件\n拉普拉斯：理性/溫和性格 + 心情高",
     "117": "已經是最終狀態",
     "129": "進化方向：\n暴鯉龍：無特殊條件",
     "130": "已經是最終狀態",
     "131": "已經是最終狀態",
 
     // --- 草系靈魂線 ---
-    "1": "進化方向：\n妙蛙草：心情 80+\n派拉斯：其餘情況",
-    "2": "進化方向：\n妙蛙花：心情/飽足 50+ 且 性格溫和/理性\n派拉斯特：其餘情況",
+    "1": "進化方向：\n妙蛙草：心情 80+\n派拉斯：心情 < 80",
+    "2": "進化方向：\n妙蛙花：心情/飢餓 50+ 且 性格溫和/理性\n派拉斯特：心情低於 50",
     "3": "已經是最終狀態",
-    "43": "進化方向：\n喇叭芽：心情/飽足 50+ 且 性格溫和/理性\n蛋蛋：性格熱情/無俚頭\n臭臭花：其餘情況",
+    "43": "進化方向：\n臭臭花：無特殊條件",
     "44": "進化方向：\n霸王花：無特殊條件",
     "45": "已經是最終狀態",
     "69": "進化方向：\n大食花：無特殊條件",
     "71": "已經是最終狀態",
-    "46": "進化方向：\n妙蛙花：心情/飽足 50+ 且 性格溫和/理性\n派拉斯特：其餘情況",
+    "46": "進化方向：\n派拉斯特：無特殊條件",
     "47": "已經是最終狀態",
     "102": "進化方向：\n椰蛋樹：無特殊條件",
     "103": "已經是最終狀態",
 
     // --- 蟲系靈魂線 ---
-    "10": "進化方向：\n鐵甲蛹：心情 50+\n鐵殼蛹：飽足 50+ 且 心情 < 50\n毛球：其餘情況",
-    "11": "進化方向：\n巴大蝶：心情 50+\n大針蜂：飽足 50+ 且 心情 < 50\n末入蛾：其餘情況",
+    "10": "進化方向：\n鐵甲蛹：無特殊條件",
+    "11": "進化方向：\n巴大蝶：無特殊條件",
     "12": "已經是最終狀態",
     "13": "進化方向：\n鐵殼蛹：無特殊條件",
-    "14": "進化方向：\n巴大蝶：心情 50+\n大針蜂：飽足 50+ 且 心情 < 50\n末入蛾：其餘情況",
+    "14": "進化方向：\n大針蜂：無特殊條件",
     "15": "已經是最終狀態",
     "48": "進化方向：\n末入蛾：無特殊條件",
     "49": "已經是最終狀態",
 
     // --- 一般線與失敗線 ---
-    "32": "進化方向：\n尼多力諾：心情 50+\n尼多娜：飢餓 50+\n拉達：心情/飢餓 低於 50",
-    "33": "進化方向：\n尼多王：心情/飢餓 50+\n多邊獸：心情/飢餓 低於 50",
+    "32": "進化方向：\n尼多力諾：無特殊條件",
+    "33": "進化方向：\n尼多王：無特殊條件",
     "34": "已經是最終狀態",
-    "29": "進化方向：\n尼多力諾：心情 50+\n尼多娜：飢餓 50+\n拉達：心情/飢餓 低於 50",
-    "30": "進化方向：\n尼多后：心情/飢餓 50+\n多邊獸：心情/飢餓 低於 50",
+    "29": "進化方向：\n尼多娜：無特殊條件",
+    "30": "進化方向：\n尼多后：無特殊條件",
     "31": "已經是最終狀態",
-    "19": "進化方向：\n尼多力諾：心情 50+\n尼多娜：飢餓 50+\n拉達：心情/飢餓 低於 50",
-    "20": "進化方向：\n多邊獸：心情/飢餓 低於 50",
+    "19": "進化方向：\n拉達：無特殊條件",
+    "20": "已經是最終狀態",
     "137": "已經是最終狀態",
 
     // --- 特殊培育 (P, F, G Series) ---
-    "109": "進化方向：\n三合一磁怪：心情 80+\n雙彈瓦斯：其餘情況",
+    "109": "進化方向：\n雙彈瓦斯：無特殊條件\n三合一磁怪：心情 > 80",
     "110": "已經是最終狀態",
-    "88": "進化方向：\n可達鴨：心情 80+\n臭臭泥：其餘情況",
+    "88": "進化方向：\n臭臭泥：無特殊條件\n可達鴨：心情 > 80",
     "89": "已經是最終狀態",
     "82": "已經是最終狀態",
-    "66": "進化方向：\n豪力：特訓勝場 30+\n飛腿郎：其餘情況",
-    "67": "進化方向：\n怪力：特訓勝場 50+\n快拳郎：其餘情況",
+    "66": "進化方向：\n豪力：特訓勝場 30+\n沙瓦郎：訓練不足",
+    "67": "進化方向：\n怪力：特訓勝場 50+\n艾比郎：訓練不足",
     "68": "已經是最終狀態",
     "106": "已經是最終狀態",
     "107": "已經是最終狀態",
@@ -8131,14 +8131,20 @@ function StatusOverlay({
     if (!isStatusUIOpen) return null;
 
     return (
-        <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
-            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
+        <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ 
+            backgroundImage: 'url("assets/BG/共用底圖.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+        }}>
+            <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
+
+            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black relative z-10 shadow-sm">
                 <span>狀態資訊</span>
                 <span>[C] 關閉</span>
             </div>
 
-            <div className="flex-1 w-full flex flex-col gap-1.5 px-1 justify-start pb-1">
-                <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-[#1a1a1a]">
+            <div className="flex-1 w-full flex flex-col gap-1.5 px-1 justify-start pb-1 relative z-10">
+                <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-white">
                     <span>屬性: {(() => {
                         const sid = getMonsterId();
                         const types = SPECIES_BASE_STATS[String(sid)]?.types || ['normal'];
@@ -8165,7 +8171,7 @@ function StatusOverlay({
                         { label: '羈絆值', val: Math.min(100, (bondValue / 100) * 100), color: '#e74c3c', text: bondValue }
                     ].map((s, i) => (
                         <div key={i} className="flex flex-col gap-0.5">
-                            <div className="flex justify-between text-[10px] font-black text-[#1a1a1a] leading-tight">
+                            <div className="flex justify-between text-[10px] font-black text-white leading-tight">
                                 <span>{s.label}</span>
                                 <span>{s.text !== undefined ? s.text : `${Math.floor(s.val)}%`}</span>
                             </div>
@@ -8176,7 +8182,7 @@ function StatusOverlay({
                     ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 bg-[#869675] px-1.5 py-1 rounded border border-[#383a37] mt-0.5">
+                <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 px-1.5 py-1 mt-0.5">
                     {(() => {
                         const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
                         const sid = getMonsterId();
@@ -8194,18 +8200,18 @@ function StatusOverlay({
 
                         return (
                             <>
-                                <div className="text-[10px] font-black text-[#1a1a1a]">血量: {fHP} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.hp)})</span></div>
-                                <div className="text-[10px] font-black text-[#1a1a1a]">攻擊: {fATK} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.atk)})</span></div>
-                                <div className="text-[10px] font-black text-[#1a1a1a]">防禦: {fDEF} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.def)})</span></div>
-                                <div className="text-[10px] font-black text-[#1a1a1a]">速度: {fSPD} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.spd)})</span></div>
-                                <div className="text-[10px] font-black text-[#1a1a1a]">等級: {level}</div>
-                                <div className="text-[10px] font-black text-[#1a1a1a]">戰力: {advStats.basePower}</div>
+                                <div className="text-[10px] font-black text-white">血量: {fHP} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.hp)})</span></div>
+                                <div className="text-[10px] font-black text-white">攻擊: {fATK} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.atk)})</span></div>
+                                <div className="text-[10px] font-black text-white">防禦: {fDEF} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.def)})</span></div>
+                                <div className="text-[10px] font-black text-white">速度: {fSPD} <span className="opacity-50 text-[8px]">({getIVGrade(advStats.ivs.spd)})</span></div>
+                                <div className="text-[10px] font-black text-white">等級: {level}</div>
+                                <div className="text-[10px] font-black text-white">戰力: {advStats.basePower}</div>
                             </>
                         );
                     })()}
                 </div>
 
-                <div className="text-[10px] font-black text-center text-[#1a1a1a] mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
+                <div className="text-[10px] font-black text-center text-white mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
                     累計特訓勝次: {trainWins} 次
                 </div>
             </div>
@@ -13285,19 +13291,25 @@ function App() {
                     {/* === 🤝 互動系統子選單 UI (滿版升級) === */}
                     {isInteractMenuOpen && (
                         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" 
-                             style={{ backgroundColor: 'rgba(157, 174, 138, 0.99)' }}>
-                            <div className="w-full bg-[#383a37] text-[#8fa07e] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black">
+                             style={{ 
+                                 backgroundImage: 'url("assets/BG/共用底圖.png")',
+                                 backgroundSize: 'cover',
+                                 backgroundPosition: 'center'
+                             }}>
+                            <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
+
+                            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
                                 <span>互動系統</span>
                             </div>
 
-                            <div className="flex-1 w-full flex flex-col gap-2 px-4 justify-center pb-4">
+                            <div className="flex-1 w-full flex flex-col gap-2 px-4 justify-center pb-4 relative z-10">
                                 {["🍖 餵食 (飽食度)", "✋ 撫摸 (心情度)", "❌ 結束互動"].map((label, idx) => (
                                     <div 
                                         key={idx}
                                         className={`text-[10px] p-2.5 flex items-center gap-3 font-black border-2 ${
                                             interactMenuIdx === idx 
-                                            ? 'bg-[#383a37] text-[#8fa07e] border-[#383a37] shadow-[2px_2px_0_rgba(0,0,0,0.1)]' 
-                                            : 'text-[#1a1a1a] border-transparent'
+                                            ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-[#383a37]/50 shadow-[2px_2px_0_rgba(0,0,0,0.1)]' 
+                                            : 'text-white border-transparent'
                                         }`}
                                     >
                                         <span style={{ visibility: interactMenuIdx === idx ? 'visible' : 'hidden' }}>▶</span>
@@ -13306,8 +13318,8 @@ function App() {
                                 ))}
                             </div>
 
-                            <div className="absolute bottom-6 w-full text-center px-4">
-                                <div className="text-[9px] font-black text-[#1a1a1a] opacity-60 border-t-2 border-[#383a37]/20 pt-2">
+                            <div className="absolute bottom-6 w-full text-center px-4 z-10">
+                                <div className="text-[9px] font-black text-white opacity-60 border-t-2 border-[#383a37]/20 pt-2">
                                     使用 [A] 切換選項，[B] 執行動作
                                 </div>
                             </div>
