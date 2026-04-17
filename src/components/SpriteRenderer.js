@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { MONSTER_ASSET_IDS } from '../monsterData';
 
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
 const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silhouette = false }) => {
-    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/${id}.gif` : `assets/sprites/${id}.png`);
+    const assetId = MONSTER_ASSET_IDS[id] || id;
+    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/${assetId}.gif` : `assets/sprites/${assetId}.png`);
 
     useEffect(() => {
-        setImgSrc(animated ? `assets/animated/${id}.gif` : `assets/sprites/${id}.png`);
+        const currentAssetId = MONSTER_ASSET_IDS[id] || id;
+        setImgSrc(animated ? `assets/animated/${currentAssetId}.gif` : `assets/sprites/${currentAssetId}.png`);
     }, [id, animated]);
 
     if (!id) return null;
@@ -54,8 +57,9 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                 }}
                 alt="Monster Sprite"
                 onError={() => {
+                    const currentAssetId = MONSTER_ASSET_IDS[id] || id;
                     if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`assets/sprites/${id}.png`);
+                        setImgSrc(`assets/sprites/${currentAssetId}.png`);
                     }
                 }}
             />
@@ -67,10 +71,12 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
 // 背面 4-Color 網點運算引擎
 // ==========================================
 const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
-    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/back/${id}.gif` : `assets/back_sprites/${id}.png`);
+    const assetId = MONSTER_ASSET_IDS[id] || id;
+    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/back/${assetId}.gif` : `assets/back_sprites/${assetId}.png`);
 
     useEffect(() => {
-        setImgSrc(animated ? `assets/animated/back/${id}.gif` : `assets/back_sprites/${id}.png`);
+        const currentAssetId = MONSTER_ASSET_IDS[id] || id;
+        setImgSrc(animated ? `assets/animated/back/${currentAssetId}.gif` : `assets/back_sprites/${currentAssetId}.png`);
     }, [id, animated]);
 
     if (!id) return null;
@@ -115,8 +121,9 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                 }}
                 alt="Monster Back Sprite"
                 onError={() => {
+                    const currentAssetId = MONSTER_ASSET_IDS[id] || id;
                     if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`assets/back_sprites/${id}.png`);
+                        setImgSrc(`assets/back_sprites/${currentAssetId}.png`);
                     }
                 }}
             />

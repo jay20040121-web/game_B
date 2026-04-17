@@ -2213,7 +2213,7 @@ export default function App() {
                             else if (evolutionBranch === 'W_MAGIKARP_SOUL') {
                                 nextBranch = 'W_GYARADOS_SOUL'; // 無條件進化
                             }
-                            // 墨海馬 → 拉普拉斯 / 海刺龍
+                            // 海刺龍 → 拉普拉斯 / 刺龍王
                             else if (evolutionBranch === 'W_HORSEA_SOUL') {
                                 const wOpts = [];
                                 if (m >= 50 && ['rational', 'gentle'].includes(topTag))
@@ -2262,11 +2262,11 @@ export default function App() {
                                 fOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = fOpts[0].branch;
                             }
-                            // 卡蒂狗 → 風速狗（無條件）
+                            // 黑魯加 → 風速狗（無條件）
                             else if (evolutionBranch === 'F_GROWLITHE_SOUL') {
                                 nextBranch = 'F_ARCANINE_SOUL';
                             }
-                            // 小火馬 → 烈焰馬（無條件）
+                            // 火岩鼠 → 火爆獸（無條件）
                             else if (evolutionBranch === 'F_PONYTA_SOUL') {
                                 nextBranch = 'F_RAPIDASH_SOUL';
                             }
@@ -2299,7 +2299,7 @@ export default function App() {
                             }
                             else { nextBranch = evolutionBranch; }
                         } else if (evolutionStage === 3) {
-                            // 妙蛙草 / 派拉斯線
+                            // 妙蛙草 / 木守宮線
                             if (['GR_IVYSAUR_SOUL', 'GR_PARAS_SOUL'].includes(evolutionBranch)) {
                                 const grOpts = [];
                                 if (m >= 50 && h >= 50 && ['gentle', 'rational'].includes(topTag))
@@ -2308,11 +2308,11 @@ export default function App() {
                                 grOpts.sort((a, b) => b.count - a.count);
                                 nextBranch = grOpts[0].branch;
                             }
-                            // 臭臭花 → 霸王花（無條件）
+                            // 森林蜥蜴 → 蜥蜴王（無條件）
                             else if (evolutionBranch === 'GR_GLOOM_SOUL') {
                                 nextBranch = 'GR_VILEPLUME_SOUL';
                             }
-                            // 喇叭芽 → 大食花（無條件）
+                             // 奇魯莉安 → 沙奈朵（無條件）
                             else if (evolutionBranch === 'GR_BELLSPROUT_SOUL') {
                                 nextBranch = 'GR_VICTREEBEL_SOUL';
                             }

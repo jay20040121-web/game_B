@@ -29,7 +29,7 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
         if (branch === 'W_SQUIRTLE_SOUL' || branch === 'W_SOUL') return 7;  // Squirtle
         if (branch === 'W_DRATINI_SOUL') return 147; // Dratini
         if (branch === 'GR_SOUL') return 1; // Bulbasaur
-        if (branch === 'GR_ODDISH_SOUL') return 43; // Oddish
+        if (branch === 'GR_ODDISH_SOUL') return 43; // 木守宮 (Treecko)
         if (branch === 'G1') return 93;  // 鬼斯通
         if (branch === 'G2') return 64;  // 勇吉拉
         if (branch === 'P1') return 109; // 瓦斯彈
@@ -46,18 +46,18 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
         if (branch === 'B_E_SOUL') return 48; // Venonat
         if (branch === 'F_CHARMELEON_SOUL') return 5;  // Charmeleon
         if (branch === 'F_CUBONE_SOUL') return 104;    // Cubone
-        if (branch === 'F_GROWLITHE_SOUL') return 58;  // Growlithe
-        if (branch === 'F_PONYTA_SOUL') return 77;     // Ponyta
+        if (branch === 'F_GROWLITHE_SOUL') return 58;  // 黑魯加 (Houndoom)
+        if (branch === 'F_PONYTA_SOUL') return 77;     // 火岩鼠 (Quilava)
         if (branch === 'F_NINETALES_SOUL') return 38;  // Ninetales
         if (branch === 'W_WARTORTLE_SOUL' || branch === 'W_SOUL') return 8;  // Wartortle
         if (branch === 'W_DRAGONAIR_SOUL') return 148; // Dragonair
-        if (branch === 'W_HORSEA_SOUL') return 116; // Horsea
+        if (branch === 'W_HORSEA_SOUL') return 116; // 海刺龍 (Seadra)
         if (branch === 'W_MAGIKARP_SOUL') return 129; // Magikarp
         if (branch === 'GR_IVYSAUR_SOUL' || branch === 'GR_SOUL') return 2; // Ivysaur
-        if (branch === 'GR_PARAS_SOUL') return 46;     // Paras
-        if (branch === 'GR_BELLSPROUT_SOUL') return 69; // Bellsprout
+        if (branch === 'GR_PARAS_SOUL') return 46;     // 月桂葉 (Bayleef)
+        if (branch === 'GR_BELLSPROUT_SOUL') return 69; // 奇魯莉安 (Kirlia)
         if (branch === 'GR_EXEGGCUTE_SOUL') return 102; // Exeggcute
-        if (branch === 'GR_GLOOM_SOUL') return 44;     // Gloom
+        if (branch === 'GR_GLOOM_SOUL') return 44;     // 森林蜥蜴 (Grovyle)
         if (branch === 'G1') return 94;  // 耿鬼
         if (branch === 'G2') return 65;  // 胡地
         if (branch === 'P1_SPECIAL') return 82; // Magneton
@@ -78,17 +78,17 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
         if (branch === 'F_CHARIZARD_SOUL') return 6;   // Charizard
         if (branch === 'F_MAGMAR_SOUL') return 126;    // Magmar
         if (branch === 'F_MAROWAK_SOUL') return 105;   // Marowak
-        if (branch === 'F_ARCANINE_SOUL') return 59;   // Arcanine
-        if (branch === 'F_RAPIDASH_SOUL') return 78;   // Rapidash
+        if (branch === 'F_ARCANINE_SOUL') return 59;   // 風速狗 (Arcanine)
+        if (branch === 'F_RAPIDASH_SOUL') return 78;   // 火爆獸 (Typhlosion)
         if (branch === 'W_BLASTOISE_SOUL' || branch === 'W_SOUL') return 9;  // Blastoise
         if (branch === 'W_DRAGONITE_SOUL') return 149; // Dragonite
         if (branch === 'W_GYARADOS_SOUL') return 130;  // Gyarados
         if (branch === 'W_LAPRAS_SOUL') return 131;    // Lapras
-        if (branch === 'W_SEADRA_SOUL') return 117;    // Seadra
+        if (branch === 'W_SEADRA_SOUL') return 117;    // 刺龍王 (Kingdra)
         if (branch === 'GR_VENUSAUR_SOUL' || branch === 'GR_SOUL') return 3; // Venusaur
-        if (branch === 'GR_PARASECT_SOUL') return 47;     // Parasect
-        if (branch === 'GR_VILEPLUME_SOUL') return 45;    // Vileplume
-        if (branch === 'GR_VICTREEBEL_SOUL') return 71;   // Victreebel
+        if (branch === 'GR_PARASECT_SOUL') return 47;     // 大竺葵 (Meganium)
+        if (branch === 'GR_VILEPLUME_SOUL') return 45;    // 蜥蜴王 (Sceptile)
+        if (branch === 'GR_VICTREEBEL_SOUL') return 71;   // 沙奈朵 (Gardevoir)
         if (branch === 'GR_EXEGGUTOR_SOUL') return 103;   // Exeggutor
         if (branch === 'FAIL_ABC') return 137; // 3D獸 (一般線失敗分支)
         if (branch === 'DRAGON') return 147; // 迷你龍 (靈魂龍進化)
