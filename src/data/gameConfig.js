@@ -7,13 +7,10 @@ const PHYSICS = {
     MAX_VELOCITY: 7.0,
 };
 
-const EVOLUTION_TIME = {
-    1: 3600000,   // 1 小時 (Baby -> Child / 幼年期 -> 成長期)
-    2: 21600000,   // 6 小時 (Child -> Adult)
-    3: 86400000,   // 24 小時 (Adult -> Perfect)
-};
 
-const FINAL_LIFETIME = 604800000; // 最終階段壽命：7 天 (604,800,000 ms)
+// 已遷移至 src/data/evolutionConfig.js
+// const EVOLUTION_TIME = ...
+// const FINAL_LIFETIME = ...
 
 // ==========================================
 // 冒險系統基礎數據 (Adventure Constants)
@@ -211,7 +208,7 @@ const generateSoulQuestions = () => {
 const SOUL_QUESTIONS = generateSoulQuestions();
 
 export {
-    apiKey, modelName, PHYSICS, EVOLUTION_TIME, FINAL_LIFETIME, ADV_ITEMS, DIARY_ITEM, 
+    apiKey, modelName, PHYSICS, ADV_ITEMS, DIARY_ITEM, 
     DIARY_MESSAGES_TEMPLATE, ADV_BATTLE_RULES, RAW_Q_DATA, SOUL_QUESTIONS,
     getPetDailyMessage, DIARY_STORAGE_KEY, loadDiaryData, saveDiaryData, getSmartMove
 };

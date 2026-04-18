@@ -13,8 +13,6 @@ import {
     SKILL_DATABASE,
     TYPE_SKILLS,
     ADV_WILD_POOL,
-    WILD_EVOLUTION_MAP,
-    TYPE_CHART,
     TYPE_MAP,
     NATURE_CONFIG,
     getTypeMultiplier,
@@ -24,11 +22,13 @@ import {
     TRAINER_POOLS
 } from './monsterData';
 
+import { EVO_TIMES, WILD_EVOLUTION_MAP } from './src/data/evolutionConfig';
+
 import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } from './src/components/SpriteRenderer';
 
 
 import {
-    apiKey, modelName, PHYSICS, EVOLUTION_TIME, FINAL_LIFETIME, ADV_ITEMS, DIARY_ITEM,
+    apiKey, modelName, PHYSICS, ADV_ITEMS, DIARY_ITEM,
     DIARY_MESSAGES_TEMPLATE, ADV_BATTLE_RULES, RAW_Q_DATA, SOUL_QUESTIONS,
     getPetDailyMessage, DIARY_STORAGE_KEY, loadDiaryData, saveDiaryData, getSmartMove
 } from './src/data/gameConfig';
@@ -860,7 +860,7 @@ export default function App() {
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
-        const thresh = debugOverrides.evolutionMs ?? (EVOLUTION_TIME[evolutionStage] || FINAL_LIFETIME);
+        const thresh = debugOverrides.evolutionMs ?? (EVO_TIMES[evolutionStage] || EVO_TIMES.FINAL_LIFETIME);
 
         // Total drop phase logic: Ensure it drops 100 units over the entire phase
         const TARGET_DROP_PER_STAGE = 100;
@@ -873,7 +873,7 @@ export default function App() {
         }, TICK_MS);
 
         return () => clearInterval(decayTimer);
-    }, [isBooting, isDead, isEvolving, evolutionStage, isRunaway]);
+    }, [isBooting, isDead, isEvolving, evolutionStage, isRunaway, debugOverrides]);
 
     const updateDialogue = (text) => {
         setDialogue(text);
@@ -2021,7 +2021,7 @@ export default function App() {
     };
 
     useEffect(() => {
-        if (isBooting || isDead || isEvolving || miniGame || isRunaway) return;
+        if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
         const checkEvolutionInterval = setInterval(() => {
             const elapsed = Date.now() - lastEvolutionTime;
@@ -2031,7 +2031,7 @@ export default function App() {
             const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
 
             if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['P1', 'P2', 'G1', 'G2', 'C', 'F_FAIL1', 'P1_SPECIAL', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
-                const lifespan = FINAL_LIFETIME;
+            const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
                 if (elapsed >= lifespan) {
                     clearInterval(checkEvolutionInterval);
                     // D線抽籤：20% 機率靈魂重生
@@ -2056,7 +2056,7 @@ export default function App() {
                 return;
             }
 
-            const currentThresh = EVOLUTION_TIME[evolutionStage];
+            const currentThresh = debugOverrides.evolutionMs ?? EVO_TIMES[evolutionStage];
             if (elapsed >= currentThresh) {
                 clearInterval(checkEvolutionInterval);
                 setIsEvolving(true);
@@ -2384,7 +2384,7 @@ export default function App() {
         }, 500);
 
         return () => clearInterval(checkEvolutionInterval);
-    }, [isBooting, evolutionStage, isDead, isEvolving, lastEvolutionTime, miniGame, isRunaway]);
+    }, [isBooting, evolutionStage, isDead, isEvolving, lastEvolutionTime, miniGame, isRunaway, debugOverrides, isDuplicateTab]);
 
     useEffect(() => {
         if (!miniGame || miniGame.status === 'result') return;

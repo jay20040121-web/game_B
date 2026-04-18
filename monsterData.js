@@ -6625,15 +6625,8 @@ export const ADV_WILD_POOL = [
     { id: 60, name: "蚊香蝌蚪", weight: 10, power: 82, type: "water" }
 ];
 
-export const WILD_EVOLUTION_MAP = {
-    "16": 17, "17": 18,
-    "23": 24,
-    "27": 28,
-    "41": 42, "42": 169,
-    "56": 57, "57": 979,
-    "74": 75, "75": 76,
-    "60": 61, "61": 62
-};
+// 已遷移至 src/data/evolutionConfig.js
+// export const WILD_EVOLUTION_MAP = ...
 
 // 只有玩家能獲得的怪獸才會顯示在圖鑑中 (依進化鏈順序排列)
 export const OBTAINABLE_MONSTER_IDS = [
