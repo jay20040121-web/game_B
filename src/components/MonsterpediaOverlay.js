@@ -17,10 +17,13 @@ const getEvoDesc = (id) => {
         return `進化方向：\n${nextName}：無特殊條件`;
     }
 
-    // 2. 處理百變怪起始點 (百變怪分支較多且跨鏈，直接讀取 START.branches)
+    // 2. 處理百變怪起始點 (客製化說明)
     if (numId === 132) {
-        const startChain = EVOLUTION_CHAINS.START;
-        return "進化方向：\n" + startChain.branches.map(b => b.desc).join('\n');
+        return "進化方向：\n" +
+            "【靈魂線】透過談心選擇進入不同屬性路線\n" +
+            "【一般/毒化線】透過互動進入不同支線\n" +
+            "【格鬥線】透過特訓次數\n" +
+            "【野外線】透過冒險機率觸發";
     }
 
     // 3. 處理常規與魂系分支
