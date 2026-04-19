@@ -153,8 +153,14 @@ export default function App() {
     const miniGameResultFired = useRef(false);
     const advLogRef = useRef(null);
 
-    const [pos, setPos] = useState({ x: 128, y: 80 });
-    const [vel, setVel] = useState({ x: 0.6, y: 0.4 });
+    // --- 效能最佳化：改用 Ref 儲存高頻變動數值 ---
+    const posRef = useRef({ x: 128, y: 80 });
+    const velRef = useRef({ x: 0.6, y: 0.4 });
+    const monsterRef = useRef(null);
+    const spriteRef = useRef(null);
+    const requestRef = useRef();
+    const lastSaveTimeRef = useRef(0);
+
     const [isSpinning, setIsSpinning] = useState(false);
     const [isEvolving, setIsEvolving] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
@@ -607,7 +613,10 @@ export default function App() {
         };
 
         checkTab();
-        const timer = setInterval(checkTab, 1500);
+        const timer = setInterval(() => {
+            if (document.hidden) return;
+            checkTab();
+        }, 1500);
         return () => {
             clearInterval(timer);
             // 離開時清除鎖定，讓其他分頁能快速接手
@@ -640,6 +649,7 @@ export default function App() {
         let timer;
         if (isBooting) {
             timer = setInterval(() => {
+                if (document.hidden) return;
                 playBloop('heartbeat');
             }, 2000);
         }
@@ -651,6 +661,7 @@ export default function App() {
         let timer;
         if (isBooting) {
             timer = setInterval(() => {
+                if (document.hidden) return;
                 setIsBootMonsterVisible(false); // 觸發淡出
                 setTimeout(() => {
                     setBootMonsterPosIdx(prev => (prev + 1) % 4);
@@ -716,6 +727,10 @@ export default function App() {
     // 1️⃣ 本地存檔：負責頻繁更新 localStorage (包含每秒跳動的數值)
     useEffect(() => {
         try {
+            // 每 5 秒最多儲存一次，除非是重要操作 (手動觸發)
+            const now = Date.now();
+            if (now - lastSaveTimeRef.current < 5000) return;
+
             const currentData = {
                 saveVersion: SAVE_VERSION,
                 hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch,
@@ -733,6 +748,7 @@ export default function App() {
 
             localStorage.setItem('pixel_monster_save', currentDataStr);
             lastSavedDataRef.current = currentDataStr;
+            lastSaveTimeRef.current = now;
         } catch (e) { }
     }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, lastSaveTime]);
 
@@ -791,7 +807,10 @@ export default function App() {
             });
         };
         archiveToday(); // 立即執行一次
-        const timer = setInterval(archiveToday, 30000); // 每 30 秒檢查
+        const timer = setInterval(() => {
+            if (document.hidden) return;
+            archiveToday();
+        }, 30000); // 每 30 秒檢查
         return () => clearInterval(timer);
     }, [todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lockedAffinity, evolutionStage, evolutionBranch]);
 
@@ -812,44 +831,69 @@ export default function App() {
     ];
 
     useEffect(() => {
-        if (isDead || isEvolving || (miniGame && miniGame.type !== 'status') || isDuplicateTab) return;
+        if (isDead || isEvolving || (miniGame && miniGame.type !== 'status' && miniGame.status !== 'result') || isDuplicateTab) {
+            if (requestRef.current) cancelAnimationFrame(requestRef.current);
+            return;
+        }
 
-        const engineTimer = setInterval(() => {
-            setPos(prev => {
-                // 恢復為舊版的平滑滑動（移除導致抽搐的 Math.random，以及解除 Idle 時被強制釘死在 Y=86 的限制）
-                let nextX = (prev.x || 128) + (vel.x || 0.6) * (PHYSICS.FLOAT_SPEED || 0.36);
-                let nextY = (prev.y || 128) + (vel.y || 0.4) * (PHYSICS.FLOAT_SPEED || 0.36);
+        const animate = () => {
+            if (document.hidden) {
+                requestRef.current = requestAnimationFrame(animate);
+                return;
+            }
 
-                let newVelX = vel.x;
-                let newVelY = vel.y;
+            const p = posRef.current;
+            const v = velRef.current;
 
-                const MARGIN_X = 80;
-                const MARGIN_TOP = 55;
-                const MARGIN_BOTTOM = 86;
+            let nextX = p.x + v.x * (PHYSICS.FLOAT_SPEED || 0.36);
+            let nextY = p.y + v.y * (PHYSICS.FLOAT_SPEED || 0.36);
 
-                if (nextX <= MARGIN_X) {
-                    newVelX = Math.abs(vel.x) * PHYSICS.BOUNCE_DAMPING;
-                    nextX = MARGIN_X;
-                } else if (nextX >= 256 - MARGIN_X) {
-                    newVelX = -Math.abs(vel.x) * PHYSICS.BOUNCE_DAMPING;
-                    nextX = 256 - MARGIN_X;
-                }
+            let newVelX = v.x;
+            let newVelY = v.y;
 
-                if (nextY <= MARGIN_TOP) {
-                    newVelY = Math.abs(vel.y) * PHYSICS.BOUNCE_DAMPING;
-                    nextY = MARGIN_TOP;
-                } else if (nextY >= MARGIN_BOTTOM) {
-                    newVelY = -Math.abs(vel.y) * PHYSICS.BOUNCE_DAMPING;
-                    nextY = MARGIN_BOTTOM;
-                }
+            const MARGIN_X = 80;
+            const MARGIN_TOP = 55;
+            const MARGIN_BOTTOM = 86;
 
-                if (newVelX !== vel.x || newVelY !== vel.y) setVel({ x: newVelX, y: newVelY });
-                return { x: nextX, y: nextY };
-            });
-        }, 16);
+            if (nextX <= MARGIN_X) {
+                newVelX = Math.abs(v.x) * (PHYSICS.BOUNCE_DAMPING || 0.98);
+                nextX = MARGIN_X;
+            } else if (nextX >= 256 - MARGIN_X) {
+                newVelX = -Math.abs(v.x) * (PHYSICS.BOUNCE_DAMPING || 0.98);
+                nextX = 256 - MARGIN_X;
+            }
 
-        return () => clearInterval(engineTimer);
-    }, [vel, isDead, isEvolving, miniGame, isDuplicateTab]);
+            if (nextY <= MARGIN_TOP) {
+                newVelY = Math.abs(v.y) * (PHYSICS.BOUNCE_DAMPING || 0.98);
+                nextY = MARGIN_TOP;
+            } else if (nextY >= MARGIN_BOTTOM) {
+                newVelY = -Math.abs(v.y) * (PHYSICS.BOUNCE_DAMPING || 0.98);
+                nextY = MARGIN_BOTTOM;
+            }
+
+            posRef.current = { x: nextX, y: nextY };
+            velRef.current = { x: newVelX, y: newVelY };
+
+            if (monsterRef.current) {
+                // 使用 transform: translate 效能最好，但因為原本 JSX 用 left/top
+                // 我們直接更新 style.left/top 以降低改動風險，並達成跳過 React re-render 的目的
+                monsterRef.current.style.left = `${nextX}px`;
+                monsterRef.current.style.top = `${nextY}px`;
+            }
+            if (spriteRef.current) {
+                const angle = (!isDead && isSpinning) ? 'rotate(180deg)' : '';
+                const flip = (newVelX < 0) ? 'scaleX(1)' : 'scaleX(-1)';
+                spriteRef.current.style.transform = `${angle} ${flip}`;
+            }
+
+            requestRef.current = requestAnimationFrame(animate);
+        };
+
+        requestRef.current = requestAnimationFrame(animate);
+        return () => {
+            if (requestRef.current) cancelAnimationFrame(requestRef.current);
+        };
+    }, [isDead, isEvolving, miniGame, isDuplicateTab, isSpinning]);
 
     // 用 Ref 確保可以隨時讀取最新狀態而不觸發 useEffect 重啟
     const latestStats = useRef({ mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats });
@@ -912,7 +956,7 @@ export default function App() {
 
         setTimeout(() => {
             setMiniGame(null);
-            setVel({ x: (Math.random() - 0.5) * 4, y: -2.0 });
+            velRef.current = { x: (Math.random() - 0.5) * 4, y: -2.0 };
         }, 1500);
     };
 
@@ -928,7 +972,7 @@ export default function App() {
             setStageTrainWins(t => t + 1);
             setTodayTrainWins(t => t + 1);
             setMood(m => Math.min(100, m + 15));
-            setVel({ x: 0, y: -10.0 }); // 興奮大跳躍
+            velRef.current = { x: 0, y: -10.0 }; // 興奮大跳躍
 
             // --- 🔹 實裝特訓努力值獲益 (+10 EVs) 🔹 ---
             let statKey = 'atk';
@@ -966,7 +1010,7 @@ export default function App() {
 
         setTimeout(() => {
             setMiniGame(null);
-            setVel({ x: (Math.random() - 0.5) * 4, y: -2.0 });
+            velRef.current = { x: (Math.random() - 0.5) * 4, y: -2.0 };
         }, 1500);
     };
 
@@ -1766,7 +1810,7 @@ export default function App() {
         }
 
         if (activeIndex === -1) {
-            setVel(v => ({ x: v.x, y: -4.0 }));
+            velRef.current = { x: velRef.current.x, y: -4.0 };
             updateDialogue("抓到你了！");
             logEvent("玩家進行了主動摸摸。");
             return;
@@ -1913,7 +1957,7 @@ export default function App() {
                 setFeedCount(f => f + 1);
                 setTodayFeedCount(f => f + 1);
                 recordGameAction(); // 紀錄餵食
-                setVel(v => ({ x: v.x, y: -5.0 }));
+                velRef.current = { x: velRef.current.x, y: -5.0 };
                 updateDialogue("真好吃！");
                 logEvent("餵食了怪獸。");
                 break;
@@ -1945,7 +1989,7 @@ export default function App() {
                 }
                 setMood(m => Math.min(100, m + 20));
                 recordGameAction(); // 紀錄撫摸
-                setVel(v => ({ x: v.x, y: -4.0 }));
+                velRef.current = { x: velRef.current.x, y: -4.0 };
                 updateDialogue("好開心！");
                 logEvent("親密互動。");
                 break;
@@ -1979,8 +2023,8 @@ export default function App() {
                     setMiniGame({ type: 'spin_heart', status: 'idle', items: spinItems, currentIdx: 0, result: null });
                     updateDialogue("當出現紅色愛心時按B鍵！", true);
                 }
-                setPos({ x: 128, y: 190 });
-                setVel({ x: 0, y: 0 });
+                posRef.current = { x: 128, y: 190 };
+                velRef.current = { x: 0, y: 0 };
                 logEvent("開始特訓。");
                 setActiveIndex(-1);
                 break;
@@ -2024,6 +2068,7 @@ export default function App() {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
         const checkEvolutionInterval = setInterval(() => {
+            if (document.hidden) return;
             const elapsed = Date.now() - lastEvolutionTime;
 
             // 判斷是否壽終（無法再進化）
@@ -2040,7 +2085,7 @@ export default function App() {
                     setDeathBranch(dLine);
                     setIsGenerating(true);
                     setIsDead(true);
-                    setVel({ x: 0, y: -0.1 });
+                    velRef.current = { x: 0, y: -0.1 };
                     setTimeout(() => {
                         let words = dLine
                             ? "靈魂不滅...我還會回來的..."
@@ -2390,6 +2435,7 @@ export default function App() {
         if (!miniGame || miniGame.status === 'result') return;
 
         const interval = setInterval(() => {
+            if (document.hidden) return;
             if (miniGame.type === 'reaction') {
                 const now = Date.now();
                 const diff = miniGame.targetTime - now;
@@ -2426,7 +2472,7 @@ export default function App() {
                     return { ...prev, energy: nextE };
                 });
                 if (miniGame.status === 'charging') {
-                    setPos({ x: 128 + (Math.random() - 0.5) * 4, y: 190 + (Math.random() - 0.5) * 4 });
+                    posRef.current = { x: 128 + (Math.random() - 0.5) * 4, y: 190 + (Math.random() - 0.5) * 4 };
                 }
             } else if (miniGame.type === 'spin') {
                 if (miniGame.status === 'spinning') {
@@ -2459,6 +2505,7 @@ export default function App() {
     // --- 冒險 CD 計時器 ---
     useEffect(() => {
         const timer = setInterval(() => {
+            if (document.hidden) return;
             const now = Date.now();
             const diff = Math.max(0, Math.floor((lastAdvTime + ADV_BATTLE_RULES.CD_MS - now) / 1000));
             setAdvCD(diff);
@@ -2893,8 +2940,8 @@ export default function App() {
         setIsDead(false);
         setFinalWords("");
         setShowRestartHint(false);
-        setPos({ x: 128, y: 128 });
-        setVel({ x: 0.6, y: 0.4 });
+        posRef.current = { x: 128, y: 128 };
+        velRef.current = { x: 0.6, y: 0.4 };
         setSteps(0);
         setLastEvolutionTime(Date.now());
         setStageTrainWins(0);
@@ -3545,22 +3592,26 @@ export default function App() {
                                     )}
 
                                     <div
+                                        ref={monsterRef}
                                         className="absolute"
                                         style={{
-                                            left: pos.x, top: pos.y,
+                                            left: posRef.current.x, top: posRef.current.y,
                                             transform: 'translate(-50%, -50%)',
                                             animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none',
                                             zIndex: 40
                                         }}
                                     >
-                                        <div style={{
-                                            transform: `${!isDead && isSpinning ? 'rotate(180deg)' : ''} ${vel.x < 0 ? 'scaleX(1)' : 'scaleX(-1)'}`,
-                                            transformOrigin: 'center center',
-                                            transition: 'transform 0.15s ease-out', // 稍微平滑化轉向過程
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
+                                        <div 
+                                            ref={spriteRef}
+                                            style={{
+                                                transform: `${!isDead && isSpinning ? 'rotate(180deg)' : ''} ${velRef.current.x < 0 ? 'scaleX(1)' : 'scaleX(-1)'}`,
+                                                transformOrigin: 'center center',
+                                                transition: 'transform 0.15s ease-out', // 稍微平滑化轉向過程
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
                                             {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterIdWrapped(); return null; })()}
                                             <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()} />
                                         </div>
