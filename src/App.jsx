@@ -1359,25 +1359,7 @@ export default function App() {
         }
 
         if (battleState.mode === 'pvp') {
-            setAdvStats(prev => ({
-                ...prev,
-                basePower: prev.basePower + 10
-            }));
-
-            if (connInstance.current) {
-                try { connInstance.current.close(); } catch (e) { }
-                connInstance.current = null;
-            }
-            pvpRemoteMoveRef.current = null;
-            setPendingPlayerMove(null);
-
-            setIsPvpMode(false);
-            setMatchStatus('idle');
-            setBattleState(prev => ({ ...prev, active: false }));
-            updateDialogue("對戰勝利！獲得 10 點戰力！");
-            if (user) updatePvpStats(true); // 更新排行榜
-            logEvent("在一場精彩的連線對決中獲得了勝利，戰力 +10。");
-            playBloop('success');
+            handleBattleEnd(true);
             return; // PvP 模式不進入冒險流程
         }
 
@@ -1401,25 +1383,7 @@ export default function App() {
             return;
         }
         if (battleState.mode === 'pvp') {
-            setAdvStats(prev => ({
-                ...prev,
-                basePower: prev.basePower + 5
-            }));
-
-            if (connInstance.current) {
-                try { connInstance.current.close(); } catch (e) { }
-                connInstance.current = null;
-            }
-            pvpRemoteMoveRef.current = null;
-            setPendingPlayerMove(null);
-
-            setIsPvpMode(false);
-            setMatchStatus('idle');
-            setBattleState(prev => ({ ...prev, active: false }));
-            updateDialogue("對戰結束，獲得 5 點戰力！");
-            if (user) updatePvpStats(false); // 更新排行榜 (敗場)
-            logEvent("在一場連線對決中落敗，獲得了 5 點戰力的鼓勵。");
-            playBloop('fail');
+            handleBattleEnd(false);
             return; // PvP 模式不進入冒險流程
         }
 
@@ -3050,19 +3014,6 @@ export default function App() {
 
 
 
-    const pvp = usePvpConnection({
-        updateDialogue, setBattleState, getMonsterId: getMonsterIdWrapped, executeBattleTurn, generateMyBattleStats, setAlertMsg, playBloop, user, generateBattleState
-    });
-    const {
-        isPvpMode, setIsPvpMode, matchStatus, setMatchStatus, matchStatusRef, syncMatchStatus,
-        myPeerId, setMyPeerId, targetPeerId, setTargetPeerId, pvpRoomPassword, setPvpRoomPassword,
-        pvpOpponent, setPvpOpponent, pvpLog, setPvpLog, isMyTurn, setIsMyTurn,
-        pvpCurrentHP, setPvpCurrentHP, pvpOpponentHP, setPvpOpponentHP,
-        pendingPlayerMove, setPendingPlayerMove,
-        peerInstance, connInstance, isHost, pvpRemoteMoveRef,
-        cleanupPvp, initPeer, joinPvpRoom, quickMatch
-    } = pvp;
-
     // --- PVP 排行榜 (已模組化至 useLeaderboard) ---
     const {
         leaderboard, leaderboardPage, setLeaderboardPage,
@@ -3070,6 +3021,31 @@ export default function App() {
         isLeaderboardLoading,
         fetchLeaderboard, updatePvpStats
     } = useLeaderboard({ user, getMonsterId: getMonsterIdWrapped, updateDialogue });
+
+    const pvp = usePvpConnection({
+        updateDialogue, 
+        setBattleState, 
+        getMonsterId: getMonsterIdWrapped, 
+        executeBattleTurn, 
+        generateMyBattleStats, 
+        setAlertMsg, 
+        playBloop, 
+        user, 
+        generateBattleState,
+        setAdvStats,
+        logEvent,
+        updatePvpStats
+    });
+
+    const {
+        isPvpMode, setIsPvpMode, matchStatus, setMatchStatus, matchStatusRef, syncMatchStatus,
+        myPeerId, setMyPeerId, targetPeerId, setTargetPeerId, pvpRoomPassword, setPvpRoomPassword,
+        pvpOpponent, setPvpOpponent, pvpLog, setPvpLog, isMyTurn, setIsMyTurn,
+        pvpCurrentHP, setPvpCurrentHP, pvpOpponentHP, setPvpOpponentHP,
+        pendingPlayerMove, setPendingPlayerMove,
+        peerInstance, connInstance, isHost, pvpRemoteMoveRef,
+        cleanupPvp, initPeer, joinPvpRoom, handleBattleEnd
+    } = pvp;
     
     // 🔹 當使用者登入成功且排行榜尚未讀取時，自動預載資料以供大賽系統使用
     useEffect(() => {
@@ -3241,17 +3217,12 @@ export default function App() {
                     {/* 冒險或連線對戰系統 Overlay */}
                     <BattleAdventureOverlay
                         isAdvMode={isAdvMode}
-                        isPvpMode={isPvpMode}
                         isTournamentOpen={tournament.isTournamentOpen}
                         battleState={battleState}
-                        matchStatus={matchStatus}
+                        pvp={pvp}
                         advCD={advCD}
                         advStats={advStats}
-                        myPeerId={myPeerId}
-                        pvpRoomPassword={pvpRoomPassword}
-                        setPvpRoomPassword={setPvpRoomPassword}
                         fetchLeaderboard={fetchLeaderboard}
-                        joinPvpRoom={joinPvpRoom}
                         startTournament={() => {
                             setIsPvpMode(false);
                             tournament.startTournament();

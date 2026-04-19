@@ -9,7 +9,12 @@ export const usePvpConnection = (deps) => {
         executeBattleTurn,
         generateMyBattleStats,
         setAlertMsg,
-        playBloop
+        playBloop,
+        user,
+        generateBattleState,
+        setAdvStats,
+        logEvent,
+        updatePvpStats
     } = deps;
 
     // --- PvP 系統專屬狀態 (WebRTC/PeerJS) ---
@@ -40,7 +45,47 @@ export const usePvpConnection = (deps) => {
     // PeerJS 核心連線邏輯 & 穩定性強化
     // =========================================
 
-    // 統一重置 PvP 狀態與連線 (避免卡死)
+    // 對戰結束後的統一結算邏輯
+    const handleBattleEnd = (isWin) => {
+        const bpGain = isWin ? 10 : 5;
+        const msg = isWin ? `對戰勝利！獲得 ${bpGain} 點戰力！` : `對戰結束，獲得 ${bpGain} 點戰力！`;
+        const logMsg = isWin 
+            ? `在一場精彩的連線對決中獲得了勝利，戰力 +${bpGain}。` 
+            : `在一場連線對決中落敗，獲得了 ${bpGain} 點戰力的鼓勵。`;
+
+        // 1. 更新戰力
+        if (setAdvStats) {
+            setAdvStats(prev => ({
+                ...prev,
+                basePower: prev.basePower + bpGain
+            }));
+        }
+
+        // 2. 清理連線
+        if (connInstance.current) {
+            try { connInstance.current.close(); } catch (e) { }
+            connInstance.current = null;
+        }
+        pvpRemoteMoveRef.current = null;
+        setPendingPlayerMove(null);
+
+        // 3. 重置模式與狀態
+        setIsPvpMode(false);
+        syncMatchStatus('idle');
+        setBattleState(prev => ({ ...prev, active: false }));
+
+        // 4. 回饋與日誌
+        if (updateDialogue) updateDialogue(msg);
+        if (logEvent) logEvent(logMsg);
+        if (playBloop) playBloop(isWin ? 'success' : 'fail');
+
+        // 5. 更新排行榜 (如果有登入)
+        if (user && updatePvpStats) {
+            updatePvpStats(isWin);
+        }
+    };
+
+    // 統一重置 PvP 狀態與連線 (用於取消或錯誤時)
     const cleanupPvp = (msg = null, destroyPeer = true) => {
         if (msg) updateDialogue(msg);
 
@@ -271,22 +316,42 @@ export const usePvpConnection = (deps) => {
     });
 
     return {
-        // States
-        isPvpMode, setIsPvpMode,
-        matchStatus, setMatchStatus,
-        matchStatusRef, syncMatchStatus,
-        myPeerId, setMyPeerId,
-        targetPeerId, setTargetPeerId,
-        pvpRoomPassword, setPvpRoomPassword,
-        pvpOpponent, setPvpOpponent,
-        pvpLog, setPvpLog,
-        isMyTurn, setIsMyTurn,
-        pvpCurrentHP, setPvpCurrentHP,
-        pvpOpponentHP, setPvpOpponentHP,
-        pendingPlayerMove, setPendingPlayerMove,
-        // Refs
-        peerInstance, connInstance, isHost, pvpRemoteMoveRef,
-        // Methods
-        cleanupPvp, initPeer, joinPvpRoom
+        // --- Properties ---
+        isPvpMode,
+        matchStatus,
+        matchStatusRef,
+        myPeerId,
+        targetPeerId,
+        pvpRoomPassword,
+        pvpOpponent,
+        pvpLog,
+        isMyTurn,
+        pvpCurrentHP,
+        pvpOpponentHP,
+        pendingPlayerMove,
+        
+        // --- Methods / Setters ---
+        setIsPvpMode,
+        setMatchStatus,
+        syncMatchStatus,
+        setMyPeerId,
+        setTargetPeerId,
+        setPvpRoomPassword,
+        setPvpOpponent,
+        setPvpLog,
+        setIsMyTurn,
+        setPvpCurrentHP,
+        setPvpOpponentHP,
+        setPendingPlayerMove,
+        cleanupPvp,
+        initPeer,
+        joinPvpRoom,
+        handleBattleEnd,
+
+        // --- Raw Refs ---
+        peerInstance,
+        connInstance,
+        isHost,
+        pvpRemoteMoveRef
     };
 };

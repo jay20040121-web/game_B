@@ -3,17 +3,12 @@ import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 
 export default function BattleAdventureOverlay({
     isAdvMode,
-    isPvpMode,
     isTournamentOpen,
     battleState,
-    matchStatus,
+    pvp,
     advCD,
     advStats,
-    myPeerId,
-    pvpRoomPassword,
-    setPvpRoomPassword,
     fetchLeaderboard,
-    joinPvpRoom,
     startTournament,
     advLogRef,
     advLog,
@@ -21,6 +16,12 @@ export default function BattleAdventureOverlay({
     isAdvStreaming,
     pendingWildCapture
 }) {
+    // 從封裝好的 pvp 物件中解構出需要的狀態與方法
+    const { 
+        isPvpMode, matchStatus, myPeerId, 
+        pvpRoomPassword, setPvpRoomPassword, joinPvpRoom 
+    } = pvp;
+
     // 嚴格檢查：如果是大賽模式且戰鬥未開始，或者是其他模式未開啟，就隱藏 (避免洩漏大廳/冒險介面)
     // 但如果玩家主動開啟了冒險或 PvP 模式，則不應該被大賽的殘留狀態阻擋
     if (!isAdvMode && !isPvpMode) {

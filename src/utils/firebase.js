@@ -1,4 +1,8 @@
-// Firebase Initialization (Compat for UMD)
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+
+// Firebase Initialization (Modular Compat)
 const firebaseConfig = {
     apiKey: "AIzaSyC4dn9ugKWNRGhaMpSiTV40GnuH-cDyvVI",
     authDomain: "gamea-42ecd.firebaseapp.com",
@@ -9,18 +13,17 @@ const firebaseConfig = {
     measurementId: "G-VJ5K0P6321"
 };
 
-// 安全檢查：確保在瀏覽器環境且 firebase 已載入
-let auth = null;
-let db = null;
-let googleProvider = null;
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-if (typeof window !== "undefined" && window.firebase) {
-    if (!window.firebase.apps.length) {
-        window.firebase.initializeApp(firebaseConfig);
-    }
-    auth = window.firebase.auth();
-    db = window.firebase.firestore();
-    googleProvider = new window.firebase.auth.GoogleAuthProvider();
+const auth = firebase.auth();
+const db = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// 暴露到全域以便某些舊邏輯存取 (可選)
+if (typeof window !== 'undefined') {
+    window.firebase = firebase;
 }
 
 export { auth, db, googleProvider };
