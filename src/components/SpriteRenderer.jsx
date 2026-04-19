@@ -6,12 +6,13 @@ import { MONSTER_ASSET_IDS } from '../monsterData';
 // ==========================================
 const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silhouette = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
-    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/${assetId}.gif` : `assets/sprites/${assetId}.png`);
+    const base = import.meta.env.BASE_URL;
+    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/animated/${assetId}.gif` : `${base}assets/sprites/${assetId}.png`);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `assets/animated/${currentAssetId}.gif` : `assets/sprites/${currentAssetId}.png`);
-    }, [id, animated]);
+        setImgSrc(animated ? `${base}assets/animated/${currentAssetId}.gif` : `${base}assets/sprites/${currentAssetId}.png`);
+    }, [id, animated, base]);
 
     if (!id) return null;
 
@@ -58,8 +59,9 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                 alt="Monster Sprite"
                 onError={() => {
                     const currentAssetId = MONSTER_ASSET_IDS[id] || id;
+                    const base = import.meta.env.BASE_URL;
                     if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`assets/sprites/${currentAssetId}.png`);
+                        setImgSrc(`${base}assets/sprites/${currentAssetId}.png`);
                     }
                 }}
             />
@@ -72,12 +74,13 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
 // ==========================================
 const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
-    const [imgSrc, setImgSrc] = useState(animated ? `assets/animated/back/${assetId}.gif` : `assets/back_sprites/${assetId}.png`);
+    const base = import.meta.env.BASE_URL;
+    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/animated/back/${assetId}.gif` : `${base}assets/back_sprites/${assetId}.png`);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `assets/animated/back/${currentAssetId}.gif` : `assets/back_sprites/${currentAssetId}.png`);
-    }, [id, animated]);
+        setImgSrc(animated ? `${base}assets/animated/back/${currentAssetId}.gif` : `${base}assets/back_sprites/${currentAssetId}.png`);
+    }, [id, animated, base]);
 
     if (!id) return null;
 
@@ -122,8 +125,9 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                 alt="Monster Back Sprite"
                 onError={() => {
                     const currentAssetId = MONSTER_ASSET_IDS[id] || id;
+                    const base = import.meta.env.BASE_URL;
                     if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`assets/back_sprites/${currentAssetId}.png`);
+                        setImgSrc(`${base}assets/back_sprites/${currentAssetId}.png`);
                     }
                 }}
             />

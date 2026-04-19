@@ -11,7 +11,7 @@ export default function LeaderboardOverlay({
 
     return (
         <div className="absolute inset-0 z-[500] flex flex-col items-center p-2 font-bold select-none animate-fade-in text-white" style={{ 
-            backgroundImage: 'url("assets/BG/共用底圖.png")',
+            backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/共用底圖.png")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
         }}>

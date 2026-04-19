@@ -16,7 +16,7 @@ export default function StatusOverlay({
 
     return (
         <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ 
-            backgroundImage: 'url("assets/BG/通用底層.png")',
+            backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/通用底層.png")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
         }}>

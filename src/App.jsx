@@ -811,15 +811,16 @@ export default function App() {
     }, []);
 
 
+    const base = import.meta.env.BASE_URL;
     const menuItems = [
-        { id: 'status', sprite: ICONS.status, label: '狀態(可觀看寵物成長資訊)', img: 'assets/BG/M1.png' },
-        { id: 'interact', sprite: ICONS.feed, label: '互動(餵食或撫摸寵物)', img: 'assets/BG/M2.png' },
-        { id: 'talk', sprite: ICONS.heart, label: '談心(根據喜好改變寵物特性)', img: 'assets/BG/M3.png' },
-        { id: 'train', sprite: ICONS.train, label: '特訓(提升寵物戰鬥力)', img: 'assets/BG/M4.png' },
-        { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)', img: 'assets/BG/M5.png' },
-        { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)', img: 'assets/BG/M6.png' },
-        { id: 'pedia', sprite: ICONS.footprint, label: '圖鑑(查看已收集的像素怪獸)', img: 'assets/BG/M7.png' },
-        { id: 'info', sprite: ICONS.info, label: '背包(裝著戰利品與寵物的回憶)', img: 'assets/BG/M8.png' },
+        { id: 'status', sprite: ICONS.status, label: '狀態(可觀看寵物成長資訊)', img: `${base}assets/BG/M1.png` },
+        { id: 'interact', sprite: ICONS.feed, label: '互動(餵食或撫摸寵物)', img: `${base}assets/BG/M2.png` },
+        { id: 'talk', sprite: ICONS.heart, label: '談心(根據喜好改變寵物特性)', img: `${base}assets/BG/M3.png` },
+        { id: 'train', sprite: ICONS.train, label: '特訓(提升寵物戰鬥力)', img: `${base}assets/BG/M4.png` },
+        { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)', img: `${base}assets/BG/M5.png` },
+        { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)', img: `${base}assets/BG/M6.png` },
+        { id: 'pedia', sprite: ICONS.footprint, label: '圖鑑(查看已收集的像素怪獸)', img: `${base}assets/BG/M7.png` },
+        { id: 'info', sprite: ICONS.info, label: '背包(裝著戰利品與寵物的回憶)', img: `${base}assets/BG/M8.png` },
     ];
 
     useEffect(() => {
@@ -3119,7 +3120,7 @@ export default function App() {
                     <div 
                         className="relative w-[320px] h-[620px] pt-[50px] pb-12 px-[32px] flex flex-col items-center"
                         style={{
-                            backgroundImage: "url('./assets/BG/BG_01.png')",
+                            backgroundImage: `url('${base}assets/BG/BG_01.png')`,
                             backgroundSize: '100% 100%',
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
@@ -3256,7 +3257,7 @@ export default function App() {
                     {isInteractMenuOpen && (
                         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" 
                              style={{ 
-                                 backgroundImage: 'url("assets/BG/共用底圖.png")',
+                                 backgroundImage: `url("${base}assets/BG/共用底圖.png")`,
                                  backgroundSize: 'cover',
                                  backgroundPosition: 'center'
                              }}>
@@ -3373,7 +3374,7 @@ export default function App() {
                                 }}>
                                     {/* 替換標題字體為 LOGO 圖片 */}
                                     <img 
-                                        src="assets/BG/LOGO.png" 
+                                        src={`${base}assets/BG/LOGO.png`} 
                                         alt="LOGO" 
                                         className="w-[180px] h-auto object-contain mb-1"
                                         style={{ imageRendering: 'pixelated' }}
@@ -3681,7 +3682,7 @@ export default function App() {
                                   flex items-center justify-center
                                 `}
                                 style={{
-                                    backgroundImage: `url('./assets/BG/${btn.key}.png')`,
+                                    backgroundImage: `url('${base}assets/BG/${btn.key}.png')`,
                                     backgroundSize: 'cover',
                                     backgroundPosition: 'center',
                                     backgroundRepeat: 'no-repeat',
@@ -3701,7 +3702,7 @@ export default function App() {
                         disabled={!isDead && isGenerating}
                         className={`w-[160px] h-[68px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
                         style={{
-                            backgroundImage: "url('./assets/BG/ED.png')",
+                            backgroundImage: `url('${base}assets/BG/ED.png')`,
                             backgroundSize: '100% 100%',
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',

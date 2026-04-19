@@ -83,7 +83,7 @@ export const MonsterpediaOverlay = ({
         <div
             className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2 animate-fade-in"
             style={{
-                backgroundImage: 'url("assets/BG/圖鑑系統背板.png")',
+                backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/圖鑑系統背板.png")`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
             }}

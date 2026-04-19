@@ -24,7 +24,7 @@ export function TournamentOverlay({
             {tPhase === 'intro' && (
                 <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
                     <img 
-                        src="assets/BG/聯盟大會開幕.png" 
+                        src={`${import.meta.env.BASE_URL}assets/BG/聯盟大會開幕.png`} 
                         alt="Tournament Intro" 
                         className="w-full h-full object-cover animate-fade-in"
                     />
@@ -105,7 +105,7 @@ export function TournamentOverlay({
             {tPhase === 'champion' && (
                 <div className="absolute inset-0 flex flex-col items-center overflow-hidden animate-fade-in">
                     <img 
-                        src="assets/BG/獲得冠軍.png" 
+                        src={`${import.meta.env.BASE_URL}assets/BG/獲得冠軍.png`} 
                         alt="Champion Background" 
                         className="absolute inset-0 w-full h-full object-cover z-0"
                     />
@@ -124,7 +124,7 @@ export function TournamentOverlay({
             {tPhase === 'lost' && (
                 <div className="absolute inset-0 flex flex-col items-center overflow-hidden animate-fade-in">
                     <img 
-                        src="assets/BG/淘汰.png" 
+                        src={`${import.meta.env.BASE_URL}assets/BG/淘汰.png`} 
                         alt="Defeat Background" 
                         className="absolute inset-0 w-full h-full object-cover z-0"
                     />
