@@ -514,13 +514,6 @@ export default function App() {
         } catch (e) { console.error(e); }
     };
 
-    // 清理連線
-    useEffect(() => {
-        return () => {
-            if (connInstance.current) connInstance.current.close();
-            if (peerInstance.current) peerInstance.current.destroy();
-        };
-    }, []);
 
     const [inventory, setInventory] = useState(initialData?.inventory || []);
     const [lastAdvTime, setLastAdvTime] = useState(initialData?.lastAdvTime || 0);

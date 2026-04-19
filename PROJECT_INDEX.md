@@ -25,9 +25,7 @@ game_A/
 │
 └── [工具腳本]
     ├── fetch_monster_data.py   — 從 PokeAPI 抓取怪獸資料
-    ├── sync.py                 — 同步 game_A → game_B
-    ├── vcs.py                  — 版本管理工具
-    └── watch.py                — 檔案監聽自動同步
+    └── vcs.py                  — 版本管理工具
 ```
 
 ---

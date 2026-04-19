@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Peer } from 'peerjs';
 import { PEER_PREFIX } from './envConfig';
 
 export const usePvpConnection = (deps) => {
@@ -235,7 +236,7 @@ export const usePvpConnection = (deps) => {
             }
         }, 15000);
 
-        const peer = customId ? new window.Peer(customId) : new window.Peer();
+        const peer = customId ? new Peer(customId) : new Peer();
 
         peer.on('open', (id) => {
             setMyPeerId(id);
@@ -310,10 +311,20 @@ export const usePvpConnection = (deps) => {
 
 
 
-    // 視窗關閉前確實銷毀連線
-    window.addEventListener('beforeunload', () => {
-        if (peerInstance.current) peerInstance.current.destroy();
-    });
+    // 視窗關閉或組件卸載時，確實銷毀連線
+    useEffect(() => {
+        const handleUnload = () => {
+            if (peerInstance.current) peerInstance.current.destroy();
+        };
+        window.addEventListener('beforeunload', handleUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleUnload);
+            if (peerInstance.current) {
+                console.log("[PVP] Component unmounting, destroying peer...");
+                peerInstance.current.destroy();
+            }
+        };
+    }, []);
 
     return {
         // --- Properties ---
