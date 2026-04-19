@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Peer } from 'peerjs';
 import { PEER_PREFIX } from './envConfig';
 

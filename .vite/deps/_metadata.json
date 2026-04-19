@@ -1,0 +1,55 @@
+{
+  "hash": "9c8cc795",
+  "configHash": "0088e89e",
+  "lockfileHash": "090bbb31",
+  "browserHash": "e66460bf",
+  "optimized": {
+    "firebase/compat/app": {
+      "src": "../../node_modules/firebase/compat/app/dist/esm/index.esm.js",
+      "file": "firebase_compat_app.js",
+      "fileHash": "a26fb110",
+      "needsInterop": false
+    },
+    "firebase/compat/auth": {
+      "src": "../../node_modules/firebase/compat/auth/dist/esm/index.esm.js",
+      "file": "firebase_compat_auth.js",
+      "fileHash": "23168e6a",
+      "needsInterop": false
+    },
+    "firebase/compat/firestore": {
+      "src": "../../node_modules/firebase/compat/firestore/dist/esm/index.esm.js",
+      "file": "firebase_compat_firestore.js",
+      "fileHash": "049500f0",
+      "needsInterop": false
+    },
+    "peerjs": {
+      "src": "../../node_modules/peerjs/dist/bundler.mjs",
+      "file": "peerjs.js",
+      "fileHash": "e5925e8c",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "2345ab36",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "8628e829",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-MTLR7HJU": {
+      "file": "chunk-MTLR7HJU.js"
+    },
+    "chunk-QRIG2ITU": {
+      "file": "chunk-QRIG2ITU.js"
+    },
+    "chunk-M5LBBGMC": {
+      "file": "chunk-M5LBBGMC.js"
+    }
+  }
+}
