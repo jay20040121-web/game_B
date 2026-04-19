@@ -1552,7 +1552,14 @@ export default function App() {
                 const currentIdx = battleState.menuIdx || 0;
                 const move = battleState.player?.moves?.[currentIdx];
                 if (move) {
-                    executeBattleTurn('attack', move);
+                    // ⏱️ 沉默緩衝 5 秒：若對手已經出招 (pvpRemoteMoveRef 有值)，延後 5 秒結算以確保對齊
+                    if (isPvpMode && pvpRemoteMoveRef.current) {
+                        // 先將狀態設為等待，視覺上維持「等待中」避免玩家以為當機
+                        setBattleState(prev => ({ ...prev, phase: 'waiting_opponent' }));
+                        setTimeout(() => executeBattleTurn('attack', move), 5000);
+                    } else {
+                        executeBattleTurn('attack', move);
+                    }
                 } else {
                     const errorMsg = battleState.mode === 'pvp' ? "尚未裝備技能！" : "該格子尚未裝備技能！";
                     const tempLogs = [...battleState.logs, errorMsg];
@@ -3019,6 +3026,7 @@ export default function App() {
     const pvp = usePvpConnection({
         updateDialogue, 
         setBattleState, 
+        battleState,
         getMonsterId: getMonsterIdWrapped, 
         executeBattleTurn, 
         generateMyBattleStats, 

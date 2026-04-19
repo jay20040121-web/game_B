@@ -6,6 +6,7 @@ export const usePvpConnection = (deps) => {
     const {
         updateDialogue,
         setBattleState,
+        battleState,
         getMonsterId,
         executeBattleTurn,
         generateMyBattleStats,
@@ -37,9 +38,15 @@ export const usePvpConnection = (deps) => {
     const [pvpOpponent, setPvpOpponent] = useState(null);
     const [pvpLog, setPvpLog] = useState([]);
     const [isMyTurn, setIsMyTurn] = useState(false);
-    const [pvpCurrentHP, setPvpCurrentHP] = useState(100);
-    const [pvpOpponentHP, setPvpOpponentHP] = useState(100);
+    const [pvpCurrentHP, setPvpCurrentHP] = useState(1);
+    const [pvpOpponentHP, setPvpOpponentHP] = useState(1);
     const [pendingPlayerMove, setPendingPlayerMove] = useState(null);
+
+    // 🔹 同步與回合同步 (Battle Sync & Turn Control)
+    const battleStateRef = useRef(null);
+    useEffect(() => {
+        battleStateRef.current = battleState;
+    }, [battleState]);
     const pvpRemoteMoveRef = useRef(null);
 
     // =========================================
@@ -141,11 +148,19 @@ export const usePvpConnection = (deps) => {
                 syncMatchStatus('matched');
                 playBloop('success');
             } else if (payload.type === 'ACTION') {
+                // 🛑 回合驗證：僅忽略舊回合封包，允許當前或超前封包（用於緩衝）
+                const currentTurn = battleStateRef.current?.turn || 1;
+                if (payload.data.turnId !== undefined && payload.data.turnId < currentTurn) {
+                    console.log(`[PVP] 忽略舊回合封包: 收到 ${payload.data.turnId}, 當前 ${currentTurn}`);
+                    return;
+                }
+
                 pvpRemoteMoveRef.current = payload.data.move;
                 setPendingPlayerMove(prevMove => {
                     if (prevMove) {
                         const myMove = prevMove;
-                        setTimeout(() => executeBattleTurn('attack', myMove, pvpRemoteMoveRef.current), 0);
+                        // ⏱️ 沉默緩衝 5 秒：當雙方都確認後，延遲 5 秒結算以確保同步
+                        setTimeout(() => executeBattleTurn('attack', myMove, pvpRemoteMoveRef.current), 5000);
                         return null;
                     }
                     return prevMove;

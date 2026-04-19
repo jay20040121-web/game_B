@@ -14,12 +14,12 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     pvpEnemyMove = pvpRemoteMoveRef.current;
                     pvpRemoteMoveRef.current = null;
                     if (connInstance.current) {
-                        connInstance.current.send({ type: 'ACTION', data: { move: actionMove } });
+                        connInstance.current.send({ type: 'ACTION', data: { move: actionMove, turnId: prev.turn } });
                     }
                 } else {
                     setPendingPlayerMove(actionMove);
                     if (connInstance.current) {
-                        connInstance.current.send({ type: 'ACTION', data: { move: actionMove } });
+                        connInstance.current.send({ type: 'ACTION', data: { move: actionMove, turnId: prev.turn } });
                     }
                     return { ...prev, phase: 'waiting_opponent', logs: [...prev.logs, "等待對手出招..."] };
                 }
@@ -33,7 +33,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             }
             setPendingPlayerMove(actionMove);
             if (connInstance.current) {
-                connInstance.current.send({ type: 'ACTION', data: { move: actionMove } });
+                connInstance.current.send({ type: 'ACTION', data: { move: actionMove, turnId: prev.turn } });
             }
             return { ...prev, phase: 'waiting_opponent', logs: [...prev.logs, "等待對手出招..."] };
         }
