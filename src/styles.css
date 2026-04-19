@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-* {
-    box-sizing: border-box;
-    font-family: 'Press Start 2P', 'PMingLiU', 'SimSun', monospace !important;
-}
+@import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap');
+ 
+ * {
+     box-sizing: border-box;
+     font-family: 'DotGothic16', 'Press Start 2P', 'PMingLiU', 'SimSun', monospace !important;
+ }
 
 body {
     margin: 0;

@@ -59,7 +59,6 @@ node_modules/
 
 # Gatsby files
 .cache/
-public
 
 # vue-cli build scripts
 dist
