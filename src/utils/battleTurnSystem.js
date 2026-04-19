@@ -1,4 +1,4 @@
-import { SKILL_DATABASE, getTypeMultiplier } from '../../monsterData';
+import { SKILL_DATABASE, getTypeMultiplier } from '../monsterData';
 import { checkPreTurnStatus, applyMoveEffects, processPostTurnStatus, getStatMultiplier } from './battleEngine';
 
 export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) => {
