@@ -68,7 +68,7 @@ export default function BattleAdventureOverlay({
                     </div>
 
                     {/* Player Area */}
-                    <div className={`absolute bottom-1 -left-2 z-10 transform scale-[1.4] origin-bottom px-2 ${battleState.flashTarget === 'player' ? 'damage-flash' : ''}`}>
+                    <div className={`absolute bottom-6 -left-2 z-10 transform scale-[1.4] origin-bottom px-2 ${battleState.flashTarget === 'player' ? 'damage-flash' : ''}`}>
                         <DitheredBackSprite id={battleState?.player?.id} scale={2} />
                     </div>
                     <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pr-2 shadow-sm backdrop-blur-[2px]">

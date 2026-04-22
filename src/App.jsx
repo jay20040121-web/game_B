@@ -3194,7 +3194,6 @@ export default function App() {
                             <div style={{ marginTop: '10px', color: '#aaa', fontSize: '9px' }}>為避免存檔衝突，此分頁已暫停。<br />請關閉其他分頁後再重新整理。</div>
                         </div>
                     )}
-                    <div className="lcd-grid-overlay"></div>
 
                     {/* --- 👑 整合式行動排行榜 (LCD Integrated) --- */}
                     <LeaderboardOverlay
@@ -3371,6 +3370,7 @@ export default function App() {
                     />
 
                     <div className="logical-canvas flex flex-col items-center justify-between pointer-events-none">
+                        <div className="lcd-grid-overlay"></div>
 
                         {isBooting ? (
                             <div className="absolute inset-0 z-50 overflow-hidden pointer-events-none">
@@ -3444,7 +3444,7 @@ export default function App() {
                             </div>
                         ) : (
                             <>
-                                <div className="w-full h-[28px] flex justify-between px-4 pt-2 z-20 shrink-0">
+                                <div className="w-full h-[28px] flex justify-between px-4 pt-2 z-10 shrink-0 relative">
                                     {menuItems.slice(0, 4).map((item, idx) => (
                                         <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
                                             {/* 底層：原本的點陣圖 (當沒有圖片或圖片載入失敗時顯示) */}
@@ -3571,7 +3571,7 @@ export default function App() {
                                             left: posRef.current.x, top: posRef.current.y,
                                             transform: 'translate(-50%, -50%)',
                                             animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none',
-                                            zIndex: 40
+                                            zIndex: 50
                                         }}
                                     >
                                         <div 
@@ -3586,7 +3586,7 @@ export default function App() {
                                             }}
                                         >
                                             {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterIdWrapped(); return null; })()}
-                                            <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()} />
+                                            <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()} pure={true} />
                                         </div>
                                     </div>
 
@@ -3610,7 +3610,7 @@ export default function App() {
                                     )}
                                 </div>
 
-                                <div className="w-[240px] h-[32px] border-2 border-[#1a1a1a] flex items-center px-2 overflow-hidden z-20 bg-[#9dae8a] shrink-0 mb-[10px] shadow-[inset_2px_2px_0_rgba(0,0,0,0.2)]">
+                                <div className="w-[240px] h-[32px] border-2 border-[#1a1a1a] flex items-center px-2 overflow-hidden z-10 bg-[#9dae8a] shrink-0 mb-[10px] shadow-[inset_2px_2px_0_rgba(0,0,0,0.2)] relative">
                                     <span key={marqueeKey} className={`text-[11px] font-bold ${isBooting ? 'whitespace-pre-line text-center w-full leading-tight' : 'whitespace-nowrap'}`} style={{ animation: isBooting ? 'none' : 'marquee-once 4s ease-out forwards' }}>
                                         {isBooting ? (
                                             <>
@@ -3621,7 +3621,7 @@ export default function App() {
                                     </span>
                                 </div>
 
-                                <div className="w-full h-[28px] flex justify-between px-4 pb-12 z-20 shrink-0">
+                                <div className="w-full h-[28px] flex justify-between px-4 pb-12 z-10 shrink-0 relative">
                                     {menuItems.slice(4, 8).map((item, idx) => (
                                         <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
                                             {/* 底層保底 */}

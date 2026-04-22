@@ -4,14 +4,14 @@ import { MONSTER_ASSET_IDS } from '../monsterData';
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
-const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silhouette = false }) => {
+const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
-    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/animated/${assetId}.gif` : `${base}assets/sprites/${assetId}.png`);
+    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/idle/${assetId}.gif` : `${base}assets/exclusive/sprites/${assetId}.png`);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `${base}assets/animated/${currentAssetId}.gif` : `${base}assets/sprites/${currentAssetId}.png`);
+        setImgSrc(animated ? `${base}assets/exclusive/idle/${currentAssetId}.gif` : `${base}assets/exclusive/sprites/${currentAssetId}.png`);
     }, [id, animated, base]);
 
     if (!id) return null;
@@ -41,7 +41,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                 style={{ 
                     filter: silhouette 
                         ? 'brightness(0) contrast(100)' 
-                        : 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                        : (pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)'),
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
@@ -51,9 +51,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                     opacity: 1.0,
                     pointerEvents: 'none',
                     // GIF 特殊定位：修正縮放後「浮在空中」的問題
-                    transform: (imgSrc.toLowerCase().endsWith('.gif')) 
-                        ? 'scale(0.55) translateY(0)' 
-                        : 'none',
+                    transform: 'scale(0.55) translateY(0)',
                     transformOrigin: 'bottom center'
                 }}
                 alt="Monster Sprite"
@@ -61,7 +59,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                     const currentAssetId = MONSTER_ASSET_IDS[id] || id;
                     const base = import.meta.env.BASE_URL;
                     if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`${base}assets/sprites/${currentAssetId}.png`);
+                        setImgSrc(`${base}assets/exclusive/sprites/${currentAssetId}.png`);
                     }
                 }}
             />
@@ -72,14 +70,14 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
 // ==========================================
 // 背面 4-Color 網點運算引擎
 // ==========================================
-const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
+const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, pure = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
-    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/animated/back/${assetId}.gif` : `${base}assets/back_sprites/${assetId}.png`);
+    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/back/${assetId}.gif` : `${base}assets/exclusive/back/${assetId}.png`);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `${base}assets/animated/back/${currentAssetId}.gif` : `${base}assets/back_sprites/${currentAssetId}.png`);
+        setImgSrc(animated ? `${base}assets/exclusive/back/${currentAssetId}.gif` : `${base}assets/exclusive/back/${currentAssetId}.png`);
     }, [id, animated, base]);
 
     if (!id) return null;
@@ -107,7 +105,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                 src={imgSrc}
                 className="pixel-rendering"
                 style={{ 
-                    filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                    filter: pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)',
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
@@ -117,9 +115,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                     opacity: 1.0,
                     pointerEvents: 'none',
                     // GIF 特殊定位：與正面一致
-                    transform: (imgSrc.toLowerCase().endsWith('.gif')) 
-                        ? 'scale(0.55) translateY(0)' 
-                        : 'none',
+                    transform: 'scale(0.55) translateY(0)',
                     transformOrigin: 'bottom center'
                 }}
                 alt="Monster Back Sprite"
@@ -127,6 +123,10 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                     const currentAssetId = MONSTER_ASSET_IDS[id] || id;
                     const base = import.meta.env.BASE_URL;
                     if (imgSrc.toLowerCase().endsWith('.gif')) {
+                        // 如果 GIF 找不到，優先找 exclusive 資料夾內的 PNG (修正讀取位置)
+                        setImgSrc(`${base}assets/exclusive/back/${currentAssetId}.png`);
+                    } else if (imgSrc.includes('exclusive/back/')) {
+                        // 如果 exclusive 的 PNG 也找不到，才退回原始路徑
                         setImgSrc(`${base}assets/back_sprites/${currentAssetId}.png`);
                     }
                 }}
