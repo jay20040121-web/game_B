@@ -3460,7 +3460,7 @@ export default function App() {
                                                     alt={item.id} 
                                                     className="relative z-10 w-[25px] h-[25px] object-contain" 
                                                     style={{ 
-                                                        filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                                                        filter: 'none',
                                                         imageRendering: 'pixelated',
                                                         visibility: loadedImages[item.id] ? 'visible' : 'hidden'
                                                     }}
@@ -3637,7 +3637,7 @@ export default function App() {
                                                     alt={item.id} 
                                                     className="relative z-10 w-[25px] h-[25px] object-contain" 
                                                     style={{ 
-                                                        filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                                                        filter: 'none',
                                                         imageRendering: 'pixelated',
                                                         visibility: loadedImages[item.id] ? 'visible' : 'hidden'
                                                     }}

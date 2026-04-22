@@ -1,7 +1,7 @@
 # 🗺️ 怪獸對打機 — 專案索引 (PROJECT INDEX)
 
 > 此文件為 AI 輔助除錯用的快速導航索引。  
-> 上次更新：2026-04-07
+> 上次更新：2026-04-22
 
 ---
 
@@ -9,7 +9,7 @@
 
 ```
 game_A/
-├── App.js                      ★ 主程式 (3389 行) — React 根元件，所有遊戲狀態都在這
+├── App.js                      ★ 主程式 (3389 行) — React根元件，所有遊戲狀態都在這
 ├── index.html                  ★ 備用單頁版本 (461 KB) — 無框架純 JS 版本
 ├── monsterData.js              ★ 怪獸資料庫 (6854 行) — 所有怪獸/技能/屬性資料
 ├── styles.css                  — 全域樣式
@@ -21,11 +21,7 @@ game_A/
 │       └── gameConfig.js       ★ 遊戲設定常數
 │
 ├── assets/                     — 圖片音效資源
-├── backups/                    — 舊版備份
-│
-└── [工具腳本]
-    ├── fetch_monster_data.py   — 從 PokeAPI 抓取怪獸資料
-    └── vcs.py                  — 版本管理工具
+└── backups/                    — 舊版備份
 ```
 
 ---

@@ -7,11 +7,18 @@ import { MONSTER_ASSET_IDS } from '../monsterData';
 const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silhouette = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
-    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/animated/${assetId}.gif` : `${base}assets/sprites/${assetId}.png`);
+    const [imgSrc, setImgSrc] = useState(() => {
+        const currentAssetId = MONSTER_ASSET_IDS[id] || id;
+        return animated 
+            ? `${base}assets/exclusive/idle/${currentAssetId}.gif` 
+            : `${base}assets/exclusive/sprites/${currentAssetId}.png`;
+    });
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `${base}assets/animated/${currentAssetId}.gif` : `${base}assets/sprites/${currentAssetId}.png`);
+        setImgSrc(animated 
+            ? `${base}assets/exclusive/idle/${currentAssetId}.gif` 
+            : `${base}assets/exclusive/sprites/${currentAssetId}.png`);
     }, [id, animated, base]);
 
     if (!id) return null;
@@ -41,7 +48,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                 style={{ 
                     filter: silhouette 
                         ? 'brightness(0) contrast(100)' 
-                        : 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                        : 'none',
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
@@ -75,11 +82,18 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
 const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
-    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/animated/back/${assetId}.gif` : `${base}assets/back_sprites/${assetId}.png`);
+    const [imgSrc, setImgSrc] = useState(() => {
+        const currentAssetId = MONSTER_ASSET_IDS[id] || id;
+        return animated 
+            ? `${base}assets/exclusive/back/${currentAssetId}.gif` 
+            : `${base}assets/exclusive/back_sprites/${currentAssetId}.png`;
+    });
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `${base}assets/animated/back/${currentAssetId}.gif` : `${base}assets/back_sprites/${currentAssetId}.png`);
+        setImgSrc(animated 
+            ? `${base}assets/exclusive/back/${currentAssetId}.gif` 
+            : `${base}assets/exclusive/back_sprites/${currentAssetId}.png`);
     }, [id, animated, base]);
 
     if (!id) return null;
@@ -107,7 +121,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true }
                 src={imgSrc}
                 className="pixel-rendering"
                 style={{ 
-                    filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                    filter: 'none',
                     width: '100%',
                     height: '100%',
                     minWidth: '100%',
