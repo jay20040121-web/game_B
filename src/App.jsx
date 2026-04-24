@@ -2039,7 +2039,7 @@ export default function App() {
             // 野外怪獸 (方案 C)：若在對照表中已無下一階，則視為最終型態，進入壽命倒數
             const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
 
-            if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['P1', 'P2', 'G1', 'G2', 'C', 'F_FAIL1', 'P1_SPECIAL', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
+            if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['P1', 'P2', 'G1', 'G2', 'F_FAIL1', 'P1_SPECIAL', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
             const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
                 if (elapsed >= lifespan) {
                     clearInterval(checkEvolutionInterval);
@@ -2345,25 +2345,15 @@ export default function App() {
                         // P 線：心情飢餓同時歸零
                         nextBranch = Math.random() < 0.5 ? 'P1' : 'P2';
                     } else if (m >= 50 && h >= 50) {
-                        nextBranch = Math.random() < 0.5 ? 'A' : 'B';
-                    } else if (m >= 50) {
                         nextBranch = 'A';
-                    } else if (h >= 50) {
-                        nextBranch = 'B';
                     } else {
                         nextBranch = 'C';
                     }
 
-                } else if (['A', 'B', 'C'].includes(evolutionBranch)) {
-                    // ★ 已在 A/B/C 一般線（Stage>=2）：三線互通
-                    if (evolutionStage === 3 && h < 50 && m < 50) {
-                        nextBranch = 'FAIL_ABC'; // Stage 3→4 一般線失敗進化 (3D獸)
-                    } else if (m >= 50 && h >= 50) {
-                        nextBranch = Math.random() < 0.5 ? 'A' : 'B';
-                    } else if (m >= 50) {
+                } else if (['A', 'C'].includes(evolutionBranch)) {
+                    // ★ 已在 A/C 一般線（Stage>=2）：依據數值決定下一階段路徑
+                    if (m >= 50 && h >= 50) {
                         nextBranch = 'A';
-                    } else if (h >= 50) {
-                        nextBranch = 'B';
                     } else {
                         nextBranch = 'C';
                     }

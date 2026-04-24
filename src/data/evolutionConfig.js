@@ -46,8 +46,7 @@ export const EVOLUTION_CHAINS = {
             { to: "F", condition: "sWins >= 8", desc: "格鬥系 (腕力)" },
             { to: "P1", condition: "mood <= 0 && hunger <= 0", desc: "毒系 A (瓦斯彈)" },
             { to: "P2", condition: "mood <= 0 && hunger <= 0", desc: "毒系 B (臭泥)" },
-            { to: "A", condition: "mood >= 50", desc: "一般線 A (尼多朗)" },
-            { to: "B", condition: "hunger >= 50", desc: "一般線 B (尼多蘭)" },
+            { to: "A", condition: "mood >= 50 && hunger >= 50", desc: "一般線 A (尼多朗)" },
             { to: "C", condition: "else", desc: "一般線 C (小拉達)" }
         ]
     },
@@ -161,18 +160,15 @@ export const EVOLUTION_CHAINS = {
     "NORMAL": {
         stage2: {
             "A": { id: 32, desc: "尼多朗" },
-            "B": { id: 29, desc: "尼多蘭" },
             "C": { id: 19, desc: "小拉達" }
         },
         stage3: {
-            "A": { id: 33, condition: "m >= 50", from: ["A", "B", "C"], desc: "尼多力諾 (心情 50+)" },
-            "B": { id: 30, condition: "h >= 50", from: ["A", "B", "C"], desc: "尼多娜 (飽食 50+)" },
-            "C": { id: 20, condition: "else", from: ["A", "B", "C"], desc: "拉達 (其餘條件)" }
+            "A": { id: 33, from: "A", desc: "尼多力諾" },
+            "C": { id: 20, from: "C", desc: "拉達" }
         },
         stage4: {
-            "A": { id: 34, condition: "m >= 50", from: ["A", "B", "C"], desc: "尼多王 (心情 50+)" },
-            "B": { id: 31, condition: "h >= 50", from: ["A", "B", "C"], desc: "尼多后 (飽食 50+)" },
-            "FAIL_ABC": { id: 137, condition: "mood/hunger < 50 at stage 3", from: ["A", "B", "C"], desc: "3D 獸 (三階時心情與飽食均 < 50)" }
+            "A": { id: 34, from: "A", desc: "尼多王" },
+            "C": { id: 137, from: "C", desc: "多邊獸" }
         }
     },
 
