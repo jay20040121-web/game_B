@@ -249,7 +249,7 @@ export default function App() {
                         targetType = myType[Math.floor(Math.random() * myType.length)];
                     } else {
                         const allTypes = Object.keys(TYPE_MAP || {
-                            'normal':'普','fire':'火','water':'水','grass':'草','electric':'電','ice':'冰','fighting':'鬥','poison':'毒','ground':'地','flying':'飛','psychic':'超','bug':'蟲','rock':'岩','ghost':'鬼','dragon':'龍','steel':'鋼','dark':'惡','fairy':'妖'
+                            'normal': '普', 'fire': '火', 'water': '水', 'grass': '草', 'electric': '電', 'ice': '冰', 'fighting': '鬥', 'poison': '毒', 'ground': '地', 'flying': '飛', 'psychic': '超', 'bug': '蟲', 'rock': '岩', 'ghost': '鬼', 'dragon': '龍', 'steel': '鋼', 'dark': '惡', 'fairy': '妖'
                         });
                         targetType = allTypes[Math.floor(Math.random() * allTypes.length)];
                     }
@@ -419,7 +419,7 @@ export default function App() {
                 }
             } else {
                 updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
-                setHasCheckedCloud(true); 
+                setHasCheckedCloud(true);
                 setIsCloudLoading(false);
                 // 只有當本地資料為「訪客 (無 ownerUid)」或是「本人」時，才建立初始備份
                 if (localData) saveToCloud(localData);
@@ -427,7 +427,7 @@ export default function App() {
         } catch (e) {
             console.error("☁️ Cloud Load Error:", e);
             updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
-            setHasCheckedCloud(true); 
+            setHasCheckedCloud(true);
             setIsCloudLoading(false);
         }
     };
@@ -471,7 +471,7 @@ export default function App() {
             }
         } catch (e) {
             console.error("☁️ Login Error:", e);
-            
+
             // --- 🚨 核心修正：處理 disallowed_useragent (Google 政策阻擋) ---
             if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
                 // 嘗試轉為 Redirect 模式，這在某些行動瀏覽器較穩定
@@ -487,7 +487,7 @@ export default function App() {
             let errMsg = e.message;
             if (e.code === 'auth/popup-closed-by-user') errMsg = "登入視窗被關閉了。";
             if (e.code === 'auth/unauthorized-domain') errMsg = "網域尚未授權，請至 Firebase 設定。";
-            
+
             // 針對政策阻擋的特別說明
             if (e.message.includes('disallowed_useragent') || e.code?.includes('disallowed-user-agent')) {
                 updateDialogue("❌ Google 政策限制：請點擊右上角「...」並選「使用瀏覽器開啟」。", true);
@@ -504,8 +504,8 @@ export default function App() {
         try {
             await auth.signOut();
             // 登出時執行本地存檔清理，防止跨帳號衝突
-            try { 
-                localStorage.removeItem('pixel_monster_save'); 
+            try {
+                localStorage.removeItem('pixel_monster_save');
                 sessionStorage.removeItem('pixel_monster_save');
             } catch (e) { }
             playBloop('pop');
@@ -647,7 +647,7 @@ export default function App() {
         }
         return () => clearInterval(timer);
     }, [isBooting]);
- 
+
     // 啟動畫面怪獸跳槽動畫 (四個角落巡迴 + 倒掛效果)
     useEffect(() => {
         let timer;
@@ -875,7 +875,10 @@ export default function App() {
             }
             if (spriteRef.current) {
                 const angle = (!isDead && isSpinning) ? 'rotate(180deg)' : '';
-                const flip = (newVelX < 0) ? 'scaleX(1)' : 'scaleX(-1)';
+                const currentId = String(isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped());
+                const flipBase = (newVelX < 0) ? 1 : -1;
+                const flipMod = currentId === '137' ? -1 : 1;
+                const flip = `scaleX(${flipBase * flipMod})`;
                 spriteRef.current.style.transform = `${angle} ${flip}`;
             }
 
@@ -1153,7 +1156,7 @@ export default function App() {
             // 等級 1：探索 80% / 野怪 20% / 訓練師 0%
             // 等級 50 及以上：探索 0% / 野怪 30% / 訓練師 70%
             const levelRatio = Math.min(1, Math.max(0, (derivedLevel - 1) / 49)); // 1級為0，50級(含)以上為1
-            
+
             const gatherProb = 0.80 * (1 - levelRatio); // 探索機率 (80% -> 0%)
             const trainerProb = 0.70 * levelRatio;      // 訓練師機率 (0% -> 70%)
             const wildProb = 1 - gatherProb - trainerProb; // 野怪機率 (20% -> 30%)
@@ -1275,16 +1278,16 @@ export default function App() {
 
                     // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
                     const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
-                    
+
                     // 利用計算結果進行最終 HP 校準，同時百分之百保留本地所有其他屬性 (如 moves)
                     const finalPlayer = { ...prev.player, hp: finalPlayerHp };
                     const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
 
-                    return { 
-                        ...prev, 
-                        phase: nextPhase, 
-                        activeMsg: "", 
-                        turn: prev.turn + 1, 
+                    return {
+                        ...prev,
+                        phase: nextPhase,
+                        activeMsg: "",
+                        turn: prev.turn + 1,
                         flashTarget: null,
                         player: finalPlayer,
                         enemy: finalEnemy
@@ -2040,7 +2043,7 @@ export default function App() {
             const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
 
             if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['P1', 'P2', 'G1', 'G2', 'F_FAIL1', 'P1_SPECIAL', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
-            const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
+                const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
                 if (elapsed >= lifespan) {
                     clearInterval(checkEvolutionInterval);
                     // D線抽籤：20% 機率靈魂重生
@@ -2321,7 +2324,7 @@ export default function App() {
                             else if (evolutionBranch === 'GR_GLOOM_SOUL') {
                                 nextBranch = 'GR_VILEPLUME_SOUL';
                             }
-                             // 奇魯莉安 → 沙奈朵（無條件）
+                            // 奇魯莉安 → 沙奈朵（無條件）
                             else if (evolutionBranch === 'GR_BELLSPROUT_SOUL') {
                                 nextBranch = 'GR_VICTREEBEL_SOUL';
                             }
@@ -2908,7 +2911,7 @@ export default function App() {
         // 取得死前戰力的 10% 漲幅作為遺產，加上基礎 100 戰力
         const prevBasePower = latestStats.current.advStats?.basePower || 100;
         const inheritedPower = Math.floor((prevBasePower - 100) * 0.1); // 繼承 10% 的努力成果，而非總戰力
-        
+
         // 判斷下一代初始招式
         const nextId = savedDeathBranch === 'G1' ? "92" : (savedDeathBranch === 'G2' ? "63" : "132");
         const nextStarterMove = nextId === "92" ? 'lick' : (nextId === "63" ? 'confusion' : 'tackle');
@@ -2917,7 +2920,7 @@ export default function App() {
         // 完美繼承招式處理：避免與新生自帶招式衝突，並且最多只保留 4 招
         const prevMoves = latestStats.current.advStats?.moves || [];
         let combinedMoves = [nextStarterMove]; // 保證必定擁有當前物種的基本招式
-        
+
         // 完美匯入前代技能
         prevMoves.forEach(mv => {
             if (!combinedMoves.includes(mv)) {
@@ -2983,7 +2986,7 @@ export default function App() {
         // 🔥 VERY IMPORTANT: Remove localStorage data immediately!
         try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
         try { sessionStorage.removeItem('pixel_monster_save'); } catch (e) { }
-        
+
         recordGameAction(); // 紀錄重啟行為
     };
 
@@ -3014,15 +3017,15 @@ export default function App() {
     } = useLeaderboard({ user, getMonsterId: getMonsterIdWrapped, updateDialogue });
 
     const pvp = usePvpConnection({
-        updateDialogue, 
-        setBattleState, 
+        updateDialogue,
+        setBattleState,
         battleState,
-        getMonsterId: getMonsterIdWrapped, 
-        executeBattleTurn, 
-        generateMyBattleStats, 
-        setAlertMsg, 
-        playBloop, 
-        user, 
+        getMonsterId: getMonsterIdWrapped,
+        executeBattleTurn,
+        generateMyBattleStats,
+        setAlertMsg,
+        playBloop,
+        user,
         generateBattleState,
         setAdvStats,
         logEvent,
@@ -3038,7 +3041,7 @@ export default function App() {
         peerInstance, connInstance, isHost, pvpRemoteMoveRef,
         cleanupPvp, initPeer, joinPvpRoom, handleBattleEnd
     } = pvp;
-    
+
     // 🔹 當使用者登入成功且排行榜尚未讀取時，自動預載資料以供大賽系統使用
     useEffect(() => {
         if (user && leaderboard.length === 0 && !isLeaderboardLoading) {
@@ -3047,7 +3050,7 @@ export default function App() {
     }, [user]);
 
     // --- 聯盟大賽 (Tournament System) ---
-    const tournament = useTournament({ 
+    const tournament = useTournament({
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
         advStats, soulTagCounts, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
         pendingSkillLearn
@@ -3105,17 +3108,17 @@ export default function App() {
 
             {/* --- 自動縮放包裝容器 (Responsive Wrapper) --- */}
             <div className="fixed inset-0 flex items-center justify-center bg-[#1a1a1a] overflow-hidden select-none">
-                <div 
+                <div
                     className="relative flex flex-col items-center justify-center pointer-events-auto transition-transform duration-100 ease-out"
-                    style={{ 
-                        transform: `scale(${displayScale})`, 
+                    style={{
+                        transform: `scale(${displayScale})`,
                         transformOrigin: 'center center',
                         imageRendering: 'pixelated',
                         width: '320px',
                         height: '620px'
                     }}
                 >
-                    <div 
+                    <div
                         className="relative w-[320px] h-[620px] pt-[50px] pb-12 px-[32px] flex flex-col items-center"
                         style={{
                             backgroundImage: `url('${base}assets/BG/BG_01.png')`,
@@ -3128,590 +3131,590 @@ export default function App() {
 
 
 
-                <div className="lcd-container">
+                        <div className="lcd-container">
 
-                    {/* 雲端載入遮罩 */}
-                    {isCloudLoading && (
-                        <div style={{
-                            position: 'absolute', inset: 0, zIndex: 10000,
-                            backgroundColor: 'rgba(157, 174, 138, 0.9)',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            color: '#111', fontSize: '12px', fontWeight: 'bold'
-                        }}>
-                            <div className="animate-spin text-2xl mb-2">☁️</div>
-                            <div>雲端同步中...</div>
-                            <div style={{ fontSize: '10px', opacity: 0.6, marginTop: '8px' }}>請稍候</div>
-                        </div>
-                    )}
-
-                    {/* 二次確認介面 (LCD 內建) */}
-                    {isConfirmingFarewell && (
-                        <div style={{
-                            position: 'absolute', inset: 0, zIndex: 9999,
-                            backgroundColor: 'rgba(157, 174, 138, 0.95)',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            color: '#1a1a1a', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
-                        }}>
-                            <div style={{
-                                width: '180px', padding: '15px', border: '4px solid #111', backgroundColor: '#8fa07e',
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px',
-                                boxShadow: '8px 8px 0 rgba(0,0,0,0.2)'
-                            }}>
-                                <div style={{ fontSize: '12px', fontWeight: '900', color: '#111', lineHeight: '1.4' }}>
-                                    確定要<br />終止生命嗎？
+                            {/* 雲端載入遮罩 */}
+                            {isCloudLoading && (
+                                <div style={{
+                                    position: 'absolute', inset: 0, zIndex: 10000,
+                                    backgroundColor: 'rgba(157, 174, 138, 0.9)',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    color: '#111', fontSize: '12px', fontWeight: 'bold'
+                                }}>
+                                    <div className="animate-spin text-2xl mb-2">☁️</div>
+                                    <div>雲端同步中...</div>
+                                    <div style={{ fontSize: '10px', opacity: 0.6, marginTop: '8px' }}>請稍候</div>
                                 </div>
-                                <div style={{ display: 'flex', gap: '20px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                        <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ffca28', color: '#111', fontSize: '9px', fontWeight: 'black' }}>A:NO</div>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                        <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ff5252', color: '#fff', fontSize: '9px', fontWeight: 'black' }}>B:YES</div>
+                            )}
+
+                            {/* 二次確認介面 (LCD 內建) */}
+                            {isConfirmingFarewell && (
+                                <div style={{
+                                    position: 'absolute', inset: 0, zIndex: 9999,
+                                    backgroundColor: 'rgba(157, 174, 138, 0.95)',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    color: '#1a1a1a', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
+                                }}>
+                                    <div style={{
+                                        width: '180px', padding: '15px', border: '4px solid #111', backgroundColor: '#8fa07e',
+                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px',
+                                        boxShadow: '8px 8px 0 rgba(0,0,0,0.2)'
+                                    }}>
+                                        <div style={{ fontSize: '12px', fontWeight: '900', color: '#111', lineHeight: '1.4' }}>
+                                            確定要<br />終止生命嗎？
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '20px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ffca28', color: '#111', fontSize: '9px', fontWeight: 'black' }}>A:NO</div>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ff5252', color: '#fff', fontSize: '9px', fontWeight: 'black' }}>B:YES</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
-                    {/* 這裡新增多分頁警告 UI */}
-                    {isDuplicateTab && (
-                        <div style={{
-                            position: 'absolute', inset: 0, zIndex: 9999,
-                            backgroundColor: 'rgba(0,0,0,0.85)',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            color: 'white', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
-                        }}>
-                            <div style={{ fontSize: '24px', marginBottom: '10px' }}>⚠️</div>
-                            <div style={{ fontWeight: 'bold' }}>偵測到其他分頁正在遊玩</div>
-                            <div style={{ marginTop: '10px', color: '#aaa', fontSize: '9px' }}>為避免存檔衝突，此分頁已暫停。<br />請關閉其他分頁後再重新整理。</div>
-                        </div>
-                    )}
+                            )}
+                            {/* 這裡新增多分頁警告 UI */}
+                            {isDuplicateTab && (
+                                <div style={{
+                                    position: 'absolute', inset: 0, zIndex: 9999,
+                                    backgroundColor: 'rgba(0,0,0,0.85)',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    color: 'white', textAlign: 'center', padding: '20px', fontSize: '11px', lineHeight: '1.6'
+                                }}>
+                                    <div style={{ fontSize: '24px', marginBottom: '10px' }}>⚠️</div>
+                                    <div style={{ fontWeight: 'bold' }}>偵測到其他分頁正在遊玩</div>
+                                    <div style={{ marginTop: '10px', color: '#aaa', fontSize: '9px' }}>為避免存檔衝突，此分頁已暫停。<br />請關閉其他分頁後再重新整理。</div>
+                                </div>
+                            )}
 
-                    {/* --- 👑 整合式行動排行榜 (LCD Integrated) --- */}
-                    <LeaderboardOverlay
-                        isLeaderboardOpen={isLeaderboardOpen}
-                        leaderboardPage={leaderboardPage}
-                        isLeaderboardLoading={isLeaderboardLoading}
-                        leaderboard={leaderboard}
-                    />
+                            {/* --- 👑 整合式行動排行榜 (LCD Integrated) --- */}
+                            <LeaderboardOverlay
+                                isLeaderboardOpen={isLeaderboardOpen}
+                                leaderboardPage={leaderboardPage}
+                                isLeaderboardLoading={isLeaderboardLoading}
+                                leaderboard={leaderboard}
+                            />
 
 
-                    {/* 淘汰賽系統 Overlay */}
-                    <TournamentOverlay
-                        isTournamentOpen={tournament.isTournamentOpen}
-                        tPhase={tournament.tPhase}
-                        currentRound={tournament.currentRound}
-                        opponents={tournament.opponents}
-                        nextTournamentPhase={tournament.nextTournamentPhase}
-                        myMonsterId={getMonsterIdWrapped()}
-                        playerName={user?.displayName || '玩家'}
-                    />
+                            {/* 淘汰賽系統 Overlay */}
+                            <TournamentOverlay
+                                isTournamentOpen={tournament.isTournamentOpen}
+                                tPhase={tournament.tPhase}
+                                currentRound={tournament.currentRound}
+                                opponents={tournament.opponents}
+                                nextTournamentPhase={tournament.nextTournamentPhase}
+                                myMonsterId={getMonsterIdWrapped()}
+                                playerName={user?.displayName || '玩家'}
+                            />
 
-                    {/* 冒險或連線對戰系統 Overlay */}
-                    <BattleAdventureOverlay
-                        isAdvMode={isAdvMode}
-                        isTournamentOpen={tournament.isTournamentOpen}
-                        battleState={battleState}
-                        pvp={pvp}
-                        advCD={advCD}
-                        advStats={advStats}
-                        fetchLeaderboard={fetchLeaderboard}
-                        startTournament={() => {
-                            setIsPvpMode(false);
-                            tournament.startTournament();
-                        }}
-                        advLogRef={advLogRef}
-                        advLog={advLog}
-                        advCurrentHP={advCurrentHP}
-                        isAdvStreaming={isAdvStreaming}
-                        pendingWildCapture={pendingWildCapture}
-                    />
+                            {/* 冒險或連線對戰系統 Overlay */}
+                            <BattleAdventureOverlay
+                                isAdvMode={isAdvMode}
+                                isTournamentOpen={tournament.isTournamentOpen}
+                                battleState={battleState}
+                                pvp={pvp}
+                                advCD={advCD}
+                                advStats={advStats}
+                                fetchLeaderboard={fetchLeaderboard}
+                                startTournament={() => {
+                                    setIsPvpMode(false);
+                                    tournament.startTournament();
+                                }}
+                                advLogRef={advLogRef}
+                                advLog={advLog}
+                                advCurrentHP={advCurrentHP}
+                                isAdvStreaming={isAdvStreaming}
+                                pendingWildCapture={pendingWildCapture}
+                            />
 
-                    {/* 狀態查詢 Overlay */}
-                    <StatusOverlay
-                        isStatusUIOpen={isStatusUIOpen}
-                        getMonsterId={getMonsterIdWrapped}
-                        soulTagCounts={soulTagCounts}
-                        hunger={hunger}
-                        mood={mood}
-                        bondValue={bondValue}
-                        advStats={advStats}
-                        trainWins={trainWins}
-                        calcFinalStat={calcFinalStat}
-                        getIVGrade={getIVGrade}
-                    />
+                            {/* 狀態查詢 Overlay */}
+                            <StatusOverlay
+                                isStatusUIOpen={isStatusUIOpen}
+                                getMonsterId={getMonsterIdWrapped}
+                                soulTagCounts={soulTagCounts}
+                                hunger={hunger}
+                                mood={mood}
+                                bondValue={bondValue}
+                                advStats={advStats}
+                                trainWins={trainWins}
+                                calcFinalStat={calcFinalStat}
+                                getIVGrade={getIVGrade}
+                            />
 
-                    {/* 怪獸圖鑑 */}
-                    <MonsterpediaOverlay
-                        isOpen={isPediaOpen}
-                        onClose={() => setIsPediaOpen(false)}
-                        ownedMonsters={ownedMonsters}
-                        monsterNames={MONSTER_NAMES}
-                        obtainableIds={OBTAINABLE_MONSTER_IDS}
-                        selectedIndex={pediaIdx}
-                        isDetailOpen={isPediaDetailOpen}
-                    />
+                            {/* 怪獸圖鑑 */}
+                            <MonsterpediaOverlay
+                                isOpen={isPediaOpen}
+                                onClose={() => setIsPediaOpen(false)}
+                                ownedMonsters={ownedMonsters}
+                                monsterNames={MONSTER_NAMES}
+                                obtainableIds={OBTAINABLE_MONSTER_IDS}
+                                selectedIndex={pediaIdx}
+                                isDetailOpen={isPediaDetailOpen}
+                            />
 
-                    {/* === 🤝 互動系統子選單 UI (精緻捲軸版) === */}
-                    {isInteractMenuOpen && (
-                        <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" 
-                             style={{ 
-                                 backgroundImage: `url("${base}assets/BG/共用底圖.png")`,
-                                 backgroundSize: 'cover',
-                                 backgroundPosition: 'center'
-                             }}>
-                            <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
+                            {/* === 🤝 互動系統子選單 UI (精緻捲軸版) === */}
+                            {isInteractMenuOpen && (
+                                <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2"
+                                    style={{
+                                        backgroundImage: `url("${base}assets/BG/共用底圖.png")`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center'
+                                    }}>
+                                    <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
 
-                            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
-                                <span>互動系統</span>
-                            </div>
+                                    <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
+                                        <span>互動系統</span>
+                                    </div>
 
-                            <div className="flex-1 w-full flex flex-col gap-2 px-1 justify-center pb-4 relative z-10 overflow-hidden">
-                                {(() => {
-                                    const options = [
-                                        { label: "🍖 餵食 (飽食度)", desc: "提供美味的肉類，快速補充體力並提升好感。" },
-                                        { label: "✋ 撫摸 (心情度)", desc: "溫和地互動，能夠安撫怪獸的心情並建立連結。" },
-                                        { label: "❌ 結束互動", desc: "完成目前的互動，返回主畫面休息。" }
-                                    ];
+                                    <div className="flex-1 w-full flex flex-col gap-2 px-1 justify-center pb-4 relative z-10 overflow-hidden">
+                                        {(() => {
+                                            const options = [
+                                                { label: "🍖 餵食 (飽食度)", desc: "提供美味的肉類，快速補充體力並提升好感。" },
+                                                { label: "✋ 撫摸 (心情度)", desc: "溫和地互動，能夠安撫怪獸的心情並建立連結。" },
+                                                { label: "❌ 結束互動", desc: "完成目前的互動，返回主畫面休息。" }
+                                            ];
 
-                                    return options.map((opt, idx) => {
-                                        const isSelected = interactMenuIdx === idx;
-                                        const isNext = (interactMenuIdx + 1) % options.length === idx;
-                                        const isPrev = (interactMenuIdx - 1 + options.length) % options.length === idx;
+                                            return options.map((opt, idx) => {
+                                                const isSelected = interactMenuIdx === idx;
+                                                const isNext = (interactMenuIdx + 1) % options.length === idx;
+                                                const isPrev = (interactMenuIdx - 1 + options.length) % options.length === idx;
 
-                                        if (!isSelected && !isNext && !isPrev) return null;
+                                                if (!isSelected && !isNext && !isPrev) return null;
 
-                                        return (
-                                            <div 
-                                                key={idx}
-                                                className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center backdrop-blur-[2px]
-                                                    ${isSelected 
-                                                        ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-white/40 scale-100 opacity-100 z-10' 
-                                                        : 'bg-white/10 text-white/50 border-white/10 scale-90 opacity-40 blur-[0.5px]'
-                                                    }`}
-                                                style={{
-                                                    transform: isPrev ? 'translateY(-5px)' : isNext ? 'translateY(5px)' : 'none'
-                                                }}
-                                            >
-                                                <div className="text-[12px] font-black">
-                                                    {opt.label}
-                                                </div>
-                                                {isSelected && (
-                                                    <div className="mt-2 flex flex-col items-center animate-fade-in">
-                                                        <div className="text-[9px] leading-tight px-3 py-1 bg-black/20 rounded-sm mb-2 text-white/90">
-                                                            {opt.desc}
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center backdrop-blur-[2px]
+                                                    ${isSelected
+                                                                ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-white/40 scale-100 opacity-100 z-10'
+                                                                : 'bg-white/10 text-white/50 border-white/10 scale-90 opacity-40 blur-[0.5px]'
+                                                            }`}
+                                                        style={{
+                                                            transform: isPrev ? 'translateY(-5px)' : isNext ? 'translateY(5px)' : 'none'
+                                                        }}
+                                                    >
+                                                        <div className="text-[12px] font-black">
+                                                            {opt.label}
                                                         </div>
-                                                        <div className="text-[9px] font-black bg-[#ff5252] text-white px-3 py-0.5 rounded-full border border-white/30 animate-pulse shadow-sm">
-                                                            [B] 確認執行
-                                                        </div>
+                                                        {isSelected && (
+                                                            <div className="mt-2 flex flex-col items-center animate-fade-in">
+                                                                <div className="text-[9px] leading-tight px-3 py-1 bg-black/20 rounded-sm mb-2 text-white/90">
+                                                                    {opt.desc}
+                                                                </div>
+                                                                <div className="text-[9px] font-black bg-[#ff5252] text-white px-3 py-0.5 rounded-full border border-white/30 animate-pulse shadow-sm">
+                                                                    [B] 確認執行
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
+                                                );
+                                            });
+                                        })()}
+                                    </div>
+
+                                    <div className="absolute bottom-6 w-full text-center px-4 z-10">
+                                        <div className="text-[9px] font-black text-white opacity-60 border-t-2 border-white/10 pt-2">
+                                            使用 [A] 切換選項，[B] 執行動作
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 我的背包 */}
+                            <InventoryOverlay
+                                isInventoryOpen={isInventoryOpen}
+                                inventory={inventory}
+                                selectedItemIdx={selectedItemIdx}
+                                isUsingItem={isUsingItem}
+                            />
+
+                            {/* === 📖 對戰日記 UI === */}
+                            <DiaryOverlay
+                                isDiaryOpen={isDiaryOpen}
+                                getTodayStr={getTodayStr}
+                                diaryViewDate={diaryViewDate}
+                                todayTrainWins={todayTrainWins}
+                                todayWildDefeated={todayWildDefeated}
+                                todaySpecialEvent={todaySpecialEvent}
+                                todayHasEvolved={todayHasEvolved}
+                                diaryLog={diaryLog}
+                                hunger={hunger}
+                                mood={mood}
+                                bondValue={bondValue}
+                                soulTagCounts={soulTagCounts}
+                                lockedAffinity={lockedAffinity}
+                                handleBUp={() => { }}
+                            />
+
+                            {/* 技能學習/替換介面 (Skill Learn UI) - Moved to bottom for max priority */}
+                            <SkillLearnOverlay
+                                pendingSkillLearn={pendingSkillLearn}
+                                isAdvMode={isAdvMode}
+                                isPvpMode={isPvpMode}
+                                battleState={battleState}
+                                isConfirmingReplace={isConfirmingReplace}
+                                advStats={advStats}
+                                tempReplaceIdx={tempReplaceIdx}
+                                SKILL_DATABASE={SKILL_DATABASE}
+                                TYPE_MAP={TYPE_MAP}
+                                skillSelectIdx={skillSelectIdx}
+                                handleB={handleB}
+                            />
+
+                            <div className="logical-canvas flex flex-col items-center justify-between pointer-events-none">
+                                <div className="lcd-grid-overlay"></div>
+
+                                {isBooting ? (
+                                    <div className="absolute inset-0 z-50 overflow-hidden pointer-events-none">
+                                        {/* 頂部文字 */}
+                                        <div className="absolute top-[20px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2" style={{
+                                            color: '#1a1a1a',
+                                            whiteSpace: 'nowrap',
+                                            textAlign: 'center'
+                                        }}>
+                                            {/* 替換標題字體為 LOGO 圖片 */}
+                                            <img
+                                                src={`${base}assets/BG/LOGO.png`}
+                                                alt="LOGO"
+                                                className="w-[180px] h-auto object-contain mb-1"
+                                                style={{ imageRendering: 'pixelated' }}
+                                            />
+                                            <div style={{ fontSize: '10px', fontWeight: 'bold' }}>
+                                                按 <span className="blink-anim">A</span> 開始冒險
+                                            </div>
+
+                                            {/* Firebase 登入控制項 */}
+                                            <div className="mt-4 pointer-events-auto flex flex-col items-center gap-2">
+                                                {user ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <div className="text-[9px] text-[#383a37] mb-1">已登入: {user.displayName}</div>
+                                                        <button
+                                                            onClick={logoutGoogle}
+                                                            className="bg-[#ccd6be] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.1)] active:translate-y-[1px]"
+                                                        >
+                                                            登出帳號
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={loginWithGoogle}
+                                                        className="bg-[#ffca28] border-2 border-[#1a1a1a] px-3 py-1.5 text-[10px] font-bold shadow-[3px_3px_0_rgba(0,0,0,0.2)] active:translate-y-[1px] flex items-center gap-2"
+                                                    >
+                                                        <span>連動 Google 帳號</span>
+                                                    </button>
                                                 )}
                                             </div>
-                                        );
-                                    });
-                                })()}
-                            </div>
-
-                            <div className="absolute bottom-6 w-full text-center px-4 z-10">
-                                <div className="text-[9px] font-black text-white opacity-60 border-t-2 border-white/10 pt-2">
-                                    使用 [A] 切換選項，[B] 執行動作
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* 我的背包 */}
-                    <InventoryOverlay
-                        isInventoryOpen={isInventoryOpen}
-                        inventory={inventory}
-                        selectedItemIdx={selectedItemIdx}
-                        isUsingItem={isUsingItem}
-                    />
-
-                    {/* === 📖 對戰日記 UI === */}
-                    <DiaryOverlay
-                        isDiaryOpen={isDiaryOpen}
-                        getTodayStr={getTodayStr}
-                        diaryViewDate={diaryViewDate}
-                        todayTrainWins={todayTrainWins}
-                        todayWildDefeated={todayWildDefeated}
-                        todaySpecialEvent={todaySpecialEvent}
-                        todayHasEvolved={todayHasEvolved}
-                        diaryLog={diaryLog}
-                        hunger={hunger}
-                        mood={mood}
-                        bondValue={bondValue}
-                        soulTagCounts={soulTagCounts}
-                        lockedAffinity={lockedAffinity}
-                        handleBUp={() => {}}
-                    />
-
-                    {/* 技能學習/替換介面 (Skill Learn UI) - Moved to bottom for max priority */}
-                    <SkillLearnOverlay
-                        pendingSkillLearn={pendingSkillLearn}
-                        isAdvMode={isAdvMode}
-                        isPvpMode={isPvpMode}
-                        battleState={battleState}
-                        isConfirmingReplace={isConfirmingReplace}
-                        advStats={advStats}
-                        tempReplaceIdx={tempReplaceIdx}
-                        SKILL_DATABASE={SKILL_DATABASE}
-                        TYPE_MAP={TYPE_MAP}
-                        skillSelectIdx={skillSelectIdx}
-                        handleB={handleB}
-                    />
-
-                    <div className="logical-canvas flex flex-col items-center justify-between pointer-events-none">
-                        <div className="lcd-grid-overlay"></div>
-
-                        {isBooting ? (
-                            <div className="absolute inset-0 z-50 overflow-hidden pointer-events-none">
-                                {/* 頂部文字 */}
-                                <div className="absolute top-[20px] left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2" style={{
-                                    color: '#1a1a1a',
-                                    whiteSpace: 'nowrap',
-                                    textAlign: 'center'
-                                }}>
-                                    {/* 替換標題字體為 LOGO 圖片 */}
-                                    <img 
-                                        src={`${base}assets/BG/LOGO.png`} 
-                                        alt="LOGO" 
-                                        className="w-[180px] h-auto object-contain mb-1"
-                                        style={{ imageRendering: 'pixelated' }}
-                                    />
-                                    <div style={{ fontSize: '10px', fontWeight: 'bold' }}>
-                                        按 <span className="blink-anim">A</span> 開始冒險
-                                    </div>
-
-                                    {/* Firebase 登入控制項 */}
-                                    <div className="mt-4 pointer-events-auto flex flex-col items-center gap-2">
-                                        {user ? (
-                                            <div className="flex flex-col items-center">
-                                                <div className="text-[9px] text-[#383a37] mb-1">已登入: {user.displayName}</div>
-                                                <button
-                                                    onClick={logoutGoogle}
-                                                    className="bg-[#ccd6be] border-2 border-[#1a1a1a] px-2 py-1 text-[9px] shadow-[2px_2px_0_rgba(0,0,0,0.1)] active:translate-y-[1px]"
-                                                >
-                                                    登出帳號
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={loginWithGoogle}
-                                                className="bg-[#ffca28] border-2 border-[#1a1a1a] px-3 py-1.5 text-[10px] font-bold shadow-[3px_3px_0_rgba(0,0,0,0.2)] active:translate-y-[1px] flex items-center gap-2"
-                                            >
-                                                <span>連動 Google 帳號</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* 畫面四個角落跳躍的怪獸 (帶有淡入淡出與倒掛效果) */}
-                                {(() => {
-                                    const positions = [
-                                        "top-4 left-4",    // 0: 左上
-                                        "top-4 right-4",   // 1: 右上
-                                        "bottom-4 left-4", // 2: 左下
-                                        "bottom-4 right-4" // 3: 右下
-                                    ];
-                                    const isTop = bootMonsterPosIdx < 2;
-                                    const isLeft = bootMonsterPosIdx % 2 === 0;
-                                    return (
-                                        <div 
-                                            className={`absolute ${positions[bootMonsterPosIdx]} flex justify-center items-center transition-opacity duration-1000`} 
-                                            style={{ 
-                                                zIndex: 40,
-                                                opacity: isBootMonsterVisible ? 1 : 0,
-                                                // 同時處理上下反轉(isTop)與左右鏡射(isLeft)
-                                                transform: `scale(${isLeft ? -2.5 : 2.5}, ${isTop ? -2.5 : 2.5})`, 
-                                                transformOrigin: 'center'
-                                            }}
-                                        >
-                                            <div style={{ animation: 'egg-pulse 2s infinite ease-in-out' }}>
-                                                <DitheredSprite id={bootMonsterId} scale={1} />
-                                            </div>
                                         </div>
-                                    );
-                                })()}
-                            </div>
-                        ) : (
-                            <>
-                                <div className="w-full h-[28px] flex justify-between px-4 pt-2 z-10 shrink-0 relative">
-                                    {menuItems.slice(0, 4).map((item, idx) => (
-                                        <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
-                                            {/* 底層：原本的點陣圖 (當沒有圖片或圖片載入失敗時顯示) */}
-                                            {!loadedImages[item.id] && (
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
-                                                </div>
-                                            )}
-                                            {/* 上層：自定義圖片圖標 (M1-M8) */}
-                                            {item.img && (
-                                                <img 
-                                                    src={item.img} 
-                                                    alt={item.id} 
-                                                    className="relative z-10 w-[25px] h-[25px] object-contain" 
-                                                    style={{ 
-                                                        filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
-                                                        imageRendering: 'pixelated',
-                                                        visibility: loadedImages[item.id] ? 'visible' : 'hidden'
+
+                                        {/* 畫面四個角落跳躍的怪獸 (帶有淡入淡出與倒掛效果) */}
+                                        {(() => {
+                                            const positions = [
+                                                "top-4 left-4",    // 0: 左上
+                                                "top-4 right-4",   // 1: 右上
+                                                "bottom-4 left-4", // 2: 左下
+                                                "bottom-4 right-4" // 3: 右下
+                                            ];
+                                            const isTop = bootMonsterPosIdx < 2;
+                                            const isLeft = bootMonsterPosIdx % 2 === 0;
+                                            return (
+                                                <div
+                                                    className={`absolute ${positions[bootMonsterPosIdx]} flex justify-center items-center transition-opacity duration-1000`}
+                                                    style={{
+                                                        zIndex: 40,
+                                                        opacity: isBootMonsterVisible ? 1 : 0,
+                                                        // 同時處理上下反轉(isTop)與左右鏡射(isLeft)
+                                                        transform: `scale(${isLeft ? -2.5 : 2.5}, ${isTop ? -2.5 : 2.5})`,
+                                                        transformOrigin: 'center'
                                                     }}
-                                                    onLoad={() => setLoadedImages(prev => ({ ...prev, [item.id]: true }))}
-                                                    onError={(e) => { 
-                                                        e.target.style.display = 'none';
-                                                        setLoadedImages(prev => ({ ...prev, [item.id]: false }));
-                                                    }} 
-                                                />
-                                            )}
-                                        </div>
-                                    ))}
-
-                                    {/* 雲端同步狀態顯示 */}
-                                    {user && (
-                                        <div className="absolute right-4 top-2 flex items-center gap-1">
-                                            <div className={`w-[6px] h-[6px] rounded-full ${isCloudSyncing ? 'bg-[#ff5252] animate-pulse' : 'bg-[#4caf50]'}`} />
-                                            <span className="text-[8px] text-[#383a37] font-bold">
-                                                {isCloudSyncing ? '同步中...' : '雲端存檔已同步'}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="w-full flex-1 relative z-10 overflow-hidden flex flex-col items-center justify-center">
-                                    {isEvolving && (
-                                        <div className="absolute inset-0 bg-[#8fa07e]/80 flex items-center justify-center z-30">
-                                            <span className="animate-pulse text-[14px] tracking-widest font-bold">進化中...</span>
-                                        </div>
-                                    )}
-
-                                    {miniGame && (
-                                        <div className="absolute inset-0 z-60 flex flex-col items-center justify-start pt-8 pointer-events-none">
-                                            {miniGame.type === 'reaction' && (
-                                                <>
-                                                    {miniGame.status === 'ready' && <span className="text-[20px] font-bold animate-pulse text-[#111]">READY?</span>}
-                                                    {miniGame.status === 'countdown' && <span className="text-[48px] font-black text-[#111]">{miniGame.count}</span>}
-                                                    {miniGame.status === 'go' && <span className="text-[36px] font-black text-[#ff5252] animate-bounce" style={{ textShadow: '2px 2px 0 #fff' }}>GO!</span>}
-                                                </>
-                                            )}
-
-                                            {miniGame.type === 'charge_click' && (
-                                                <>
-                                                    {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111]">CLICK B!</span>}
-                                                    {(miniGame.status === 'idle' || miniGame.status === 'clicking') && (
-                                                        <div className="w-[160px] h-[24px] border-4 border-[#111] bg-[#8fa07e] relative shadow-[0_4px_0_rgba(0,0,0,0.2)] mt-4">
-                                                            <div className="h-full bg-[#ff5252] transition-all duration-75" style={{ width: `${miniGame.energy}%` }} />
+                                                >
+                                                    <div style={{ animation: 'egg-pulse 2s infinite ease-in-out' }}>
+                                                        <DitheredSprite id={bootMonsterId} scale={1} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-full h-[28px] flex justify-between px-4 pt-2 z-10 shrink-0 relative">
+                                            {menuItems.slice(0, 4).map((item, idx) => (
+                                                <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx ? 1 : 0.2 }}>
+                                                    {/* 底層：原本的點陣圖 (當沒有圖片或圖片載入失敗時顯示) */}
+                                                    {!loadedImages[item.id] && (
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
                                                         </div>
                                                     )}
-                                                    {miniGame.status === 'clicking' && (
-                                                        <span className="text-[16px] font-bold text-[#111] mt-2">
-                                                            {Math.max(0, Math.ceil((3000 - (Date.now() - miniGame.startTime)) / 1000))}s
+                                                    {/* 上層：自定義圖片圖標 (M1-M8) */}
+                                                    {item.img && (
+                                                        <img
+                                                            src={item.img}
+                                                            alt={item.id}
+                                                            className="relative z-10 w-[25px] h-[25px] object-contain"
+                                                            style={{
+                                                                filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                                                                imageRendering: 'pixelated',
+                                                                visibility: loadedImages[item.id] ? 'visible' : 'hidden'
+                                                            }}
+                                                            onLoad={() => setLoadedImages(prev => ({ ...prev, [item.id]: true }))}
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                setLoadedImages(prev => ({ ...prev, [item.id]: false }));
+                                                            }}
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
+
+                                            {/* 雲端同步狀態顯示 */}
+                                            {user && (
+                                                <div className="absolute right-4 top-2 flex items-center gap-1">
+                                                    <div className={`w-[6px] h-[6px] rounded-full ${isCloudSyncing ? 'bg-[#ff5252] animate-pulse' : 'bg-[#4caf50]'}`} />
+                                                    <span className="text-[8px] text-[#383a37] font-bold">
+                                                        {isCloudSyncing ? '同步中...' : '雲端存檔已同步'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="w-full flex-1 relative z-10 overflow-hidden flex flex-col items-center justify-center">
+                                            {isEvolving && (
+                                                <div className="absolute inset-0 bg-[#8fa07e]/80 flex items-center justify-center z-30">
+                                                    <span className="animate-pulse text-[14px] tracking-widest font-bold">進化中...</span>
+                                                </div>
+                                            )}
+
+                                            {miniGame && (
+                                                <div className="absolute inset-0 z-60 flex flex-col items-center justify-start pt-8 pointer-events-none">
+                                                    {miniGame.type === 'reaction' && (
+                                                        <>
+                                                            {miniGame.status === 'ready' && <span className="text-[20px] font-bold animate-pulse text-[#111]">READY?</span>}
+                                                            {miniGame.status === 'countdown' && <span className="text-[48px] font-black text-[#111]">{miniGame.count}</span>}
+                                                            {miniGame.status === 'go' && <span className="text-[36px] font-black text-[#ff5252] animate-bounce" style={{ textShadow: '2px 2px 0 #fff' }}>GO!</span>}
+                                                        </>
+                                                    )}
+
+                                                    {miniGame.type === 'charge_click' && (
+                                                        <>
+                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111]">CLICK B!</span>}
+                                                            {(miniGame.status === 'idle' || miniGame.status === 'clicking') && (
+                                                                <div className="w-[160px] h-[24px] border-4 border-[#111] bg-[#8fa07e] relative shadow-[0_4px_0_rgba(0,0,0,0.2)] mt-4">
+                                                                    <div className="h-full bg-[#ff5252] transition-all duration-75" style={{ width: `${miniGame.energy}%` }} />
+                                                                </div>
+                                                            )}
+                                                            {miniGame.status === 'clicking' && (
+                                                                <span className="text-[16px] font-bold text-[#111] mt-2">
+                                                                    {Math.max(0, Math.ceil((3000 - (Date.now() - miniGame.startTime)) / 1000))}s
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                    {miniGame.type === 'spin' && (
+                                                        <>
+                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
+                                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
+
+                                                            {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
+                                                                <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
+                                                                    <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                    {miniGame.type === 'spin_heart' && (
+                                                        <>
+                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
+                                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
+
+                                                            {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
+                                                                <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
+                                                                    <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                    {miniGame.type === 'talk' && miniGame.status === 'question' && (
+                                                        <div className="absolute inset-x-2 top-2 bottom-2 bg-[#9baea0] border-[4px] border-[#383a37] shadow-[4px_4px_0_rgba(0,0,0,0.2)] p-2 flex flex-col pointer-events-auto z-[100]">
+                                                            <div className="text-[13px] font-extrabold text-[#111] mb-2 leading-tight whitespace-normal break-words h-[40px] flex items-center shrink-0">
+                                                                {SOUL_QUESTIONS[miniGame.qIdx].q}
+                                                            </div>
+                                                            <div className="flex flex-col gap-1 w-full bg-[#839788] px-2 py-1.5 border-[2px] border-[#5e6d62] flex-1 justify-around">
+                                                                {SOUL_QUESTIONS[miniGame.qIdx].options.map((opt, i) => (
+                                                                    <div key={i} className="text-[11px] whitespace-normal leading-[1.2] text-[#111] font-bold tracking-tight flex items-start">
+                                                                        <span className="text-[#333] font-black mr-1 shrink-0">{['A', 'B', 'C'][i]}.</span>
+                                                                        <span>{opt.label}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {miniGame.status === 'result' && (
+                                                        <span className={`text-[24px] font-black ${(miniGame.points || miniGame.result) ? 'text-[#ffca28]' : 'text-[#444]'}`} style={{ textShadow: '2px 2px 0 #fff' }}>
+                                                            {miniGame.points ? `+${miniGame.points}` : (miniGame.result ? "PERFECT!" : "MISS")}
                                                         </span>
                                                     )}
-                                                </>
-                                            )}
-                                            {miniGame.type === 'spin' && (
-                                                <>
-                                                    {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
-                                                    {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
-
-                                                    {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
-                                                        <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
-                                                            <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
-                                            {miniGame.type === 'spin_heart' && (
-                                                <>
-                                                    {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
-                                                    {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
-
-                                                    {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
-                                                        <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
-                                                            <PixelArt sprite={ICONS[miniGame.items[miniGame.currentIdx]]} color="#111" scale={3} />
-                                                        </div>
-                                                    )}
-                                                </>
-                                            )}
-                                            {miniGame.type === 'talk' && miniGame.status === 'question' && (
-                                                <div className="absolute inset-x-2 top-2 bottom-2 bg-[#9baea0] border-[4px] border-[#383a37] shadow-[4px_4px_0_rgba(0,0,0,0.2)] p-2 flex flex-col pointer-events-auto z-50">
-                                                    <div className="text-[13px] font-extrabold text-[#111] mb-2 leading-tight whitespace-normal break-words h-[40px] flex items-center shrink-0">
-                                                        {SOUL_QUESTIONS[miniGame.qIdx].q}
-                                                    </div>
-                                                    <div className="flex flex-col gap-1 w-full bg-[#839788] px-2 py-1.5 border-[2px] border-[#5e6d62] flex-1 justify-around">
-                                                        {SOUL_QUESTIONS[miniGame.qIdx].options.map((opt, i) => (
-                                                            <div key={i} className="text-[11px] whitespace-normal leading-[1.2] text-[#111] font-bold tracking-tight flex items-start">
-                                                                <span className="text-[#333] font-black mr-1 shrink-0">{['A', 'B', 'C'][i]}.</span>
-                                                                <span>{opt.label}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
                                                 </div>
                                             )}
-                                            {miniGame.status === 'result' && (
-                                                <span className={`text-[24px] font-black ${(miniGame.points || miniGame.result) ? 'text-[#ffca28]' : 'text-[#444]'}`} style={{ textShadow: '2px 2px 0 #fff' }}>
-                                                    {miniGame.points ? `+${miniGame.points}` : (miniGame.result ? "PERFECT!" : "MISS")}
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
 
-                                    <div
-                                        ref={monsterRef}
-                                        className="absolute"
-                                        style={{
-                                            left: posRef.current.x, top: posRef.current.y,
-                                            transform: 'translate(-50%, -50%)',
-                                            animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none',
-                                            zIndex: 50
-                                        }}
-                                    >
-                                        <div 
-                                            ref={spriteRef}
-                                            style={{
-                                                transform: `${!isDead && isSpinning ? 'rotate(180deg)' : ''} ${velRef.current.x < 0 ? 'scaleX(1)' : 'scaleX(-1)'}`,
-                                                transformOrigin: 'center center',
-                                                transition: 'transform 0.15s ease-out', // 稍微平滑化轉向過程
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterIdWrapped(); return null; })()}
-                                            <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()} pure={true} />
-                                        </div>
-                                    </div>
-
-                                    {/* 死亡後提示文字 */}
-                                    {isDead && showRestartHint && (
-                                        <div
-                                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                                            style={{ animation: 'hint-fadein 0.8s ease-out forwards' }}
-                                        >
-                                            <div style={{
-                                                fontFamily: "'Press Start 2P', monospace",
-                                                fontSize: '10px',
-                                                color: '#1a1a1a',
-                                                textAlign: 'center',
-                                                lineHeight: 2,
-                                                opacity: 0.85
-                                            }}>
-                                                按任意按鈕<br />重新開始
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="w-[240px] h-[32px] border-2 border-[#1a1a1a] flex items-center px-2 overflow-hidden z-10 bg-[#9dae8a] shrink-0 mb-[10px] shadow-[inset_2px_2px_0_rgba(0,0,0,0.2)] relative">
-                                    <span key={marqueeKey} className={`text-[11px] font-bold ${isBooting ? 'whitespace-pre-line text-center w-full leading-tight' : 'whitespace-nowrap'}`} style={{ animation: isBooting ? 'none' : 'marquee-once 4s ease-out forwards' }}>
-                                        {isBooting ? (
-                                            <>
-                                                <div>像素怪獸</div>
-                                                <div>按 <span className="blink-anim">A</span> 開始冒險</div>
-                                            </>
-                                        ) : dialogue}
-                                    </span>
-                                </div>
-
-                                <div className="w-full h-[28px] flex justify-between px-4 pb-12 z-10 shrink-0 relative">
-                                    {menuItems.slice(4, 8).map((item, idx) => (
-                                        <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
-                                            {/* 底層保底 */}
-                                            {!loadedImages[item.id] && (
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
-                                                </div>
-                                            )}
-                                            {/* 上層自定義圖片 */}
-                                            {item.img && (
-                                                <img 
-                                                    src={item.img} 
-                                                    alt={item.id} 
-                                                    className="relative z-10 w-[25px] h-[25px] object-contain" 
-                                                    style={{ 
-                                                        filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
-                                                        imageRendering: 'pixelated',
-                                                        visibility: loadedImages[item.id] ? 'visible' : 'hidden'
+                                            <div
+                                                ref={monsterRef}
+                                                className="absolute"
+                                                style={{
+                                                    left: posRef.current.x, top: posRef.current.y,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    animation: isDead ? 'monster-fadeout 2s ease-out forwards' : 'none',
+                                                    zIndex: 50
+                                                }}
+                                            >
+                                                <div
+                                                    ref={spriteRef}
+                                                    style={{
+                                                        transform: `${!isDead && isSpinning ? 'rotate(180deg)' : ''} ${velRef.current.x < 0 ? 'scaleX(1)' : 'scaleX(-1)'}`,
+                                                        transformOrigin: 'center center',
+                                                        transition: 'transform 0.15s ease-out',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center'
                                                     }}
-                                                    onLoad={() => setLoadedImages(prev => ({ ...prev, [item.id]: true }))}
-                                                    onError={(e) => { 
-                                                        e.target.style.display = 'none';
-                                                        setLoadedImages(prev => ({ ...prev, [item.id]: false }));
-                                                    }} 
-                                                />
+                                                >
+                                                    {!isDead && (() => { lastAliveMonsterIdRef.current = getMonsterIdWrapped(); return null; })()}
+                                                    <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()} pure={true} />
+                                                </div>
+                                            </div>
+
+                                            {/* 死亡後提示文字 */}
+                                            {isDead && showRestartHint && (
+                                                <div
+                                                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                                                    style={{ animation: 'hint-fadein 0.8s ease-out forwards' }}
+                                                >
+                                                    <div style={{
+                                                        fontFamily: "'Press Start 2P', monospace",
+                                                        fontSize: '10px',
+                                                        color: '#1a1a1a',
+                                                        textAlign: 'center',
+                                                        lineHeight: 2,
+                                                        opacity: 0.85
+                                                    }}>
+                                                        按任意按鈕<br />重新開始
+                                                    </div>
+                                                </div>
                                             )}
                                         </div>
-                                    ))}
-                                </div>
 
-                                {/* 全域警告彈窗 (Alert Modal) */}
-                                {alertMsg && (
-                                    <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[1px]">
-                                        <div className="bg-[#9dae8a] border-[4px] border-[#1a1a1a] shadow-[4px_4px_0_rgba(0,0,0,0.3)] p-3 w-full flex flex-col items-center">
-                                            <div className="text-[12px] font-black text-[#ff5252] mb-1 tracking-widest">[ SYSTEM ALERT ]</div>
-                                            <div className="text-[13px] font-bold text-[#111] text-center leading-tight mb-3">
-                                                {alertMsg}
-                                            </div>
-                                            <div className="text-[10px] text-[#444] animate-pulse">
-                                                -- 按任意鍵關閉 --
-                                            </div>
+                                        <div className="w-[240px] h-[32px] border-2 border-[#1a1a1a] flex items-center px-2 overflow-hidden z-10 bg-[#9dae8a] shrink-0 mb-[10px] shadow-[inset_2px_2px_0_rgba(0,0,0,0.2)] relative">
+                                            <span key={marqueeKey} className={`text-[11px] font-bold ${isBooting ? 'whitespace-pre-line text-center w-full leading-tight' : 'whitespace-nowrap'}`} style={{ animation: isBooting ? 'none' : 'marquee-once 4s ease-out forwards' }}>
+                                                {isBooting ? (
+                                                    <>
+                                                        <div>像素怪獸</div>
+                                                        <div>按 <span className="blink-anim">A</span> 開始冒險</div>
+                                                    </>
+                                                ) : dialogue}
+                                            </span>
                                         </div>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
-                    <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 4px 15px rgba(0,0,0,0.8)', zIndex: 100 }} />
-                </div>
 
-                <div className="mt-7 w-full flex justify-between px-6 mb-2">
-                    {[
-                        { key: 'A', name: '選擇' },
-                        { key: 'B', name: '確定' },
-                        { key: 'C', name: '返回' }
-                    ].map((btn) => (
-                        <div key={btn.key} className="flex flex-col items-center gap-1">
-                            <button
-                                onMouseDown={() => { setBtnPressed(btn.key); if (btn.key === 'B') handleBDown(); }}
-                                onMouseUp={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
-                                onMouseLeave={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
-                                className={`
+                                        <div className="w-full h-[28px] flex justify-between px-4 pb-12 z-10 shrink-0 relative">
+                                            {menuItems.slice(4, 8).map((item, idx) => (
+                                                <div key={item.id} className="pixel-rendering relative w-[28px] h-[28px] flex items-center justify-center" style={{ opacity: activeIndex === idx + 4 ? 1 : 0.2 }}>
+                                                    {/* 底層保底 */}
+                                                    {!loadedImages[item.id] && (
+                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                            <PixelArt sprite={item.sprite} color="#1a1a1a" scale={3} />
+                                                        </div>
+                                                    )}
+                                                    {/* 上層自定義圖片 */}
+                                                    {item.img && (
+                                                        <img
+                                                            src={item.img}
+                                                            alt={item.id}
+                                                            className="relative z-10 w-[25px] h-[25px] object-contain"
+                                                            style={{
+                                                                filter: 'saturate(1.0) brightness(0.5) contrast(1.1)',
+                                                                imageRendering: 'pixelated',
+                                                                visibility: loadedImages[item.id] ? 'visible' : 'hidden'
+                                                            }}
+                                                            onLoad={() => setLoadedImages(prev => ({ ...prev, [item.id]: true }))}
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                setLoadedImages(prev => ({ ...prev, [item.id]: false }));
+                                                            }}
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* 全域警告彈窗 (Alert Modal) */}
+                                        {alertMsg && (
+                                            <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[1px]">
+                                                <div className="bg-[#9dae8a] border-[4px] border-[#1a1a1a] shadow-[4px_4px_0_rgba(0,0,0,0.3)] p-3 w-full flex flex-col items-center">
+                                                    <div className="text-[12px] font-black text-[#ff5252] mb-1 tracking-widest">[ SYSTEM ALERT ]</div>
+                                                    <div className="text-[13px] font-bold text-[#111] text-center leading-tight mb-3">
+                                                        {alertMsg}
+                                                    </div>
+                                                    <div className="text-[10px] text-[#444] animate-pulse">
+                                                        -- 按任意鍵關閉 --
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                            <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 4px 15px rgba(0,0,0,0.8)', zIndex: 100 }} />
+                        </div>
+
+                        <div className="mt-7 w-full flex justify-between px-6 mb-2">
+                            {[
+                                { key: 'A', name: '選擇' },
+                                { key: 'B', name: '確定' },
+                                { key: 'C', name: '返回' }
+                            ].map((btn) => (
+                                <div key={btn.key} className="flex flex-col items-center gap-1">
+                                    <button
+                                        onMouseDown={() => { setBtnPressed(btn.key); if (btn.key === 'B') handleBDown(); }}
+                                        onMouseUp={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
+                                        onMouseLeave={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
+                                        className={`
                                   w-[54px] h-[54px] rounded-full shadow-[0_4px_6px_rgba(0,0,0,0.6)]
                                   transition-all active:translate-y-[2px] active:shadow-sm
                                   ${btnPressed === btn.key ? 'brightness-75' : 'brightness-100'}
                                   flex items-center justify-center
                                 `}
+                                        style={{
+                                            backgroundImage: `url('${base}assets/BG/${btn.key}.png')`,
+                                            backgroundSize: 'cover',
+                                            backgroundPosition: 'center',
+                                            backgroundRepeat: 'no-repeat',
+                                            border: 'none'
+                                        }}
+                                        onClick={() => btn.key === 'A' ? handleA() : btn.key === 'B' ? handleB() : handleC()}
+                                    ></button>
+                                    <span className="text-[12px] font-bold text-[#e0e0e0] tracking-widest mt-1 opacity-80">
+                                        {btn.name}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="w-full mt-2 px-6 flex justify-center">
+                            <button
+                                onClick={isDead ? handleRestart : triggerFarewell}
+                                disabled={!isDead && isGenerating}
+                                className={`w-[160px] h-[68px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
                                 style={{
-                                    backgroundImage: `url('${base}assets/BG/${btn.key}.png')`,
-                                    backgroundSize: 'cover',
+                                    backgroundImage: `url('${base}assets/BG/ED.png')`,
+                                    backgroundSize: '100% 100%',
                                     backgroundPosition: 'center',
                                     backgroundRepeat: 'no-repeat',
-                                    border: 'none'
+                                    backgroundColor: 'transparent',
                                 }}
-                                onClick={() => btn.key === 'A' ? handleA() : btn.key === 'B' ? handleB() : handleC()}
                             ></button>
-                            <span className="text-[12px] font-bold text-[#e0e0e0] tracking-widest mt-1 opacity-80">
-                                {btn.name}
-                            </span>
                         </div>
-                    ))}
-                </div>
-                <div className="w-full mt-2 px-6 flex justify-center">
-                    <button
-                        onClick={isDead ? handleRestart : triggerFarewell}
-                        disabled={!isDead && isGenerating}
-                        className={`w-[160px] h-[68px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
-                        style={{
-                            backgroundImage: `url('${base}assets/BG/ED.png')`,
-                            backgroundSize: '100% 100%',
-                            backgroundPosition: 'center',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundColor: 'transparent',
-                        }}
-                    ></button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
     );
 }
 
