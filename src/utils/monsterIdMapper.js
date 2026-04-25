@@ -12,7 +12,7 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
     const cleanBranch = String(branch || "").trim();
     const numStage = parseInt(stage);
 
-    // 2. 處理野外怪獸進化 (WILD_ID 格式)
+    // 2. 處理野外怪獸進化 (WILD_ID 格式 - 僅保留波波線與小拳石線)
     if (cleanBranch.startsWith('WILD_')) {
         return parseInt(cleanBranch.split('_')[1]);
     }

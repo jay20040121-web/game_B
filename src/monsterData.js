@@ -6617,12 +6617,7 @@ export const TYPE_SKILLS = {
 
 export const ADV_WILD_POOL = [
     { id: 16, name: "波波", weight: 20, power: 90, type: "flying" },
-    { id: 23, name: "阿柏蛇", weight: 15, power: 110, type: "poison" },
-    { id: 27, name: "穿山鼠", weight: 15, power: 120, type: "ground" },
-    { id: 41, name: "超音蝠", weight: 15, power: 105, type: "poison" },
-    { id: 56, name: "猴怪", weight: 15, power: 150, type: "fighting" },
-    { id: 74, name: "小拳石", weight: 10, power: 80, type: "rock" },
-    { id: 60, name: "蚊香蝌蚪", weight: 10, power: 82, type: "water" }
+    { id: 74, name: "小拳石", weight: 10, power: 80, type: "rock" }
 ];
 
 // 已遷移至 src/data/evolutionConfig.js
@@ -6675,12 +6670,7 @@ export const OBTAINABLE_MONSTER_IDS = [
     92, 93, 94,    // 鬼斯線 (G1)
     63, 64, 65,    // 凱西線 (G2)
     16, 17, 18,    // 波波線 (Wild)
-    23, 24,        // 阿柏蛇線 (Wild)
-    27, 28,        // 穿山鼠線 (Wild)
-    41, 42, 169,   // 超音蝠線 (Wild)
-    56, 57, 979,   // 猴怪線 (Wild)
     74, 75, 76,    // 小拳石線 (Wild)
-    60, 61, 62,    // 蚊香蝌蚪線 (Wild)
 
     // --- 8. 傳說與幻之怪獸 (End Game) ---
     // 已移除夢幻、洛奇亞、烈空坐以防法律糾紛
