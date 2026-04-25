@@ -9,7 +9,7 @@ import { MONSTER_NAMES } from '../monsterData';
  */
 const getEvoDesc = (id) => {
     const numId = parseInt(id);
-    
+
     // 1. 處理野外進化線
     const nextWildId = WILD_EVOLUTION_MAP[String(numId)];
     if (nextWildId) {
@@ -29,16 +29,16 @@ const getEvoDesc = (id) => {
     // 3. 處理常規與魂系分支
     for (const chainName in EVOLUTION_CHAINS) {
         const chain = EVOLUTION_CHAINS[chainName];
-        
+
         // 遍歷各個階段 (1 -> 2, 2 -> 3, 3 -> 4)
         for (let s = 1; s <= 3; s++) {
             const currentStageMap = chain[`stage${s}`];
-            const nextStageMap = chain[`stage${s+1}`];
+            const nextStageMap = chain[`stage${s + 1}`];
             if (!currentStageMap || !nextStageMap) continue;
 
             // 尋找當前 ID 對應的分支名稱
             const currentBranch = Object.keys(currentStageMap).find(b => currentStageMap[b].id === numId);
-            
+
             if (currentBranch) {
                 // 尋找所有從此分支進化而來的後繼者
                 const nextForms = Object.values(nextStageMap).filter(next => {

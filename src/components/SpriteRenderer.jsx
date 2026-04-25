@@ -8,6 +8,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/idle/${assetId}.gif` : `${base}assets/exclusive/sprites/${assetId}.png`);
+    const [naturalWidth, setNaturalWidth] = useState(0);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
@@ -18,6 +19,9 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
 
     const baseSize = 68;
     const targetSize = baseSize * scale;
+
+    // 根據原始圖片解析度決定內部縮放比例 (64px 使用 0.55, 128px 使用 0.7)
+    const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
 
     return (
         <div 
@@ -38,6 +42,7 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
             <img 
                 src={imgSrc}
                 className="pixel-rendering"
+                onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
                 style={{ 
                     filter: silhouette 
                         ? 'brightness(0) contrast(100)' 
@@ -50,8 +55,8 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
                     imageRendering: 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    // GIF 特殊定位：修正縮放後「浮在空中」的問題
-                    transform: 'scale(0.55) translateY(0)',
+                    // 動態調整縮放倍率
+                    transform: `scale(${innerScale}) translateY(0)`,
                     transformOrigin: 'bottom center'
                 }}
                 alt="Monster Sprite"
@@ -74,6 +79,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, 
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/back/${assetId}.gif` : `${base}assets/exclusive/back/${assetId}.png`);
+    const [naturalWidth, setNaturalWidth] = useState(0);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
@@ -84,6 +90,9 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, 
 
     const baseSize = 68;
     const targetSize = baseSize * scale;
+
+    // 與正面一致：128px 使用 0.7, 64px 使用 0.55
+    const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
 
     return (
         <div 
@@ -104,6 +113,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, 
             <img 
                 src={imgSrc}
                 className="pixel-rendering"
+                onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
                 style={{ 
                     filter: pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)',
                     width: '100%',
@@ -114,8 +124,8 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, 
                     imageRendering: 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    // GIF 特殊定位：與正面一致
-                    transform: 'scale(0.55) translateY(0)',
+                    // 動態調整縮放倍率
+                    transform: `scale(${innerScale}) translateY(0)`,
                     transformOrigin: 'bottom center'
                 }}
                 alt="Monster Back Sprite"

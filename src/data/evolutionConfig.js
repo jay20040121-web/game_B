@@ -31,7 +31,7 @@ export const WILD_EVOLUTION_MAP = {
 export const EVOLUTION_CHAINS = {
     "START": {
         stage1: {
-            "A": { id: 132 }, "B": { id: 132 }, "C": { id: 132 },
+            "A": { id: 132 }, "C": { id: 132 },
             "F": { id: 132 }, "P1": { id: 132 }, "P2": { id: 132 },
             "F_SOUL": { id: 132 }, "W_SOUL": { id: 132 }, "GR_SOUL": { id: 132 }, "B_SOUL": { id: 132 }
         },
@@ -41,7 +41,7 @@ export const EVOLUTION_CHAINS = {
             { to: "W_SOUL", condition: "bond >= 80 && affinity == 'water'", desc: "水系靈魂 (傑尼龜線)" },
             { to: "GR_SOUL", condition: "bond >= 80 && affinity == 'grass'", desc: "草系靈魂 (妙蛙種子線)" },
             { to: "B_SOUL", condition: "bond >= 80 && affinity == 'bug'", desc: "蟲系靈魂 (綠毛蟲線)" },
-            
+
             // 基礎分支
             { to: "F", condition: "sWins >= 8", desc: "格鬥系 (腕力)" },
             { to: "P1", condition: "mood <= 0 && hunger <= 0", desc: "毒系 A (瓦斯彈)" },
@@ -163,12 +163,12 @@ export const EVOLUTION_CHAINS = {
             "C": { id: 19, desc: "小拉達" }
         },
         stage3: {
-            "A": { id: 33, from: "A", desc: "尼多力諾" },
-            "C": { id: 20, from: "C", desc: "拉達" }
+            "A": { id: 33, from: ["A", "C"], desc: "尼多力諾 (心情、飽食度 >= 50)" },
+            "C": { id: 20, from: ["A", "C"], desc: "拉達 (其餘條件)" }
         },
         stage4: {
-            "A": { id: 34, from: "A", desc: "尼多王" },
-            "C": { id: 137, from: "C", desc: "多邊獸" }
+            "A": { id: 34, from: ["A", "C"], desc: "尼多王 (心情、飽食度 >= 50)" },
+            "C": { id: 137, from: ["A", "C"], desc: "多邊獸 (其餘條件)" }
         }
     },
 
