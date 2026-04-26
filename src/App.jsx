@@ -1015,7 +1015,6 @@ export default function App() {
     const confirmWildCapture = (confirm) => {
         if (confirm && pendingWildCapture) {
             setEvolutionBranch('WILD_' + pendingWildCapture.id);
-            setEvolutionStage(1);
             setLastEvolutionTime(Date.now()); // 🔥 捕獲後務必重置進化時鐘，防止繼承舊寵物時間導致瞬間進化或暴斃
             recordGameAction(); // 紀錄捕獲行為
             setStageTrainWins(0);            // 重置當前階級勝次
@@ -1050,6 +1049,7 @@ export default function App() {
                 return stage;
             };
             const bioStage = getBioStage(pendingWildCapture.id);
+            setEvolutionStage(bioStage); // 同步正確的進化階段
 
             // 使用最新的 generateMoves 系統生成招式 (取代舊有硬編碼邏輯)
             // 捕捉到的怪獸視為 initialized，不給予強制 bonusId，完全由 generateMoves 根據等級與階級決定
@@ -2934,14 +2934,22 @@ export default function App() {
         // 把長度限制在最大四招內
         combinedMoves = combinedMoves.slice(0, 4);
 
+        // --- 遺傳繼承：從前代個體值中挑選最強的一項繼承 ---
+        const prevIVs = latestStats.current.advStats?.ivs || { hp: 0, atk: 0, def: 0, spd: 0 };
+        const maxIVEntry = Object.entries(prevIVs).reduce((a, b) => (a[1] || 0) >= (b[1] || 0) ? a : b);
+        const [bestStatKey, bestIVValue] = maxIVEntry;
+
+        const nextIVs = {
+            hp: Math.floor(Math.random() * 32),
+            atk: Math.floor(Math.random() * 32),
+            def: Math.floor(Math.random() * 32),
+            spd: Math.floor(Math.random() * 32)
+        };
+        nextIVs[bestStatKey] = bestIVValue; // 繼承前代最強的一項基因
+
         setAdvStats({
             basePower: 100 + inheritedPower,
-            ivs: {
-                hp: Math.floor(Math.random() * 32),
-                atk: Math.floor(Math.random() * 32),
-                def: Math.floor(Math.random() * 32),
-                spd: Math.floor(Math.random() * 32)
-            },
+            ivs: nextIVs,
             evs: { hp: 0, atk: 0, def: 0, spd: 0 },
             bonusMoveId: nextBonusId, // 記錄原本隨機出的，但不一定在 moves 陣列中
             moves: combinedMoves
