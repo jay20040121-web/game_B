@@ -2540,10 +2540,8 @@ export default function App() {
                 ? ADV_WILD_POOL.filter(m => m.id !== 74)
                 : ADV_WILD_POOL;
 
-            const totalWeight = filteredPool.reduce((sum, m) => sum + m.weight, 0);
-            let roll = Math.random() * totalWeight;
-            enemyData = filteredPool[0];
-            for (const m of filteredPool) { if (roll < m.weight) { enemyData = m; break; } roll -= m.weight; }
+            // 自動根據池子數量分配平等的出現機率 (1/N)
+            enemyData = filteredPool[Math.floor(Math.random() * filteredPool.length)];
             const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
             eType = eStatsRef.types;
             const isBaby = evolutionStage < 2;

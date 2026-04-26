@@ -85,6 +85,8 @@ const saveDiaryData = (diary) => {
     } catch (e) { }
 };
 
+import { getTypeMultiplier } from '../monsterData';
+
 const ADV_BATTLE_RULES = {
     BASE_HP: 100, BASE_ATK: 10, BASE_DEF: 10, BASE_SPD: 1,
     HIT_RATE: 0.9,
@@ -102,25 +104,45 @@ const getSmartMove = (attacker, defender, moves) => {
     let maxScore = -1;
     
     for (const move of validMoves) {
+        const movePower = move.power || 0;
         const moveType = move.type || 'normal';
         const defenderType = defender.type || ['normal'];
         
+        // 取得屬性相剋倍率 (確認此處 moveType 為攻擊方，defenderType 為防禦方)
         const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(moveType, defenderType) : 1;
         
-        // --- 核心修正 (v2)：區分傷害招式與狀態招式 ---
-        const movePower = move.power || 0;
-        const isStatus = movePower === 0;
         let score = 0;
 
-        if (isStatus) {
-            // 狀態招式不參與屬性相剋計算 (倍率強制為 1)
-            // 且基礎得分進一步降至 12 (確保威力只有 20 的低階攻擊招式也能優先選用)
-            score = 12 * 1;
+        if (movePower > 0) {
+            // 1. 威力權重分配 (根據需求優先級：80 > 60 > 40 > 100+)
+            let pScore = 0;
+            if (movePower >= 100) pScore = 10;      // 100以上威力大但常有副作用，優先級設為最低
+            else if (movePower >= 80) pScore = 40;  // 80 為理想最強招
+            else if (movePower >= 60) pScore = 30;
+            else if (movePower >= 40) pScore = 20;
+            else pScore = 5;
 
-            // 檢查能力值上限：如果該技能是自我強化且對應屬性已達 +6，則將分數設為 0
+            // 2. 屬性克制優先 (Rule: 屬性克制時優先使用屬性克制的招式)
+            if (realMult > 1) {
+                // 克制時給予 1000 級距的加分，確保優於所有非克制招式
+                score = 1000 + pScore;
+            } else if (realMult === 0) {
+                // 完全無效則不考慮
+                score = 0;
+            } else if (realMult < 1) {
+                // 效果不好時，分數大幅降低，但仍高於 BUFF (級距 10)
+                score = 10 + pScore * 0.1;
+            } else {
+                // 一般情況 (級距 100)
+                score = 100 + pScore;
+            }
+        } else {
+            // 3. 威力=0 是 BUFF 招式，優先級放在最後 (級距 1)
+            score = 1;
+
+            // 檢查能力值上限：如果該技能是自我強化且對應屬性已達 +6，則不重複使用
             if (move.stat_changes && attacker.statStages) {
                 const isRedundant = move.stat_changes.some(sc => {
-                    // 檢查目標是自己且是正向增益
                     const isSelfBuff = (move.stat_target === 'self' || !move.stat_target);
                     if (isSelfBuff && sc.change > 0) {
                         return (attacker.statStages[sc.stat] || 0) >= 6;
@@ -129,19 +151,15 @@ const getSmartMove = (attacker, defender, moves) => {
                 });
                 if (isRedundant) score = 0;
             }
-        } else {
-            // 傷害招式權重：基礎威力 * 屬性相剋
-            score = movePower * realMult;
         }
 
+        // 更新最佳招式
         if (score > maxScore) {
             maxScore = score;
             bestMove = move;
         } else if (score === maxScore && score > 0) {
-            // 同分時，偏向隨機選擇，但稍微拉高攻擊招式的選中率 (70%)
-            if (!isStatus && Math.random() < 0.7) {
-                bestMove = move;
-            } else if (Math.random() < 0.5) {
+            // 同分時隨機選擇 (50% 機率切換)
+            if (Math.random() < 0.5) {
                 bestMove = move;
             }
         }

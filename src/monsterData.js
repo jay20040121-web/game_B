@@ -6616,8 +6616,8 @@ export const TYPE_SKILLS = {
 // --- 其他戰鬥與遊戲邏輯 ---
 
 export const ADV_WILD_POOL = [
-    { id: 16, name: "波波", weight: 20, power: 90, type: "flying" },
-    { id: 74, name: "小拳石", weight: 10, power: 80, type: "rock" }
+    { id: 16, name: "波波", weight: 1, power: 90, type: "flying" },
+    { id: 74, name: "小拳石", weight: 1, power: 80, type: "rock" }
 ];
 
 // 已遷移至 src/data/evolutionConfig.js
@@ -6626,7 +6626,7 @@ export const ADV_WILD_POOL = [
 // 只有玩家能獲得的怪獸才會顯示在圖鑑中 (依進化鏈順序排列)
 export const OBTAINABLE_MONSTER_IDS = [
     // --- 1. 百變怪 (起始) ---
-    132, 
+    132,
 
     // --- 2. 一般線 (A, C, FAIL 分支) ---
     32, 33, 34,    // 尼多朗線 (A)
@@ -6754,7 +6754,7 @@ export const calculateDamage = (atk, def, power, multiplier = 1.0) => {
 
 export const generateMoves = (stage, types, forcedBonusId = null, level = 1, isAi = true) => {
     const typeList = Array.isArray(types) ? types : [types];
-    
+
     // --- 威力過濾邏輯 (Power Gating) ---
     // 限制 AI 技能強度，避免前期秒殺玩家
     let maxPower = 999;
@@ -6767,7 +6767,7 @@ export const generateMoves = (stage, types, forcedBonusId = null, level = 1, isA
     const allSkillIds = Object.keys(SKILL_DATABASE);
 
     // 取得過濾後的池子
-    const getPool = (tFilter, powerLimit) => 
+    const getPool = (tFilter, powerLimit) =>
         allSkillIds.filter(id => {
             const s = SKILL_DATABASE[id];
             if (!s) return false;
@@ -6790,28 +6790,24 @@ export const generateMoves = (stage, types, forcedBonusId = null, level = 1, isA
     };
 
     let selectedIds = [];
-    if (stage <= 1) {
-        // 第一階通常只會有基本招式
-        const primaryTypeId = TYPE_SKILLS[typeList[0]]?.[0] || 'tackle';
-        selectedIds = [primaryTypeId, forcedBonusId].filter(Boolean);
-    } else {
-        const count = stage === 2 ? 2 : (stage === 3 ? 3 : 4);
-        
-        // 抽取邏輯
-        for (let i = 0; i < count; i++) {
-            // 第一招保證本系（或是玩家自己學招時全本系，除非是 AI 特殊生成）
-            const isStabTurn = (i === 0) || !isAi || (Math.random() < 0.7);
-            const currentPool = isStabTurn ? stabPool : coveragePool;
-            
-            let available = currentPool.filter(id => !selectedIds.includes(id));
-            
-            // 備援：若該威力限制下沒招了，回退到 normal 或全池
-            if (available.length === 0) available = normalPool.filter(id => !selectedIds.includes(id));
-            if (available.length === 0) available = coveragePool.filter(id => !selectedIds.includes(id));
+    if (forcedBonusId) selectedIds.push(forcedBonusId);
 
-            if (available.length > 0) {
-                selectedIds.push(shuffle(available)[0]);
-            }
+    const count = 4; // 不論等級、Stage 或進化鏈，一律初始給滿 4 招
+
+    // 抽取邏輯
+    for (let i = selectedIds.length; i < count; i++) {
+        // 第一招保證本系（或是玩家自己學招時全本系，除非是 AI 特殊生成）
+        const isStabTurn = (i === 0) || !isAi || (Math.random() < 0.7);
+        const currentPool = isStabTurn ? stabPool : coveragePool;
+
+        let available = currentPool.filter(id => !selectedIds.includes(id));
+
+        // 備援：若該威力限制下沒招了，回退到 normal 或全池
+        if (available.length === 0) available = normalPool.filter(id => !selectedIds.includes(id));
+        if (available.length === 0) available = coveragePool.filter(id => !selectedIds.includes(id));
+
+        if (available.length > 0) {
+            selectedIds.push(shuffle(available)[0]);
         }
     }
 
@@ -6831,7 +6827,7 @@ export const generateMoves = (stage, types, forcedBonusId = null, level = 1, isA
 export const calcFinalStat = (type, speciesId, iv, ev, level, natureMod = 1.0) => {
     const baseStats = SPECIES_BASE_STATS[String(speciesId)] || { hp: 50, atk: 50, def: 50, spd: 50 };
     const base = baseStats[type] || 50;
-    
+
     if (type === 'hp') {
         return Math.floor((Math.floor(((2 * base + iv + (ev / 4)) * level) / 100) + level + 10) * natureMod);
     } else {
