@@ -27,7 +27,7 @@ export const EVOLUTION_CHAINS = {
     "START": {
         stage1: {
             "A": { id: 132 }, "C": { id: 132 },
-            "F": { id: 132 }, "P1": { id: 132 }, "P2": { id: 132 },
+            "F": { id: 132 },
             "F_SOUL": { id: 132 }, "W_SOUL": { id: 132 }, "GR_SOUL": { id: 132 }, "B_SOUL": { id: 132 }
         },
         branches: [
@@ -39,8 +39,6 @@ export const EVOLUTION_CHAINS = {
 
             // 基礎分支
             { to: "F", condition: "sWins >= 8", desc: "格鬥系 (腕力)" },
-            { to: "P1", condition: "mood <= 0 && hunger <= 0", desc: "毒系 A (瓦斯彈)" },
-            { to: "P2", condition: "mood <= 0 && hunger <= 0", desc: "毒系 B (臭泥)" },
             { to: "A", condition: "mood >= 50 && hunger >= 50", desc: "一般線 A (尼多朗)" },
             { to: "C", condition: "else", desc: "一般線 C (小拉達)" }
         ]
@@ -111,16 +109,8 @@ export const EVOLUTION_CHAINS = {
 
     "SOUL_BUG": {
         stage2: { "B_SOUL": { id: 10, desc: "綠毛蟲" } },
-        stage3: {
-            "B_M_SOUL": { id: 11, condition: "mood >= 50", from: "B_SOUL", desc: "鐵甲蛹 (心情 50+)" },
-            "B_H_SOUL": { id: 14, condition: "hunger >= 50", from: "B_SOUL", desc: "鐵殼蛹 (飽食 50+)" },
-            "B_E_SOUL": { id: 48, condition: "else", from: "B_SOUL", desc: "毛球 (其餘條件)" }
-        },
-        stage4: {
-            "B_M2_SOUL": { id: 12, condition: "m >= 50", from: ["B_M_SOUL", "B_H_SOUL", "B_E_SOUL"], desc: "巴大蝶" },
-            "B_H2_SOUL": { id: 15, condition: "m < 50 && h >= 50", from: ["B_M_SOUL", "B_H_SOUL", "B_E_SOUL"], desc: "大針蜂" },
-            "B_E2_SOUL": { id: 49, condition: "else", from: ["B_M_SOUL", "B_H_SOUL", "B_E_SOUL"], desc: "末入蛾" }
-        }
+        stage3: { "B_SOUL": { id: 11, from: "B_SOUL", desc: "鐵甲蛹 (無條件進化)" } },
+        stage4: { "B_SOUL": { id: 12, from: "B_SOUL", desc: "巴大蝶 (無條件進化)" } }
     },
 
     // --- 特色培訓線 (Special Training Lines) ---
@@ -133,22 +123,6 @@ export const EVOLUTION_CHAINS = {
         stage4: {
             "F": { id: 68, condition: "sWins >= 50", from: "F", desc: "怪力 (特訓勝場 50+)" },
             "F_FAIL2": { id: 107, condition: "sWins < 50", from: "F", desc: "快拳郎 (特訓勝場 < 50)" }
-        }
-    },
-
-    "POISON": {
-        stage2: {
-            "P1": { id: 109, desc: "瓦斯彈" },
-            "P2": { id: 88, desc: "臭泥" }
-        },
-        stage3: {
-            "P1_SPECIAL": { id: 82, condition: "mood > 80", from: "P1", desc: "三合一磁怪 (心情 > 80)" },
-            "P1": { id: 110, from: "P1", desc: "雙彈瓦斯 (其餘條件)" },
-            "P2_SPECIAL": { id: 54, condition: "mood > 80", from: "P2", desc: "可達鴨 (心情 > 80)" },
-            "P2": { id: 89, from: "P2", desc: "臭臭泥 (其餘條件)" }
-        },
-        stage4: {
-            "P2_SPECIAL": { id: 55, from: "P2_SPECIAL", desc: "哥達鴨 (無特殊條件)" }
         }
     },
 

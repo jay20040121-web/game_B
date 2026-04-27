@@ -2042,7 +2042,7 @@ export default function App() {
             // 野外怪獸 (方案 C)：若在對照表中已無下一階，則視為最終型態，進入壽命倒數
             const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
 
-            if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['P1', 'P2', 'G1', 'G2', 'F_FAIL1', 'P1_SPECIAL', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
+            if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'G2', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
                 const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
                 if (elapsed >= lifespan) {
                     clearInterval(checkEvolutionInterval);
@@ -2160,40 +2160,14 @@ export default function App() {
                         nextBranch = evolutionBranch; // F_FAIL1/F_FAIL2 維持
                     }
 
-                } else if (evolutionBranch === 'P1' || evolutionBranch === 'P1_SPECIAL') {
-                    // ★ 已在 P1 線：鎖定在 P1 線內
-                    if (evolutionBranch === 'P1' && evolutionStage === 2 && m > 80) {
-                        nextBranch = 'P1_SPECIAL'; // 毒瓦斯 → 三合一磁怪（特殊）
-                    } else {
-                        nextBranch = evolutionBranch; // 其餘維持原線
-                    }
-
-                } else if (evolutionBranch === 'P2' || evolutionBranch === 'P2_SPECIAL') {
-                    // ★ 已在 P2 線：鎖定在 P2 線內
-                    if (evolutionBranch === 'P2' && evolutionStage === 2 && m > 80) {
-                        nextBranch = 'P2_SPECIAL'; // 臭泥 → 可達鴨（特殊）
-                    } else {
-                        nextBranch = evolutionBranch; // P2_SPECIAL 維持原線 → Stage 4 哥達鴨
-                    }
-
                 } else if (soulNext || evolutionBranch.endsWith('_SOUL')) {
 
                     // 靈魂進化線最高優先
                     if (soulNext) {
                         nextBranch = soulNext;
                     } else if (evolutionBranch.startsWith('B_') && evolutionBranch.endsWith('_SOUL')) {
-                        // 蟲系獨立進化判斷 (B_SOUL, B_M_SOUL, 等)
-                        if (evolutionStage === 2) {
-                            if (m >= 50) nextBranch = 'B_M_SOUL';
-                            else if (h >= 50) nextBranch = 'B_H_SOUL';
-                            else nextBranch = 'B_E_SOUL';
-                        } else if (evolutionStage === 3) {
-                            if (m >= 50) nextBranch = 'B_M2_SOUL';
-                            else if (h >= 50) nextBranch = 'B_H2_SOUL';
-                            else nextBranch = 'B_E2_SOUL';
-                        } else {
-                            nextBranch = evolutionBranch;
-                        }
+                        // 蟲系獨立進化：採單一線路 (10 -> 11 -> 12)
+                        nextBranch = 'B_SOUL';
                     } else if (evolutionBranch.startsWith('W_') && evolutionBranch.endsWith('_SOUL')) {
                         // 水系獨立進化判斷 (傑尼龜線與迷你龍線不互通)
                         const topTag = Object.entries(stats.soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
@@ -2344,9 +2318,6 @@ export default function App() {
                     if (sWins >= requiredWins) {
                         // F 線優先（訓練達標）
                         nextBranch = 'F';
-                    } else if (m <= 0 && h <= 0) {
-                        // P 線：心情飢餓同時歸零
-                        nextBranch = Math.random() < 0.5 ? 'P1' : 'P2';
                     } else if (m >= 50 && h >= 50) {
                         nextBranch = 'A';
                     } else {
