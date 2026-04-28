@@ -1,979 +1,69 @@
 // Generated from PokeAPI (zh-Hant)
 
+// 怪獸名稱表 — 使用自有 ID 系統 (1000 起)
 export const MONSTER_NAMES = {
-    "1": "妙蛙種子",
-    "2": "妙蛙草",
-    "3": "妙蛙花",
-    "4": "小火龍",
-    "5": "火恐龍",
-    "6": "噴火龍",
-    "7": "傑尼龜",
-    "8": "卡咪龜",
-    "9": "水箭龜",
-    "10": "綠毛蟲",
-    "11": "鐵甲蛹",
-    "12": "巴大蝶",
-    "13": "獨角蟲",
-    "14": "鐵殼蛹",
-    "15": "大針蜂",
-    "16": "波波",
-    "17": "比比鳥",
-    "18": "大比鳥",
-    "19": "小拉達",
-    "20": "拉達",
-    "21": "烈雀",
-    "22": "大嘴雀",
-    "23": "阿柏蛇",
-    "24": "阿柏怪",
-    "25": "皮卡丘",
-    "26": "雷丘",
-    "27": "穿山鼠",
-    "28": "穿山王",
-    "29": "尼多蘭",
-    "30": "尼多娜",
-    "31": "尼多后",
-    "32": "尼多朗",
-    "33": "尼多力諾",
-    "34": "尼多王",
-    "35": "皮皮",
-    "36": "皮可西",
-    "39": "胖丁",
-    "40": "胖可丁",
-    "41": "超音蝠",
-    "42": "大嘴蝠",
-    "48": "毛球",
-    "49": "摩魯蛾",
-    "50": "地鼠",
-    "51": "三地鼠",
-    "52": "喵喵",
-    "53": "貓老大",
-    "74": "小拳石",
-    "75": "隆隆石",
-    "76": "隆隆岩",
-    "81": "小磁怪",
-    "82": "三合一磁怪",
-    "83": "大蔥鴨",
-    "84": "嘟嘟",
-    "85": "嘟嘟利",
-    "88": "臭泥",
-    "89": "臭臭泥",
-    "92": "鬼斯",
-    "93": "鬼斯通",
-    "94": "耿鬼",
-    "95": "大岩蛇",
-    "96": "催眠貘",
-    "97": "引夢貘人",
-    "100": "霹靂電球",
-    "101": "頑皮雷彈",
-    "108": "大舌頭",
-    "109": "瓦斯彈",
-    "110": "雙彈瓦斯",
-    "111": "獨角犀牛",
-    "112": "鑽角犀獸",
-    "113": "吉利蛋",
-    "115": "袋獸",
-    "122": "魔牆人偶",
-    "123": "飛天螳螂",
-    "124": "迷唇姐",
-    "125": "電擊獸",
-    "127": "凱羅斯",
-    "128": "肯泰羅",
-    "132": "百變怪",
-    "133": "伊布",
-    "135": "雷伊布",
-    "136": "火伊布",
-    "137": "多邊獸",
-    "138": "菊石獸",
-    "139": "多刺菊石獸",
-    "140": "化石盔",
-    "141": "鐮刀盔",
-    "142": "化石翼龍",
-    "143": "卡比獸",
-    "144": "急凍鳥",
-    "145": "閃電鳥",
-    "146": "火焰鳥",
-    "169": "叉字蝠"
+    "1000": "百變怪",
+    "1001": "小火龍",
+    "1002": "火恐龍",
+    "1003": "噴火龍",
+    "1004": "傑尼龜",
+    "1005": "卡咪龜",
+    "1006": "水箭龜",
+    "1007": "妙蛙種子",
+    "1008": "妙蛙草",
+    "1009": "妙蛙花",
+    "1010": "綠毛蟲",
+    "1011": "鐵甲蛹",
+    "1012": "巴大蝶",
+    "1013": "尼多朗",
+    "1014": "尼多力諾",
+    "1015": "尼多王",
+    "1016": "小拉達",
+    "1017": "拉達",
+    "1018": "多邊獸",
+    "1019": "鬼斯",
+    "1020": "鬼斯通",
+    "1021": "耿鬼",
+    "1022": "波波",
+    "1023": "比比鳥",
+    "1024": "大比鳥",
+    "1025": "小拳石",
+    "1026": "隆隆石",
+    "1027": "隆隆岩"
 };
 
-// 資源映射表：用於將遊戲邏輯 ID 映射到正確的圖片/動畫資源 ID
+// 資源映射表：(所有資源均已重新命名為新 ID，此表清空備用)
 export const MONSTER_ASSET_IDS = {};
 
 export const SPECIES_BASE_STATS = {
-    "1": {
-        "hp": 45,
-        "atk": 65,
-        "def": 65,
-        "spd": 45,
-        "types": [
-            "grass",
-            "poison"
-        ]
-    },
-    "2": {
-        "hp": 60,
-        "atk": 80,
-        "def": 80,
-        "spd": 60,
-        "types": [
-            "grass",
-            "poison"
-        ]
-    },
-    "3": {
-        "hp": 80,
-        "atk": 100,
-        "def": 100,
-        "spd": 80,
-        "types": [
-            "grass",
-            "poison"
-        ]
-    },
-    "4": {
-        "hp": 39,
-        "atk": 60,
-        "def": 50,
-        "spd": 65,
-        "types": [
-            "fire"
-        ]
-    },
-    "5": {
-        "hp": 58,
-        "atk": 80,
-        "def": 65,
-        "spd": 80,
-        "types": [
-            "fire"
-        ]
-    },
-    "6": {
-        "hp": 78,
-        "atk": 109,
-        "def": 85,
-        "spd": 100,
-        "types": [
-            "fire",
-            "flying"
-        ]
-    },
-    "7": {
-        "hp": 44,
-        "atk": 50,
-        "def": 65,
-        "spd": 43,
-        "types": [
-            "water"
-        ]
-    },
-    "8": {
-        "hp": 59,
-        "atk": 65,
-        "def": 80,
-        "spd": 58,
-        "types": [
-            "water"
-        ]
-    },
-    "9": {
-        "hp": 79,
-        "atk": 85,
-        "def": 105,
-        "spd": 78,
-        "types": [
-            "water"
-        ]
-    },
-    "10": {
-        "hp": 45,
-        "atk": 30,
-        "def": 35,
-        "spd": 45,
-        "types": [
-            "bug"
-        ]
-    },
-    "11": {
-        "hp": 50,
-        "atk": 25,
-        "def": 55,
-        "spd": 30,
-        "types": [
-            "bug"
-        ]
-    },
-    "12": {
-        "hp": 60,
-        "atk": 90,
-        "def": 80,
-        "spd": 70,
-        "types": [
-            "bug",
-            "flying"
-        ]
-    },
-    "13": {
-        "hp": 40,
-        "atk": 35,
-        "def": 30,
-        "spd": 50,
-        "types": [
-            "bug",
-            "poison"
-        ]
-    },
-    "14": {
-        "hp": 45,
-        "atk": 25,
-        "def": 50,
-        "spd": 35,
-        "types": [
-            "bug",
-            "poison"
-        ]
-    },
-    "15": {
-        "hp": 65,
-        "atk": 90,
-        "def": 80,
-        "spd": 75,
-        "types": [
-            "bug",
-            "poison"
-        ]
-    },
-    "16": {
-        "hp": 40,
-        "atk": 45,
-        "def": 40,
-        "spd": 56,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "17": {
-        "hp": 63,
-        "atk": 60,
-        "def": 55,
-        "spd": 71,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "18": {
-        "hp": 83,
-        "atk": 80,
-        "def": 75,
-        "spd": 101,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "19": {
-        "hp": 30,
-        "atk": 56,
-        "def": 35,
-        "spd": 72,
-        "types": [
-            "normal"
-        ]
-    },
-    "20": {
-        "hp": 55,
-        "atk": 81,
-        "def": 70,
-        "spd": 97,
-        "types": [
-            "normal"
-        ]
-    },
-    "21": {
-        "hp": 40,
-        "atk": 60,
-        "def": 31,
-        "spd": 70,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "22": {
-        "hp": 65,
-        "atk": 90,
-        "def": 65,
-        "spd": 100,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "23": {
-        "hp": 35,
-        "atk": 60,
-        "def": 54,
-        "spd": 55,
-        "types": [
-            "poison"
-        ]
-    },
-    "24": {
-        "hp": 60,
-        "atk": 95,
-        "def": 79,
-        "spd": 80,
-        "types": [
-            "poison"
-        ]
-    },
-    "25": {
-        "hp": 35,
-        "atk": 55,
-        "def": 50,
-        "spd": 90,
-        "types": [
-            "electric"
-        ]
-    },
-    "26": {
-        "hp": 60,
-        "atk": 90,
-        "def": 80,
-        "spd": 110,
-        "types": [
-            "electric"
-        ]
-    },
-    "27": {
-        "hp": 50,
-        "atk": 75,
-        "def": 85,
-        "spd": 40,
-        "types": [
-            "ground"
-        ]
-    },
-    "28": {
-        "hp": 75,
-        "atk": 100,
-        "def": 110,
-        "spd": 65,
-        "types": [
-            "ground"
-        ]
-    },
-    "29": {
-        "hp": 55,
-        "atk": 47,
-        "def": 52,
-        "spd": 41,
-        "types": [
-            "poison"
-        ]
-    },
-    "30": {
-        "hp": 70,
-        "atk": 62,
-        "def": 67,
-        "spd": 56,
-        "types": [
-            "poison"
-        ]
-    },
-    "31": {
-        "hp": 90,
-        "atk": 92,
-        "def": 87,
-        "spd": 76,
-        "types": [
-            "poison",
-            "ground"
-        ]
-    },
-    "32": {
-        "hp": 46,
-        "atk": 57,
-        "def": 40,
-        "spd": 50,
-        "types": [
-            "poison"
-        ]
-    },
-    "33": {
-        "hp": 61,
-        "atk": 72,
-        "def": 57,
-        "spd": 65,
-        "types": [
-            "poison"
-        ]
-    },
-    "34": {
-        "hp": 81,
-        "atk": 102,
-        "def": 77,
-        "spd": 85,
-        "types": [
-            "poison",
-            "ground"
-        ]
-    },
-    "35": {
-        "hp": 70,
-        "atk": 60,
-        "def": 65,
-        "spd": 35,
-        "types": [
-            "fairy"
-        ]
-    },
-    "36": {
-        "hp": 95,
-        "atk": 95,
-        "def": 90,
-        "spd": 60,
-        "types": [
-            "fairy"
-        ]
-    },
-    "39": {
-        "hp": 115,
-        "atk": 45,
-        "def": 25,
-        "spd": 20,
-        "types": [
-            "normal",
-            "fairy"
-        ]
-    },
-    "40": {
-        "hp": 140,
-        "atk": 85,
-        "def": 50,
-        "spd": 45,
-        "types": [
-            "normal",
-            "fairy"
-        ]
-    },
-    "41": {
-        "hp": 40,
-        "atk": 45,
-        "def": 40,
-        "spd": 55,
-        "types": [
-            "poison",
-            "flying"
-        ]
-    },
-    "42": {
-        "hp": 75,
-        "atk": 80,
-        "def": 75,
-        "spd": 90,
-        "types": [
-            "poison",
-            "flying"
-        ]
-    },
-    "48": {
-        "hp": 60,
-        "atk": 55,
-        "def": 55,
-        "spd": 45,
-        "types": [
-            "bug",
-            "poison"
-        ]
-    },
-    "49": {
-        "hp": 70,
-        "atk": 90,
-        "def": 75,
-        "spd": 90,
-        "types": [
-            "bug",
-            "poison"
-        ]
-    },
-    "50": {
-        "hp": 10,
-        "atk": 55,
-        "def": 45,
-        "spd": 95,
-        "types": [
-            "ground"
-        ]
-    },
-    "51": {
-        "hp": 35,
-        "atk": 100,
-        "def": 70,
-        "spd": 120,
-        "types": [
-            "ground"
-        ]
-    },
-    "52": {
-        "hp": 40,
-        "atk": 45,
-        "def": 40,
-        "spd": 90,
-        "types": [
-            "normal"
-        ]
-    },
-    "53": {
-        "hp": 65,
-        "atk": 70,
-        "def": 65,
-        "spd": 115,
-        "types": [
-            "normal"
-        ]
-    },
-    "74": {
-        "hp": 40,
-        "atk": 80,
-        "def": 100,
-        "spd": 20,
-        "types": [
-            "rock",
-            "ground"
-        ]
-    },
-    "75": {
-        "hp": 55,
-        "atk": 95,
-        "def": 115,
-        "spd": 35,
-        "types": [
-            "rock",
-            "ground"
-        ]
-    },
-    "76": {
-        "hp": 80,
-        "atk": 120,
-        "def": 130,
-        "spd": 45,
-        "types": [
-            "rock",
-            "ground"
-        ]
-    },
-    "81": {
-        "hp": 25,
-        "atk": 95,
-        "def": 70,
-        "spd": 45,
-        "types": [
-            "electric",
-            "steel"
-        ]
-    },
-    "82": {
-        "hp": 50,
-        "atk": 120,
-        "def": 95,
-        "spd": 70,
-        "types": [
-            "electric",
-            "steel"
-        ]
-    },
-    "83": {
-        "hp": 52,
-        "atk": 90,
-        "def": 62,
-        "spd": 60,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "84": {
-        "hp": 35,
-        "atk": 85,
-        "def": 45,
-        "spd": 75,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "85": {
-        "hp": 60,
-        "atk": 110,
-        "def": 70,
-        "spd": 110,
-        "types": [
-            "normal",
-            "flying"
-        ]
-    },
-    "88": {
-        "hp": 80,
-        "atk": 80,
-        "def": 50,
-        "spd": 25,
-        "types": [
-            "poison"
-        ]
-    },
-    "89": {
-        "hp": 105,
-        "atk": 105,
-        "def": 100,
-        "spd": 50,
-        "types": [
-            "poison"
-        ]
-    },
-    "92": {
-        "hp": 30,
-        "atk": 100,
-        "def": 35,
-        "spd": 80,
-        "types": [
-            "ghost",
-            "poison"
-        ]
-    },
-    "93": {
-        "hp": 45,
-        "atk": 115,
-        "def": 55,
-        "spd": 95,
-        "types": [
-            "ghost",
-            "poison"
-        ]
-    },
-    "94": {
-        "hp": 60,
-        "atk": 130,
-        "def": 75,
-        "spd": 110,
-        "types": [
-            "ghost",
-            "poison"
-        ]
-    },
-    "95": {
-        "hp": 35,
-        "atk": 45,
-        "def": 160,
-        "spd": 70,
-        "types": [
-            "rock",
-            "ground"
-        ]
-    },
-    "96": {
-        "hp": 60,
-        "atk": 48,
-        "def": 90,
-        "spd": 42,
-        "types": [
-            "psychic"
-        ]
-    },
-    "97": {
-        "hp": 85,
-        "atk": 73,
-        "def": 115,
-        "spd": 67,
-        "types": [
-            "psychic"
-        ]
-    },
-    "100": {
-        "hp": 40,
-        "atk": 55,
-        "def": 55,
-        "spd": 100,
-        "types": [
-            "electric"
-        ]
-    },
-    "101": {
-        "hp": 60,
-        "atk": 80,
-        "def": 80,
-        "spd": 150,
-        "types": [
-            "electric"
-        ]
-    },
-    "108": {
-        "hp": 90,
-        "atk": 60,
-        "def": 75,
-        "spd": 30,
-        "types": [
-            "normal"
-        ]
-    },
-    "109": {
-        "hp": 40,
-        "atk": 65,
-        "def": 95,
-        "spd": 35,
-        "types": [
-            "poison"
-        ]
-    },
-    "110": {
-        "hp": 65,
-        "atk": 90,
-        "def": 120,
-        "spd": 60,
-        "types": [
-            "poison"
-        ]
-    },
-    "111": {
-        "hp": 80,
-        "atk": 85,
-        "def": 95,
-        "spd": 25,
-        "types": [
-            "ground",
-            "rock"
-        ]
-    },
-    "112": {
-        "hp": 105,
-        "atk": 130,
-        "def": 120,
-        "spd": 40,
-        "types": [
-            "ground",
-            "rock"
-        ]
-    },
-    "113": {
-        "hp": 250,
-        "atk": 35,
-        "def": 105,
-        "spd": 50,
-        "types": [
-            "normal"
-        ]
-    },
-    "115": {
-        "hp": 105,
-        "atk": 95,
-        "def": 80,
-        "spd": 90,
-        "types": [
-            "normal"
-        ]
-    },
-    "122": {
-        "hp": 40,
-        "atk": 100,
-        "def": 120,
-        "spd": 90,
-        "types": [
-            "psychic",
-            "fairy"
-        ]
-    },
-    "123": {
-        "hp": 70,
-        "atk": 110,
-        "def": 80,
-        "spd": 105,
-        "types": [
-            "bug",
-            "flying"
-        ]
-    },
-    "124": {
-        "hp": 65,
-        "atk": 115,
-        "def": 95,
-        "spd": 95,
-        "types": [
-            "ice",
-            "psychic"
-        ]
-    },
-    "125": {
-        "hp": 65,
-        "atk": 95,
-        "def": 85,
-        "spd": 105,
-        "types": [
-            "electric"
-        ]
-    },
-    "127": {
-        "hp": 65,
-        "atk": 125,
-        "def": 100,
-        "spd": 85,
-        "types": [
-            "bug"
-        ]
-    },
-    "128": {
-        "hp": 75,
-        "atk": 100,
-        "def": 95,
-        "spd": 110,
-        "types": [
-            "normal"
-        ]
-    },
-    "132": {
-        "hp": 48,
-        "atk": 48,
-        "def": 48,
-        "spd": 48,
-        "types": [
-            "normal"
-        ]
-    },
-    "133": {
-        "hp": 55,
-        "atk": 55,
-        "def": 65,
-        "spd": 55,
-        "types": [
-            "normal"
-        ]
-    },
-    "135": {
-        "hp": 65,
-        "atk": 110,
-        "def": 95,
-        "spd": 130,
-        "types": [
-            "electric"
-        ]
-    },
-    "136": {
-        "hp": 65,
-        "atk": 130,
-        "def": 110,
-        "spd": 65,
-        "types": [
-            "fire"
-        ]
-    },
-    "137": {
-        "hp": 65,
-        "atk": 85,
-        "def": 75,
-        "spd": 40,
-        "types": [
-            "normal"
-        ]
-    },
-    "138": {
-        "hp": 35,
-        "atk": 90,
-        "def": 100,
-        "spd": 35,
-        "types": [
-            "rock",
-            "water"
-        ]
-    },
-    "139": {
-        "hp": 70,
-        "atk": 115,
-        "def": 125,
-        "spd": 55,
-        "types": [
-            "rock",
-            "water"
-        ]
-    },
-    "140": {
-        "hp": 30,
-        "atk": 80,
-        "def": 90,
-        "spd": 55,
-        "types": [
-            "rock",
-            "water"
-        ]
-    },
-    "141": {
-        "hp": 60,
-        "atk": 115,
-        "def": 105,
-        "spd": 80,
-        "types": [
-            "rock",
-            "water"
-        ]
-    },
-    "142": {
-        "hp": 80,
-        "atk": 105,
-        "def": 75,
-        "spd": 130,
-        "types": [
-            "rock",
-            "flying"
-        ]
-    },
-    "143": {
-        "hp": 160,
-        "atk": 110,
-        "def": 110,
-        "spd": 30,
-        "types": [
-            "normal"
-        ]
-    },
-    "144": {
-        "hp": 90,
-        "atk": 95,
-        "def": 125,
-        "spd": 85,
-        "types": [
-            "ice",
-            "flying"
-        ]
-    },
-    "145": {
-        "hp": 90,
-        "atk": 125,
-        "def": 90,
-        "spd": 100,
-        "types": [
-            "electric",
-            "flying"
-        ]
-    },
-    "146": {
-        "hp": 90,
-        "atk": 125,
-        "def": 90,
-        "spd": 90,
-        "types": [
-            "fire",
-            "flying"
-        ]
-    },
-    "169": {
-        "hp": 85,
-        "atk": 90,
-        "def": 80,
-        "spd": 130,
-        "types": [
-            "poison",
-            "flying"
-        ]
-    }
+    "1000": { "hp": 48, "atk": 48, "def": 48, "spd": 48, "types": ["normal"] },
+    "1001": { "hp": 39, "atk": 60, "def": 50, "spd": 65, "types": ["fire"] },
+    "1002": { "hp": 58, "atk": 80, "def": 65, "spd": 80, "types": ["fire"] },
+    "1003": { "hp": 78, "atk": 109, "def": 85, "spd": 100, "types": ["fire", "flying"] },
+    "1004": { "hp": 44, "atk": 50, "def": 65, "spd": 43, "types": ["water"] },
+    "1005": { "hp": 59, "atk": 65, "def": 80, "spd": 58, "types": ["water"] },
+    "1006": { "hp": 79, "atk": 85, "def": 105, "spd": 78, "types": ["water"] },
+    "1007": { "hp": 45, "atk": 65, "def": 65, "spd": 45, "types": ["grass", "poison"] },
+    "1008": { "hp": 60, "atk": 80, "def": 80, "spd": 60, "types": ["grass", "poison"] },
+    "1009": { "hp": 80, "atk": 100, "def": 100, "spd": 80, "types": ["grass", "poison"] },
+    "1010": { "hp": 45, "atk": 30, "def": 35, "spd": 45, "types": ["bug"] },
+    "1011": { "hp": 50, "atk": 25, "def": 55, "spd": 30, "types": ["bug"] },
+    "1012": { "hp": 60, "atk": 90, "def": 80, "spd": 70, "types": ["bug", "flying"] },
+    "1013": { "hp": 46, "atk": 57, "def": 40, "spd": 50, "types": ["poison"] },
+    "1014": { "hp": 61, "atk": 72, "def": 57, "spd": 65, "types": ["poison"] },
+    "1015": { "hp": 81, "atk": 102, "def": 77, "spd": 85, "types": ["poison", "ground"] },
+    "1016": { "hp": 30, "atk": 56, "def": 35, "spd": 72, "types": ["normal"] },
+    "1017": { "hp": 55, "atk": 81, "def": 70, "spd": 97, "types": ["normal"] },
+    "1018": { "hp": 65, "atk": 85, "def": 75, "spd": 40, "types": ["normal"] },
+    "1019": { "hp": 30, "atk": 100, "def": 35, "spd": 80, "types": ["ghost", "poison"] },
+    "1020": { "hp": 45, "atk": 115, "def": 55, "spd": 95, "types": ["ghost", "poison"] },
+    "1021": { "hp": 60, "atk": 130, "def": 75, "spd": 110, "types": ["ghost", "poison"] },
+    "1022": { "hp": 40, "atk": 45, "def": 40, "spd": 56, "types": ["normal", "flying"] },
+    "1023": { "hp": 63, "atk": 60, "def": 55, "spd": 71, "types": ["normal", "flying"] },
+    "1024": { "hp": 83, "atk": 80, "def": 75, "spd": 101, "types": ["normal", "flying"] },
+    "1025": { "hp": 40, "atk": 80, "def": 100, "spd": 20, "types": ["rock", "ground"] },
+    "1026": { "hp": 55, "atk": 95, "def": 115, "spd": 35, "types": ["rock", "ground"] },
+    "1027": { "hp": 80, "atk": 120, "def": 130, "spd": 45, "types": ["rock", "ground"] }
 };
 
 export const TYPE_MAP = {
@@ -6005,8 +5095,8 @@ export const TYPE_SKILLS = {
 // --- 其他戰鬥與遊戲邏輯 ---
 
 export const ADV_WILD_POOL = [
-    { id: 16, name: "波波", weight: 1, power: 90, type: "flying" },
-    { id: 74, name: "小拳石", weight: 1, power: 80, type: "rock" }
+    { id: 1022, name: "波波", weight: 1, power: 90, type: "flying" },
+    { id: 1025, name: "小拳石", weight: 1, power: 80, type: "rock" }
 ];
 
 // 已遷移至 src/data/evolutionConfig.js
@@ -6015,30 +5105,30 @@ export const ADV_WILD_POOL = [
 // 只有玩家能獲得的怪獸才會顯示在圖鑑中 (依進化鏈順序排列)
 export const OBTAINABLE_MONSTER_IDS = [
     // --- 1. 百變怪 (起始) ---
-    132,
+    1000,
 
     // --- 2. 一般線 (A, C, FAIL 分支) ---
-    32, 33, 34,    // 尼多朗線 (A)
-    19, 20,        // 小拉達線 (C)
-    137,           // 3D 獸 (FAIL)
+    1013, 1014, 1015,    // 尼多朗線 (A)
+    1016, 1017,        // 小拉達線 (C)
+    1018,           // 3D 獸 (FAIL)
 
     // --- 3. 靈魂進化 - 火系 (Fire Soul) ---
-    4, 5, 6,       // 小火龍線
+    1001, 1002, 1003,       // 小火龍線
 
     // --- 4. 靈魂進化 - 水系 (Water Soul) ---
-    7, 8, 9,       // 傑尼龜線
+    1004, 1005, 1006,       // 傑尼龜線
 
     // --- 5. 靈魂進化 - 草系 (Grass Soul) ---
-    1, 2, 3,       // 妙蛙種子線
+    1007, 1008, 1009,       // 妙蛙種子線
 
     // --- 6. 靈魂進化 - 蟲系 (Bug Soul) ---
-    10, 11, 12,    // 綠毛蟲線
+    1010, 1011, 1012,    // 綠毛蟲線
 
 
     // --- 7. 特殊培育與野外捕捉 (G Series & Wild) ---
-    92, 93, 94,    // 鬼斯線 (G1)
-    16, 17, 18,    // 波波線 (Wild)
-    74, 75, 76,    // 小拳石線 (Wild)
+    1019, 1020, 1021,    // 鬼斯線 (G1)
+    1022, 1023, 1024,    // 波波線 (Wild)
+    1025, 1026, 1027,    // 小拳石線 (Wild)
 
     // --- 8. 傳說與幻之怪獸 (End Game) ---
     // 已移除夢幻、洛奇亞、烈空坐以防法律糾紛
@@ -6046,40 +5136,40 @@ export const OBTAINABLE_MONSTER_IDS = [
 
 export const TRAINER_POOLS = {
     1: [
-        { id: 132, name: '百變怪', type: 'normal' },
-        { id: 92, name: '鬼斯', type: 'poison' },
-        { id: 19, name: '小拉達', type: 'normal' } // 原：凱西 (替換為小拉達)
+        { id: 1000, name: '百變怪', type: 'normal' },
+        { id: 1019, name: '鬼斯', type: 'poison' },
+        { id: 1016, name: '小拉達', type: 'normal' } // 原：凱西 (替換為小拉達)
     ],
     2: [
-        { id: 4, name: '小火龍', type: 'fire' },
-        { id: 7, name: '傑尼龜', type: 'water' },
-        { id: 1, name: '妙蛙種子', type: 'grass' },
-        { id: 10, name: '綠毛蟲', type: 'bug' },
-        { id: 19, name: '小拉達', type: 'normal' }
+        { id: 1001, name: '小火龍', type: 'fire' },
+        { id: 1004, name: '傑尼龜', type: 'water' },
+        { id: 1007, name: '妙蛙種子', type: 'grass' },
+        { id: 1010, name: '綠毛蟲', type: 'bug' },
+        { id: 1016, name: '小拉達', type: 'normal' }
     ],
     3: [
-        { id: 5, name: '火恐龍', type: 'fire' },
-        { id: 8, name: '卡咪龜', type: 'water' },
-        { id: 2, name: '妙蛙草', type: 'grass' },
-        { id: 11, name: '鐵甲蛹', type: 'bug' },
-        { id: 20, name: '拉達', type: 'normal' }
+        { id: 1002, name: '火恐龍', type: 'fire' },
+        { id: 1005, name: '卡咪龜', type: 'water' },
+        { id: 1008, name: '妙蛙草', type: 'grass' },
+        { id: 1011, name: '鐵甲蛹', type: 'bug' },
+        { id: 1017, name: '拉達', type: 'normal' }
     ],
     4: [
-        { id: 6, name: '噴火龍', type: 'fire' },
-        { id: 9, name: '水箭龜', type: 'water' },
-        { id: 3, name: '妙蛙花', type: 'grass' },
-        { id: 12, name: '巴大蝶', type: 'bug' },
-        { id: 6, name: '噴火龍', type: 'fire' } // 原：快龍 (替換為噴火龍)
+        { id: 1003, name: '噴火龍', type: 'fire' },
+        { id: 1006, name: '水箭龜', type: 'water' },
+        { id: 1009, name: '妙蛙花', type: 'grass' },
+        { id: 1012, name: '巴大蝶', type: 'bug' },
+        { id: 1003, name: '噴火龍', type: 'fire' } // 原：快龍 (替換為噴火龍)
     ],
     5: [
-        { id: 9, name: '水箭龜', type: 'water' }, // 原：洛奇亞
-        { id: 94, name: '耿鬼', type: 'ghost' },
-        { id: 9, name: '水箭龜', type: 'water' } // 原：暴鯉龍 (替換為水箭龜)
+        { id: 1006, name: '水箭龜', type: 'water' }, // 原：洛奇亞
+        { id: 1021, name: '耿鬼', type: 'ghost' },
+        { id: 1006, name: '水箭龜', type: 'water' } // 原：暴鯉龍 (替換為水箭龜)
     ],
     6: [
-        { id: 6, name: '噴火龍', type: 'fire' },  // 原：烈空坐
-        { id: 3, name: '妙蛙花', type: 'grass' }, // 原：夢幻
-        { id: 94, name: '耿鬼', type: 'ghost' } // 原：胡地 (替換為耿鬼)
+        { id: 1003, name: '噴火龍', type: 'fire' },  // 原：烈空坐
+        { id: 1009, name: '妙蛙花', type: 'grass' }, // 原：夢幻
+        { id: 1021, name: '耿鬼', type: 'ghost' } // 原：胡地 (替換為耿鬼)
     ]
 };
 

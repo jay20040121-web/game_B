@@ -19,15 +19,15 @@ export const EVO_TIMES = {
 };
 
 export const WILD_EVOLUTION_MAP = {
-    "16": 17, "17": 18,    // 波波線
-    "74": 75, "75": 76,    // 小拳石線
+    "1022": 1023, "1023": 1024,    // 波波線
+    "1025": 1026, "1026": 1027,    // 小拳石線
 };
 
 export const EVOLUTION_CHAINS = {
     "START": {
         stage1: {
-            "A": { id: 132 }, "C": { id: 132 },
-            "F_SOUL": { id: 132 }, "W_SOUL": { id: 132 }, "GR_SOUL": { id: 132 }, "B_SOUL": { id: 132 }
+            "A": { id: 1000 }, "C": { id: 1000 },
+            "F_SOUL": { id: 1000 }, "W_SOUL": { id: 1000 }, "GR_SOUL": { id: 1000 }, "B_SOUL": { id: 1000 }
         },
         branches: [
             // 靈魂進化優先級最高
@@ -44,53 +44,53 @@ export const EVOLUTION_CHAINS = {
 
     // --- 魂系分支 (Soul Lines) ---
     "SOUL_FIRE": {
-        stage2: { "F_SOUL": { id: 4, desc: "小火龍" } },
-        stage3: { "F_SOUL": { id: 5, from: "F_SOUL", desc: "火恐龍 (無條件進化)" } },
-        stage4: { "F_SOUL": { id: 6, from: "F_SOUL", desc: "噴火龍 (無條件進化)" } }
+        stage2: { "F_SOUL": { id: 1001, desc: "小火龍" } },
+        stage3: { "F_SOUL": { id: 1002, from: "F_SOUL", desc: "火恐龍 (無條件進化)" } },
+        stage4: { "F_SOUL": { id: 1003, from: "F_SOUL", desc: "噴火龍 (無條件進化)" } }
     },
 
     "SOUL_WATER": {
-        stage2: { "W_SOUL": { id: 7, desc: "傑尼龜" } },
-        stage3: { "W_SOUL": { id: 8, from: "W_SOUL", desc: "卡咪龜 (無條件進化)" } },
-        stage4: { "W_SOUL": { id: 9, from: "W_SOUL", desc: "水箭龜 (無條件進化)" } }
+        stage2: { "W_SOUL": { id: 1004, desc: "傑尼龜" } },
+        stage3: { "W_SOUL": { id: 1005, from: "W_SOUL", desc: "卡咪龜 (無條件進化)" } },
+        stage4: { "W_SOUL": { id: 1006, from: "W_SOUL", desc: "水箭龜 (無條件進化)" } }
     },
 
     "SOUL_GRASS": {
-        stage2: { "GR_SOUL": { id: 1, desc: "妙蛙種子" } },
-        stage3: { "GR_SOUL": { id: 2, from: "GR_SOUL", desc: "妙蛙草 (無條件進化)" } },
-        stage4: { "GR_SOUL": { id: 3, from: "GR_SOUL", desc: "妙蛙花 (無條件進化)" } }
+        stage2: { "GR_SOUL": { id: 1007, desc: "妙蛙種子" } },
+        stage3: { "GR_SOUL": { id: 1008, from: "GR_SOUL", desc: "妙蛙草 (無條件進化)" } },
+        stage4: { "GR_SOUL": { id: 1009, from: "GR_SOUL", desc: "妙蛙花 (無條件進化)" } }
     },
 
     "SOUL_BUG": {
-        stage2: { "B_SOUL": { id: 10, desc: "綠毛蟲" } },
-        stage3: { "B_SOUL": { id: 11, from: "B_SOUL", desc: "鐵甲蛹 (無條件進化)" } },
-        stage4: { "B_SOUL": { id: 12, from: "B_SOUL", desc: "巴大蝶 (無條件進化)" } }
+        stage2: { "B_SOUL": { id: 1010, desc: "綠毛蟲" } },
+        stage3: { "B_SOUL": { id: 1011, from: "B_SOUL", desc: "鐵甲蛹 (無條件進化)" } },
+        stage4: { "B_SOUL": { id: 1012, from: "B_SOUL", desc: "巴大蝶 (無條件進化)" } }
     },
 
     "NORMAL": {
         stage2: {
-            "A": { id: 32, desc: "尼多朗" },
-            "C": { id: 19, desc: "小拉達" }
+            "A": { id: 1013, desc: "尼多朗" },
+            "C": { id: 1016, desc: "小拉達" }
         },
         stage3: {
-            "A": { id: 33, from: ["A", "C"], desc: "尼多力諾 (心情、飽食度 >= 50)" },
-            "C": { id: 20, from: ["A", "C"], desc: "拉達 (其餘條件)" }
+            "A": { id: 1014, from: ["A", "C"], desc: "尼多力諾 (心情、飽食度 >= 50)" },
+            "C": { id: 1017, from: ["A", "C"], desc: "拉達 (其餘條件)" }
         },
         stage4: {
-            "A": { id: 34, from: ["A", "C"], desc: "尼多王 (心情、飽食度 >= 50)" },
-            "C": { id: 137, from: ["A", "C"], desc: "多邊獸 (其餘條件)" }
+            "A": { id: 1015, from: ["A", "C"], desc: "尼多王 (心情、飽食度 >= 50)" },
+            "C": { id: 1018, from: ["A", "C"], desc: "多邊獸 (其餘條件)" }
         }
     },
 
     "SOUL_DEATH": {
         stage1: {
-            "G1": { id: 92, desc: "鬼斯" }
+            "G1": { id: 1019, desc: "鬼斯" }
         },
         stage2: {
-            "G1": { id: 93, from: "G1", desc: "鬼斯通 (無特殊條件)" }
+            "G1": { id: 1020, from: "G1", desc: "鬼斯通 (無特殊條件)" }
         },
         stage3: {
-            "G1": { id: 94, from: "G1", desc: "耿鬼 (無特殊條件)" }
+            "G1": { id: 1021, from: "G1", desc: "耿鬼 (無特殊條件)" }
         }
     }
 };

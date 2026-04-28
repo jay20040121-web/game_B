@@ -202,10 +202,9 @@ export default function App() {
         // --- 新增：招式永久化存檔 ---
         if (!d.moves) {
             // 嘗試取得暫存的物種ID
-            const monId = String(initialData?.id || localStorage.getItem('pixel_monster_id') || 132);
+            const monId = String(initialData?.id || localStorage.getItem('pixel_monster_id') || 1000);
             const getStarterMove = (id) => {
-                if (id === "92") return 'lick'; // 鬼斯
-                if (id === "63") return 'confusion'; // 凱西
+                if (id === "1019") return 'lick'; // 鬼斯
                 return 'tackle'; // 其他
             };
             // 初始招式：撞擊(或專屬) + 隨機贈送的那一招
@@ -629,7 +628,7 @@ export default function App() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [btnPressed, setBtnPressed] = useState(null);
     const idleTimeoutRef = useRef(null);
-    const lastAliveMonsterIdRef = useRef(132);
+    const lastAliveMonsterIdRef = useRef(1000);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
     const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 149) + 1);
@@ -2463,7 +2462,7 @@ export default function App() {
         if (mode === 'wild') {
             // 新手保護：在 Stage 1 時過濾掉岩石系等難度過高的怪獸
             const filteredPool = (evolutionStage === 1)
-                ? ADV_WILD_POOL.filter(m => m.id !== 74)
+                ? ADV_WILD_POOL.filter(m => m.id !== 1025)
                 : ADV_WILD_POOL;
 
             // 自動根據池子數量分配平等的出現機率 (1/N)
@@ -2521,7 +2520,7 @@ export default function App() {
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
                 enemy: {
-                    id: enemyData?.id || 132, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
+                    id: enemyData?.id || 1000, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
                 },
                 logs: [initMsg], initMsg,
@@ -2837,8 +2836,8 @@ export default function App() {
         const inheritedPower = Math.floor((prevBasePower - 100) * 0.1); // 繼承 10% 的努力成果，而非總戰力
 
         // 判斷下一代初始招式
-        const nextId = savedDeathBranch === 'G1' ? "92" : (savedDeathBranch === 'G2' ? "63" : "132");
-        const nextStarterMove = nextId === "92" ? 'lick' : (nextId === "63" ? 'confusion' : 'tackle');
+        const nextId = savedDeathBranch === 'G1' ? "1019" : "1000";
+        const nextStarterMove = nextId === "1019" ? 'lick' : 'tackle';
         const nextBonusId = ['ember', 'water_gun', 'vine_whip', 'quick_attack'][Math.floor(Math.random() * 4)];
 
         // 完美繼承招式處理：避免與新生自帶招式衝突，並且最多只保留 4 招
