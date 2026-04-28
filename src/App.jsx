@@ -2098,23 +2098,9 @@ export default function App() {
                 // Determine basic soulNext based on locked affinity
                 if (stats.bondValue >= 80 && stats.lockedAffinity) {
                     if (evolutionStage === 1) {
-                        if (stats.lockedAffinity === 'fire') {
-                            soulNext = 'F_SOUL';
-                        }
-                        if (stats.lockedAffinity === 'water') {
-                            const wOpts = [];
-                            if (m >= 50 && h >= 50 && sWins >= 8) wOpts.push({ branch: 'W_DRATINI_SOUL', count: 4 });
-                            wOpts.push({ branch: 'W_SQUIRTLE_SOUL', count: 1 });
-                            wOpts.sort((a, b) => b.count - a.count);
-                            soulNext = wOpts[0].branch;
-                        }
-                        if (stats.lockedAffinity === 'grass') {
-                            const grOpts = [];
-                            if (m >= 50 && h >= 50) grOpts.push({ branch: 'GR_ODDISH_SOUL', count: 3 });
-                            grOpts.push({ branch: 'GR_SOUL', count: 1 });
-                            grOpts.sort((a, b) => b.count - a.count);
-                            soulNext = grOpts[0].branch;
-                        }
+                        if (stats.lockedAffinity === 'fire') soulNext = 'F_SOUL';
+                        if (stats.lockedAffinity === 'water') soulNext = 'W_SOUL';
+                        if (stats.lockedAffinity === 'grass') soulNext = 'GR_SOUL';
                         if (stats.lockedAffinity === 'bug') soulNext = 'B_SOUL';
                     }
                 }
@@ -2135,144 +2121,22 @@ export default function App() {
                     } else {
                         nextBranch = evolutionBranch; // 已是最終型態
                     }
-                } else if (['G1', 'G2'].includes(evolutionBranch)) {
+                } else if (['G1'].includes(evolutionBranch)) {
                     // D 線完全封閉，沿原線繼續 (優先度高於靈魂進化，防止凱西被劫持)
                     nextBranch = evolutionBranch;
-
-                } else if (evolutionBranch === 'F' || evolutionBranch === 'F_FAIL1' || evolutionBranch === 'F_FAIL2') {
-                    // ★ 已在 F 線：鎖定在 F 線內，不可換線
-                    if (evolutionBranch === 'F') {
-                        if (sWins >= requiredWins) {
-                            nextBranch = 'F'; // 達標，繼續正規 F
-                        } else if (evolutionStage === 2) {
-                            nextBranch = 'F_FAIL1'; // Stage2 訓練不足 → 飛腿郎
-                        } else if (evolutionStage === 3) {
-                            nextBranch = 'F_FAIL2'; // Stage3 訓練不足 → 快拳郎
-                        } else {
-                            nextBranch = 'F';
-                        }
-                    } else {
-                        nextBranch = evolutionBranch; // F_FAIL1/F_FAIL2 維持
-                    }
 
                 } else if (soulNext || evolutionBranch.endsWith('_SOUL')) {
 
                     // 靈魂進化線最高優先
                     if (soulNext) {
                         nextBranch = soulNext;
-                    } else if (evolutionBranch.startsWith('B_') && evolutionBranch.endsWith('_SOUL')) {
-                        // 蟲系獨立進化：採單一線路 (10 -> 11 -> 12)
-                        nextBranch = 'B_SOUL';
-                    } else if (evolutionBranch.startsWith('W_') && evolutionBranch.endsWith('_SOUL')) {
-                        // 水系獨立進化判斷 (傑尼龜線與迷你龍線不互通)
-                        const topTag = Object.entries(stats.soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                        if (evolutionStage === 2) {
-                            // 傑尼龜線
-                            if (['W_SQUIRTLE_SOUL', 'W_SOUL'].includes(evolutionBranch)) {
-                                nextBranch = 'W_WARTORTLE_SOUL'; // 無條件進化
-                            }
-                            // 迷你龍線
-                            else if (evolutionBranch === 'W_DRATINI_SOUL') {
-                                const wOpts = [];
-                                if (m >= 50 && h >= 50 && sWins >= 30) wOpts.push({ branch: 'W_DRAGONAIR_SOUL', count: 4 });
-                                if (['rational', 'gentle'].includes(topTag)) wOpts.push({ branch: 'W_HORSEA_SOUL', count: 2 });
-                                wOpts.push({ branch: 'W_MAGIKARP_SOUL', count: 1 });
-                                wOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = wOpts[0].branch;
-                            }
-                            else { nextBranch = evolutionBranch; }
-                        } else if (evolutionStage === 3) {
-                            // 卡咪龜 → 水箭龜
-                            if (['W_WARTORTLE_SOUL', 'W_SOUL'].includes(evolutionBranch)) {
-                                nextBranch = 'W_BLASTOISE_SOUL'; // 無條件進化
-                            }
-                            // 哈克龍 → 快龍
-                            else if (evolutionBranch === 'W_DRAGONAIR_SOUL') {
-                                nextBranch = 'W_DRAGONITE_SOUL'; // 無條件進化
-                            }
-                            // 鲤魚王 → 暴鲤龍
-                            else if (evolutionBranch === 'W_MAGIKARP_SOUL') {
-                                nextBranch = 'W_GYARADOS_SOUL'; // 無條件進化
-                            }
-                            // 海刺龍 → 拉普拉斯 / 刺龍王
-                            else if (evolutionBranch === 'W_HORSEA_SOUL') {
-                                const wOpts = [];
-                                if (m >= 50 && ['rational', 'gentle'].includes(topTag))
-                                    wOpts.push({ branch: 'W_LAPRAS_SOUL', count: 3 });
-                                wOpts.push({ branch: 'W_SEADRA_SOUL', count: 1 });
-                                wOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = wOpts[0].branch;
-                            }
-                            else { nextBranch = evolutionBranch; }
-                        } else {
-                            nextBranch = evolutionBranch;
-                        }
-                    } else if (evolutionBranch.startsWith('F_') && evolutionBranch.endsWith('_SOUL')) {
-                        // ★ 火系獨立進化判斷 (單一小火龍線)
-                        if (evolutionStage >= 2 && evolutionStage < 4) { // Stage 2->3 or 3->4
-                            nextBranch = 'F_SOUL';
-                        } else {
-                            nextBranch = evolutionBranch; // 最終階段不再變動
-                        }
-                    } else if (evolutionBranch.startsWith('GR_') && evolutionBranch.endsWith('_SOUL')) {
-                        // ★ 草系獨立進化判斷 (妙蛙種子線與走路草線不互通)
-                        const topTag = Object.entries(stats.soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                        if (evolutionStage === 2) {
-                            // 妙蛙種子線
-                            if (evolutionBranch === 'GR_SOUL') {
-                                const grOpts = [];
-                                if (m >= 80) grOpts.push({ branch: 'GR_IVYSAUR_SOUL', count: 2 });
-                                grOpts.push({ branch: 'GR_PARAS_SOUL', count: 1 });
-                                grOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = grOpts[0].branch;
-                            }
-                            // 走路草線
-                            else if (evolutionBranch === 'GR_ODDISH_SOUL') {
-                                const grOpts = [];
-                                if (m >= 50 && h >= 50 && ['gentle', 'rational'].includes(topTag))
-                                    grOpts.push({ branch: 'GR_BELLSPROUT_SOUL', count: 3 });
-                                if (['passionate', 'nonsense'].includes(topTag))
-                                    grOpts.push({ branch: 'GR_EXEGGCUTE_SOUL', count: 2 });
-                                grOpts.push({ branch: 'GR_GLOOM_SOUL', count: 1 });
-                                grOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = grOpts[0].branch;
-                            }
-                            else { nextBranch = evolutionBranch; }
-                        } else if (evolutionStage === 3) {
-                            // 妙蛙草 / 木守宮線
-                            if (['GR_IVYSAUR_SOUL', 'GR_PARAS_SOUL'].includes(evolutionBranch)) {
-                                const grOpts = [];
-                                if (m >= 50 && h >= 50 && ['gentle', 'rational'].includes(topTag))
-                                    grOpts.push({ branch: 'GR_VENUSAUR_SOUL', count: 3 });
-                                grOpts.push({ branch: 'GR_PARASECT_SOUL', count: 1 });
-                                grOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = grOpts[0].branch;
-                            }
-                            // 森林蜥蜴 → 蜥蜴王（無條件）
-                            else if (evolutionBranch === 'GR_GLOOM_SOUL') {
-                                nextBranch = 'GR_VILEPLUME_SOUL';
-                            }
-                            // 奇魯莉安 → 沙奈朵（無條件）
-                            else if (evolutionBranch === 'GR_BELLSPROUT_SOUL') {
-                                nextBranch = 'GR_VICTREEBEL_SOUL';
-                            }
-                            // 蛋蛋 → 椰蛋樹（無條件）
-                            else if (evolutionBranch === 'GR_EXEGGCUTE_SOUL') {
-                                nextBranch = 'GR_EXEGGUTOR_SOUL';
-                            }
-                            else { nextBranch = evolutionBranch; }
-                        } else {
-                            nextBranch = evolutionBranch;
-                        }
                     } else {
-                        nextBranch = evolutionBranch; // Stage >= 2 後延續自己的靈魂線
+                        // 所有靈魂線現在都是單一直線進化，無額外分支
+                        nextBranch = evolutionBranch;
                     }
                 } else if (evolutionStage === 1) {
                     // ★ Stage 0→1（百變怪 Stage）：所有線可互通，依條件首次分支
-                    if (sWins >= requiredWins) {
-                        // F 線優先（訓練達標）
-                        nextBranch = 'F';
-                    } else if (m >= 50 && h >= 50) {
+                    if (m >= 50 && h >= 50) {
                         nextBranch = 'A';
                     } else {
                         nextBranch = 'C';
@@ -2765,7 +2629,7 @@ export default function App() {
         setIsConfirmingFarewell(false);
         // D線抽籤：20% 機率靈魂重生
         const dRoll = Math.random();
-        const dLine = dRoll < 0.20 ? (Math.random() < 0.5 ? 'G1' : 'G2') : null;
+        const dLine = dRoll < 0.20 ? 'G1' : null;
         setDeathBranch(dLine);
         setIsGenerating(true);
         setIsDead(true);
