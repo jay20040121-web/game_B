@@ -84,16 +84,13 @@ export const EVOLUTION_CHAINS = {
 
     "SOUL_DEATH": {
         stage1: {
-            "G1": { id: 92, desc: "鬼斯" },
-            "G2": { id: 63, desc: "凱西" }
+            "G1": { id: 92, desc: "鬼斯" }
         },
         stage2: {
-            "G1": { id: 93, from: "G1", desc: "鬼斯通 (無特殊條件)" },
-            "G2": { id: 64, from: "G2", desc: "勇基拉 (無特殊條件)" }
+            "G1": { id: 93, from: "G1", desc: "鬼斯通 (無特殊條件)" }
         },
         stage3: {
-            "G1": { id: 94, from: "G1", desc: "耿鬼 (無特殊條件)" },
-            "G2": { id: 65, from: "G2", desc: "胡地 (無特殊條件)" }
+            "G1": { id: 94, from: "G1", desc: "耿鬼 (無特殊條件)" }
         }
     }
 };

@@ -21,7 +21,6 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
     // 雖然這些現在也在 EVOLUTION_CHAINS 中，但保留特殊階段 1 的快速回傳作為保底
     if (numStage === 1) {
         if (cleanBranch === 'G1') return 92; // Gastly
-        if (cleanBranch === 'G2') return 63; // Abra
         // 如果是其他分支但階段是 1，預設回傳百變怪，或者進入下方的鏈查找
     }
 

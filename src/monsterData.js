@@ -47,9 +47,6 @@ export const MONSTER_NAMES = {
     "51": "三地鼠",
     "52": "喵喵",
     "53": "貓老大",
-    "63": "凱西",
-    "64": "勇基拉",
-    "65": "胡地",
     "74": "小拳石",
     "75": "隆隆石",
     "76": "隆隆岩",
@@ -535,33 +532,6 @@ export const SPECIES_BASE_STATS = {
         "spd": 115,
         "types": [
             "normal"
-        ]
-    },
-    "63": {
-        "hp": 25,
-        "atk": 105,
-        "def": 55,
-        "spd": 90,
-        "types": [
-            "psychic"
-        ]
-    },
-    "64": {
-        "hp": 40,
-        "atk": 120,
-        "def": 70,
-        "spd": 105,
-        "types": [
-            "psychic"
-        ]
-    },
-    "65": {
-        "hp": 55,
-        "atk": 135,
-        "def": 95,
-        "spd": 120,
-        "types": [
-            "psychic"
         ]
     },
     "74": {
@@ -6067,7 +6037,6 @@ export const OBTAINABLE_MONSTER_IDS = [
 
     // --- 7. 特殊培育與野外捕捉 (G Series & Wild) ---
     92, 93, 94,    // 鬼斯線 (G1)
-    63, 64, 65,    // 凱西線 (G2)
     16, 17, 18,    // 波波線 (Wild)
     74, 75, 76,    // 小拳石線 (Wild)
 
@@ -6079,7 +6048,7 @@ export const TRAINER_POOLS = {
     1: [
         { id: 132, name: '百變怪', type: 'normal' },
         { id: 92, name: '鬼斯', type: 'poison' },
-        { id: 63, name: '凱西', type: 'psychic' }
+        { id: 19, name: '小拉達', type: 'normal' } // 原：凱西 (替換為小拉達)
     ],
     2: [
         { id: 4, name: '小火龍', type: 'fire' },
@@ -6110,7 +6079,7 @@ export const TRAINER_POOLS = {
     6: [
         { id: 6, name: '噴火龍', type: 'fire' },  // 原：烈空坐
         { id: 3, name: '妙蛙花', type: 'grass' }, // 原：夢幻
-        { id: 65, name: '胡地', type: 'psychic' }
+        { id: 94, name: '耿鬼', type: 'ghost' } // 原：胡地 (替換為耿鬼)
     ]
 };
 
