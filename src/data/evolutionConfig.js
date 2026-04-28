@@ -46,24 +46,9 @@ export const EVOLUTION_CHAINS = {
 
     // --- 魂系分支 (Soul Lines) ---
     "SOUL_FIRE": {
-        stage2: {
-            "F_SOUL": { id: 4, desc: "小火龍" },
-            "F_VULPIX_SOUL": { id: 37, desc: "六尾" }
-        },
-        stage3: {
-            "F_CHARMELEON_SOUL": { id: 5, condition: "mood >= 80", from: "F_SOUL", desc: "火恐龍 (心情 80+)" },
-            "F_CUBONE_SOUL": { id: 104, condition: "mood < 80", from: "F_SOUL", desc: "卡拉卡拉 (心情 < 80)" },
-            "F_GROWLITHE_SOUL": { id: 58, condition: "passionate/stubborn", from: "F_VULPIX_SOUL", desc: "黑魯加 (熱情/頑固個性)" },
-            "F_PONYTA_SOUL": { id: 77, condition: "rational/nonsense", from: "F_VULPIX_SOUL", desc: "火岩鼠 (理性/無俚頭個性)" },
-            "F_NINETALES_SOUL": { id: 38, condition: "else", from: "F_VULPIX_SOUL", desc: "九尾" }
-        },
-        stage4: {
-            "F_CHARIZARD_SOUL": { id: 6, condition: "passionate/stubborn && m/h >= 50", from: ["F_CHARMELEON_SOUL", "F_CUBONE_SOUL"], desc: "噴火龍 (熱情/頑固且心情與飽食 50+)" },
-            "F_MAGMAR_SOUL": { id: 126, condition: "stubborn && m < 50", from: ["F_CHARMELEON_SOUL", "F_CUBONE_SOUL"], desc: "鴨嘴火龍 (頑固且心情 < 50)" },
-            "F_MAROWAK_SOUL": { id: 105, condition: "else", from: ["F_CHARMELEON_SOUL", "F_CUBONE_SOUL"], desc: "嘎啦嘎啦 (其餘條件)" },
-            "F_ARCANINE_SOUL": { id: 59, from: "F_GROWLITHE_SOUL", desc: "風速狗 (無特殊條件)" },
-            "F_RAPIDASH_SOUL": { id: 78, from: "F_PONYTA_SOUL", desc: "火爆獸 (無特殊條件)" }
-        }
+        stage2: { "F_SOUL": { id: 4, desc: "小火龍" } },
+        stage3: { "F_SOUL": { id: 5, from: "F_SOUL", desc: "火恐龍 (無條件進化)" } },
+        stage4: { "F_SOUL": { id: 6, from: "F_SOUL", desc: "噴火龍 (無條件進化)" } }
     },
 
     "SOUL_WATER": {

@@ -2100,11 +2100,7 @@ export default function App() {
                 if (stats.bondValue >= 80 && stats.lockedAffinity) {
                     if (evolutionStage === 1) {
                         if (stats.lockedAffinity === 'fire') {
-                            const fOpts = [];
-                            if (m >= 50 && h >= 50) fOpts.push({ branch: 'F_VULPIX_SOUL', count: 3 });
-                            fOpts.push({ branch: 'F_SOUL', count: 1 });
-                            fOpts.sort((a, b) => b.count - a.count);
-                            soulNext = fOpts[0].branch;
+                            soulNext = 'F_SOUL';
                         }
                         if (stats.lockedAffinity === 'water') {
                             const wOpts = [];
@@ -2213,52 +2209,11 @@ export default function App() {
                             nextBranch = evolutionBranch;
                         }
                     } else if (evolutionBranch.startsWith('F_') && evolutionBranch.endsWith('_SOUL')) {
-                        // ★ 火系獨立進化判斷 (小火龍線與六尾線不互通)
-                        const topTag = Object.entries(stats.soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                        if (evolutionStage === 2) {
-                            // 小火龍線
-                            if (evolutionBranch === 'F_SOUL') {
-                                const fOpts = [];
-                                if (m >= 80) fOpts.push({ branch: 'F_CHARMELEON_SOUL', count: 2 });
-                                fOpts.push({ branch: 'F_CUBONE_SOUL', count: 1 });
-                                fOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = fOpts[0].branch;
-                            }
-                            // 六尾線
-                            else if (evolutionBranch === 'F_VULPIX_SOUL') {
-                                const fOpts = [];
-                                if (m >= 50 && h >= 50 && ['passionate', 'stubborn'].includes(topTag))
-                                    fOpts.push({ branch: 'F_GROWLITHE_SOUL', count: 3 });
-                                if (['rational', 'nonsense'].includes(topTag))
-                                    fOpts.push({ branch: 'F_PONYTA_SOUL', count: 2 });
-                                fOpts.push({ branch: 'F_NINETALES_SOUL', count: 1 });
-                                fOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = fOpts[0].branch;
-                            }
-                            else { nextBranch = evolutionBranch; }
-                        } else if (evolutionStage === 3) {
-                            // 火恐龍 / 卡拉卡拉線
-                            if (['F_CHARMELEON_SOUL', 'F_CUBONE_SOUL'].includes(evolutionBranch)) {
-                                const fOpts = [];
-                                if (m >= 50 && h >= 50 && ['passionate', 'stubborn'].includes(topTag))
-                                    fOpts.push({ branch: 'F_CHARIZARD_SOUL', count: 3 });
-                                if (m < 50 && topTag === 'stubborn')
-                                    fOpts.push({ branch: 'F_MAGMAR_SOUL', count: 3 });
-                                fOpts.push({ branch: 'F_MAROWAK_SOUL', count: 1 });
-                                fOpts.sort((a, b) => b.count - a.count);
-                                nextBranch = fOpts[0].branch;
-                            }
-                            // 黑魯加 → 風速狗（無條件）
-                            else if (evolutionBranch === 'F_GROWLITHE_SOUL') {
-                                nextBranch = 'F_ARCANINE_SOUL';
-                            }
-                            // 火岩鼠 → 火爆獸（無條件）
-                            else if (evolutionBranch === 'F_PONYTA_SOUL') {
-                                nextBranch = 'F_RAPIDASH_SOUL';
-                            }
-                            else { nextBranch = evolutionBranch; }
+                        // ★ 火系獨立進化判斷 (單一小火龍線)
+                        if (evolutionStage >= 2 && evolutionStage < 4) { // Stage 2->3 or 3->4
+                            nextBranch = 'F_SOUL';
                         } else {
-                            nextBranch = evolutionBranch;
+                            nextBranch = evolutionBranch; // 最終階段不再變動
                         }
                     } else if (evolutionBranch.startsWith('GR_') && evolutionBranch.endsWith('_SOUL')) {
                         // ★ 草系獨立進化判斷 (妙蛙種子線與走路草線不互通)
