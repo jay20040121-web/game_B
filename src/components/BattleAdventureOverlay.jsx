@@ -1,5 +1,6 @@
 import React from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
+import { getTypeMultiplier } from '../monsterData';
 
 export default function BattleAdventureOverlay({
     isAdvMode,
@@ -106,11 +107,21 @@ export default function BattleAdventureOverlay({
                                 {[0, 1, 2, 3].map((idx) => {
                                     const move = battleState.player?.moves?.[idx];
                                     const isSelected = (battleState.menuIdx || 0) === idx;
+                                    
+                                    // ⚡ 屬性相剋色彩邏輯
+                                    let moveColor = isSelected ? '#8fa07e' : 'white';
+                                    if (move && battleState.enemy) {
+                                        const mult = getTypeMultiplier(move.type, battleState.enemy.type);
+                                        if (mult > 1) moveColor = '#ff5252'; // 2.0x 紅色 (效果絕佳)
+                                        else if (mult < 1) moveColor = '#2ecc71'; // 0.5x 綠色 (效果不好)
+                                    }
+
                                     return (
                                         <div
                                             key={idx}
+                                            style={{ color: moveColor }}
                                             className={`border-2 flex items-center justify-center transition-all ${isSelected
-                                                    ? 'border-[#1a1a1a] bg-[#383a37] text-[#8fa07e] invert-0'
+                                                    ? 'border-[#1a1a1a] bg-[#383a37] invert-0'
                                                     : 'border-[#1a1a1a] bg-[#ccd6be]/20'
                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                         >
