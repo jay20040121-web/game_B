@@ -3275,7 +3275,7 @@ export default function App() {
 
                                         <div className="w-full flex-1 relative z-10 overflow-hidden flex flex-col items-center justify-center">
                                             {isEvolving && (
-                                                <div className="absolute inset-0 bg-[#8fa07e]/80 flex items-center justify-center z-30">
+                                                <div className="absolute inset-0 bg-[#8fa07e]/80 flex items-center justify-center z-[100]">
                                                     <span className="animate-pulse text-[14px] tracking-widest font-bold">進化中...</span>
                                                 </div>
                                             )}
