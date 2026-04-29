@@ -4,20 +4,24 @@
 import { MONSTER_REGISTRY } from './data/monsterRegistry';
 
 // 從中央怪獸註冊表動態生成資料，確保單一資料來源 (Single Source of Truth)
-export const MONSTER_NAMES = {};
-export const SPECIES_BASE_STATS = {};
-export const MONSTER_ASSET_IDS = {};
+export const MONSTER_NAMES = Object.fromEntries(
+    MONSTER_REGISTRY.map(monster => [monster.id, monster.name])
+);
 
-MONSTER_REGISTRY.forEach(monster => {
-    MONSTER_NAMES[monster.id] = monster.name;
-    SPECIES_BASE_STATS[monster.id] = {
-        hp: monster.baseStats.hp,
-        atk: monster.baseStats.atk,
-        def: monster.baseStats.def,
-        spd: monster.baseStats.spd,
-        types: monster.types
-    };
-});
+export const SPECIES_BASE_STATS = Object.fromEntries(
+    MONSTER_REGISTRY.map(monster => [
+        monster.id,
+        {
+            hp: monster.baseStats.hp,
+            atk: monster.baseStats.atk,
+            def: monster.baseStats.def,
+            spd: monster.baseStats.spd,
+            types: monster.types
+        }
+    ])
+);
+
+export const MONSTER_ASSET_IDS = {};
 
 export const TYPE_MAP = {
     "normal": "普",
