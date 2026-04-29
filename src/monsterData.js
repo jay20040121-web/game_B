@@ -1,70 +1,23 @@
 // Generated from PokeAPI (zh-Hant)
 
 // 怪獸名稱表 — 使用自有 ID 系統 (1000 起)
-export const MONSTER_NAMES = {
-    "1000": "百變怪",
-    "1001": "小火龍",
-    "1002": "火恐龍",
-    "1003": "噴火龍",
-    "1004": "傑尼龜",
-    "1005": "卡咪龜",
-    "1006": "水箭龜",
-    "1007": "妙蛙種子",
-    "1008": "妙蛙草",
-    "1009": "妙蛙花",
-    "1010": "綠毛蟲",
-    "1011": "鐵甲蛹",
-    "1012": "巴大蝶",
-    "1013": "尼多朗",
-    "1014": "尼多力諾",
-    "1015": "尼多王",
-    "1016": "小拉達",
-    "1017": "拉達",
-    "1018": "多邊獸",
-    "1019": "鬼斯",
-    "1020": "鬼斯通",
-    "1021": "耿鬼",
-    "1022": "波波",
-    "1023": "比比鳥",
-    "1024": "大比鳥",
-    "1025": "小拳石",
-    "1026": "隆隆石",
-    "1027": "隆隆岩"
-};
+import { MONSTER_REGISTRY } from './data/monsterRegistry';
 
-// 資源映射表：(所有資源均已重新命名為新 ID，此表清空備用)
+// 從中央怪獸註冊表動態生成資料，確保單一資料來源 (Single Source of Truth)
+export const MONSTER_NAMES = {};
+export const SPECIES_BASE_STATS = {};
 export const MONSTER_ASSET_IDS = {};
 
-export const SPECIES_BASE_STATS = {
-    "1000": { "hp": 48, "atk": 48, "def": 48, "spd": 48, "types": ["normal"] },
-    "1001": { "hp": 39, "atk": 60, "def": 50, "spd": 65, "types": ["fire"] },
-    "1002": { "hp": 58, "atk": 80, "def": 65, "spd": 80, "types": ["fire"] },
-    "1003": { "hp": 78, "atk": 109, "def": 85, "spd": 100, "types": ["fire", "flying"] },
-    "1004": { "hp": 44, "atk": 50, "def": 65, "spd": 43, "types": ["water"] },
-    "1005": { "hp": 59, "atk": 65, "def": 80, "spd": 58, "types": ["water"] },
-    "1006": { "hp": 79, "atk": 85, "def": 105, "spd": 78, "types": ["water"] },
-    "1007": { "hp": 45, "atk": 65, "def": 65, "spd": 45, "types": ["grass", "poison"] },
-    "1008": { "hp": 60, "atk": 80, "def": 80, "spd": 60, "types": ["grass", "poison"] },
-    "1009": { "hp": 80, "atk": 100, "def": 100, "spd": 80, "types": ["grass", "poison"] },
-    "1010": { "hp": 45, "atk": 30, "def": 35, "spd": 45, "types": ["bug"] },
-    "1011": { "hp": 50, "atk": 25, "def": 55, "spd": 30, "types": ["bug"] },
-    "1012": { "hp": 60, "atk": 90, "def": 80, "spd": 70, "types": ["bug", "flying"] },
-    "1013": { "hp": 46, "atk": 57, "def": 40, "spd": 50, "types": ["poison"] },
-    "1014": { "hp": 61, "atk": 72, "def": 57, "spd": 65, "types": ["poison"] },
-    "1015": { "hp": 81, "atk": 102, "def": 77, "spd": 85, "types": ["poison", "ground"] },
-    "1016": { "hp": 30, "atk": 56, "def": 35, "spd": 72, "types": ["normal"] },
-    "1017": { "hp": 55, "atk": 81, "def": 70, "spd": 97, "types": ["normal"] },
-    "1018": { "hp": 65, "atk": 85, "def": 75, "spd": 40, "types": ["normal"] },
-    "1019": { "hp": 30, "atk": 100, "def": 35, "spd": 80, "types": ["ghost", "poison"] },
-    "1020": { "hp": 45, "atk": 115, "def": 55, "spd": 95, "types": ["ghost", "poison"] },
-    "1021": { "hp": 60, "atk": 130, "def": 75, "spd": 110, "types": ["ghost", "poison"] },
-    "1022": { "hp": 40, "atk": 45, "def": 40, "spd": 56, "types": ["normal", "flying"] },
-    "1023": { "hp": 63, "atk": 60, "def": 55, "spd": 71, "types": ["normal", "flying"] },
-    "1024": { "hp": 83, "atk": 80, "def": 75, "spd": 101, "types": ["normal", "flying"] },
-    "1025": { "hp": 40, "atk": 80, "def": 100, "spd": 20, "types": ["rock", "ground"] },
-    "1026": { "hp": 55, "atk": 95, "def": 115, "spd": 35, "types": ["rock", "ground"] },
-    "1027": { "hp": 80, "atk": 120, "def": 130, "spd": 45, "types": ["rock", "ground"] }
-};
+MONSTER_REGISTRY.forEach(monster => {
+    MONSTER_NAMES[monster.id] = monster.name;
+    SPECIES_BASE_STATS[monster.id] = {
+        hp: monster.baseStats.hp,
+        atk: monster.baseStats.atk,
+        def: monster.baseStats.def,
+        spd: monster.baseStats.spd,
+        types: monster.types
+    };
+});
 
 export const TYPE_MAP = {
     "normal": "普",
