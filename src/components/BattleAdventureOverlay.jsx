@@ -120,12 +120,33 @@ export default function BattleAdventureOverlay({
                                         <div
                                             key={idx}
                                             style={{ color: moveColor }}
-                                            className={`border-2 flex items-center justify-center transition-all ${isSelected
+                                            className={`border-2 flex items-center justify-center transition-all relative ${isSelected
                                                     ? 'border-[#1a1a1a] bg-[#383a37] invert-0'
                                                     : 'border-[#1a1a1a] bg-[#ccd6be]/20'
                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                         >
-                                            {move ? move.name : '---'}
+                                            {move ? (
+                                                <div className="flex items-center gap-1">
+                                                    <span>{move.name}</span>
+                                                    {(move.ailment && move.ailment !== 'none') && (
+                                                        <span className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
+                                                            move.ailment === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                            move.ailment === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                            move.ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                            'bg-[#4db6ac] text-white'
+                                                        }`}>
+                                                            {move.ailment === 'burn' ? '燒' :
+                                                             move.ailment === 'paralysis' ? '麻' :
+                                                             move.ailment === 'poison' ? '毒' : '狀'}
+                                                        </span>
+                                                    )}
+                                                    {(move.stat_changes && move.stat_changes.some(s => s.change > 0)) && (
+                                                        <span className="text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black bg-[#42a5f5] text-white uppercase">
+                                                            Buff
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ) : '---'}
                                         </div>
                                     );
                                 })}
