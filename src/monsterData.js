@@ -143,7 +143,7 @@ export const SKILL_DATABASE = {
     },
     "extreme_speed": {
         "id": "extreme_speed",
-        "name": "神速",
+        "name": "極限衝刺",
         "type": "normal",
         "power": 80,
         "priority": 2
@@ -165,7 +165,7 @@ export const SKILL_DATABASE = {
     },
     "hyper_beam": {
         "id": "hyper_beam",
-        "name": "破壞光線",
+        "name": "能量衝擊波",
         "type": "normal",
         "power": 150
     },
@@ -323,7 +323,7 @@ export const SKILL_DATABASE = {
     },
     "judgment": {
         "id": "judgment",
-        "name": "制裁光礫",
+        "name": "終極裁決",
         "type": "normal",
         "power": 100
     },
@@ -356,7 +356,7 @@ export const SKILL_DATABASE = {
     },
     "body_slam": {
         "id": "body_slam",
-        "name": "泰山壓頂",
+        "name": "重力壓制",
         "type": "normal",
         "power": 85,
         "ailment": "paralysis",
@@ -461,7 +461,7 @@ export const SKILL_DATABASE = {
     },
     "sky_attack": {
         "id": "sky_attack",
-        "name": "神鳥猛擊",
+        "name": "天際猛擊",
         "type": "flying",
         "power": 140,
         "flinch_chance": 30
@@ -475,7 +475,7 @@ export const SKILL_DATABASE = {
     },
     "dragon_ascent": {
         "id": "dragon_ascent",
-        "name": "畫龍點睛",
+        "name": "天際衝擊",
         "type": "flying",
         "power": 120,
         "stat_changes": [
@@ -2366,27 +2366,27 @@ export const OBTAINABLE_MONSTER_IDS = [
     1000,
 
     // --- 2. 一般線 (A, C, FAIL 分支) ---
-    1013, 1014, 1015,    // 尼多朗線 (A)
-    1016, 1017,        // 小拉達線 (C)
-    1018,           // 3D 獸 (FAIL)
+    1013, 1014, 1015,    // 咪兔線 (A)
+    1016, 1017,        // 咪球線 (C)
+    1018,           // 天后咪 (FAIL)
 
     // --- 3. 靈魂進化 - 火系 (Fire Soul) ---
-    1001, 1002, 1003,       // 小火龍線
+    1001, 1002, 1003,       // 火星獸線
 
     // --- 4. 靈魂進化 - 水系 (Water Soul) ---
-    1004, 1005, 1006,       // 傑尼龜線
+    1004, 1005, 1006,       // 泡泡獸線
 
     // --- 5. 靈魂進化 - 草系 (Grass Soul) ---
-    1007, 1008, 1009,       // 妙蛙種子線
+    1007, 1008, 1009,       // 棉棉獸線
 
     // --- 6. 靈魂進化 - 蟲系 (Bug Soul) ---
-    1010, 1011, 1012,    // 綠毛蟲線
+    1010, 1011, 1012,    // 蜂兵線
 
 
     // --- 7. 特殊培育與野外捕捉 (G Series & Wild) ---
-    1019, 1020, 1021,    // 鬼斯線 (G1)
-    1022, 1023, 1024,    // 波波線 (Wild)
-    1025, 1026, 1027,    // 小拳石線 (Wild)
+    1019, 1020, 1021,    // 幽影線 (G1)
+    1022, 1023, 1024,    // 小雞獸線 (Wild)
+    1025, 1026, 1027,    // 石精靈線 (Wild)
 
 ].map(String);
 

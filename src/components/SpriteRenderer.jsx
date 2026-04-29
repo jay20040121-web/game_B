@@ -133,11 +133,8 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, 
                     const currentAssetId = MONSTER_ASSET_IDS[id] || id;
                     const base = import.meta.env.BASE_URL;
                     if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        // 如果 GIF 找不到，優先找 exclusive 資料夾內的 PNG (修正讀取位置)
+                        // 如果 GIF 找不到，優先找 exclusive 資料夾內的 PNG
                         setImgSrc(`${base}assets/exclusive/back/${currentAssetId}.png`);
-                    } else if (imgSrc.includes('exclusive/back/')) {
-                        // 如果 exclusive 的 PNG 也找不到，才退回原始路徑
-                        setImgSrc(`${base}assets/back_sprites/${currentAssetId}.png`);
                     }
                 }}
             />

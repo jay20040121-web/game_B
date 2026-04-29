@@ -204,7 +204,7 @@ export default function App() {
             // 嘗試取得暫存的物種ID
             const monId = String(initialData?.id || localStorage.getItem('pixel_monster_id') || 1000);
             const getStarterMove = (id) => {
-                if (id === "1019") return 'lick'; // 鬼斯
+                if (id === "1019") return 'lick'; // 霧氣精靈
                 return 'tackle'; // 其他
             };
             // 初始招式：撞擊(或專屬) + 隨機贈送的那一招
@@ -631,7 +631,7 @@ export default function App() {
     const lastAliveMonsterIdRef = useRef(1000);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
-    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 149) + 1);
+    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 28) + 1000);
     const [bootMonsterPosIdx, setBootMonsterPosIdx] = useState(0); // 0:左上, 1:右上, 2:左下, 3:右下
     const [isBootMonsterVisible, setIsBootMonsterVisible] = useState(true);
 
@@ -656,7 +656,7 @@ export default function App() {
                 setIsBootMonsterVisible(false); // 觸發淡出
                 setTimeout(() => {
                     setBootMonsterPosIdx(prev => (prev + 1) % 4);
-                    setBootMonsterId(Math.floor(Math.random() * 151) + 1); // 每次跳轉都更換怪獸 ID (1-151)
+                    setBootMonsterId(Math.floor(Math.random() * 28) + 1000); // 每次跳轉都更換怪獸 ID (1000-1027)
                     setIsBootMonsterVisible(true); // 觸發淡入
                 }, 1000); // 1秒的淡出過渡
             }, 10000); // 10秒一個週期
@@ -1577,37 +1577,45 @@ export default function App() {
             playBloop('pop');
             return;
         }
-        if (isConfirmingReplace) {
-            if (currentSkillIdx === 0) { // YES (學習)
-                handleLearnSkill(pendingSkillLearn.skill.id, tempReplaceIdx);
-                setIsConfirmingReplace(false);
-                setTempReplaceIdx(-1);
-            } else { // NO (不學習)
-                setIsConfirmingReplace(false);
-                setSkillSelectIdx(0);
-            }
-            return;
-        }
-        if (pendingSkillLearn && !isAdvMode && !isPvpMode && !battleState.active) {
-            const currentMoveCount = advStats.moves.length;
-            if (currentMoveCount < 4) {
-                if (currentSkillIdx === 0) {
-                    handleLearnSkill(pendingSkillLearn.skill.id);
-                } else {
-                    setPendingSkillLearn(null);
+        // 1. 優先處理技能學習/替換介面 (Skill Learn Overlay)
+        // 增加優先級，且移除 !battleState.active 限制（允許在野外戰鬥中使用秘笈書後立即進入學習）
+        if (pendingSkillLearn) {
+            // 如果正在二次確認替換招式
+            if (isConfirmingReplace) {
+                if (currentSkillIdx === 0) { // YES (學習)
+                    handleLearnSkill(pendingSkillLearn.skill.id, tempReplaceIdx);
+                    setIsConfirmingReplace(false);
+                    setTempReplaceIdx(-1);
+                } else { // NO (不學習)
+                    setIsConfirmingReplace(false);
+                    setSkillSelectIdx(0);
                 }
-            } else {
-                if (currentSkillIdx === 4) { // 指向「放棄」
-                    setPendingSkillLearn(null);
-                } else {
-                    // 指向 0, 1, 2, 3 的某個位置
-                    setTempReplaceIdx(currentSkillIdx);
-                    setIsConfirmingReplace(true);
-                    setSkillSelectIdx(0); // 預設跳到 否 (0)
-                }
+                playBloop('success');
+                return;
             }
-            playBloop('success');
-            return;
+
+            // 一般學習狀態
+            if (!isAdvMode && !isPvpMode) {
+                const currentMoveCount = advStats.moves.length;
+                if (currentMoveCount < 4) {
+                    if (currentSkillIdx === 0) {
+                        handleLearnSkill(pendingSkillLearn.skill.id);
+                    } else {
+                        setPendingSkillLearn(null);
+                    }
+                } else {
+                    if (currentSkillIdx === 4) { // 指向「放棄」
+                        setPendingSkillLearn(null);
+                    } else {
+                        // 指向 0, 1, 2, 3 的某個位置
+                        setTempReplaceIdx(currentSkillIdx);
+                        setIsConfirmingReplace(true);
+                        setSkillSelectIdx(0); // 預設跳到 否 (0)
+                    }
+                }
+                playBloop('success');
+                return;
+            }
         }
         if (isConfirmingFarewell) {
             confirmFarewellAction();
@@ -2513,6 +2521,23 @@ export default function App() {
                 setPendingSkillLearn({ skill: skill, level: derivedLevel });
                 setIsInventoryOpen(false);
                 updateDialogue(`打開了${item.name}！怪獸開始專心領悟新的招式...`);
+                // 🚀 關鍵修正：技能道具使用後立即解鎖，不進入 1.8s 的延遲流程
+                // 避免 isUsingItem 狀態阻塞後續的 SkillLearnOverlay 操作
+                setIsUsingItem(false); 
+                
+                // 執行消耗流程（減少數量與同步）
+                setInventory(prev => {
+                    const next = [...prev];
+                    if ((next[itemIdx].count || 1) > 1) {
+                        next[itemIdx] = { ...next[itemIdx], count: next[itemIdx].count - 1 };
+                        return next;
+                    }
+                    return next.filter((_, i) => i !== itemIdx);
+                });
+                recordGameAction();
+                setSelectedItemIdx(0);
+                playSoundEffect('success');
+                return; // 提前返回，不走後面的通用 success 邏輯
             }
         } else {
             switch (item.id) {
@@ -2767,12 +2792,12 @@ export default function App() {
         setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
 
         if (savedDeathBranch) {
-            // D線觸發：靈魂重生為鬼斯/凱西線
+            // D線觸發：靈魂重生為霧氣精靈線
             setEvolutionStage(1);
             setEvolutionBranch(savedDeathBranch);
-            setDialogue(savedDeathBranch === 'G1' ? "鬼魂附身！" : "神秘力量覺醒！");
+            setDialogue(savedDeathBranch === 'G1' ? "幽影附身！" : "神秘力量覺醒！");
         } else {
-            // 正常重啟：回到百變怪
+            // 正常重啟：回到起始怪獸
             setEvolutionStage(1);
             setEvolutionBranch('A');
             setDialogue("吼吼吼～");
