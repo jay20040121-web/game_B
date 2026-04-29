@@ -28,20 +28,11 @@ export const TYPE_MAP = {
     "fire": "火",
     "water": "水",
     "grass": "草",
-    "electric": "電",
-    "ice": "冰",
-    "fighting": "鬥",
     "poison": "毒",
-    "ground": "地",
     "flying": "飛",
-    "psychic": "超",
     "bug": "蟲",
     "rock": "岩",
     "ghost": "鬼",
-    "dragon": "龍",
-    "steel": "鋼",
-    "dark": "惡",
-    "fairy": "妖"
 };
 
 export const NATURE_CONFIG = {
@@ -5087,15 +5078,13 @@ export const OBTAINABLE_MONSTER_IDS = [
     1022, 1023, 1024,    // 波波線 (Wild)
     1025, 1026, 1027,    // 小拳石線 (Wild)
 
-    // --- 8. 傳說與幻之怪獸 (End Game) ---
-    // 已移除夢幻、洛奇亞、烈空坐以防法律糾紛
 ].map(String);
 
 export const TRAINER_POOLS = {
     1: [
         { id: 1000, name: MONSTER_NAMES[1000], type: 'normal' },
         { id: 1019, name: MONSTER_NAMES[1019], type: 'poison' },
-        { id: 1016, name: MONSTER_NAMES[1016], type: 'normal' } // 原：凱西 (替換為小拉達)
+        { id: 1016, name: MONSTER_NAMES[1016], type: 'normal' }
     ],
     2: [
         { id: 1001, name: MONSTER_NAMES[1001], type: 'fire' },
@@ -5116,40 +5105,32 @@ export const TRAINER_POOLS = {
         { id: 1006, name: MONSTER_NAMES[1006], type: 'water' },
         { id: 1009, name: MONSTER_NAMES[1009], type: 'grass' },
         { id: 1012, name: MONSTER_NAMES[1012], type: 'bug' },
-        { id: 1003, name: MONSTER_NAMES[1003], type: 'fire' } // 原：快龍 (替換為噴火龍)
+        { id: 1003, name: MONSTER_NAMES[1003], type: 'fire' }
     ],
     5: [
-        { id: 1006, name: MONSTER_NAMES[1006], type: 'water' }, // 原：洛奇亞
+        { id: 1006, name: MONSTER_NAMES[1006], type: 'water' },
         { id: 1021, name: MONSTER_NAMES[1021], type: 'ghost' },
-        { id: 1006, name: MONSTER_NAMES[1006], type: 'water' } // 原：暴鯉龍 (替換為水箭龜)
+        { id: 1006, name: MONSTER_NAMES[1006], type: 'water' }
     ],
     6: [
-        { id: 1003, name: MONSTER_NAMES[1003], type: 'fire' },  // 原：烈空坐
-        { id: 1009, name: MONSTER_NAMES[1009], type: 'grass' }, // 原：夢幻
-        { id: 1021, name: MONSTER_NAMES[1021], type: 'ghost' } // 原：胡地 (替換為耿鬼)
+        { id: 1003, name: MONSTER_NAMES[1003], type: 'fire' },
+        { id: 1009, name: MONSTER_NAMES[1009], type: 'grass' },
+        { id: 1021, name: MONSTER_NAMES[1021], type: 'ghost' }
     ]
 };
 
 export const TYPE_CHART = {
-    fire: { bug: 2.0, grass: 2.0, water: 0.5, rock: 0.5, fire: 0.5, ice: 2.0, dragon: 0.5, steel: 2.0 },
-    water: { fire: 2.0, rock: 2.0, ground: 2.0, grass: 0.5, water: 0.5, dragon: 0.5 },
-    grass: { water: 2.0, rock: 2.0, ground: 2.0, fire: 0.5, grass: 0.5, bug: 0.5, poison: 0.5, flying: 0.5, dragon: 0.5, steel: 0.5 },
-    bug: { grass: 2.0, psychic: 2.0, fire: 0.5, fighting: 0.5, flying: 0.5, poison: 0.5, ghost: 0.5, steel: 0.5, fairy: 0.5, dark: 2.0 },
-    normal: { rock: 0.5, ghost: 0, steel: 0.5 },
-    flying: { grass: 2.0, fighting: 2.0, bug: 2.0, rock: 0.5, electric: 0.5, steel: 0.5 },
-    poison: { grass: 2.0, poison: 0.5, ground: 0.5, rock: 0.5, ghost: 0.5, steel: 0, fairy: 2.0 },
-    ground: { fire: 2.0, poison: 2.0, rock: 2.0, steel: 2.0, electric: 2.0, grass: 0.5, bug: 0.5, flying: 0 },
-    fighting: { normal: 2.0, rock: 2.0, ice: 2.0, steel: 2.0, dark: 2.0, flying: 0.5, poison: 0.5, bug: 0.5, psychic: 0.5, fairy: 0.5, ghost: 0 },
-    rock: { fire: 2.0, flying: 2.0, bug: 2.0, ice: 2.0, fighting: 0.5, ground: 0.5, steel: 0.5 },
-    psychic: { fighting: 2.0, poison: 2.0, psychic: 0.5, steel: 0.5, dark: 0 },
-    ghost: { psychic: 2.0, ghost: 2.0, normal: 0, fighting: 0, dark: 0.5 },
-    electric: { flying: 2.0, water: 2.0, electric: 0.5, grass: 0.5, dragon: 0.5, ground: 0 },
-    ice: { grass: 2.0, ground: 2.0, flying: 2.0, dragon: 2.0, fire: 0.5, water: 0.5, ice: 0.5, steel: 0.5 },
-    dragon: { dragon: 2.0, steel: 0.5, fairy: 0 },
-    steel: { rock: 2.0, ice: 2.0, fairy: 2.0, fire: 0.5, water: 0.5, electric: 0.5, steel: 0.5 },
-    dark: { psychic: 2.0, ghost: 2.0, fighting: 0.5, dark: 0.5, fairy: 0.5 },
-    fairy: { fighting: 2.0, dragon: 2.0, dark: 2.0, fire: 0.5, poison: 0.5, steel: 0.5 }
+    fire: { bug: 2.0, grass: 2.0, water: 0.5, rock: 0.5 },
+    water: { fire: 2.0, rock: 2.0, grass: 0.5, water: 0.5 },
+    grass: { water: 2.0, rock: 2.0, fire: 0.5, bug: 0.5 },
+    bug: { grass: 2.0, poison: 2.0, flying: 0.5, fire: 0.5 },
+    normal: { rock: 2.0, flying: 2.0, poison: 0.5, ghost: 0 },
+    flying: { grass: 2.0, bug: 2.0, rock: 0.5, flying: 0.5 },
+    poison: { poison: 0.5, rock: 0.5 },
+    rock: { fire: 2.0, flying: 2.0, water: 0.5, water: 0.5 },
+    ghost: { normal: 2.0 }
 };
+
 
 export const getTypeMultiplier = (atkType, defTypes) => {
     const targetTypes = Array.isArray(defTypes) ? defTypes : [defTypes];
