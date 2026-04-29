@@ -4,7 +4,7 @@
  * 特色：對戰日記系統、專屬靈魂個性對話、大事優先權紀錄、
  *       全方位的防呆機制與動態成長系統。
  */
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 // --- 🔹 環境偵測：判斷是否在 LINE/FB/IG 等 In-App Browser 🔹 ---
 export const isInAppBrowser = typeof navigator !== "undefined" && (

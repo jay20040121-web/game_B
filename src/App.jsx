@@ -403,6 +403,14 @@ export default function App() {
 
                 // 比對時間戳記，取最新者 (且必須是同一個人的資料，剛才 localData 已過濾過)
                 if (!localData || (cloudTime > localTime + 2000)) {
+                    // ✨ 增加版本檢查：如果雲端資料版本不符，不進行同步
+                    if (cloudData.saveVersion !== SAVE_VERSION) {
+                        console.warn(`☁️ 雲端資料版本 (${cloudData.saveVersion}) 與當前程式碼版本 (${SAVE_VERSION}) 不符，跳過同步以防止資料衝突。`);
+                        setHasCheckedCloud(true);
+                        setIsCloudLoading(false);
+                        return;
+                    }
+
                     updateDialogue("☁️ 發現較新的雲端進度，同步中...", true);
                     localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
                     setTimeout(() => window.location.reload(), 1500);
@@ -667,27 +675,26 @@ export default function App() {
     }, [isBooting]);
 
     // 自動合併舊有重複物品以及確認名稱/描述同步最新的設定
+    // 🚀 新增：資料清洗 (Sanitization) - 過濾掉已不存在的 ID 或無效數據
     useEffect(() => {
+        // 1. 物品清洗
         const merged = [];
         let changed = false;
 
-        // 確保日記永遠在第一位
         if (!inventory.find(it => it.id === 'DIARY')) {
             merged.push({ ...DIARY_ITEM });
             changed = true;
         } else {
-            merged.push({ ...DIARY_ITEM }); // 保持日記在最前
+            merged.push({ ...DIARY_ITEM });
         }
 
         inventory.forEach(item => {
-            if (item.id === 'DIARY') return; // 跳過舊的日記條目（避免重複）
-            // 找尋最新的定義 (支援正規化 ID，例如 '5' -> '005')
+            if (item.id === 'DIARY') return;
             let searchId = String(item.id);
             if (searchId.length < 3 && !isNaN(searchId)) {
                 searchId = searchId.padStart(3, '0');
             }
             const latestDef = ADV_ITEMS.find(it => it.id === searchId);
-            // 關鍵修正：必須同步所有屬性（尤其是 skillId），而不單只有名稱與描述
             const updatedItem = latestDef ? { ...item, ...latestDef, id: searchId } : item;
 
             if (latestDef && (item.id !== searchId || item.name !== latestDef.name || item.skillId !== latestDef.skillId)) {
@@ -704,6 +711,29 @@ export default function App() {
         });
 
         setInventory(merged);
+
+        // 2. 圖鑑清洗 (Owned Monsters)
+        // 過濾掉不屬於 OBTAINABLE_MONSTER_IDS 的舊 ID
+        setOwnedMonsters(prev => {
+            const valid = prev.filter(id => OBTAINABLE_MONSTER_IDS.includes(String(id)));
+            if (valid.length !== prev.length) {
+                console.log(`🧹 已自動清除 ${prev.length - valid.length} 項過時的圖鑑紀錄`);
+                return valid;
+            }
+            return prev;
+        });
+
+        // 3. 招式清洗 (Monster Moves)
+        // 過濾掉已從 SKILL_DATABASE 移除的招式
+        setAdvStats(prev => {
+            const validMoves = (prev.moves || []).filter(mId => SKILL_DATABASE[mId]);
+            if (validMoves.length !== (prev.moves || []).length) {
+                console.log(`🧹 已從怪獸招式中移除 ${prev.moves.length - validMoves.length} 個過時招式`);
+                return { ...prev, moves: validMoves };
+            }
+            return prev;
+        });
+
     }, []);
 
 

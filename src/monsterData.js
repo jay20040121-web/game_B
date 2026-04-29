@@ -113,7 +113,7 @@ export const SKILL_DATABASE = {
     },
     "swords_dance": {
         "id": "swords_dance",
-        "name": "劍舞",
+        "name": "戰舞",
         "type": "normal",
         "power": 0,
         "priority": 2,
@@ -223,7 +223,7 @@ export const SKILL_DATABASE = {
     },
     "double_team": {
         "id": "double_team",
-        "name": "影子分身",
+        "name": "影子分身術",
         "type": "normal",
         "power": 0,
         "priority": 2,
@@ -238,7 +238,7 @@ export const SKILL_DATABASE = {
     },
     "harden": {
         "id": "harden",
-        "name": "變硬",
+        "name": "堅硬防守",
         "type": "normal",
         "power": 0,
         "priority": 2,
@@ -561,7 +561,7 @@ export const SKILL_DATABASE = {
     },
     "chatter": {
         "id": "chatter",
-        "name": "喋喋不休",
+        "name": "瘋狂大鬧",
         "type": "flying",
         "power": 65,
         "ailment": "confusion",
@@ -1712,7 +1712,7 @@ export const SKILL_DATABASE = {
     },
     "fire_spin": {
         "id": "fire_spin",
-        "name": "火焰旋渦",
+        "name": "火之旋渦",
         "type": "fire",
         "power": 35,
         "ailment": "trap",
@@ -1720,52 +1720,52 @@ export const SKILL_DATABASE = {
     },
     "jet_punch": {
         "id": "jet_punch",
-        "name": "喷射拳",
+        "name": "水槍拳",
         "type": "water",
         "power": 60,
         "priority": 1
     },
     "aqua_jet": {
         "id": "aqua_jet",
-        "name": "水流噴射",
+        "name": "水火箭",
         "type": "water",
         "power": 40,
         "priority": 1
     },
     "water_shuriken": {
         "id": "water_shuriken",
-        "name": "飛水手裡劍",
+        "name": "水之手裡劍",
         "type": "water",
-        "power": 15,
+        "power": 35,
         "priority": 1
     },
     "hydro_cannon": {
         "id": "hydro_cannon",
-        "name": "加農水砲",
+        "name": "加農水柱",
         "type": "water",
         "power": 150
     },
     "water_spout": {
         "id": "water_spout",
-        "name": "噴水",
+        "name": "高潮",
         "type": "water",
         "power": 150
     },
     "wave_crash": {
         "id": "wave_crash",
-        "name": "波動冲",
+        "name": "冲水",
         "type": "water",
         "power": 120
     },
     "hydro_pump": {
         "id": "hydro_pump",
-        "name": "水砲",
+        "name": "水砲台",
         "type": "water",
         "power": 110
     },
     "steam_eruption": {
         "id": "steam_eruption",
-        "name": "蒸汽爆炸",
+        "name": "水蒸汽爆",
         "type": "water",
         "power": 110,
         "ailment": "burn",
@@ -1773,13 +1773,13 @@ export const SKILL_DATABASE = {
     },
     "origin_pulse": {
         "id": "origin_pulse",
-        "name": "根源波動",
+        "name": "海浪波動",
         "type": "water",
         "power": 110
     },
     "withdraw": {
         "id": "withdraw",
-        "name": "縮入殼中",
+        "name": "龜縮",
         "type": "water",
         "power": 0,
         "priority": 2,
@@ -1794,7 +1794,7 @@ export const SKILL_DATABASE = {
     },
     "crabhammer": {
         "id": "crabhammer",
-        "name": "蟹鉗錘",
+        "name": "螃蟹拳",
         "type": "water",
         "power": 100
     },
@@ -1806,19 +1806,19 @@ export const SKILL_DATABASE = {
     },
     "muddy_water": {
         "id": "muddy_water",
-        "name": "濁流",
+        "name": "下雨",
         "type": "water",
         "power": 90
     },
     "aqua_tail": {
         "id": "aqua_tail",
-        "name": "水流尾",
+        "name": "水流擊",
         "type": "water",
         "power": 90
     },
     "sparkling_aria": {
         "id": "sparkling_aria",
-        "name": "泡影的詠歎調",
+        "name": "泡影之歌",
         "type": "water",
         "power": 90
     },
@@ -1832,7 +1832,7 @@ export const SKILL_DATABASE = {
     },
     "liquidation": {
         "id": "liquidation",
-        "name": "水流裂破",
+        "name": "水流破",
         "type": "water",
         "power": 85,
         "stat_changes": [
@@ -1846,13 +1846,13 @@ export const SKILL_DATABASE = {
     },
     "fishious_rend": {
         "id": "fishious_rend",
-        "name": "鰓咬",
+        "name": "水魚咬",
         "type": "water",
         "power": 85
     },
     "waterfall": {
         "id": "waterfall",
-        "name": "攀瀑",
+        "name": "瀑布",
         "type": "water",
         "power": 80,
         "flinch_chance": 20
@@ -1865,7 +1865,7 @@ export const SKILL_DATABASE = {
     },
     "scald": {
         "id": "scald",
-        "name": "熱水",
+        "name": "風平浪靜",
         "type": "water",
         "power": 80,
         "ailment": "burn",
@@ -1879,13 +1879,13 @@ export const SKILL_DATABASE = {
     },
     "snipe_shot": {
         "id": "snipe_shot",
-        "name": "狙擊",
+        "name": "水面斬",
         "type": "water",
         "power": 80
     },
     "aqua_step": {
         "id": "aqua_step",
-        "name": "流水旋舞",
+        "name": "流流水舞",
         "type": "water",
         "power": 80,
         "stat_changes": [
@@ -1905,7 +1905,7 @@ export const SKILL_DATABASE = {
     },
     "razor_shell": {
         "id": "razor_shell",
-        "name": "貝殼刃",
+        "name": "水之利刃",
         "type": "water",
         "power": 75,
         "stat_changes": [
@@ -1919,15 +1919,15 @@ export const SKILL_DATABASE = {
     },
     "aqua_cutter": {
         "id": "aqua_cutter",
-        "name": "水波刀",
+        "name": "水之亂斬",
         "type": "water",
         "power": 70
     },
     "bubble_beam": {
         "id": "bubble_beam",
-        "name": "泡沫光線",
+        "name": "水壓光線",
         "type": "water",
-        "power": 65,
+        "power": 80,
         "stat_changes": [
             {
                 "stat": "spd",
@@ -1939,7 +1939,7 @@ export const SKILL_DATABASE = {
     },
     "octazooka": {
         "id": "octazooka",
-        "name": "章魚桶炮",
+        "name": "蠑螈水炮",
         "type": "water",
         "power": 65
     },
@@ -1951,7 +1951,7 @@ export const SKILL_DATABASE = {
     },
     "water_pulse": {
         "id": "water_pulse",
-        "name": "水之波動",
+        "name": "水滴之聲",
         "type": "water",
         "power": 60,
         "ailment": "confusion",
@@ -1959,19 +1959,19 @@ export const SKILL_DATABASE = {
     },
     "bouncy_bubble": {
         "id": "bouncy_bubble",
-        "name": "活活氣泡",
+        "name": "水氣泡",
         "type": "water",
         "power": 60
     },
     "flip_turn": {
         "id": "flip_turn",
-        "name": "快速折返",
+        "name": "快速滑水",
         "type": "water",
         "power": 60
     },
     "chilling_water": {
         "id": "chilling_water",
-        "name": "泼冷水",
+        "name": "冷水澡",
         "type": "water",
         "power": 50,
         "stat_changes": [
@@ -1999,9 +1999,9 @@ export const SKILL_DATABASE = {
     },
     "clamp": {
         "id": "clamp",
-        "name": "貝殼夾擊",
+        "name": "水之夾擊",
         "type": "water",
-        "power": 35,
+        "power": 45,
         "ailment": "trap",
         "ailment_chance": 100
     },
@@ -2009,37 +2009,37 @@ export const SKILL_DATABASE = {
         "id": "whirlpool",
         "name": "潮旋",
         "type": "water",
-        "power": 35,
+        "power": 40,
         "ailment": "trap",
         "ailment_chance": 100
     },
     "triple_dive": {
         "id": "triple_dive",
-        "name": "三连钻",
+        "name": "三連潛",
         "type": "water",
-        "power": 30
+        "power": 50
     },
     "surging_strikes": {
         "id": "surging_strikes",
-        "name": "水流連打",
+        "name": "水流衝擊",
         "type": "water",
-        "power": 25
+        "power": 45
     },
     "frenzy_plant": {
         "id": "frenzy_plant",
-        "name": "瘋狂植物",
+        "name": "魔性植物",
         "type": "grass",
         "power": 150
     },
     "chloroblast": {
         "id": "chloroblast",
-        "name": "葉绿爆震",
+        "name": "葉子爆震",
         "type": "grass",
         "power": 150
     },
     "leaf_storm": {
         "id": "leaf_storm",
-        "name": "飛葉風暴",
+        "name": "飛葉暴風",
         "type": "grass",
         "power": 130,
         "stat_changes": [
@@ -2053,19 +2053,19 @@ export const SKILL_DATABASE = {
     },
     "solar_blade": {
         "id": "solar_blade",
-        "name": "日光刃",
+        "name": "太陽花",
         "type": "grass",
         "power": 125
     },
     "solar_beam": {
         "id": "solar_beam",
-        "name": "日光束",
+        "name": "太陽能量束",
         "type": "grass",
         "power": 120
     },
     "petal_dance": {
         "id": "petal_dance",
-        "name": "花瓣舞",
+        "name": "花之舞",
         "type": "grass",
         "power": 120
     },
@@ -2084,7 +2084,7 @@ export const SKILL_DATABASE = {
     },
     "seed_flare": {
         "id": "seed_flare",
-        "name": "種子閃光",
+        "name": "種子閃光彈",
         "type": "grass",
         "power": 120,
         "stat_changes": [
@@ -2098,7 +2098,7 @@ export const SKILL_DATABASE = {
     },
     "cotton_guard": {
         "id": "cotton_guard",
-        "name": "棉花防守",
+        "name": "樹木防守",
         "type": "grass",
         "power": 0,
         "priority": 2,
@@ -2113,7 +2113,7 @@ export const SKILL_DATABASE = {
     },
     "sappy_seed": {
         "id": "sappy_seed",
-        "name": "茁茁轟炸",
+        "name": "種子轟炸",
         "type": "grass",
         "power": 100,
         "ailment": "leech-seed",
@@ -2121,13 +2121,13 @@ export const SKILL_DATABASE = {
     },
     "leaf_blade": {
         "id": "leaf_blade",
-        "name": "葉刃",
+        "name": "葉子飛刃",
         "type": "grass",
         "power": 90
     },
     "energy_ball": {
         "id": "energy_ball",
-        "name": "能量球",
+        "name": "植物球",
         "type": "grass",
         "power": 90,
         "stat_changes": [
@@ -2141,15 +2141,15 @@ export const SKILL_DATABASE = {
     },
     "petal_blizzard": {
         "id": "petal_blizzard",
-        "name": "落英繽紛",
+        "name": "花瓣暴風",
         "type": "grass",
         "power": 90
     },
     "seed_bomb": {
         "id": "seed_bomb",
-        "name": "種子炸彈",
+        "name": "種子炸藥",
         "type": "grass",
-        "power": 80
+        "power": 90
     },
     "grass_pledge": {
         "id": "grass_pledge",
@@ -2159,7 +2159,7 @@ export const SKILL_DATABASE = {
     },
     "drum_beating": {
         "id": "drum_beating",
-        "name": "鼓擊",
+        "name": "花擊",
         "type": "grass",
         "power": 80,
         "stat_changes": [
@@ -2187,7 +2187,7 @@ export const SKILL_DATABASE = {
     },
     "grav_apple": {
         "id": "grav_apple",
-        "name": "萬有引力",
+        "name": "地心引力",
         "type": "grass",
         "power": 80,
         "stat_changes": [
@@ -2201,21 +2201,21 @@ export const SKILL_DATABASE = {
     },
     "giga_drain": {
         "id": "giga_drain",
-        "name": "終極吸取",
+        "name": "無盡吸取",
         "type": "grass",
-        "power": 75,
-        "drain": 0.5
+        "power": 70,
+        "drain": 0.7
     },
     "horn_leech": {
         "id": "horn_leech",
-        "name": "木角",
+        "name": "木遁",
         "type": "grass",
         "power": 75,
         "drain": 0.5
     },
     "trop_kick": {
         "id": "trop_kick",
-        "name": "熱帶踢",
+        "name": "草葉踢",
         "type": "grass",
         "power": 70,
         "stat_changes": [
@@ -2229,44 +2229,44 @@ export const SKILL_DATABASE = {
     },
     "flower_trick": {
         "id": "flower_trick",
-        "name": "千变万花",
+        "name": "千變花樣",
         "type": "grass",
-        "power": 70
+        "power": 90
     },
     "leaf_tornado": {
         "id": "leaf_tornado",
-        "name": "青草攪拌器",
+        "name": "青草漩渦",
         "type": "grass",
         "power": 65
     },
     "needle_arm": {
         "id": "needle_arm",
-        "name": "尖刺臂",
+        "name": "花之尖刺",
         "type": "grass",
         "power": 60,
         "flinch_chance": 30
     },
     "magical_leaf": {
         "id": "magical_leaf",
-        "name": "魔法葉",
+        "name": "魔法葉子",
         "type": "grass",
         "power": 60
     },
     "razor_leaf": {
         "id": "razor_leaf",
-        "name": "飛葉快刀",
+        "name": "飛葉刀刃",
         "type": "grass",
         "power": 55
     },
     "grassy_glide": {
         "id": "grassy_glide",
-        "name": "青草滑梯",
+        "name": "草之滑梯",
         "type": "grass",
         "power": 55
     },
     "trailblaze": {
         "id": "trailblaze",
-        "name": "起草",
+        "name": "青草腳",
         "type": "grass",
         "power": 50,
         "stat_changes": [
@@ -2280,20 +2280,20 @@ export const SKILL_DATABASE = {
     },
     "mega_drain": {
         "id": "mega_drain",
-        "name": "超級吸取",
+        "name": "極限吸收",
         "type": "grass",
-        "power": 40,
-        "drain": 0.5
+        "power": 60,
+        "drain": 0.6
     },
     "leafage": {
         "id": "leafage",
-        "name": "樹葉",
+        "name": "花葉攻擊",
         "type": "grass",
-        "power": 40
+        "power": 55
     },
     "branch_poke": {
         "id": "branch_poke",
-        "name": "木枝突刺",
+        "name": "樹木刺",
         "type": "grass",
         "power": 40
     },
@@ -2307,15 +2307,15 @@ export const SKILL_DATABASE = {
     },
     "bullet_seed": {
         "id": "bullet_seed",
-        "name": "種子機關槍",
+        "name": "果子機槍",
         "type": "grass",
-        "power": 25
+        "power": 40
     },
     "absorb": {
         "id": "absorb",
-        "name": "吸取",
+        "name": "吸收",
         "type": "grass",
-        "power": 20,
+        "power": 40,
         "drain": 0.5
     },
 };

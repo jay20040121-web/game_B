@@ -18,21 +18,19 @@ const PHYSICS = {
 const ADV_ITEMS = [
     { id: '001', name: "活力飯糰", desc: "永久提升基礎戰力 10 點", rarity: 1 },
     { id: '002', name: "戰鬥蛋白粉", desc: "提升 2 點攻擊力與戰力", rarity: 4 },
-    { id: '003', name: "跑步鞋", desc: "重置 60 分鐘冒險冷卻", rarity: 2 },
+    { id: '003', name: "跑步鞋", desc: "重置 60 秒冒險冷卻", rarity: 2 },
     { id: '004', name: "覺醒之核", desc: "提升基礎戰力與全屬性", rarity: 3 },
     { id: '005', name: "奇異糖果", desc: "隨機大幅提升戰鬥屬性", rarity: 5 },
     { id: '006', skillId: 'body_slam', name: "泰山壓頂秘笈書", desc: "讓怪獸學會招式「泰山壓頂」(30%麻痺)", rarity: 5 },
-    { id: '007', skillId: 'chatter', name: "喋喋不休秘笈書", desc: "讓怪獸學會招式「喋喋不休」(100%混亂)", rarity: 2 },
+    { id: '007', skillId: 'chatter', name: "瘋狂大鬧秘笈書", desc: "讓怪獸學會招式「瘋狂大鬧」(100%混亂)", rarity: 2 },
     { id: '008', skillId: 'inferno', name: "煉獄秘笈書", desc: "讓怪獸學會招式「煉獄」(100%燒傷)", rarity: 5 },
     { id: '009', skillId: 'rock_wrecker', name: "岩石炮秘笈書", desc: "讓怪獸學會招式「岩石炮」(強力物理攻擊)", rarity: 5 },
-    { id: '010', skillId: 'sappy_seed', name: "茁茁轟炸秘笈書", desc: "讓怪獸學會招式「茁茁轟炸」(100%寄生)", rarity: 5 },
+    { id: '010', skillId: 'sappy_seed', name: "種子轟炸秘笈書", desc: "讓怪獸學會招式「種子轟炸」(100%寄生)", rarity: 5 },
     { id: '011', skillId: 'magma_storm', name: "熔岩風暴秘笈書", desc: "讓怪獸學會招式「熔岩風暴」(100%束縛)", rarity: 5 },
-    { id: '012', skillId: 'work_up', name: "自我激勵秘笈書", desc: "讓怪獸學會招式「自我激勵」(攻擊+2)", rarity: 4 },
-    { id: '013', skillId: 'minimize', name: "縮小秘笈書", desc: "讓怪獸學會招式「縮小」(速度+2)", rarity: 4 },
-    { id: '014', skillId: 'harden', name: "變硬秘笈書", desc: "讓怪獸學會招式「變硬」(防禦+2)", rarity: 3 },
-    { id: '015', skillId: 'double_team', name: "影子分身秘笈書", desc: "讓怪獸學會招式「影子分身」(速度+2)", rarity: 4 },
-    { id: '016', skillId: 'swords_dance', name: "劍舞秘笈書", desc: "讓怪獸學會招式「劍舞」(攻擊+2)", rarity: 5 },
-    { id: '017', skillId: 'leech_life', name: "吸血秘笈書", desc: "讓怪獸學會招式「吸血」(傷害 50% 轉為恢復)", rarity: 5 }
+    { id: '012', skillId: 'harden', name: "堅硬防守秘笈書", desc: "讓怪獸學會招式「堅硬防守」(防禦+2)", rarity: 3 },
+    { id: '013', skillId: 'double_team', name: "影子分身術秘笈書", desc: "讓怪獸學會招式「影子分身術」(速度+2)", rarity: 4 },
+    { id: '014', skillId: 'swords_dance', name: "戰舞秘笈書", desc: "讓怪獸學會招式「戰舞」(攻擊+2)", rarity: 5 },
+    { id: '015', skillId: 'leech_life', name: "吸取秘笈書", desc: "讓怪獸學會招式「吸取」(傷害 50% 轉為恢復)", rarity: 5 }
 ];
 
 // ==========================================
@@ -51,10 +49,10 @@ const DIARY_ITEM = {
 
 // 寵物話語罐頭詞庫 (V1 - 依 lockedAffinity 分類)
 const DIARY_MESSAGES_TEMPLATE = {
-    fire:    ["今天練很多！我越來越強了！朝著頂端衝吧！", "感覺燃燒起來了，明天還要更猛！", "跟你在一起，每天都很充實！"],
-    water:   ["今天悄悄觀察你很久了，你有注意到嗎？", "平靜的一天...但你在的話就夠了。", "謝謝今天陪我游過那條小溪。"],
-    grass:   ["大地給了我力量，你也是。", "今天的陽光很好，希望你也過得好。", "有你陪著，連休息都覺得特別安心。"],
-    bug:     ["嘿，我在想一件事，但說不出口...算了！", "今天偷偷守護你了！你不知道吧？", "硬殼雖然厚，但心裡還是有點癢癢的。"],
+    fire: ["今天練很多！我越來越強了！朝著頂端衝吧！", "感覺燃燒起來了，明天還要更猛！", "跟你在一起，每天都很充實！"],
+    water: ["今天悄悄觀察你很久了，你有注意到嗎？", "平靜的一天...但你在的話就夠了。", "謝謝今天陪我游過那條小溪。"],
+    grass: ["大地給了我力量，你也是。", "今天的陽光很好，希望你也過得好。", "有你陪著，連休息都覺得特別安心。"],
+    bug: ["嘿，我在想一件事，但說不出口...算了！", "今天偷偷守護你了！你不知道吧？", "硬殼雖然厚，但心裡還是有點癢癢的。"],
     default: ["今天也是謝謝你陪伴我的一天。", "不管發生什麼，只要有你在就好了。", "一起加油吧，明天也是新的開始！"]
 };
 
@@ -99,18 +97,18 @@ const getSmartMove = (attacker, defender, moves) => {
     const validMoves = (moves || []).filter(m => m && typeof m === 'object');
     if (validMoves.length === 0) return { name: '撞擊', power: 40, type: 'normal' };
     if (validMoves.length === 1) return validMoves[0];
-    
+
     let bestMove = validMoves[0];
     let maxScore = -1;
-    
+
     for (const move of validMoves) {
         const movePower = move.power || 0;
         const moveType = move.type || 'normal';
         const defenderType = defender.type || ['normal'];
-        
+
         // 取得屬性相剋倍率 (確認此處 moveType 為攻擊方，defenderType 為防禦方)
         const realMult = typeof getTypeMultiplier !== "undefined" ? getTypeMultiplier(moveType, defenderType) : 1;
-        
+
         let score = 0;
 
         if (movePower > 0) {
@@ -226,7 +224,7 @@ const generateSoulQuestions = () => {
 const SOUL_QUESTIONS = generateSoulQuestions();
 
 export {
-    apiKey, modelName, PHYSICS, ADV_ITEMS, DIARY_ITEM, 
+    apiKey, modelName, PHYSICS, ADV_ITEMS, DIARY_ITEM,
     DIARY_MESSAGES_TEMPLATE, ADV_BATTLE_RULES, RAW_Q_DATA, SOUL_QUESTIONS,
     getPetDailyMessage, DIARY_STORAGE_KEY, loadDiaryData, saveDiaryData, getSmartMove
 };
