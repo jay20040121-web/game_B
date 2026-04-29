@@ -1,3 +1,6 @@
+import { MONSTER_REGISTRY } from './monsterRegistry';
+const getMName = id => MONSTER_REGISTRY.find(m => m.id === id)?.name || '未知';
+
 /**
  * evolutionConfig.js
  * 這是遊戲進化的核心數據文件。
@@ -31,66 +34,66 @@ export const EVOLUTION_CHAINS = {
         },
         branches: [
             // 靈魂進化優先級最高
-            { to: "F_SOUL", condition: "bond >= 80 && affinity == 'fire'", desc: "火系靈魂 (小火龍線)" },
-            { to: "W_SOUL", condition: "bond >= 80 && affinity == 'water'", desc: "水系靈魂 (傑尼龜線)" },
-            { to: "GR_SOUL", condition: "bond >= 80 && affinity == 'grass'", desc: "草系靈魂 (妙蛙種子線)" },
-            { to: "B_SOUL", condition: "bond >= 80 && affinity == 'bug'", desc: "蟲系靈魂 (綠毛蟲線)" },
+            { to: "F_SOUL", condition: "bond >= 80 && affinity == 'fire'", desc: `火系靈魂 (${getMName(1001)}線)` },
+            { to: "W_SOUL", condition: "bond >= 80 && affinity == 'water'", desc: `水系靈魂 (${getMName(1004)}線)` },
+            { to: "GR_SOUL", condition: "bond >= 80 && affinity == 'grass'", desc: `草系靈魂 (${getMName(1007)}線)` },
+            { to: "B_SOUL", condition: "bond >= 80 && affinity == 'bug'", desc: `蟲系靈魂 (${getMName(1010)}線)` },
 
             // 基礎分支
-            { to: "A", condition: "mood >= 50 && hunger >= 50", desc: "一般線 A (尼多朗)" },
-            { to: "C", condition: "else", desc: "一般線 C (小拉達)" }
+            { to: "A", condition: "mood >= 50 && hunger >= 50", desc: `一般線 A (${getMName(1013)})` },
+            { to: "C", condition: "else", desc: `一般線 C (${getMName(1016)})` }
         ]
     },
 
     // --- 魂系分支 (Soul Lines) ---
     "SOUL_FIRE": {
-        stage2: { "F_SOUL": { id: 1001, desc: "小火龍" } },
-        stage3: { "F_SOUL": { id: 1002, from: "F_SOUL", desc: "火恐龍 (無條件進化)" } },
-        stage4: { "F_SOUL": { id: 1003, from: "F_SOUL", desc: "噴火龍 (無條件進化)" } }
+        stage2: { "F_SOUL": { id: 1001, desc: `${getMName(1001)}` } },
+        stage3: { "F_SOUL": { id: 1002, from: "F_SOUL", desc: `${getMName(1002)} (無條件進化)` } },
+        stage4: { "F_SOUL": { id: 1003, from: "F_SOUL", desc: `${getMName(1003)} (無條件進化)` } }
     },
 
     "SOUL_WATER": {
-        stage2: { "W_SOUL": { id: 1004, desc: "傑尼龜" } },
-        stage3: { "W_SOUL": { id: 1005, from: "W_SOUL", desc: "卡咪龜 (無條件進化)" } },
-        stage4: { "W_SOUL": { id: 1006, from: "W_SOUL", desc: "水箭龜 (無條件進化)" } }
+        stage2: { "W_SOUL": { id: 1004, desc: `${getMName(1004)}` } },
+        stage3: { "W_SOUL": { id: 1005, from: "W_SOUL", desc: `${getMName(1005)} (無條件進化)` } },
+        stage4: { "W_SOUL": { id: 1006, from: "W_SOUL", desc: `${getMName(1006)} (無條件進化)` } }
     },
 
     "SOUL_GRASS": {
-        stage2: { "GR_SOUL": { id: 1007, desc: "妙蛙種子" } },
-        stage3: { "GR_SOUL": { id: 1008, from: "GR_SOUL", desc: "妙蛙草 (無條件進化)" } },
-        stage4: { "GR_SOUL": { id: 1009, from: "GR_SOUL", desc: "妙蛙花 (無條件進化)" } }
+        stage2: { "GR_SOUL": { id: 1007, desc: `${getMName(1007)}` } },
+        stage3: { "GR_SOUL": { id: 1008, from: "GR_SOUL", desc: `${getMName(1008)} (無條件進化)` } },
+        stage4: { "GR_SOUL": { id: 1009, from: "GR_SOUL", desc: `${getMName(1009)} (無條件進化)` } }
     },
 
     "SOUL_BUG": {
-        stage2: { "B_SOUL": { id: 1010, desc: "綠毛蟲" } },
-        stage3: { "B_SOUL": { id: 1011, from: "B_SOUL", desc: "鐵甲蛹 (無條件進化)" } },
-        stage4: { "B_SOUL": { id: 1012, from: "B_SOUL", desc: "巴大蝶 (無條件進化)" } }
+        stage2: { "B_SOUL": { id: 1010, desc: `${getMName(1010)}` } },
+        stage3: { "B_SOUL": { id: 1011, from: "B_SOUL", desc: `${getMName(1011)} (無條件進化)` } },
+        stage4: { "B_SOUL": { id: 1012, from: "B_SOUL", desc: `${getMName(1012)} (無條件進化)` } }
     },
 
     "NORMAL": {
         stage2: {
-            "A": { id: 1013, desc: "尼多朗" },
-            "C": { id: 1016, desc: "小拉達" }
+            "A": { id: 1013, desc: `${getMName(1013)}` },
+            "C": { id: 1016, desc: `${getMName(1016)}` }
         },
         stage3: {
-            "A": { id: 1014, from: ["A", "C"], desc: "尼多力諾 (心情、飽食度 >= 50)" },
-            "C": { id: 1017, from: ["A", "C"], desc: "拉達 (其餘條件)" }
+            "A": { id: 1014, from: ["A", "C"], desc: `${getMName(1014)} (心情、飽食度 >= 50)` },
+            "C": { id: 1017, from: ["A", "C"], desc: `${getMName(1017)} (其餘條件)` }
         },
         stage4: {
-            "A": { id: 1015, from: ["A", "C"], desc: "尼多王 (心情、飽食度 >= 50)" },
-            "C": { id: 1018, from: ["A", "C"], desc: "多邊獸 (其餘條件)" }
+            "A": { id: 1015, from: ["A", "C"], desc: `${getMName(1015)} (心情、飽食度 >= 50)` },
+            "C": { id: 1018, from: ["A", "C"], desc: `${getMName(1018)} (其餘條件)` }
         }
     },
 
     "SOUL_DEATH": {
         stage1: {
-            "G1": { id: 1019, desc: "鬼斯" }
+            "G1": { id: 1019, desc: `${getMName(1019)}` }
         },
         stage2: {
-            "G1": { id: 1020, from: "G1", desc: "鬼斯通 (無特殊條件)" }
+            "G1": { id: 1020, from: "G1", desc: `${getMName(1020)} (無特殊條件)` }
         },
         stage3: {
-            "G1": { id: 1021, from: "G1", desc: "耿鬼 (無特殊條件)" }
+            "G1": { id: 1021, from: "G1", desc: `${getMName(1021)} (無特殊條件)` }
         }
     }
 };
