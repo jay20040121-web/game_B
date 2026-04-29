@@ -5093,40 +5093,40 @@ export const OBTAINABLE_MONSTER_IDS = [
 
 export const TRAINER_POOLS = {
     1: [
-        { id: 1000, name: '百變怪', type: 'normal' },
-        { id: 1019, name: '鬼斯', type: 'poison' },
-        { id: 1016, name: '小拉達', type: 'normal' } // 原：凱西 (替換為小拉達)
+        { id: 1000, name: MONSTER_NAMES[1000], type: 'normal' },
+        { id: 1019, name: MONSTER_NAMES[1019], type: 'poison' },
+        { id: 1016, name: MONSTER_NAMES[1016], type: 'normal' } // 原：凱西 (替換為小拉達)
     ],
     2: [
-        { id: 1001, name: '小火龍', type: 'fire' },
-        { id: 1004, name: '傑尼龜', type: 'water' },
-        { id: 1007, name: '妙蛙種子', type: 'grass' },
-        { id: 1010, name: '綠毛蟲', type: 'bug' },
-        { id: 1016, name: '小拉達', type: 'normal' }
+        { id: 1001, name: MONSTER_NAMES[1001], type: 'fire' },
+        { id: 1004, name: MONSTER_NAMES[1004], type: 'water' },
+        { id: 1007, name: MONSTER_NAMES[1007], type: 'grass' },
+        { id: 1010, name: MONSTER_NAMES[1010], type: 'bug' },
+        { id: 1016, name: MONSTER_NAMES[1016], type: 'normal' }
     ],
     3: [
-        { id: 1002, name: '火恐龍', type: 'fire' },
-        { id: 1005, name: '卡咪龜', type: 'water' },
-        { id: 1008, name: '妙蛙草', type: 'grass' },
-        { id: 1011, name: '鐵甲蛹', type: 'bug' },
-        { id: 1017, name: '拉達', type: 'normal' }
+        { id: 1002, name: MONSTER_NAMES[1002], type: 'fire' },
+        { id: 1005, name: MONSTER_NAMES[1005], type: 'water' },
+        { id: 1008, name: MONSTER_NAMES[1008], type: 'grass' },
+        { id: 1011, name: MONSTER_NAMES[1011], type: 'bug' },
+        { id: 1017, name: MONSTER_NAMES[1017], type: 'normal' }
     ],
     4: [
-        { id: 1003, name: '噴火龍', type: 'fire' },
-        { id: 1006, name: '水箭龜', type: 'water' },
-        { id: 1009, name: '妙蛙花', type: 'grass' },
-        { id: 1012, name: '巴大蝶', type: 'bug' },
-        { id: 1003, name: '噴火龍', type: 'fire' } // 原：快龍 (替換為噴火龍)
+        { id: 1003, name: MONSTER_NAMES[1003], type: 'fire' },
+        { id: 1006, name: MONSTER_NAMES[1006], type: 'water' },
+        { id: 1009, name: MONSTER_NAMES[1009], type: 'grass' },
+        { id: 1012, name: MONSTER_NAMES[1012], type: 'bug' },
+        { id: 1003, name: MONSTER_NAMES[1003], type: 'fire' } // 原：快龍 (替換為噴火龍)
     ],
     5: [
-        { id: 1006, name: '水箭龜', type: 'water' }, // 原：洛奇亞
-        { id: 1021, name: '耿鬼', type: 'ghost' },
-        { id: 1006, name: '水箭龜', type: 'water' } // 原：暴鯉龍 (替換為水箭龜)
+        { id: 1006, name: MONSTER_NAMES[1006], type: 'water' }, // 原：洛奇亞
+        { id: 1021, name: MONSTER_NAMES[1021], type: 'ghost' },
+        { id: 1006, name: MONSTER_NAMES[1006], type: 'water' } // 原：暴鯉龍 (替換為水箭龜)
     ],
     6: [
-        { id: 1003, name: '噴火龍', type: 'fire' },  // 原：烈空坐
-        { id: 1009, name: '妙蛙花', type: 'grass' }, // 原：夢幻
-        { id: 1021, name: '耿鬼', type: 'ghost' } // 原：胡地 (替換為耿鬼)
+        { id: 1003, name: MONSTER_NAMES[1003], type: 'fire' },  // 原：烈空坐
+        { id: 1009, name: MONSTER_NAMES[1009], type: 'grass' }, // 原：夢幻
+        { id: 1021, name: MONSTER_NAMES[1021], type: 'ghost' } // 原：胡地 (替換為耿鬼)
     ]
 };
 
