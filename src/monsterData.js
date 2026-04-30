@@ -105,9 +105,9 @@ export const SKILL_DATABASE = {
     },
     "lick": {
         "id": "lick",
-        "name": "舌舔",
+        "name": "鬼臉",
         "type": "ghost",
-        "power": 30,
+        "power": 40,
         "ailment": "paralysis",
         "ailment_chance": 30
     },
@@ -128,7 +128,7 @@ export const SKILL_DATABASE = {
     },
     "work_up": {
         "id": "work_up",
-        "name": "自我激勵",
+        "name": "激勵",
         "type": "normal",
         "power": 0,
         "priority": 2,
@@ -143,14 +143,14 @@ export const SKILL_DATABASE = {
     },
     "extreme_speed": {
         "id": "extreme_speed",
-        "name": "極限衝刺",
+        "name": "衝刺",
         "type": "normal",
         "power": 80,
         "priority": 2
     },
     "fake_out": {
         "id": "fake_out",
-        "name": "擊掌奇襲",
+        "name": "快速奇襲",
         "type": "normal",
         "power": 40,
         "priority": 3,
@@ -158,32 +158,32 @@ export const SKILL_DATABASE = {
     },
     "feint": {
         "id": "feint",
-        "name": "佯攻",
+        "name": "假動作",
         "type": "normal",
         "power": 30,
         "priority": 2
     },
     "hyper_beam": {
         "id": "hyper_beam",
-        "name": "能量衝擊波",
+        "name": "能量波",
         "type": "normal",
         "power": 150
     },
     "giga_impact": {
         "id": "giga_impact",
-        "name": "終極衝擊",
+        "name": "終極絕招",
         "type": "normal",
         "power": 150
     },
     "last_resort": {
         "id": "last_resort",
-        "name": "珍藏",
+        "name": "直球攻擊",
         "type": "normal",
         "power": 140
     },
     "skull_bash": {
         "id": "skull_bash",
-        "name": "火箭頭錘",
+        "name": "頭錘",
         "type": "normal",
         "power": 130
     },
@@ -201,7 +201,7 @@ export const SKILL_DATABASE = {
     },
     "double_edge": {
         "id": "double_edge",
-        "name": "捨身衝撞",
+        "name": "捨身攻擊",
         "type": "normal",
         "power": 120,
         "recoil": 0.33
@@ -283,13 +283,13 @@ export const SKILL_DATABASE = {
     },
     "egg_bomb": {
         "id": "egg_bomb",
-        "name": "炸蛋",
+        "name": "炸彈",
         "type": "normal",
         "power": 100
     },
     "sharpen": {
         "id": "sharpen",
-        "name": "稜角化",
+        "name": "鬼人化",
         "type": "normal",
         "power": 0,
         "priority": 2,
@@ -323,7 +323,7 @@ export const SKILL_DATABASE = {
     },
     "judgment": {
         "id": "judgment",
-        "name": "終極裁決",
+        "name": "終極審判",
         "type": "normal",
         "power": 100
     },
@@ -342,13 +342,13 @@ export const SKILL_DATABASE = {
     },
     "hyper_voice": {
         "id": "hyper_voice",
-        "name": "巨聲",
+        "name": "巨吼",
         "type": "normal",
         "power": 90
     },
     "rock_climb": {
         "id": "rock_climb",
-        "name": "攀岩",
+        "name": "跳砍",
         "type": "normal",
         "power": 90,
         "ailment": "confusion",
@@ -356,7 +356,7 @@ export const SKILL_DATABASE = {
     },
     "body_slam": {
         "id": "body_slam",
-        "name": "重力壓制",
+        "name": "柔術",
         "type": "normal",
         "power": 85,
         "ailment": "paralysis",
@@ -370,38 +370,38 @@ export const SKILL_DATABASE = {
     },
     "razor_wind": {
         "id": "razor_wind",
-        "name": "旋風刀",
+        "name": "手刀",
         "type": "normal",
         "power": 80
     },
     "slam": {
         "id": "slam",
-        "name": "摔打",
+        "name": "互毆",
         "type": "normal",
         "power": 80
     },
     "strength": {
         "id": "strength",
-        "name": "怪力",
+        "name": "怪力撞擊",
         "type": "normal",
         "power": 80
     },
     "hyper_fang": {
         "id": "hyper_fang",
-        "name": "必殺門牙",
+        "name": "必殺咬",
         "type": "normal",
         "power": 80,
         "flinch_chance": 10
     },
     "tri_attack": {
         "id": "tri_attack",
-        "name": "三重攻擊",
+        "name": "三段攻擊",
         "type": "normal",
         "power": 80
     },
     "crush_claw": {
         "id": "crush_claw",
-        "name": "撕裂爪",
+        "name": "尖爪",
         "type": "normal",
         "power": 75,
         "stat_changes": [
@@ -415,7 +415,7 @@ export const SKILL_DATABASE = {
     },
     "headbutt": {
         "id": "headbutt",
-        "name": "頭錘",
+        "name": "詠春",
         "type": "normal",
         "power": 70,
         "flinch_chance": 30
@@ -430,52 +430,52 @@ export const SKILL_DATABASE = {
     },
     "slash": {
         "id": "slash",
-        "name": "劈開",
+        "name": "快打斬",
         "type": "normal",
         "power": 70
     },
     "facade": {
         "id": "facade",
-        "name": "硬撐",
+        "name": "反擊拳",
         "type": "normal",
         "power": 70
     },
     "smelling_salts": {
         "id": "smelling_salts",
-        "name": "清醒",
+        "name": "大叫",
         "type": "normal",
         "power": 70
     },
     "secret_power": {
         "id": "secret_power",
-        "name": "秘密之力",
+        "name": "秘密力量",
         "type": "normal",
         "power": 70
     },
     "stomp": {
         "id": "stomp",
-        "name": "踩踏",
+        "name": "大象踏",
         "type": "normal",
         "power": 65,
         "flinch_chance": 30
     },
     "sky_attack": {
         "id": "sky_attack",
-        "name": "天際猛擊",
+        "name": "天擊",
         "type": "flying",
         "power": 140,
         "flinch_chance": 30
     },
     "brave_bird": {
         "id": "brave_bird",
-        "name": "勇鳥猛攻",
+        "name": "神鳥",
         "type": "flying",
         "power": 120,
         "recoil": 0.33
     },
     "dragon_ascent": {
         "id": "dragon_ascent",
-        "name": "天際衝擊",
+        "name": "天空衝擊",
         "type": "flying",
         "power": 120,
         "stat_changes": [
@@ -493,7 +493,7 @@ export const SKILL_DATABASE = {
     },
     "hurricane": {
         "id": "hurricane",
-        "name": "暴風",
+        "name": "暴風之夜",
         "type": "flying",
         "power": 110,
         "ailment": "confusion",
@@ -501,20 +501,20 @@ export const SKILL_DATABASE = {
     },
     "aeroblast": {
         "id": "aeroblast",
-        "name": "氣旋攻擊",
+        "name": "上升氣旋",
         "type": "flying",
         "power": 100
     },
     "beak_blast": {
         "id": "beak_blast",
-        "name": "鳥嘴加農炮",
+        "name": "鳥嘴炮",
         "type": "flying",
         "power": 100,
         "priority": -3
     },
     "bleakwind_storm": {
         "id": "bleakwind_storm",
-        "name": "枯葉風暴",
+        "name": "築巢",
         "type": "flying",
         "power": 100
     },
@@ -526,14 +526,14 @@ export const SKILL_DATABASE = {
     },
     "floaty_fall": {
         "id": "floaty_fall",
-        "name": "飄飄墜落",
+        "name": "墜落",
         "type": "flying",
         "power": 90,
         "flinch_chance": 30
     },
     "bounce": {
         "id": "bounce",
-        "name": "彈跳",
+        "name": "跳起",
         "type": "flying",
         "power": 85,
         "ailment": "paralysis",
@@ -541,7 +541,7 @@ export const SKILL_DATABASE = {
     },
     "drill_peck": {
         "id": "drill_peck",
-        "name": "啄鑽",
+        "name": "啄彈",
         "type": "flying",
         "power": 80
     },
@@ -554,7 +554,7 @@ export const SKILL_DATABASE = {
     },
     "air_slash": {
         "id": "air_slash",
-        "name": "空氣斬",
+        "name": "空氣刀",
         "type": "flying",
         "power": 75,
         "flinch_chance": 30
@@ -569,25 +569,25 @@ export const SKILL_DATABASE = {
     },
     "wing_attack": {
         "id": "wing_attack",
-        "name": "翅膀攻擊",
+        "name": "翅膀拍擊",
         "type": "flying",
-        "power": 60
+        "power": 80
     },
     "air_cutter": {
         "id": "air_cutter",
-        "name": "空氣利刃",
+        "name": "空氣刃",
         "type": "flying",
         "power": 60
     },
     "aerial_ace": {
         "id": "aerial_ace",
-        "name": "燕返",
+        "name": "燕歸來",
         "type": "flying",
-        "power": 60
+        "power": 90
     },
     "pluck": {
         "id": "pluck",
-        "name": "啄食",
+        "name": "捕食",
         "type": "flying",
         "power": 60
     },
@@ -599,31 +599,31 @@ export const SKILL_DATABASE = {
     },
     "acrobatics": {
         "id": "acrobatics",
-        "name": "雜技",
+        "name": "高速飛行",
         "type": "flying",
         "power": 55
     },
     "gust": {
         "id": "gust",
-        "name": "起風",
+        "name": "旋風",
         "type": "flying",
         "power": 40
     },
     "dual_wingbeat": {
         "id": "dual_wingbeat",
-        "name": "雙翼",
+        "name": "羽毛攻擊",
         "type": "flying",
         "power": 40
     },
     "peck": {
         "id": "peck",
-        "name": "啄",
+        "name": "鷹爪",
         "type": "flying",
         "power": 35
     },
     "gunk_shot": {
         "id": "gunk_shot",
-        "name": "垃圾射擊",
+        "name": "垃圾山",
         "type": "poison",
         "power": 120,
         "ailment": "poison",
@@ -631,13 +631,13 @@ export const SKILL_DATABASE = {
     },
     "belch": {
         "id": "belch",
-        "name": "打嗝",
+        "name": "嘔吐物",
         "type": "poison",
         "power": 120
     },
     "acid_armor": {
         "id": "acid_armor",
-        "name": "溶化",
+        "name": "酸性鎧甲",
         "type": "poison",
         "power": 0,
         "priority": 2,
@@ -652,7 +652,7 @@ export const SKILL_DATABASE = {
     },
     "coil": {
         "id": "coil",
-        "name": "盤蜷",
+        "name": "生猛毒藥",
         "type": "poison",
         "power": 0,
         "priority": 2,
@@ -671,19 +671,19 @@ export const SKILL_DATABASE = {
     },
     "noxious_torque": {
         "id": "noxious_torque",
-        "name": "劇毒暴衝",
+        "name": "傳染病",
         "type": "poison",
         "power": 100
     },
     "malignant_chain": {
         "id": "malignant_chain",
-        "name": "邪毒鎖鏈",
+        "name": "邪毒娃娃",
         "type": "poison",
         "power": 100
     },
     "sludge_wave": {
         "id": "sludge_wave",
-        "name": "污泥波",
+        "name": "垃圾山",
         "type": "poison",
         "power": 95,
         "ailment": "poison",
@@ -691,7 +691,7 @@ export const SKILL_DATABASE = {
     },
     "sludge_bomb": {
         "id": "sludge_bomb",
-        "name": "污泥炸彈",
+        "name": "毒氣炸彈",
         "type": "poison",
         "power": 90,
         "ailment": "poison",
@@ -699,7 +699,7 @@ export const SKILL_DATABASE = {
     },
     "shell_side_arm": {
         "id": "shell_side_arm",
-        "name": "臂貝武器",
+        "name": "生化武器",
         "type": "poison",
         "power": 90,
         "ailment": "poison",
@@ -707,7 +707,7 @@ export const SKILL_DATABASE = {
     },
     "poison_jab": {
         "id": "poison_jab",
-        "name": "毒擊",
+        "name": "劇毒",
         "type": "poison",
         "power": 80,
         "ailment": "poison",
@@ -715,13 +715,13 @@ export const SKILL_DATABASE = {
     },
     "dire_claw": {
         "id": "dire_claw",
-        "name": "克命爪",
+        "name": "毒爪",
         "type": "poison",
         "power": 80
     },
     "cross_poison": {
         "id": "cross_poison",
-        "name": "十字毒刃",
+        "name": "毒刃",
         "type": "poison",
         "power": 70,
         "ailment": "poison",
@@ -729,7 +729,7 @@ export const SKILL_DATABASE = {
     },
     "sludge": {
         "id": "sludge",
-        "name": "污泥攻擊",
+        "name": "污泥炸彈",
         "type": "poison",
         "power": 65,
         "ailment": "poison",
@@ -737,19 +737,19 @@ export const SKILL_DATABASE = {
     },
     "venoshock": {
         "id": "venoshock",
-        "name": "毒液衝擊",
+        "name": "毒液術",
         "type": "poison",
         "power": 65
     },
     "barb_barrage": {
         "id": "barb_barrage",
-        "name": "毒千針",
+        "name": "毒千本",
         "type": "poison",
         "power": 60
     },
     "poison_fang": {
         "id": "poison_fang",
-        "name": "劇毒牙",
+        "name": "劇毒之牙",
         "type": "poison",
         "power": 50,
         "ailment": "poison",
@@ -757,7 +757,7 @@ export const SKILL_DATABASE = {
     },
     "poison_tail": {
         "id": "poison_tail",
-        "name": "毒尾",
+        "name": "毒液",
         "type": "poison",
         "power": 50,
         "ailment": "poison",
@@ -765,13 +765,13 @@ export const SKILL_DATABASE = {
     },
     "clear_smog": {
         "id": "clear_smog",
-        "name": "清除之煙",
+        "name": "毒煙",
         "type": "poison",
         "power": 50
     },
     "acid": {
         "id": "acid",
-        "name": "溶解液",
+        "name": "腐蝕液",
         "type": "poison",
         "power": 40,
         "stat_changes": [
@@ -785,7 +785,7 @@ export const SKILL_DATABASE = {
     },
     "acid_spray": {
         "id": "acid_spray",
-        "name": "酸液炸彈",
+        "name": "胃酸",
         "type": "poison",
         "power": 40,
         "stat_changes": [
@@ -799,17 +799,17 @@ export const SKILL_DATABASE = {
     },
     "smog": {
         "id": "smog",
-        "name": "濁霧",
+        "name": "汙染",
         "type": "poison",
-        "power": 30,
+        "power": 60,
         "ailment": "poison",
         "ailment_chance": 40
     },
     "mortal_spin": {
         "id": "mortal_spin",
-        "name": "晶光转转",
+        "name": "吐滿地",
         "type": "poison",
-        "power": 30
+        "power": 39
     },
     "poison_sting": {
         "id": "poison_sting",
@@ -821,7 +821,7 @@ export const SKILL_DATABASE = {
     },
     "accelerock": {
         "id": "accelerock",
-        "name": "衝岩",
+        "name": "岩落",
         "type": "rock",
         "power": 40,
         "priority": 1
@@ -834,26 +834,26 @@ export const SKILL_DATABASE = {
     },
     "head_smash": {
         "id": "head_smash",
-        "name": "雙刃頭錘",
+        "name": "頭錘",
         "type": "rock",
         "power": 150
     },
     "meteor_beam": {
         "id": "meteor_beam",
-        "name": "流星光束",
+        "name": "隕石術",
         "type": "rock",
         "power": 120
     },
     "rock_polish": {
         "id": "rock_polish",
-        "name": "岩石打磨",
+        "name": "打磨石頭",
         "type": "rock",
         "power": 0,
         "priority": 2,
         "stat_changes": [
             {
                 "stat": "spd",
-                "change": 2
+                "change": 3
             }
         ],
         "stat_chance": 100,
@@ -861,13 +861,13 @@ export const SKILL_DATABASE = {
     },
     "stone_edge": {
         "id": "stone_edge",
-        "name": "尖石攻擊",
+        "name": "巨岩拳",
         "type": "rock",
         "power": 100
     },
     "diamond_storm": {
         "id": "diamond_storm",
-        "name": "鑽石風暴",
+        "name": "鑽石撞擊",
         "type": "rock",
         "power": 100,
         "stat_changes": [
@@ -881,32 +881,32 @@ export const SKILL_DATABASE = {
     },
     "mighty_cleave": {
         "id": "mighty_cleave",
-        "name": "強刃攻擊",
+        "name": "硬化攻擊",
         "type": "rock",
         "power": 95
     },
     "power_gem": {
         "id": "power_gem",
-        "name": "力量寶石",
+        "name": "寶石之心",
         "type": "rock",
         "power": 80
     },
     "rock_slide": {
         "id": "rock_slide",
-        "name": "岩崩",
+        "name": "土石流",
         "type": "rock",
         "power": 75,
         "flinch_chance": 30
     },
     "stone_axe": {
         "id": "stone_axe",
-        "name": "岩斧",
+        "name": "岩手",
         "type": "rock",
         "power": 65
     },
     "ancient_power": {
         "id": "ancient_power",
-        "name": "原始之力",
+        "name": "巨神兵",
         "type": "rock",
         "power": 60,
         "stat_changes": [
@@ -936,7 +936,7 @@ export const SKILL_DATABASE = {
     },
     "rock_tomb": {
         "id": "rock_tomb",
-        "name": "岩石封鎖",
+        "name": "路線封鎖",
         "type": "rock",
         "power": 60,
         "stat_changes": [
@@ -950,50 +950,50 @@ export const SKILL_DATABASE = {
     },
     "rock_throw": {
         "id": "rock_throw",
-        "name": "落石",
+        "name": "小心落石",
         "type": "rock",
-        "power": 50
+        "power": 60
     },
     "smack_down": {
         "id": "smack_down",
-        "name": "擊落",
+        "name": "石頭攻擊",
         "type": "rock",
         "power": 50
     },
     "salt_cure": {
         "id": "salt_cure",
-        "name": "鹽醃",
+        "name": "粗鹽",
         "type": "rock",
         "power": 40
     },
     "rollout": {
         "id": "rollout",
-        "name": "滾動",
+        "name": "滾動之軀",
         "type": "rock",
-        "power": 30
+        "power": 35
     },
     "rock_blast": {
         "id": "rock_blast",
-        "name": "岩石爆擊",
+        "name": "岩石衝撞",
         "type": "rock",
-        "power": 25
+        "power": 40
     },
     "first_impression": {
         "id": "first_impression",
-        "name": "迎頭一擊",
+        "name": "虎頭蜂針",
         "type": "bug",
         "power": 90,
         "priority": 2
     },
     "megahorn": {
         "id": "megahorn",
-        "name": "超級角擊",
+        "name": "觸角攻擊",
         "type": "bug",
         "power": 120
     },
     "tail_glow": {
         "id": "tail_glow",
-        "name": "螢火",
+        "name": "螢火蟲之光",
         "type": "bug",
         "power": 0,
         "priority": 2,
@@ -1008,7 +1008,7 @@ export const SKILL_DATABASE = {
     },
     "defend_order": {
         "id": "defend_order",
-        "name": "防禦指令",
+        "name": "甲殼防禦",
         "type": "bug",
         "power": 0,
         "priority": 2,
@@ -1027,7 +1027,7 @@ export const SKILL_DATABASE = {
     },
     "quiver_dance": {
         "id": "quiver_dance",
-        "name": "蝶舞",
+        "name": "蝴蝶之舞",
         "type": "bug",
         "power": 0,
         "priority": 2,
@@ -1064,13 +1064,13 @@ export const SKILL_DATABASE = {
     },
     "attack_order": {
         "id": "attack_order",
-        "name": "攻擊指令",
+        "name": "蟻兵攻擊",
         "type": "bug",
         "power": 90
     },
     "pollen_puff": {
         "id": "pollen_puff",
-        "name": "花粉團",
+        "name": "花粉",
         "type": "bug",
         "power": 90
     },
@@ -1083,13 +1083,13 @@ export const SKILL_DATABASE = {
     },
     "x_scissor": {
         "id": "x_scissor",
-        "name": "十字剪",
+        "name": "巨型鉗",
         "type": "bug",
         "power": 80
     },
     "lunge": {
         "id": "lunge",
-        "name": "猛撲",
+        "name": "蟲蟲撲擊",
         "type": "bug",
         "power": 80,
         "stat_changes": [
@@ -1103,7 +1103,7 @@ export const SKILL_DATABASE = {
     },
     "signal_beam": {
         "id": "signal_beam",
-        "name": "信號光束",
+        "name": "信號光彈",
         "type": "bug",
         "power": 75,
         "ailment": "confusion",
@@ -1111,13 +1111,13 @@ export const SKILL_DATABASE = {
     },
     "u_turn": {
         "id": "u_turn",
-        "name": "急速折返",
+        "name": "蟲蜂飛行",
         "type": "bug",
         "power": 70
     },
     "skitter_smack": {
         "id": "skitter_smack",
-        "name": "爬擊",
+        "name": "爬行啃咬",
         "type": "bug",
         "power": 70,
         "stat_changes": [
@@ -1131,14 +1131,14 @@ export const SKILL_DATABASE = {
     },
     "steamroller": {
         "id": "steamroller",
-        "name": "瘋狂滾壓",
+        "name": "瘋狂啃咬",
         "type": "bug",
         "power": 65,
         "flinch_chance": 30
     },
     "silver_wind": {
         "id": "silver_wind",
-        "name": "銀色旋風",
+        "name": "治癒花粉",
         "type": "bug",
         "power": 60,
         "stat_changes": [
@@ -1174,7 +1174,7 @@ export const SKILL_DATABASE = {
     },
     "struggle_bug": {
         "id": "struggle_bug",
-        "name": "蟲之抵抗",
+        "name": "蟲蟲振翅",
         "type": "bug",
         "power": 50,
         "stat_changes": [
@@ -1194,7 +1194,7 @@ export const SKILL_DATABASE = {
     },
     "pounce": {
         "id": "pounce",
-        "name": "虫扑",
+        "name": "蟲蟲撲擊",
         "type": "bug",
         "power": 50,
         "stat_changes": [
@@ -1208,72 +1208,72 @@ export const SKILL_DATABASE = {
     },
     "fury_cutter": {
         "id": "fury_cutter",
-        "name": "連斬",
+        "name": "居合斬",
         "type": "bug",
-        "power": 40
+        "power": 60
     },
     "twineedle": {
         "id": "twineedle",
-        "name": "雙針",
+        "name": "雙針攻擊",
         "type": "bug",
-        "power": 25,
+        "power": 40,
         "ailment": "poison",
         "ailment_chance": 20
     },
     "pin_missile": {
         "id": "pin_missile",
-        "name": "飛彈針",
+        "name": "飛針",
         "type": "bug",
-        "power": 25
+        "power": 55
     },
     "infestation": {
         "id": "infestation",
         "name": "死纏爛打",
         "type": "bug",
-        "power": 20,
+        "power": 35,
         "ailment": "trap",
         "ailment_chance": 100
     },
     "shadow_sneak": {
         "id": "shadow_sneak",
-        "name": "影子偷襲",
+        "name": "偷襲",
         "type": "ghost",
         "power": 40,
         "priority": 1
     },
     "shadow_force": {
         "id": "shadow_force",
-        "name": "暗影潛襲",
+        "name": "潛襲",
         "type": "ghost",
         "power": 120
     },
     "astral_barrage": {
         "id": "astral_barrage",
-        "name": "星碎",
+        "name": "無光",
         "type": "ghost",
         "power": 120
     },
     "poltergeist": {
         "id": "poltergeist",
-        "name": "靈騷",
+        "name": "靈",
         "type": "ghost",
         "power": 110
     },
     "moongeist_beam": {
         "id": "moongeist_beam",
-        "name": "暗影之光",
+        "name": "黑暗",
         "type": "ghost",
         "power": 100
     },
     "phantom_force": {
         "id": "phantom_force",
-        "name": "潛靈奇襲",
+        "name": "幻影奇襲",
         "type": "ghost",
         "power": 90
     },
     "spectral_thief": {
         "id": "spectral_thief",
-        "name": "暗影偷盜",
+        "name": "黑夜",
         "type": "ghost",
         "power": 90
     },
@@ -1293,13 +1293,13 @@ export const SKILL_DATABASE = {
     },
     "shadow_ball": {
         "id": "shadow_ball",
-        "name": "暗影球",
+        "name": "暗影巨兵",
         "type": "ghost",
-        "power": 80,
+        "power": 60,
         "stat_changes": [
             {
                 "stat": "def",
-                "change": -1
+                "change": -2
             }
         ],
         "stat_chance": 20,
@@ -1307,19 +1307,19 @@ export const SKILL_DATABASE = {
     },
     "spirit_shackle": {
         "id": "spirit_shackle",
-        "name": "縫影",
+        "name": "影子人",
         "type": "ghost",
         "power": 80
     },
     "bitter_malice": {
         "id": "bitter_malice",
-        "name": "冤冤相報",
+        "name": "冤魂",
         "type": "ghost",
         "power": 75
     },
     "shadow_claw": {
         "id": "shadow_claw",
-        "name": "暗影爪",
+        "name": "魅影突襲",
         "type": "ghost",
         "power": 70
     },
@@ -1327,97 +1327,73 @@ export const SKILL_DATABASE = {
         "id": "hex",
         "name": "禍不單行",
         "type": "ghost",
-        "power": 65
+        "power": 40
     },
     "shadow_punch": {
         "id": "shadow_punch",
         "name": "暗影拳",
         "type": "ghost",
-        "power": 60
+        "power": 90
     },
     "ominous_wind": {
         "id": "ominous_wind",
-        "name": "奇異之風",
+        "name": "招魂術",
         "type": "ghost",
-        "power": 60,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": 1
-            },
-            {
-                "stat": "def",
-                "change": 1
-            },
-            {
-                "stat": "atk",
-                "change": 1
-            },
-            {
-                "stat": "def",
-                "change": 1
-            },
-            {
-                "stat": "spd",
-                "change": 1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "power": 60
     },
     "infernal_parade": {
         "id": "infernal_parade",
-        "name": "群魔乱舞",
+        "name": "群魔遊行",
         "type": "ghost",
         "power": 60
     },
     "last_respects": {
         "id": "last_respects",
-        "name": "扫墓",
+        "name": "見鬼",
         "type": "ghost",
         "power": 50
     },
     "rage_fist": {
         "id": "rage_fist",
-        "name": "愤怒之拳",
+        "name": "龍火拳",
         "type": "ghost",
         "power": 50
     },
     "astonish": {
         "id": "astonish",
-        "name": "驚嚇",
+        "name": "火爆彈頭",
         "type": "ghost",
         "power": 30,
         "flinch_chance": 30
     },
     "eruption": {
         "id": "eruption",
-        "name": "噴火",
+        "name": "火山爆發",
         "type": "fire",
         "power": 150
     },
     "blast_burn": {
         "id": "blast_burn",
-        "name": "爆炸烈焰",
+        "name": "爆炸陷阱",
         "type": "fire",
         "power": 150
     },
     "shell_trap": {
         "id": "shell_trap",
-        "name": "陷阱甲殼",
+        "name": "燃燒彈",
         "type": "fire",
         "power": 150,
         "priority": -3
     },
     "mind_blown": {
         "id": "mind_blown",
-        "name": "驚爆大頭",
+        "name": "核彈頭",
         "type": "fire",
         "power": 150
     },
     "overheat": {
         "id": "overheat",
-        "name": "過熱",
+        "name": "超溫攻擊",
         "type": "fire",
         "power": 130,
         "stat_changes": [
@@ -1431,7 +1407,7 @@ export const SKILL_DATABASE = {
     },
     "blue_flare": {
         "id": "blue_flare",
-        "name": "青焰",
+        "name": "青炎",
         "type": "fire",
         "power": 130,
         "ailment": "burn",
@@ -1439,13 +1415,13 @@ export const SKILL_DATABASE = {
     },
     "burn_up": {
         "id": "burn_up",
-        "name": "燃盡",
+        "name": "燃燒殆盡",
         "type": "fire",
         "power": 130
     },
     "flare_blitz": {
         "id": "flare_blitz",
-        "name": "閃焰衝鋒",
+        "name": "閃焰火光",
         "type": "fire",
         "power": 120,
         "recoil": 0.33,
@@ -1454,7 +1430,7 @@ export const SKILL_DATABASE = {
     },
     "pyro_ball": {
         "id": "pyro_ball",
-        "name": "火焰球",
+        "name": "火薔薇",
         "type": "fire",
         "power": 120,
         "ailment": "burn",
@@ -1462,13 +1438,13 @@ export const SKILL_DATABASE = {
     },
     "raging_fury": {
         "id": "raging_fury",
-        "name": "大愤慨",
+        "name": "大怒神",
         "type": "fire",
         "power": 120
     },
     "armor_cannon": {
         "id": "armor_cannon",
-        "name": "铠农炮",
+        "name": "熔岩火炮",
         "type": "fire",
         "power": 120,
         "stat_changes": [
@@ -1486,7 +1462,7 @@ export const SKILL_DATABASE = {
     },
     "fire_blast": {
         "id": "fire_blast",
-        "name": "大字爆炎",
+        "name": "爆炎",
         "type": "fire",
         "power": 110,
         "ailment": "burn",
@@ -1494,7 +1470,7 @@ export const SKILL_DATABASE = {
     },
     "sacred_fire": {
         "id": "sacred_fire",
-        "name": "神聖之火",
+        "name": "聖火",
         "type": "fire",
         "power": 100,
         "ailment": "burn",
@@ -1518,7 +1494,7 @@ export const SKILL_DATABASE = {
     },
     "searing_shot": {
         "id": "searing_shot",
-        "name": "火焰彈",
+        "name": "火焰球",
         "type": "fire",
         "power": 100,
         "ailment": "burn",
@@ -1526,13 +1502,13 @@ export const SKILL_DATABASE = {
     },
     "fusion_flare": {
         "id": "fusion_flare",
-        "name": "交錯火焰",
+        "name": "雙重火力",
         "type": "fire",
         "power": 100
     },
     "heat_wave": {
         "id": "heat_wave",
-        "name": "熱風",
+        "name": "烈焰風暴",
         "type": "fire",
         "power": 95,
         "ailment": "burn",
@@ -1540,7 +1516,7 @@ export const SKILL_DATABASE = {
     },
     "flamethrower": {
         "id": "flamethrower",
-        "name": "噴射火焰",
+        "name": "烈焰射線",
         "type": "fire",
         "power": 90,
         "ailment": "burn",
@@ -1548,14 +1524,14 @@ export const SKILL_DATABASE = {
     },
     "bitter_blade": {
         "id": "bitter_blade",
-        "name": "悔念剑",
+        "name": "火箭拳",
         "type": "fire",
         "power": 90,
         "drain": 0.5
     },
     "blaze_kick": {
         "id": "blaze_kick",
-        "name": "火焰踢",
+        "name": "熔岩踢",
         "type": "fire",
         "power": 85,
         "ailment": "burn",
@@ -1563,7 +1539,7 @@ export const SKILL_DATABASE = {
     },
     "lava_plume": {
         "id": "lava_plume",
-        "name": "噴煙",
+        "name": "噴火",
         "type": "fire",
         "power": 80,
         "ailment": "burn",
@@ -1605,7 +1581,7 @@ export const SKILL_DATABASE = {
     },
     "torch_song": {
         "id": "torch_song",
-        "name": "闪焰高歌",
+        "name": "烈火高歌",
         "type": "fire",
         "power": 80,
         "stat_changes": [
@@ -1619,13 +1595,13 @@ export const SKILL_DATABASE = {
     },
     "blazing_torque": {
         "id": "blazing_torque",
-        "name": "灼热暴冲",
+        "name": "滅火烈炎",
         "type": "fire",
         "power": 80
     },
     "fire_punch": {
         "id": "fire_punch",
-        "name": "火焰拳",
+        "name": "火拳",
         "type": "fire",
         "power": 75,
         "ailment": "burn",
@@ -1647,19 +1623,19 @@ export const SKILL_DATABASE = {
     },
     "temper_flare": {
         "id": "temper_flare",
-        "name": "豁出去",
+        "name": "熱情之炎",
         "type": "fire",
         "power": 75
     },
     "flame_burst": {
         "id": "flame_burst",
-        "name": "烈焰濺射",
+        "name": "烈焰射",
         "type": "fire",
         "power": 70
     },
     "burning_jealousy": {
         "id": "burning_jealousy",
-        "name": "妒火",
+        "name": "忌妒之火",
         "type": "fire",
         "power": 70,
         "ailment": "burn",
@@ -1667,7 +1643,7 @@ export const SKILL_DATABASE = {
     },
     "fire_fang": {
         "id": "fire_fang",
-        "name": "火焰牙",
+        "name": "火之牙",
         "type": "fire",
         "power": 65,
         "ailment": "burn",
@@ -1676,7 +1652,7 @@ export const SKILL_DATABASE = {
     },
     "flame_wheel": {
         "id": "flame_wheel",
-        "name": "火焰輪",
+        "name": "火焰",
         "type": "fire",
         "power": 60,
         "ailment": "burn",
@@ -1684,13 +1660,13 @@ export const SKILL_DATABASE = {
     },
     "incinerate": {
         "id": "incinerate",
-        "name": "燒盡",
+        "name": "燒盡之劍",
         "type": "fire",
         "power": 60
     },
     "sizzly_slide": {
         "id": "sizzly_slide",
-        "name": "熊熊火爆",
+        "name": "火爆殺",
         "type": "fire",
         "power": 60,
         "ailment": "burn",
@@ -1698,7 +1674,7 @@ export const SKILL_DATABASE = {
     },
     "flame_charge": {
         "id": "flame_charge",
-        "name": "蓄能焰襲",
+        "name": "火焰襲擊",
         "type": "fire",
         "power": 50,
         "stat_changes": [
@@ -1747,13 +1723,13 @@ export const SKILL_DATABASE = {
     },
     "water_spout": {
         "id": "water_spout",
-        "name": "高潮",
+        "name": "暴風雨",
         "type": "water",
         "power": 150
     },
     "wave_crash": {
         "id": "wave_crash",
-        "name": "冲水",
+        "name": "生生流轉",
         "type": "water",
         "power": 120
     },
