@@ -1197,13 +1197,13 @@ export default function App() {
         } else {
             // --- 根據玩家等級 (derivedLevel) 調整機率 ---
             // 低等級時尋找物資的探索機率極高，高等級時逐漸轉換為戰鬥
-            // 等級 1：探索 80% / 野怪 20% / 訓練師 0%
+            // 等級 1：探索 50% / 野怪 50% / 訓練師 0% (改善前期體驗)
             // 等級 50 及以上：探索 0% / 野怪 30% / 訓練師 70%
             const levelRatio = Math.min(1, Math.max(0, (derivedLevel - 1) / 49)); // 1級為0，50級(含)以上為1
 
-            const gatherProb = 0.80 * (1 - levelRatio); // 探索機率 (80% -> 0%)
-            const trainerProb = 0.70 * levelRatio;      // 訓練師機率 (0% -> 70%)
-            const wildProb = 1 - gatherProb - trainerProb; // 野怪機率 (20% -> 30%)
+            const gatherProb = 0.50 * (1 - levelRatio); // 探索機率 (從 50% 降至 0%)
+            const trainerProb = 0.70 * levelRatio;      // 訓練師機率 (從 0% 升至 70%)
+            const wildProb = 1 - gatherProb - trainerProb; // 野怪機率 (從 50% 漸變至 30%)
 
             if (r < wildProb) {
                 bStateToTrigger = generateBattleState('wild', myId);
@@ -2325,9 +2325,9 @@ export default function App() {
         const base = pool[Math.floor(Math.random() * pool.length)];
 
         const modifiers = [
-            { prefix: '強壯的', hpBonus: 1.5, atkBonus: 1.0, spdBonus: 1.0 },
-            { prefix: '狂暴的', hpBonus: 1.0, atkBonus: 1.5, spdBonus: 1.0 },
-            { prefix: '疾風的', hpBonus: 1.0, atkBonus: 1.0, spdBonus: 1.5 }
+            { prefix: '強壯的', hpBonus: 1.1, atkBonus: 1.0, spdBonus: 1.0 },
+            { prefix: '狂暴的', hpBonus: 1.0, atkBonus: 1.1, spdBonus: 1.0 },
+            { prefix: '疾風的', hpBonus: 1.0, atkBonus: 1.0, spdBonus: 1.1 }
         ];
         const mod = modifiers[Math.floor(Math.random() * modifiers.length)];
         return {
@@ -2445,7 +2445,7 @@ export default function App() {
             };
         } else {
             enemyData = generateTrainerOpponent(evolutionStage);
-            eLevel = Math.min(100, level); // 訓練家與玩家等級持平
+            eLevel = Math.max(1, Math.min(100, level - 10)); // 訓練家等級必定低於玩家 10 級
             const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
             const eNatureMods = getNatureMods(eNature);
             const eIVs = { hp: 20, atk: 20, def: 20, spd: 20 };
