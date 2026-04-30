@@ -678,7 +678,7 @@ export default function App() {
                 if (document.hidden) return;
                 setIsBootMonsterVisible(false); // 觸發淡出
                 setTimeout(() => {
-                    setBootMonsterPosIdx(prev => (prev + 1) % 4);
+                    setBootMonsterPosIdx(prev => (prev + 1) % 2); // 只在兩個位置循環
                     setBootMonsterId(Math.floor(Math.random() * 28) + 1000); // 每次跳轉都更換怪獸 ID (1000-1027)
                     setIsBootMonsterVisible(true); // 觸發淡入
                 }, 1000); // 1秒的淡出過渡
@@ -3275,13 +3275,11 @@ export default function App() {
                                         {/* 畫面四個角落跳躍的怪獸 (帶有淡入淡出與倒掛效果) */}
                                         {(() => {
                                             const positions = [
-                                                "top-4 left-4",    // 0: 左上
-                                                "top-4 right-4",   // 1: 右上
-                                                "bottom-4 left-4", // 2: 左下
-                                                "bottom-4 right-4" // 3: 右下
+                                                "bottom-4 left-4", // 0: 左下
+                                                "bottom-4 right-4" // 1: 右下
                                             ];
-                                            const isTop = bootMonsterPosIdx < 2;
-                                            const isLeft = bootMonsterPosIdx % 2 === 0;
+                                            const isTop = false; // 永遠在底部
+                                            const isLeft = bootMonsterPosIdx === 0;
                                             return (
                                                 <div
                                                     className={`absolute ${positions[bootMonsterPosIdx]} flex justify-center items-center transition-opacity duration-1000`}
@@ -3290,11 +3288,12 @@ export default function App() {
                                                         opacity: isBootMonsterVisible ? 1 : 0,
                                                         // 同時處理上下反轉(isTop)與左右鏡射(isLeft)
                                                         transform: `scale(${isLeft ? -2.5 : 2.5}, ${isTop ? -2.5 : 2.5})`,
-                                                        transformOrigin: 'center'
+                                                        transformOrigin: 'center',
+                                                        imageRendering: 'pixelated' // 強制點陣化渲染
                                                     }}
                                                 >
                                                     <div style={{ animation: 'egg-pulse 2s infinite ease-in-out' }}>
-                                                        <DitheredSprite id={bootMonsterId} scale={1} />
+                                                        <DitheredSprite id={bootMonsterId} scale={1} pure={true} />
                                                     </div>
                                                 </div>
                                             );
