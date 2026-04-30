@@ -46,9 +46,9 @@ export const MONSTER_REGISTRY = [
     { id: 1018, name: "天后咪", types: ["normal"], baseStats: { hp: 81, atk: 85, def: 80, spd: 80 } },
 
     // === 死亡重生 G1 ===
-    { id: 1019, name: "霧氣精靈", types: ["ghost"], baseStats: { hp: 30, atk: 100, def: 35, spd: 80 } },
-    { id: 1020, name: "幽影長舌獸", types: ["ghost"], baseStats: { hp: 45, atk: 115, def: 55, spd: 95 } },
-    { id: 1021, name: "大笑幽靈王", types: ["ghost"], baseStats: { hp: 60, atk: 130, def: 75, spd: 110 } },
+    { id: 1019, name: "幽燭燭", types: ["ghost"], baseStats: { hp: 30, atk: 100, def: 35, spd: 80 } },
+    { id: 1020, name: "鍋爐燭燭", types: ["ghost"], baseStats: { hp: 45, atk: 115, def: 55, spd: 95 } },
+    { id: 1021, name: "幽靈女王", types: ["ghost"], baseStats: { hp: 60, atk: 130, def: 75, spd: 110 } },
 
     // === 野外 (波波線) ===
     { id: 1022, name: "小雞獸", types: ["flying"], baseStats: { hp: 40, atk: 45, def: 40, spd: 56 } },

@@ -335,10 +335,24 @@ export default function App() {
         // 防止重複觸發正在進行中的同步，或沒有使用者/DB，或尚未完成初始檢查
         if (isCloudSyncing || !user || !db || !hasCheckedCloud) return;
 
-        // 【核心安全性校驗】：如果本地進度比雲端上次同步的還舊，絕對不准上傳 (除非是剛重載或是同一個動作週期的數值更新)
+        // 【核心安全性校驗】：如果本地進度比雲端上次同步的還舊，絕對不准上傳
         if (saveData.lastSaveTime < lastCloudSyncTime) {
             console.warn(`☁️ 擋下過期的存檔！本地 ${saveData.lastSaveTime} < 雲端最新 ${lastCloudSyncTime}`);
             return;
+        }
+
+        // --- 🔒 防誤蓋保護：檢查雲端版本是否比本地新 ---
+        try {
+            const doc = await db.collection(FIRESTORE_COLLECTION).doc(user.uid).get();
+            if (doc.exists) {
+                const cloudData = doc.data();
+                if ((cloudData.saveVersion || 0) > (saveData.saveVersion || 0)) {
+                    console.error(`☁️ 擋下覆蓋請求！雲端版本 (${cloudData.saveVersion}) 較新，本地版本 (${saveData.saveVersion}) 較舊。請重新整理網頁以取得最新版本。`);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn("☁️ 無法預檢雲端版本，將嘗試直接存檔...", e);
         }
 
         setIsCloudSyncing(true);
@@ -401,17 +415,18 @@ export default function App() {
 
                 console.log(`☁️ Sync Check - Cloud: ${new Date(cloudTime).toLocaleString()}, Local: ${new Date(localTime).toLocaleString()}`);
 
-                // 比對時間戳記，取最新者 (且必須是同一個人的資料，剛才 localData 已過濾過)
+                // 比對時間戳記，取最新者
                 if (!localData || (cloudTime > localTime + 2000)) {
-                    // ✨ 增加版本檢查：如果雲端資料版本不符，不進行同步
-                    if (cloudData.saveVersion !== SAVE_VERSION) {
-                        console.warn(`☁️ 雲端資料版本 (${cloudData.saveVersion}) 與當前程式碼版本 (${SAVE_VERSION}) 不符，跳過同步以防止資料衝突。`);
+                    // ✨ 增加版本檢查：如果雲端資料比當前程式碼還新，提示使用者更新
+                    if (cloudData.saveVersion > SAVE_VERSION) {
+                        updateDialogue("☁️ 偵測到更新版本的雲端存檔，請重新整理或清除瀏覽器快取以更新遊戲版本。", true);
                         setHasCheckedCloud(true);
                         setIsCloudLoading(false);
                         return;
                     }
-
-                    updateDialogue("☁️ 發現較新的雲端進度，同步中...", true);
+                    
+                    // 如果雲端版號 <= 當前程式碼版號，允許載入
+                    updateDialogue("☁️ 發現雲端進度，同步中...", true);
                     localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
                     setTimeout(() => window.location.reload(), 1500);
                     // 不關閉 isCloudLoading，直到網頁刷新

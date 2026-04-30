@@ -20,9 +20,9 @@ export const loadSaveData = () => {
         if (str) {
             const data = JSON.parse(str);
 
-            // 版本不符 → 自動清除舊存檔，全新開始
+            // 版本不符 → 回傳 null 讓 App 決定是否全新開始，但不要刪除 localStorage，留給雲端比對
             if (data.saveVersion !== SAVE_VERSION) {
-                try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
+                console.log(`[Storage] Version mismatch (Local: ${data.saveVersion}, App: ${SAVE_VERSION}). Initializing fresh but keeping data for sync check.`);
                 return null;
             }
 
