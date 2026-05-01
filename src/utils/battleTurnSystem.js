@@ -73,16 +73,33 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     }
 
     const calcDamage = (attacker, move, defender) => {
-        if (!move.power || move.power === 0) return { dmg: 0, msg: "" };
+        const isStatusMove = !move.power || move.power === 0;
+        const isPureBuff = isStatusMove && (!move.accuracy || move.stat_target === 'self');
+
+        // BUFF 類技能或無精準度要求的技能必定命中
+        if (isPureBuff) return { dmg: 0, msg: "HIT" };
 
         const attackerEffSpd = attacker.spd * getStatMultiplier(attacker.statStages?.spd || 0) * (attacker.status === 'paralysis' ? 0.5 : 1);
         const defenderEffSpd = defender.spd * getStatMultiplier(defender.statStages?.spd || 0) * (defender.status === 'paralysis' ? 0.5 : 1);
 
         const speedRatio = attackerEffSpd / defenderEffSpd;
-        const hitRateProb = Math.min(1.0, Math.max(0.3, 0.9 + 0.1 * Math.log2(speedRatio)));
+        
+        // 取得技能基礎命中 (預設 100)，以乘法套用速度修正
+        // 乘法確保低命中率技能不會被速度差大幅拉高
+        const baseAccuracy = (move.accuracy || 100) / 100;
+        const speedMod = 1 + 0.1 * Math.log2(speedRatio);
+        const hitRateProb = Math.min(1.0, Math.max(0.3, baseAccuracy * speedMod));
 
-        let hitSuccess = rFunc() < hitRateProb;
-        if (!hitSuccess) return { dmg: 0, msg: '攻擊落空了！' };
+        const rng = rFunc();
+        if (rng >= hitRateProb) {
+            // 判定為落空，區分是「速度太慢被閃開」還是「運氣不好招式偏離」
+            if (speedRatio < 1 && rng >= baseAccuracy) {
+                return { dmg: 0, msg: 'MISS_SPEED' };
+            }
+            return { dmg: 0, msg: 'MISS_LUCK' };
+        }
+
+        if (isStatusMove) return { dmg: 0, msg: "HIT" };
 
         const attackerLevel = attacker.level || 5;
 
@@ -148,17 +165,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name}]！` });
 
-        const isStatusMove = !move.power || move.power === 0;
-
         const result = calcDamage(attacker, move, defender);
 
-        if (isStatusMove) {
-            if (move.accuracy && rFunc() * 100 > move.accuracy) {
-                nextQueue.push({ type: 'msg', text: `${attackerName} 的技能沒中！` });
-                return;
-            }
-        } else if (result.dmg === 0) {
-            nextQueue.push({ type: 'msg', text: `${attackerName} 的攻擊沒中！` });
+        if (result.msg === 'MISS_SPEED') {
+            nextQueue.push({ type: 'msg', text: `${defenderName} 靈巧地閃開了！` });
+            return;
+        } else if (result.msg === 'MISS_LUCK') {
+            nextQueue.push({ type: 'msg', text: `${attackerName} 的招式偏離了目標！` });
             return;
         }
 
@@ -168,7 +181,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             nextQueue.push({ type: 'msg', text: `${targetName} ${m.text}` });
         });
 
-        if (!isStatusMove && result.dmg > 0) {
+        if (result.dmg > 0) {
             const actualDmg = Math.min(defender.hp, result.dmg);
             nextQueue.push({
                 type: 'damage', target: isPlayer ? 'enemy' : 'player',

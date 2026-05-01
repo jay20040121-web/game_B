@@ -167,13 +167,15 @@ export const SKILL_DATABASE = {
         "id": "hyper_beam",
         "name": "能量波",
         "type": "normal",
-        "power": 150
+        "power": 150,
+        "accuracy": 90
     },
     "giga_impact": {
         "id": "giga_impact",
         "name": "終極絕招",
         "type": "normal",
-        "power": 150
+        "power": 150,
+        "accuracy": 90
     },
     "last_resort": {
         "id": "last_resort",
@@ -191,7 +193,8 @@ export const SKILL_DATABASE = {
         "id": "mega_kick",
         "name": "百萬噸重踢",
         "type": "normal",
-        "power": 120
+        "power": 120,
+        "accuracy": 75
     },
     "thrash": {
         "id": "thrash",
@@ -285,7 +288,8 @@ export const SKILL_DATABASE = {
         "id": "egg_bomb",
         "name": "炸彈",
         "type": "normal",
-        "power": 100
+        "power": 100,
+        "accuracy": 75
     },
     "sharpen": {
         "id": "sharpen",
@@ -332,7 +336,8 @@ export const SKILL_DATABASE = {
         "name": "猛撞",
         "type": "normal",
         "power": 90,
-        "recoil": 0.25
+        "recoil": 0.25,
+        "accuracy": 85
     },
     "uproar": {
         "id": "uproar",
@@ -352,7 +357,8 @@ export const SKILL_DATABASE = {
         "type": "normal",
         "power": 90,
         "ailment": "confusion",
-        "ailment_chance": 20
+        "ailment_chance": 20,
+        "accuracy": 85
     },
     "body_slam": {
         "id": "body_slam",
@@ -366,7 +372,8 @@ export const SKILL_DATABASE = {
         "id": "mega_punch",
         "name": "百萬噸重拳",
         "type": "normal",
-        "power": 80
+        "power": 80,
+        "accuracy": 85
     },
     "razor_wind": {
         "id": "razor_wind",
@@ -378,7 +385,8 @@ export const SKILL_DATABASE = {
         "id": "slam",
         "name": "互毆",
         "type": "normal",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "strength": {
         "id": "strength",
@@ -391,7 +399,8 @@ export const SKILL_DATABASE = {
         "name": "必殺咬",
         "type": "normal",
         "power": 80,
-        "flinch_chance": 10
+        "flinch_chance": 10,
+        "accuracy": 90
     },
     "tri_attack": {
         "id": "tri_attack",
@@ -464,7 +473,8 @@ export const SKILL_DATABASE = {
         "name": "天擊",
         "type": "flying",
         "power": 140,
-        "flinch_chance": 30
+        "flinch_chance": 30,
+        "accuracy": 90
     },
     "brave_bird": {
         "id": "brave_bird",
@@ -497,13 +507,15 @@ export const SKILL_DATABASE = {
         "type": "flying",
         "power": 110,
         "ailment": "confusion",
-        "ailment_chance": 30
+        "ailment_chance": 30,
+        "accuracy": 70
     },
     "aeroblast": {
         "id": "aeroblast",
         "name": "上升氣旋",
         "type": "flying",
-        "power": 100
+        "power": 100,
+        "accuracy": 95
     },
     "beak_blast": {
         "id": "beak_blast",
@@ -522,14 +534,16 @@ export const SKILL_DATABASE = {
         "id": "fly",
         "name": "飛翔",
         "type": "flying",
-        "power": 90
+        "power": 90,
+        "accuracy": 95
     },
     "floaty_fall": {
         "id": "floaty_fall",
         "name": "墜落",
         "type": "flying",
         "power": 90,
-        "flinch_chance": 30
+        "flinch_chance": 30,
+        "accuracy": 95
     },
     "bounce": {
         "id": "bounce",
@@ -537,7 +551,8 @@ export const SKILL_DATABASE = {
         "type": "flying",
         "power": 85,
         "ailment": "paralysis",
-        "ailment_chance": 30
+        "ailment_chance": 30,
+        "accuracy": 85
     },
     "drill_peck": {
         "id": "drill_peck",
@@ -557,7 +572,8 @@ export const SKILL_DATABASE = {
         "name": "空氣刀",
         "type": "flying",
         "power": 75,
-        "flinch_chance": 30
+        "flinch_chance": 30,
+        "accuracy": 95
     },
     "chatter": {
         "id": "chatter",
@@ -577,7 +593,8 @@ export const SKILL_DATABASE = {
         "id": "air_cutter",
         "name": "空氣刃",
         "type": "flying",
-        "power": 60
+        "power": 60,
+        "accuracy": 95
     },
     "aerial_ace": {
         "id": "aerial_ace",
@@ -627,7 +644,8 @@ export const SKILL_DATABASE = {
         "type": "poison",
         "power": 120,
         "ailment": "poison",
-        "ailment_chance": 30
+        "ailment_chance": 30,
+        "accuracy": 80
     },
     "belch": {
         "id": "belch",
@@ -803,7 +821,8 @@ export const SKILL_DATABASE = {
         "type": "poison",
         "power": 60,
         "ailment": "poison",
-        "ailment_chance": 40
+        "ailment_chance": 40,
+        "accuracy": 70
     },
     "mortal_spin": {
         "id": "mortal_spin",
@@ -830,19 +849,22 @@ export const SKILL_DATABASE = {
         "id": "rock_wrecker",
         "name": "岩石炮",
         "type": "rock",
-        "power": 150
+        "power": 150,
+        "accuracy": 90
     },
     "head_smash": {
         "id": "head_smash",
         "name": "頭錘",
         "type": "rock",
-        "power": 150
+        "power": 150,
+        "accuracy": 80
     },
     "meteor_beam": {
         "id": "meteor_beam",
         "name": "隕石術",
         "type": "rock",
-        "power": 120
+        "power": 120,
+        "accuracy": 90
     },
     "rock_polish": {
         "id": "rock_polish",
@@ -863,7 +885,8 @@ export const SKILL_DATABASE = {
         "id": "stone_edge",
         "name": "巨岩拳",
         "type": "rock",
-        "power": 100
+        "power": 100,
+        "accuracy": 80
     },
     "diamond_storm": {
         "id": "diamond_storm",
@@ -896,7 +919,8 @@ export const SKILL_DATABASE = {
         "name": "土石流",
         "type": "rock",
         "power": 75,
-        "flinch_chance": 30
+        "flinch_chance": 30,
+        "accuracy": 90
     },
     "stone_axe": {
         "id": "stone_axe",
@@ -952,7 +976,8 @@ export const SKILL_DATABASE = {
         "id": "rock_throw",
         "name": "小心落石",
         "type": "rock",
-        "power": 60
+        "power": 60,
+        "accuracy": 90
     },
     "smack_down": {
         "id": "smack_down",
@@ -976,7 +1001,8 @@ export const SKILL_DATABASE = {
         "id": "rock_blast",
         "name": "岩石衝撞",
         "type": "rock",
-        "power": 40
+        "power": 40,
+        "accuracy": 90
     },
     "first_impression": {
         "id": "first_impression",
@@ -989,7 +1015,8 @@ export const SKILL_DATABASE = {
         "id": "megahorn",
         "name": "觸角攻擊",
         "type": "bug",
-        "power": 120
+        "power": 120,
+        "accuracy": 85
     },
     "tail_glow": {
         "id": "tail_glow",
@@ -1210,7 +1237,8 @@ export const SKILL_DATABASE = {
         "id": "fury_cutter",
         "name": "居合斬",
         "type": "bug",
-        "power": 60
+        "power": 60,
+        "accuracy": 95
     },
     "twineedle": {
         "id": "twineedle",
@@ -1224,7 +1252,8 @@ export const SKILL_DATABASE = {
         "id": "pin_missile",
         "name": "飛針",
         "type": "bug",
-        "power": 55
+        "power": 55,
+        "accuracy": 95
     },
     "infestation": {
         "id": "infestation",
@@ -1376,7 +1405,8 @@ export const SKILL_DATABASE = {
         "id": "blast_burn",
         "name": "爆炸陷阱",
         "type": "fire",
-        "power": 150
+        "power": 150,
+        "accuracy": 90
     },
     "shell_trap": {
         "id": "shell_trap",
@@ -1411,7 +1441,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 130,
         "ailment": "burn",
-        "ailment_chance": 20
+        "ailment_chance": 20,
+        "accuracy": 85
     },
     "burn_up": {
         "id": "burn_up",
@@ -1434,7 +1465,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 120,
         "ailment": "burn",
-        "ailment_chance": 10
+        "ailment_chance": 10,
+        "accuracy": 90
     },
     "raging_fury": {
         "id": "raging_fury",
@@ -1466,7 +1498,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 110,
         "ailment": "burn",
-        "ailment_chance": 10
+        "ailment_chance": 10,
+        "accuracy": 85
     },
     "sacred_fire": {
         "id": "sacred_fire",
@@ -1482,7 +1515,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 100,
         "ailment": "trap",
-        "ailment_chance": 100
+        "ailment_chance": 100,
+        "accuracy": 75
     },
     "inferno": {
         "id": "inferno",
@@ -1490,7 +1524,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 100,
         "ailment": "burn",
-        "ailment_chance": 100
+        "ailment_chance": 100,
+        "accuracy": 50
     },
     "searing_shot": {
         "id": "searing_shot",
@@ -1512,7 +1547,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 95,
         "ailment": "burn",
-        "ailment_chance": 10
+        "ailment_chance": 10,
+        "accuracy": 90
     },
     "flamethrower": {
         "id": "flamethrower",
@@ -1535,7 +1571,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 85,
         "ailment": "burn",
-        "ailment_chance": 10
+        "ailment_chance": 10,
+        "accuracy": 90
     },
     "lava_plume": {
         "id": "lava_plume",
@@ -1648,7 +1685,8 @@ export const SKILL_DATABASE = {
         "power": 65,
         "ailment": "burn",
         "ailment_chance": 10,
-        "flinch_chance": 10
+        "flinch_chance": 10,
+        "accuracy": 95
     },
     "flame_wheel": {
         "id": "flame_wheel",
@@ -1692,7 +1730,8 @@ export const SKILL_DATABASE = {
         "type": "fire",
         "power": 35,
         "ailment": "trap",
-        "ailment_chance": 100
+        "ailment_chance": 100,
+        "accuracy": 85
     },
     "jet_punch": {
         "id": "jet_punch",
@@ -1719,7 +1758,8 @@ export const SKILL_DATABASE = {
         "id": "hydro_cannon",
         "name": "加農水柱",
         "type": "water",
-        "power": 150
+        "power": 150,
+        "accuracy": 90
     },
     "water_spout": {
         "id": "water_spout",
@@ -1737,7 +1777,8 @@ export const SKILL_DATABASE = {
         "id": "hydro_pump",
         "name": "水砲台",
         "type": "water",
-        "power": 110
+        "power": 110,
+        "accuracy": 80
     },
     "steam_eruption": {
         "id": "steam_eruption",
@@ -1751,7 +1792,8 @@ export const SKILL_DATABASE = {
         "id": "origin_pulse",
         "name": "海浪波動",
         "type": "water",
-        "power": 110
+        "power": 110,
+        "accuracy": 85
     },
     "withdraw": {
         "id": "withdraw",
@@ -1772,7 +1814,8 @@ export const SKILL_DATABASE = {
         "id": "crabhammer",
         "name": "螃蟹拳",
         "type": "water",
-        "power": 100
+        "power": 100,
+        "accuracy": 90
     },
     "surf": {
         "id": "surf",
@@ -1784,13 +1827,15 @@ export const SKILL_DATABASE = {
         "id": "muddy_water",
         "name": "下雨",
         "type": "water",
-        "power": 90
+        "power": 90,
+        "accuracy": 85
     },
     "aqua_tail": {
         "id": "aqua_tail",
         "name": "水流擊",
         "type": "water",
-        "power": 90
+        "power": 90,
+        "accuracy": 90
     },
     "sparkling_aria": {
         "id": "sparkling_aria",
@@ -1917,7 +1962,8 @@ export const SKILL_DATABASE = {
         "id": "octazooka",
         "name": "蠑螈水炮",
         "type": "water",
-        "power": 65
+        "power": 65,
+        "accuracy": 85
     },
     "brine": {
         "id": "brine",
@@ -1979,7 +2025,8 @@ export const SKILL_DATABASE = {
         "type": "water",
         "power": 45,
         "ailment": "trap",
-        "ailment_chance": 100
+        "ailment_chance": 100,
+        "accuracy": 85
     },
     "whirlpool": {
         "id": "whirlpool",
@@ -1987,7 +2034,8 @@ export const SKILL_DATABASE = {
         "type": "water",
         "power": 40,
         "ailment": "trap",
-        "ailment_chance": 100
+        "ailment_chance": 100,
+        "accuracy": 85
     },
     "triple_dive": {
         "id": "triple_dive",
@@ -2005,13 +2053,15 @@ export const SKILL_DATABASE = {
         "id": "frenzy_plant",
         "name": "魔性植物",
         "type": "grass",
-        "power": 150
+        "power": 150,
+        "accuracy": 90
     },
     "chloroblast": {
         "id": "chloroblast",
         "name": "葉子爆震",
         "type": "grass",
-        "power": 150
+        "power": 150,
+        "accuracy": 95
     },
     "leaf_storm": {
         "id": "leaf_storm",
@@ -2049,7 +2099,8 @@ export const SKILL_DATABASE = {
         "id": "power_whip",
         "name": "強力鞭打",
         "type": "grass",
-        "power": 120
+        "power": 120,
+        "accuracy": 85
     },
     "wood_hammer": {
         "id": "wood_hammer",
@@ -2213,7 +2264,8 @@ export const SKILL_DATABASE = {
         "id": "leaf_tornado",
         "name": "青草漩渦",
         "type": "grass",
-        "power": 65
+        "power": 65,
+        "accuracy": 90
     },
     "needle_arm": {
         "id": "needle_arm",
@@ -2232,7 +2284,8 @@ export const SKILL_DATABASE = {
         "id": "razor_leaf",
         "name": "飛葉刀刃",
         "type": "grass",
-        "power": 55
+        "power": 55,
+        "accuracy": 95
     },
     "grassy_glide": {
         "id": "grassy_glide",
