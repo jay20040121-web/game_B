@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { MONSTER_ASSET_IDS } from '../monsterData';
 
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
-const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true }) => {
+const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/idle/${assetId}.gif` : `${base}assets/exclusive/sprites/${assetId}.png`);
@@ -70,12 +70,12 @@ const DitheredSprite = ({ id, className = "", scale = 4.5, animated = true, silh
             />
         </div>
     );
-};
+});
 
 // ==========================================
 // 背面 4-Color 網點運算引擎
 // ==========================================
-const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, pure = true }) => {
+const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/back/${assetId}.gif` : `${base}assets/exclusive/back/${assetId}.png`);
@@ -140,7 +140,7 @@ const DitheredBackSprite = ({ id, className = "", scale = 4.5, animated = true, 
             />
         </div>
     );
-};
+});
 
 // ==========================================
 // 點陣圖及動畫共用資源
