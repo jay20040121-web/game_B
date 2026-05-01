@@ -6,6 +6,7 @@ import LeaderboardOverlay from './components/LeaderboardOverlay';
 import SkillLearnOverlay from './components/SkillLearnOverlay';
 import DebugPanel from './components/DebugPanel';
 import { MonsterpediaOverlay } from './components/MonsterpediaOverlay';
+import { SoulExpeditionOverlay } from './components/SoulExpeditionOverlay';
 import React, { useState, useEffect, useRef } from 'react';
 import './styles.css';
 import {
@@ -127,6 +128,7 @@ export default function App() {
     // 圖鑑系統狀態
     const [ownedMonsters, setOwnedMonsters] = useState(getInit('ownedMonsters', []));
     const [isPediaOpen, setIsPediaOpen] = useState(false);
+    const [isExpeditionOpen, setIsExpeditionOpen] = useState(false);
     const [pediaIdx, setPediaIdx] = useState(0);
     const [isPediaDetailOpen, setIsPediaDetailOpen] = useState(false);
 
@@ -425,7 +427,7 @@ export default function App() {
                         setIsCloudLoading(false);
                         return;
                     }
-                    
+
                     // 如果雲端版號 <= 當前程式碼版號，允許載入
                     updateDialogue("☁️ 發現雲端進度，同步中...", true);
                     localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
@@ -678,14 +680,14 @@ export default function App() {
             timer = setInterval(() => {
                 if (document.hidden) return;
                 setIsBootMonsterVisible(false); // 觸發淡出
-                
+
                 // 提前抽卡並預載圖片，消除載入延遲
                 const nextId = Math.floor(Math.random() * 30) + 1000;
                 const assetId = MONSTER_ASSET_IDS[nextId] || nextId;
                 const base = import.meta.env.BASE_URL;
                 const img = new Image();
                 img.src = `${base}assets/exclusive/idle/${assetId}.gif`;
-                
+
                 setTimeout(() => {
                     setBootMonsterPosIdx(prev => (prev + 1) % 2); // 只在兩個位置循環
                     setBootMonsterId(nextId); // 每次跳轉都更換怪獸 ID (1000-1027)
@@ -1460,6 +1462,10 @@ export default function App() {
     };
 
     const handleA = () => {
+        if (isExpeditionOpen) {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z' }));
+            return;
+        }
         if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
         if (alertMsg) {
             setAlertMsg("");
@@ -1590,6 +1596,10 @@ export default function App() {
     };
 
     const handleB = (clickIdx = null) => {
+        if (isExpeditionOpen) {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
+            return;
+        }
         if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
         const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
@@ -1847,6 +1857,10 @@ export default function App() {
     };
 
     const handleC = () => {
+        if (isExpeditionOpen) {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
+            return;
+        }
         if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
         if (alertMsg) return; // 警告視窗顯示時，C 鍵完全鎖定不執行任何動作
         if (isLeaderboardOpen) {
@@ -1967,7 +1981,7 @@ export default function App() {
                 updateDialogue("圖鑑系統開啟。", true);
                 break;
             case 'interact':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -1990,25 +2004,15 @@ export default function App() {
                 logEvent("餵食了怪獸。");
                 break;
             case 'talk':
-                let qi;
-                if (lockedAffinity) {
-                    const weightedIndices = SOUL_QUESTIONS.map((q, i) =>
-                        q.options.some(o => o.affinity === lockedAffinity) ? i : -1
-                    ).filter(idx => idx !== -1);
-
-                    if (Math.random() < 0.7 && weightedIndices.length > 0) {
-                        qi = weightedIndices[Math.floor(Math.random() * weightedIndices.length)];
-                    } else {
-                        qi = Math.floor(Math.random() * SOUL_QUESTIONS.length);
-                    }
-                } else {
-                    qi = Math.floor(Math.random() * SOUL_QUESTIONS.length);
+                if (hunger < 20) {
+                    setAlertMsg("飽食度不足 (需要 20 以上)");
+                    updateDialogue("肚子太餓了，沒力氣談心... (請先餵食)", true);
+                    playBloop('fail');
+                    break;
                 }
-
-                setMiniGame({ type: 'talk', status: 'question', qIdx: qi });
-                recordGameAction(); // 進入對談視為一動作
-                updateDialogue("陪伴對談中...", true);
-                logEvent("與怪獸談心。");
+                setIsExpeditionOpen(true);
+                recordGameAction();
+                logEvent("開始與怪獸談心。");
                 break;
             case 'pet':
                 if (mood >= 100) {
@@ -2022,7 +2026,7 @@ export default function App() {
                 logEvent("親密互動。");
                 break;
             case 'status':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2031,7 +2035,7 @@ export default function App() {
                 updateDialogue("查看狀態中...", true);
                 break;
             case 'train':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2057,7 +2061,7 @@ export default function App() {
                 setActiveIndex(-1);
                 break;
             case 'connect':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2070,7 +2074,7 @@ export default function App() {
                 logEvent(`進入連線大廳`);
                 break;
             case 'info':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2080,7 +2084,7 @@ export default function App() {
                 updateDialogue("查看背包中...", true);
                 break;
             case 'adventure':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2607,8 +2611,8 @@ export default function App() {
                 updateDialogue(`打開了${item.name}！怪獸開始專心領悟新的招式...`);
                 // 🚀 關鍵修正：技能道具使用後立即解鎖，不進入 1.8s 的延遲流程
                 // 避免 isUsingItem 狀態阻塞後續的 SkillLearnOverlay 操作
-                setIsUsingItem(false); 
-                
+                setIsUsingItem(false);
+
                 // 執行消耗流程（減少數量與同步）
                 setInventory(prev => {
                     const next = [...prev];
@@ -2705,7 +2709,7 @@ export default function App() {
 
     const triggerFarewell = () => {
         // 防呆：僅限主畫面使用 (防止在戰鬥、冒險、特訓、談心、選單中產生邏輯衝突)
-        if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+        if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
             setAlertMsg("此功能僅限在主畫面使用");
             playBloop('fail');
             return;
@@ -3156,6 +3160,49 @@ export default function App() {
                                 selectedIndex={pediaIdx}
                                 isDetailOpen={isPediaDetailOpen}
                             />
+
+                            {/* 靈魂遠征系統 */}
+                            {isExpeditionOpen && (
+                                <SoulExpeditionOverlay
+                                    monsterId={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()}
+                                    initialEnergy={hunger}
+                                    onClose={() => setIsExpeditionOpen(false)}
+                                    onComplete={({ finalEnergy, collectedStats }) => {
+                                        setIsExpeditionOpen(false);
+                                        setHunger(finalEnergy);
+                                        setBondValue(b => Math.min(999, b + collectedStats.bond));
+                                        setTodayBondGained(b => b + collectedStats.bond);
+                                        setTalkCount(t => t + 1);
+
+                                        // Update Tags
+                                        setSoulTagCounts(prev => {
+                                            const next = { ...prev };
+                                            for (let t in collectedStats.tags) {
+                                                if (collectedStats.tags[t] > 0) {
+                                                    next[t] = (next[t] || 0) + collectedStats.tags[t];
+                                                }
+                                            }
+                                            return next;
+                                        });
+
+                                        // Apply Affinities (Bonus mechanism)
+                                        if (!lockedAffinity) {
+                                            setSoulAffinityCounts(prev => {
+                                                const next = { ...prev };
+                                                for (let a in collectedStats.affinities) {
+                                                    if (collectedStats.affinities[a] > 0) {
+                                                        next[a] = (next[a] || 0) + collectedStats.affinities[a];
+                                                    }
+                                                }
+                                                return next;
+                                            });
+                                        }
+
+                                        updateDialogue("遠征結束了！");
+                                        logEvent("完成了一次靈魂遠征。");
+                                    }}
+                                />
+                            )}
 
                             {/* === 🤝 互動系統子選單 UI (精緻捲軸版) === */}
                             {isInteractMenuOpen && (
