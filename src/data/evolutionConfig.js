@@ -15,10 +15,14 @@ const getMName = id => MONSTER_REGISTRY.find(m => m.id === id)?.name || '未知'
  */
 
 export const EVO_TIMES = {
-    1: 3600000,   // 1 小時 (幼年期 -> 成長期)
-    2: 21600000,  // 6 小時 (成長期 -> 成熟期)
-    3: 86400000,  // 24 小時 (成熟期 -> 完全體)
-    FINAL_LIFETIME: 604800000 // 最終階段壽命：7 天
+    FINAL_LIFETIME: 604800000 // 最終壽命上限：7 天 (不論階段)
+};
+
+export const EVO_LEVELS = {
+    0: 5,   // 蛋/初生 -> 幼年期
+    1: 15,  // 幼年期 -> 成長期
+    2: 30,  // 成長期 -> 成熟期
+    3: 60   // 成熟期 -> 完全體
 };
 
 export const WILD_EVOLUTION_MAP = {

@@ -25,7 +25,7 @@ import {
     MONSTER_ASSET_IDS
 } from './monsterData';
 
-import { EVO_TIMES, WILD_EVOLUTION_MAP } from './data/evolutionConfig';
+import { EVO_TIMES, EVO_LEVELS, WILD_EVOLUTION_MAP } from './data/evolutionConfig';
 
 import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } from './components/SpriteRenderer';
 
@@ -88,6 +88,7 @@ export default function App() {
     const [feedCount, setFeedCount] = useState(getInit('feedCount', 0));
     const [deathBranch, setDeathBranch] = useState(getInit('deathBranch', null));
     const [lastEvolutionTime, setLastEvolutionTime] = useState(getInit('lastEvolutionTime', Date.now()));
+    const [birthTime, setBirthTime] = useState(getInit('birthTime', Date.now()));
     const [lastSaveTime, setLastSaveTime] = useState(getInit('lastSaveTime', Date.now()));
 
     // 談心系統新增狀態
@@ -781,7 +782,8 @@ export default function App() {
             const currentData = {
                 saveVersion: SAVE_VERSION,
                 hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch,
-                trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime,
+                trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords,
+                lastEvolutionTime, birthTime,
                 deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts,
                 advStats, inventory, lastAdvTime,
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
@@ -797,7 +799,7 @@ export default function App() {
             lastSavedDataRef.current = currentDataStr;
             lastSaveTimeRef.current = now;
         } catch (e) { }
-    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, lastSaveTime]);
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, birthTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, lastSaveTime]);
 
     // 2️⃣ 雲端同步：獨立監控重大行為，不受 hunger/mood 跳動影響
     useEffect(() => {
@@ -2103,38 +2105,41 @@ export default function App() {
             if (document.hidden) return;
             const elapsed = Date.now() - lastEvolutionTime;
 
-            // 判斷是否壽終（無法再進化）
-            // 野外怪獸 (方案 C)：若在對照表中已無下一階，則視為最終型態，進入壽命倒數
-            const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
+            // 1. 壽命檢查 (最高優先級：從出生起算 7 天強制死亡)
+            const totalElapsed = Date.now() - birthTime;
+            const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
 
-            if (evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'G2', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch))) {
-                const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
-                if (elapsed >= lifespan) {
-                    clearInterval(checkEvolutionInterval);
-                    // D線抽籤：20% 機率靈魂重生
-                    const dRoll = Math.random();
-                    const dLine = dRoll < 0.20 ? (Math.random() < 0.5 ? 'G1' : 'G2') : null;
-                    setDeathBranch(dLine);
-                    setIsGenerating(true);
-                    setIsDead(true);
-                    velRef.current = { x: 0, y: -0.1 };
-                    setTimeout(() => {
-                        let words = dLine
-                            ? "靈魂不滅...我還會回來的..."
-                            : "謝謝你陪我走到最後一刻...";
-                        setFinalWords(words);
-                        setIsGenerating(false);
-                        updateDialogue(words);
-                    }, 1500);
-                    setTimeout(() => {
-                        setShowRestartHint(true);
-                    }, 2500);
-                }
+            if (totalElapsed >= lifespan) {
+                clearInterval(checkEvolutionInterval);
+                // D線抽籤：20% 機率靈魂重生
+                const dRoll = Math.random();
+                const dLine = dRoll < 0.20 ? (Math.random() < 0.5 ? 'G1' : 'G2') : null;
+                setDeathBranch(dLine);
+                setIsGenerating(true);
+                setIsDead(true);
+                velRef.current = { x: 0, y: -0.1 };
+                setTimeout(() => {
+                    let words = dLine
+                        ? "靈魂不滅...我還會回來的..."
+                        : "謝謝你陪我走到最後一刻...";
+                    setFinalWords(words);
+                    setIsGenerating(false);
+                    updateDialogue(words);
+                }, 1500);
+                setTimeout(() => {
+                    setShowRestartHint(true);
+                }, 2500);
                 return;
             }
 
-            const currentThresh = debugOverrides.evolutionMs ?? EVO_TIMES[evolutionStage];
-            if (elapsed >= currentThresh) {
+            // 2. 進化檢查 (改用等級判定)
+            const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
+            const isFinalState = evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'G2', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch));
+
+            if (isFinalState) return;
+
+            const targetLevel = debugOverrides.evolutionMs ? 1 : (EVO_LEVELS[evolutionStage] || 999);
+            if (derivedLevel >= targetLevel) {
                 clearInterval(checkEvolutionInterval);
                 setIsEvolving(true);
                 updateDialogue("進化中！！");
@@ -2257,7 +2262,7 @@ export default function App() {
         }, 500);
 
         return () => clearInterval(checkEvolutionInterval);
-    }, [isBooting, evolutionStage, isDead, isEvolving, lastEvolutionTime, miniGame, isRunaway, debugOverrides, isDuplicateTab]);
+    }, [isBooting, evolutionStage, isDead, isEvolving, birthTime, derivedLevel, miniGame, isRunaway, debugOverrides, isDuplicateTab]);
 
     useEffect(() => {
         if (!miniGame || miniGame.status === 'result') return;
@@ -2801,6 +2806,7 @@ export default function App() {
         velRef.current = { x: 0.6, y: 0.4 };
         setSteps(0);
         setLastEvolutionTime(Date.now());
+        setBirthTime(Date.now());
         setStageTrainWins(0);
         setMiniGame(null);
         setActiveIndex(-1);
