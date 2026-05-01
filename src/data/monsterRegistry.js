@@ -23,6 +23,10 @@ export const MONSTER_REGISTRY = [
     { id: 1005, name: "吹泡蠑螈", types: ["water"], baseStats: { hp: 59, atk: 65, def: 80, spd: 58 } },
     { id: 1006, name: "大師蠑螈", types: ["water"], baseStats: { hp: 79, atk: 85, def: 105, spd: 78 } },
 
+    // === 水系靈魂 (熱血/無俚頭分支) ===
+    { id: 1028, name: "狂戰蠑螈", types: ["water"], baseStats: { hp: 60, atk: 85, def: 60, spd: 70 } },
+    { id: 1029, name: "極惡蠑螈", types: ["water"], baseStats: { hp: 90, atk: 110, def: 80, spd: 93 } },
+
     // === 草系靈魂 ===
     { id: 1007, name: "綿綿獸", types: ["grass"], baseStats: { hp: 45, atk: 65, def: 65, spd: 45 } },
     { id: 1008, name: "甜點獸", types: ["grass"], baseStats: { hp: 60, atk: 80, def: 80, spd: 60 } },

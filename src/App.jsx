@@ -655,7 +655,7 @@ export default function App() {
     const lastAliveMonsterIdRef = useRef(1000);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
-    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 28) + 1000);
+    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 30) + 1000);
     const [bootMonsterPosIdx, setBootMonsterPosIdx] = useState(0); // 0:左上, 1:右上, 2:左下, 3:右下
     const [isBootMonsterVisible, setIsBootMonsterVisible] = useState(true);
 
@@ -680,7 +680,7 @@ export default function App() {
                 setIsBootMonsterVisible(false); // 觸發淡出
                 
                 // 提前抽卡並預載圖片，消除載入延遲
-                const nextId = Math.floor(Math.random() * 28) + 1000;
+                const nextId = Math.floor(Math.random() * 30) + 1000;
                 const assetId = MONSTER_ASSET_IDS[nextId] || nextId;
                 const base = import.meta.env.BASE_URL;
                 const img = new Image();
@@ -2187,14 +2187,23 @@ export default function App() {
                     // D 線完全封閉，沿原線繼續 (優先度高於靈魂進化，防止凱西被劫持)
                     nextBranch = evolutionBranch;
 
-                } else if (soulNext || evolutionBranch.endsWith('_SOUL')) {
+                } else if (soulNext || evolutionBranch.endsWith('_SOUL') || evolutionBranch === 'W_SOUL_ALT') {
 
                     // 靈魂進化線最高優先
                     if (soulNext) {
                         nextBranch = soulNext;
                     } else {
-                        // 所有靈魂線現在都是單一直線進化，無額外分支
-                        nextBranch = evolutionBranch;
+                        // 水系靈魂分支判斷 (Stage 2 <-> Stage 3 <-> Stage 4 皆可互相切換)
+                        if (['W_SOUL', 'W_SOUL_ALT'].includes(evolutionBranch)) {
+                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
+                            if (['nonsense', 'passionate'].includes(dominantNature)) {
+                                nextBranch = 'W_SOUL_ALT';
+                            } else {
+                                nextBranch = 'W_SOUL';
+                            }
+                        } else {
+                            nextBranch = evolutionBranch;
+                        }
                     }
                 } else if (evolutionStage === 1) {
                     // ★ Stage 0→1（百變怪 Stage）：所有線可互通，依條件首次分支

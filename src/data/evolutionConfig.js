@@ -54,8 +54,14 @@ export const EVOLUTION_CHAINS = {
 
     "SOUL_WATER": {
         stage2: { "W_SOUL": { id: 1004, desc: `${getMName(1004)}` } },
-        stage3: { "W_SOUL": { id: 1005, from: "W_SOUL", desc: `${getMName(1005)} (無條件進化)` } },
-        stage4: { "W_SOUL": { id: 1006, from: "W_SOUL", desc: `${getMName(1006)} (無條件進化)` } }
+        stage3: {
+            "W_SOUL": { id: 1005, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1005)} (其餘條件)` },
+            "W_SOUL_ALT": { id: 1028, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1028)} (熱血/無俚頭)` }
+        },
+        stage4: {
+            "W_SOUL": { id: 1006, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1006)} (其餘條件)` },
+            "W_SOUL_ALT": { id: 1029, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1029)} (熱血/無俚頭)` }
+        }
     },
 
     "SOUL_GRASS": {
