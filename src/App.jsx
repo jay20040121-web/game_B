@@ -20,7 +20,8 @@ import {
     generateMoves,
     calcFinalStat,
     OBTAINABLE_MONSTER_IDS,
-    TRAINER_POOLS
+    TRAINER_POOLS,
+    MONSTER_ASSET_IDS
 } from './monsterData';
 
 import { EVO_TIMES, WILD_EVOLUTION_MAP } from './data/evolutionConfig';
@@ -677,9 +678,17 @@ export default function App() {
             timer = setInterval(() => {
                 if (document.hidden) return;
                 setIsBootMonsterVisible(false); // 觸發淡出
+                
+                // 提前抽卡並預載圖片，消除載入延遲
+                const nextId = Math.floor(Math.random() * 28) + 1000;
+                const assetId = MONSTER_ASSET_IDS[nextId] || nextId;
+                const base = import.meta.env.BASE_URL;
+                const img = new Image();
+                img.src = `${base}assets/exclusive/idle/${assetId}.gif`;
+                
                 setTimeout(() => {
                     setBootMonsterPosIdx(prev => (prev + 1) % 2); // 只在兩個位置循環
-                    setBootMonsterId(Math.floor(Math.random() * 28) + 1000); // 每次跳轉都更換怪獸 ID (1000-1027)
+                    setBootMonsterId(nextId); // 每次跳轉都更換怪獸 ID (1000-1027)
                     setIsBootMonsterVisible(true); // 觸發淡入
                 }, 1000); // 1秒的淡出過渡
             }, 10000); // 10秒一個週期
@@ -2208,6 +2217,13 @@ export default function App() {
                     nextBranch = 'C';
                 }
 
+                // 提前預載進化後的圖片，消除載入延遲
+                const preEvolvedId = getMonsterIdWrapped(nextBranch, evolutionStage + 1);
+                const assetId = MONSTER_ASSET_IDS[preEvolvedId] || preEvolvedId;
+                const base = import.meta.env.BASE_URL;
+                const img = new Image();
+                img.src = `${base}assets/exclusive/idle/${assetId}.gif`;
+
                 setTimeout(() => {
                     const now = new Date();
                     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -2375,6 +2391,7 @@ export default function App() {
 
         let enemyData;
         let eMaxHP, eATK, eDEF, eSPD, eType, eLevel;
+        let resultState;
 
         if (mode === 'wild') {
             // 新手保護：在 Stage 1 時過濾掉岩石系等難度過高的怪獸
@@ -2403,7 +2420,7 @@ export default function App() {
 
             const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
             const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
-            return {
+            resultState = {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
@@ -2430,7 +2447,7 @@ export default function App() {
             const eMoves = (enemyData?.moves || generateMoves(1, eType, null, eLevel, true)).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `連線成功！${enemyData?.name || '神祕對手'} (Lv.${eLevel}) 降臨！`;
-            return {
+            resultState = {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
@@ -2463,7 +2480,7 @@ export default function App() {
             const eMoves = generateMoves(evolutionStage, eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
             const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
-            return {
+            resultState = {
                 active: true, mode: 'trainer', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
@@ -2477,6 +2494,19 @@ export default function App() {
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
             };
         }
+
+        // --- 預先載入戰鬥圖片，消除載入延遲 ---
+        const base = import.meta.env.BASE_URL;
+        // 預載玩家背面 GIF
+        const pAssetId = MONSTER_ASSET_IDS[resultState.player.id] || resultState.player.id;
+        const pImg = new Image();
+        pImg.src = `${base}assets/exclusive/back/${pAssetId}.gif`;
+        // 預載敵人正面 GIF
+        const eAssetId = MONSTER_ASSET_IDS[resultState.enemy.id] || resultState.enemy.id;
+        const eImg = new Image();
+        eImg.src = `${base}assets/exclusive/idle/${eAssetId}.gif`;
+
+        return resultState;
     };
 
 
