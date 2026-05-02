@@ -60,9 +60,17 @@ export default function BattleAdventureOverlay({
                                 </span>
                             )}
                         </div>
-                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner">
-                            <div className="h-full transition-all duration-300" style={{ width: `${(battleState?.enemy?.hp / battleState?.enemy?.maxHp) * 100}%`, backgroundColor: (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.5 ? '#2ecc71' : (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
+                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
+                            <div className="h-full transition-all duration-300 absolute left-0 top-0 z-[1]" style={{ width: `${Math.min(100, (battleState?.enemy?.hp / battleState?.enemy?.maxHp) * 100)}%`, backgroundColor: (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.5 ? '#2ecc71' : (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
+                            {battleState?.enemy?.hp > battleState?.enemy?.maxHp && (
+                                <div className="h-full transition-all duration-300 absolute left-0 top-0 bg-[#4dd0e1] z-[2] opacity-80" style={{ width: `${Math.min(100, ((battleState.enemy.hp - battleState.enemy.maxHp) / battleState.enemy.maxHp) * 100)}%` }} />
+                            )}
                         </div>
+                        {battleState?.enemy?.hp > battleState?.enemy?.maxHp && (
+                            <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-left w-full drop-shadow-md">
+                                🛡️ {battleState.enemy.hp - battleState.enemy.maxHp}
+                            </div>
+                        )}
                     </div>
                     <div className={`absolute -top-16 right-0 z-10 transform scale-[1.1] ${battleState.flashTarget === 'enemy' ? 'damage-flash' : ''}`}>
                         <DitheredSprite id={battleState?.enemy?.id} scale={2} />
@@ -86,9 +94,17 @@ export default function BattleAdventureOverlay({
                             )}
                             <div className="text-[10px] font-bold text-white text-right truncate">Lv.{Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1))}</div>
                         </div>
-                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner">
-                            <div className="h-full transition-all duration-300" style={{ width: `${((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) * 100}%`, backgroundColor: ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.5 ? '#2ecc71' : ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
+                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
+                            <div className="h-full transition-all duration-300 absolute left-0 top-0 z-[1]" style={{ width: `${Math.min(100, ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) * 100)}%`, backgroundColor: ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.5 ? '#2ecc71' : ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
+                            {battleState?.player?.hp > battleState?.player?.maxHp && (
+                                <div className="h-full transition-all duration-300 absolute left-0 top-0 bg-[#4dd0e1] z-[2] opacity-80" style={{ width: `${Math.min(100, ((battleState.player.hp - battleState.player.maxHp) / battleState.player.maxHp) * 100)}%` }} />
+                            )}
                         </div>
+                        {battleState?.player?.hp > battleState?.player?.maxHp && (
+                            <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-right w-full drop-shadow-md">
+                                🛡️ {battleState.player.hp - battleState.player.maxHp}
+                            </div>
+                        )}
                     </div>
 
                     {/* 戰鬥播報對話框 (Transient Overlay) */}
@@ -126,20 +142,48 @@ export default function BattleAdventureOverlay({
                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                         >
                                             {move ? (
-                                                <div className="flex items-center gap-1">
+                                                <div className="flex flex-wrap items-center gap-0.5 justify-center">
                                                     <span>{move.name}</span>
-                                                    {(move.ailment && move.ailment !== 'none') && (
-                                                        <span className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
-                                                            move.ailment === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                            move.ailment === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                            move.ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                            'bg-[#4db6ac] text-white'
-                                                        }`}>
-                                                            {move.ailment === 'burn' ? '燒' :
-                                                             move.ailment === 'paralysis' ? '麻' :
-                                                             move.ailment === 'poison' ? '毒' : '狀'}
-                                                        </span>
-                                                    )}
+                                                    {(() => {
+                                                        const ailmentsToShow = [];
+                                                        // 1. 原生技能附帶的異常
+                                                        if (move.ailment && move.ailment !== 'none') {
+                                                            ailmentsToShow.push(move.ailment);
+                                                        }
+                                                        // 2. 附魔追加的異常與數值
+                                                        const enchantData = advStats?.moveUpgrades?.[move.id]?.ailments || {};
+                                                        Object.keys(enchantData).forEach(k => {
+                                                            if (enchantData[k] > 0 && !ailmentsToShow.includes(k)) {
+                                                                ailmentsToShow.push(k);
+                                                            }
+                                                        });
+
+                                                        return ailmentsToShow.map((ailment, idx) => (
+                                                            <span key={idx} className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
+                                                                ailment === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                                ailment === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                                ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                                ailment === 'accuracy' ? 'bg-[#2196f3] text-white' :
+                                                                ailment === 'priority' ? 'bg-[#ff9800] text-white' :
+                                                                ailment === 'freeze' ? 'bg-[#80deea] text-black' :
+                                                                ailment === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                ailment === 'lifesteal' ? 'bg-[#e91e63] text-white' :
+                                                                'bg-[#4db6ac] text-white'
+                                                            }`}>
+                                                                {ailment === 'burn' ? '燒' :
+                                                                 ailment === 'paralysis' ? '麻' :
+                                                                 ailment === 'poison' ? '毒' :
+                                                                 ailment === 'confusion' ? '混' :
+                                                                 ailment === 'leech-seed' ? '吸' :
+                                                                 ailment === 'trap' ? '縛' :
+                                                                 ailment === 'accuracy' ? '準' :
+                                                                 ailment === 'priority' ? '先' :
+                                                                 ailment === 'freeze' ? '凍' :
+                                                                 ailment === 'sleep' ? '眠' :
+                                                                 ailment === 'lifesteal' ? '血' : '狀'}
+                                                            </span>
+                                                        ));
+                                                    })()}
                                                     {(move.stat_changes && move.stat_changes.some(s => s.change > 0)) && (
                                                         <span className="text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black bg-[#42a5f5] text-white uppercase">
                                                             Buff

@@ -119,18 +119,47 @@ export default function SkillLearnOverlay({
                                             <span className="text-[10px] font-black">
                                                 {isSelected ? '▶ ' : ''}{moveDef?.name || '---'} 
                                             </span>
-                                            {moveDef?.ailment && moveDef.ailment !== 'none' && (
-                                                <span className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
-                                                    moveDef.ailment === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                    moveDef.ailment === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                    moveDef.ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                    'bg-[#4db6ac] text-white'
-                                                }`}>
-                                                    {moveDef.ailment === 'burn' ? '燒' :
-                                                     moveDef.ailment === 'paralysis' ? '麻' :
-                                                     moveDef.ailment === 'poison' ? '毒' : '狀'}
-                                                </span>
-                                            )}
+                                            {(() => {
+                                                if (!moveDef) return null;
+                                                const ailmentsToShow = [];
+                                                // 1. 原生技能附帶的異常
+                                                if (moveDef.ailment && moveDef.ailment !== 'none') {
+                                                    ailmentsToShow.push(moveDef.ailment);
+                                                }
+                                                // 2. 附魔追加的異常
+                                                const enchantData = advStats?.moveUpgrades?.[moveId]?.ailments || {};
+                                                Object.keys(enchantData).forEach(k => {
+                                                    if (enchantData[k] > 0 && !ailmentsToShow.includes(k)) {
+                                                        ailmentsToShow.push(k);
+                                                    }
+                                                });
+
+                                                return ailmentsToShow.map((ailment, aIdx) => (
+                                                    <span key={aIdx} className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
+                                                        ailment === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                        ailment === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                                        ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                        ailment === 'accuracy' ? 'bg-[#2196f3] text-white' :
+                                                        ailment === 'priority' ? 'bg-[#ff9800] text-white' :
+                                                        ailment === 'freeze' ? 'bg-[#80deea] text-black' :
+                                                        ailment === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                        ailment === 'lifesteal' ? 'bg-[#e91e63] text-white' :
+                                                        'bg-[#4db6ac] text-white'
+                                                    }`}>
+                                                        {ailment === 'burn' ? '燒' :
+                                                         ailment === 'paralysis' ? '麻' :
+                                                         ailment === 'poison' ? '毒' :
+                                                         ailment === 'confusion' ? '混' :
+                                                         ailment === 'leech-seed' ? '吸' :
+                                                         ailment === 'trap' ? '縛' :
+                                                         ailment === 'accuracy' ? '準' :
+                                                         ailment === 'priority' ? '先' :
+                                                         ailment === 'freeze' ? '凍' :
+                                                         ailment === 'sleep' ? '眠' :
+                                                         ailment === 'lifesteal' ? '血' : '狀'}
+                                                    </span>
+                                                ));
+                                            })()}
                                             {moveDef?.stat_changes && moveDef.stat_changes.some(s => s.change > 0) && (
                                                 <span className="text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black bg-[#42a5f5] text-white uppercase">
                                                     Buff

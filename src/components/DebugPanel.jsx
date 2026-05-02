@@ -119,7 +119,7 @@ const DebugPanel = ({
 
                 {activeTab === 'items' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <p style={{ color: '#aaa', margin: 0 }}>物品 ID 例: 001(飯糰), 002(蛋白粉), 003(跑步鞋), 004(核心), 005(糖果)</p>
+                        <p style={{ color: '#aaa', margin: 0 }}>物品 ID 例: 001(飯糰), 002(蛋白粉), 004(核心), 005(糖果)</p>
                         <p style={{ color: '#aaa', margin: 0 }}>秘笈書 ID: 006(爆裂拳), 008(煉獄), 009(電磁炮), 010(茁茁轟炸)...</p>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <span>ID:</span>

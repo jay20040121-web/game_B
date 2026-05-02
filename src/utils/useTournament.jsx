@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { OBTAINABLE_MONSTER_IDS, SPECIES_BASE_STATS, generateMoves, calcFinalStat, MONSTER_NAMES, SKILL_DATABASE, NATURE_CONFIG } from '../monsterData';
+import { ROGUE_CARDS } from '../data/rogueCards';
 
 // 🔹 訓練家擬人化名稱池
 const TRAINER_NAMES_POOL = [
@@ -8,6 +9,21 @@ const TRAINER_NAMES_POOL = [
     "章魚王", "小香腸", "小巴", "鋼鐵人", "小馬哥", "比比", "小光頭", "阿要", "Wendy", "阿品",
     "小黃", "阿乃", "爾康", "美美", "阿優", "朱茜", "草莓", "蛋堡", "小宇", "和瑀",
     "阿伯", "木木", "阿泰", "小東", "志宏", "小敏", "大倫", "小貝", "小小"
+];
+
+// 🔹 冠軍附魔效果池
+const ENCHANT_EFFECTS = [
+    { id: 'burn', name: '熾熱附魔', type: 'ailment', value: 10, desc: '燒傷機率 +10%' },
+    { id: 'paralysis', name: '雷鳴附魔', type: 'ailment', value: 10, desc: '麻痺機率 +10%' },
+    { id: 'poison', name: '劇毒附魔', type: 'ailment', value: 10, desc: '中毒機率 +10%' },
+    { id: 'confusion', name: '迷幻附魔', type: 'ailment', value: 10, desc: '混亂機率 +10%' },
+    { id: 'leech-seed', name: '寄生附魔', type: 'ailment', value: 10, desc: '寄生機率 +10% (每回合吸血)' },
+    { id: 'trap', name: '束縛附魔', type: 'ailment', value: 10, desc: '束縛機率 +10% (無法撤退且受損)' },
+    { id: 'freeze', name: '極寒附魔', type: 'ailment', value: 10, desc: '冰凍機率 +10%' },
+    { id: 'sleep', name: '催眠附魔', type: 'ailment', value: 10, desc: '睡眠機率 +10%' },
+    { id: 'lifesteal', name: '吸血附魔', type: 'stat', value: 5, desc: '傷害吸血比例 +5%' },
+    { id: 'accuracy', name: '鷹眼附魔', type: 'stat', value: 10, desc: '技能命中率 +10%' },
+    { id: 'priority', name: '迅捷附魔', type: 'stat', value: 0.5, desc: '技能優先度 +0.5 (疊加至 1.0 必定先制)' }
 ];
 
 export function useTournament({
@@ -28,9 +44,16 @@ export function useTournament({
     pendingSkillLearn
 }) {
     const [isTournamentOpen, setIsTournamentOpen] = useState(false);
-    const [tPhase, setTPhase] = useState('idle'); // idle, intro, bracket, battle_intro, fighting, mvp, champion, rewards
-    const [bracket, setBracket] = useState([]); // 存儲當前輪次的選單 (16, 8, 4, 2)
-    const [currentRound, setCurrentRound] = useState(1); // 1 = 16強, 2 = 8強, 3 = 4強, 4 = 決賽
+    const [tPhase, setTPhase] = useState('idle');
+    const [bracket, setBracket] = useState([]);
+    const [currentRound, setCurrentRound] = useState(1);
+    const [rogueBuffs, setRogueBuffs] = useState([]);
+    const [cardOptions, setCardOptions] = useState([]);
+
+    // 冠軍附魔選擇狀態
+    const [rewardOptions, setRewardOptions] = useState([]); // 隨機抽出的 3 個附魔效果
+    const [selectedRewardMoveIdx, setSelectedRewardMoveIdx] = useState(0); // 玩家選擇的技能索引
+    const [selectedRewardEffectIdx, setSelectedRewardEffectIdx] = useState(0); // 玩家選擇的附魔效果索引
 
     // Listen for battle conclusion
     useEffect(() => {
@@ -113,24 +136,19 @@ export function useTournament({
     // 模擬 AI 分組之間的對戰結果，產生下一輪名單
     const advanceBracket = (currentBracket) => {
         const nextBracket = [];
-        // 每兩個一組進行比賽
         for (let i = 0; i < currentBracket.length; i += 2) {
             const p1 = currentBracket[i];
             const p2 = currentBracket[i + 1];
 
             if (p1.isPlayer) {
-                // 玩家分組由實際對戰決定，此時呼叫 advanceBracket 代表玩家已贏
                 nextBracket.push(p1);
             } else if (p2 && p2.isPlayer) {
-                // 玩家在第二位 (理論上本系統玩家固定在 index 0，但做個防呆)
                 nextBracket.push(p2);
             } else if (p1 && p2) {
-                // AI vs AI: 根據等級決定勝率，等級高者優勢大
                 const p1Power = p1.monster.level + Math.random() * 10;
                 const p2Power = p2.monster.level + Math.random() * 10;
                 nextBracket.push(p1Power >= p2Power ? p1 : p2);
             } else {
-                // 單剩一人直接晉級
                 nextBracket.push(p1);
             }
         }
@@ -149,7 +167,8 @@ export function useTournament({
             setTPhase('intro');
             const initial = generateInitialBracket();
             setBracket(initial);
-            setCurrentRound(1); // 16強起步
+            setCurrentRound(1);
+            setRogueBuffs([]);
         } catch (err) {
             window.alert(`大賽引擎發生錯誤: ${err.message}`);
             console.error(err);
@@ -159,14 +178,12 @@ export function useTournament({
     const closeTournament = () => {
         setIsTournamentOpen(false);
         setTPhase('idle');
-        // 重置戰鬥狀態，防止大賽模式殘留導致其他系統 (如冒險、PvP) 的 UI 判定出錯
         setBattleState(prev => ({ ...prev, active: false, mode: 'wild', logs: [] }));
     };
 
     // 推進大賽階段
     const nextTournamentPhase = () => {
-        // 只有在非結局畫面 (champion/lost) 才攔截，確保結尾按 B 鍵能順利執行 closeTournament 關閉 Overlay
-        if (pendingSkillLearn && !['champion', 'lost'].includes(tPhase)) return;
+        if (pendingSkillLearn && !['champion', 'lost', 'champion_reward_move', 'champion_reward_effect'].includes(tPhase)) return;
 
         if (tPhase === 'intro') {
             setTPhase('bracket');
@@ -175,16 +192,15 @@ export function useTournament({
         } else if (tPhase === 'battle_intro') {
             setTPhase('fighting');
             startTournamentBattle();
-        } else if (tPhase === 'fighting') { // fighting 只是中繼，實際由戰鬥系統通知我們勝負
-            // 此處不作用
-        } else if (tPhase === 'mvp') {
-            // 已棄用，改由 handleTournamentWin 直接跳轉
-            if (currentRound >= 4) {
-                setTPhase('champion');
-            } else {
-                setCurrentRound(prev => prev + 1);
-                setTPhase('bracket');
-            }
+        } else if (tPhase === 'fighting') {
+            // 由戰鬥系統通知勝負
+        } else if (tPhase === 'card_selection') {
+            // 由 UI 呼叫 pickRogueCard 推進
+        } else if (tPhase === 'champion_reward_move') {
+            // 由 UI 呼叫，選完技能後進入選效果
+            setTPhase('champion_reward_effect');
+        } else if (tPhase === 'champion_reward_effect') {
+            // 由 confirmChampionReward 處理
         } else if (tPhase === 'champion') {
             giveChampionReward();
             closeTournament();
@@ -193,18 +209,24 @@ export function useTournament({
         }
     };
 
+    // 返回上一階段 (主要用於附魔選擇時返回選技能)
+    const prevTournamentPhase = () => {
+        if (tPhase === 'champion_reward_effect') {
+            setTPhase('champion_reward_move');
+            playBloop('pop');
+        }
+    };
+
     const startTournamentBattle = () => {
-        // 🔹 淘汰賽機制：對手永遠是當前對戰樹中離玩家最近的電腦 (index 1)
         const enemy = bracket[1];
         if (!enemy) {
             console.error("[Tournament] No enemy found at bracket[1].");
-            handleTournamentWin(); // 防呆直接晉級
+            handleTournamentWin();
             return;
         }
 
         const myId = String(advStats.id || myMonsterId);
 
-        // --- 性格修正系統 (Nature Modifiers) 同步自 App.js ---
         const getNatureMods = (tag) => {
             const mods = { hp: 1.0, atk: 1.0, def: 1.0, spd: 1.0 };
             const conf = NATURE_CONFIG[tag];
@@ -225,10 +247,8 @@ export function useTournament({
         const pDEF = calcFinalStat('def', myId, advStats.ivs.def, advStats.evs.def, derivedLevel, pNatureMods.def);
         const pSPD = calcFinalStat('spd', myId, advStats.ivs.spd, advStats.evs.spd, derivedLevel, pNatureMods.spd);
 
-        // --- 技能匯入核心邏輯 (帶入 4 招) ---
         let playerMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
-        // 如果寵物學會的技能不足 4 個，自動從其屬性對應的招式庫中補齊 (仿照冒險模式)
         if (playerMoves.length < 4) {
             const myTypes = (SPECIES_BASE_STATS[myId]?.types) || ['normal'];
             const autoGeneratedIds = generateMoves(myId, derivedLevel);
@@ -244,6 +264,29 @@ export function useTournament({
             playerMoves.push(SKILL_DATABASE.tackle || { id: 'tackle', name: '撞擊', power: 40, type: 'normal' });
         }
 
+        // --- 套用 Roguelike 強化卡片效果 ---
+        let finalMaxHP = pMaxHP;
+        let finalATK = pATK;
+        let finalDEF = pDEF;
+        let finalSPD = pSPD;
+        let specialEffects = { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 };
+
+        rogueBuffs.forEach(cardId => {
+            const card = ROGUE_CARDS.find(c => c.id === cardId);
+            if (!card) return;
+            if (card.type === 'stat') {
+                if (card.stat === 'hp') finalMaxHP = Math.floor(finalMaxHP * card.value);
+                if (card.stat === 'atk') finalATK = Math.floor(finalATK * card.value);
+                if (card.stat === 'def') finalDEF = Math.floor(finalDEF * card.value);
+                if (card.stat === 'spd') finalSPD = Math.floor(finalSPD * card.value);
+            } else if (card.type === 'special') {
+                if (card.effect === 'lifesteal') specialEffects.lifesteal += card.value;
+                if (card.effect === 'reflect') specialEffects.reflect += card.value;
+                if (card.effect === 'shield') specialEffects.shield += card.value;
+                if (card.effect === 'haste') specialEffects.haste = card.value;
+            }
+        });
+
         const newBattleState = {
             active: true,
             mode: 'tournament',
@@ -252,16 +295,18 @@ export function useTournament({
             player: {
                 id: myId,
                 name: "您的怪獸",
-                hp: pMaxHP,
-                maxHp: pMaxHP,
-                atk: pATK,
-                def: pDEF,
-                spd: pSPD,
+                hp: Math.floor(finalMaxHP * (1 + specialEffects.shield)),
+                maxHp: finalMaxHP,
+                atk: finalATK,
+                def: finalDEF,
+                spd: finalSPD,
                 level: derivedLevel,
                 type: (SPECIES_BASE_STATS[myId]?.types) || ['normal'],
                 moves: playerMoves,
                 status: null,
-                statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 }
+                statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 },
+                rogueEffects: specialEffects,
+                moveUpgrades: advStats.moveUpgrades || {} // 傳遞附魔數據給戰鬥引擎
             },
             enemy: {
                 ...enemy.monster,
@@ -272,7 +317,7 @@ export function useTournament({
             activeMsg: "",
             flashTarget: null,
             menuIdx: 0,
-            tournamentEnemyInfo: enemy // 附加供UI使用
+            tournamentEnemyInfo: enemy
         };
 
         setBattleState(newBattleState);
@@ -286,14 +331,103 @@ export function useTournament({
         }));
 
         if (currentRound >= 4) {
-            setTPhase('champion');
+            // 決賽勝利 → 進入冠軍附魔選擇
+            generateChampionRewards();
+            setTPhase('champion_reward_move');
         } else {
-            // 🔹 玩家贏了，進入下一階段並模擬 AI 勝負
-            setBracket(prev => advanceBracket(prev));
-            setCurrentRound(prev => prev + 1);
-            setTPhase('bracket');
+            // 🔹 玩家贏了，先進入卡片挑選階段
+            const shuffled = [...ROGUE_CARDS].sort(() => Math.random() - 0.5);
+            setCardOptions(shuffled.slice(0, 3));
+            setTPhase('card_selection');
         }
         playBloop('success');
+    };
+
+    const pickRogueCard = (card) => {
+        setRogueBuffs(prev => [...prev, card.id]);
+        setBracket(prev => advanceBracket(prev));
+        setCurrentRound(prev => prev + 1);
+        setTPhase('bracket');
+        playBloop('success');
+    };
+
+    // --- 冠軍附魔邏輯 ---
+    const generateChampionRewards = () => {
+        const shuffled = [...ENCHANT_EFFECTS].sort(() => 0.5 - Math.random());
+        setRewardOptions(shuffled.slice(0, 3));
+        setSelectedRewardMoveIdx(0);
+        setSelectedRewardEffectIdx(0);
+    };
+
+    const confirmChampionReward = (overrideEffectIdx = null) => {
+        // 🔹 防止重複觸發
+        if (tPhase !== 'champion_reward_effect') return;
+
+        const moveId = advStats.moves[selectedRewardMoveIdx];
+        if (!moveId) return;
+
+        const moveData_DB = SKILL_DATABASE[moveId];
+        // 🔹 防呆：禁止強化非攻擊技能 (BUFF 類)
+        if (!moveData_DB || (moveData_DB.power || 0) <= 0) {
+            updateDialogue(`【附魔失敗】技能 [${moveData_DB?.name || moveId}] 是輔助類技能，無法附魔！`);
+            playBloop('fail');
+            return;
+        }
+
+        const effectIdx = overrideEffectIdx !== null ? overrideEffectIdx : selectedRewardEffectIdx;
+        const effect = rewardOptions[effectIdx];
+        if (!effect) return;
+
+        // 🔹 防呆：檢查單項機率上限 (100%)
+        const currentAilmentVal = advStats.moveUpgrades?.[moveId]?.ailments?.[effect.id] || 0;
+        if (effect.type === 'ailment' && currentAilmentVal >= 100) {
+            updateDialogue(`【機率已達上限】技能 [${moveData_DB.name}] 的 ${effect.name} 已達 100% 上限！`);
+            playBloop('fail');
+            return;
+        }
+
+        // 檢查強化次數上限
+        const currentCount = advStats.moveUpgrades?.[moveId]?.count || 0;
+        if (currentCount >= 10) {
+            updateDialogue(`【強化次數上限】技能 [${moveData_DB.name}] 已達強化上限 (10/10)！`);
+            playBloop('fail');
+            return;
+        }
+
+        // 🔹 立刻切換階段，防止重複呼叫
+        setTPhase('champion');
+
+        setAdvStats(prev => {
+            const nextUpgrades = { ...(prev.moveUpgrades || {}) };
+            const moveData = nextUpgrades[moveId] || { ailments: {}, count: 0 };
+
+            if (moveData.count >= 10) return prev;
+
+            const nextAilments = { ...(moveData.ailments || {}) };
+            if (effect.type === 'ailment') {
+                nextAilments[effect.id] = Math.min(100, (nextAilments[effect.id] || 0) + effect.value);
+            } else {
+                nextAilments[effect.id] = (nextAilments[effect.id] || 0) + effect.value;
+            }
+
+            nextUpgrades[moveId] = {
+                ...moveData,
+                ailments: nextAilments,
+                count: (moveData.count || 0) + 1
+            };
+
+            // 確保所有狀態在同一次 setState 中更新，避免被 giveChampionReward 的 setState 覆蓋
+            return {
+                ...prev,
+                moveUpgrades: nextUpgrades,
+                basePower: Math.min(9999, prev.basePower + 50)
+            };
+        });
+
+        playBloop('success');
+        updateDialogue(`冠軍獎勵：[${moveData_DB.name}] 獲得了 ${effect.name}！(${currentCount + 1}/10)`);
+
+
     };
 
     const handleTournamentLoss = () => {
@@ -302,39 +436,29 @@ export function useTournament({
     };
 
     const giveChampionReward = () => {
-        // 給稀有度 5 的獎勵
-        if (ADV_ITEMS) {
-            const rareItems = ADV_ITEMS.filter(it => it.rarity >= 5);
-            if (rareItems.length > 0) {
-                const item = rareItems[Math.floor(Math.random() * rareItems.length)];
-                setInventory(prev => {
-                    const idx = prev.findIndex(it => it.id === item.id);
-                    if (idx !== -1) {
-                        const next = [...prev];
-                        next[idx] = { ...next[idx], count: (next[idx].count || 1) + 1 };
-                        return next;
-                    }
-                    if (prev.length >= 99) return prev;
-                    return [...prev, { ...item, count: 1 }];
-                });
-                updateDialogue(`取得了冠軍，獲得獎品 : ${item.name}`);
-            }
-        }
-        setAdvStats(prev => ({
-            ...prev,
-            basePower: Math.min(9999, prev.basePower + 50)
-        }));
+        // 此函式的內容已經合併進 confirmChampionReward，保留此空函式避免其他地方呼叫出錯
+        // 如果 tPhase 直接跳到 champion，需要單獨給予獎勵，可以在這裡實作
     };
 
     return {
         isTournamentOpen,
         tPhase,
-        opponents: bracket, // 🔹 維持原本名稱以與 UI 對接，但內部邏輯改為對戰樹
+        opponents: bracket,
         currentRound,
+        cardOptions,
         startTournament,
         closeTournament,
         nextTournamentPhase,
+        prevTournamentPhase,
+        pickRogueCard,
         handleTournamentWin,
-        handleTournamentLoss
+        handleTournamentLoss,
+        // --- 冠軍附魔 ---
+        rewardOptions,
+        selectedRewardMoveIdx,
+        setSelectedRewardMoveIdx,
+        selectedRewardEffectIdx,
+        setSelectedRewardEffectIdx,
+        confirmChampionReward
     };
 }

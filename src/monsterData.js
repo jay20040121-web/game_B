@@ -74,42 +74,68 @@ export const SKILL_DATABASE = {
         "id": "tackle",
         "name": "撞擊",
         "type": "normal",
-        "power": 40
+        "power": 40,
+        "accuracy": 95
     },
     "quick_attack": {
         "id": "quick_attack",
         "name": "電光一閃",
         "type": "normal",
         "power": 40,
+        "accuracy": 95,
         "priority": 1
     },
     "water_gun": {
         "id": "water_gun",
         "name": "水槍",
         "type": "water",
-        "power": 40
+        "power": 40,
+        "accuracy": 95
     },
     "ember": {
         "id": "ember",
         "name": "火花",
         "type": "fire",
         "power": 40,
-        "ailment": "burn",
-        "ailment_chance": 10
+        "accuracy": 95
     },
     "vine_whip": {
         "id": "vine_whip",
         "name": "藤鞭",
         "type": "grass",
-        "power": 45
+        "power": 45,
+        "accuracy": 95
     },
     "lick": {
         "id": "lick",
-        "name": "鬼臉",
+        "name": "舌舔",
         "type": "ghost",
-        "power": 40,
-        "ailment": "paralysis",
-        "ailment_chance": 30
+"power": 40,
+        "accuracy": 95
+    },
+    "cross_defense": {
+        "id": "cross_defense",
+        "name": "十字防守",
+        "type": "normal",
+        "power": 0,
+        "priority": 4,
+        "isProtect": true
+    },
+    "reflect_shield": {
+        "id": "reflect_shield",
+        "name": "反射盾",
+        "type": "normal",
+        "power": 0,
+        "priority": 1,
+        "addReflect": 0.25
+    },
+    "guardian_shield": {
+        "id": "guardian_shield",
+        "name": "守護者之盾",
+        "type": "normal",
+        "power": 0,
+        "priority": 1,
+        "addShield": 0.3
     },
     "swords_dance": {
         "id": "swords_dance",
@@ -128,7 +154,7 @@ export const SKILL_DATABASE = {
     },
     "work_up": {
         "id": "work_up",
-        "name": "激勵",
+        "name": "自我激勵",
         "type": "normal",
         "power": 0,
         "priority": 2,
@@ -143,71 +169,75 @@ export const SKILL_DATABASE = {
     },
     "extreme_speed": {
         "id": "extreme_speed",
-        "name": "衝刺",
+        "name": "極限衝刺",
         "type": "normal",
         "power": 80,
+        "accuracy": 75,
         "priority": 2
     },
     "fake_out": {
         "id": "fake_out",
-        "name": "快速奇襲",
+        "name": "擊掌奇襲",
         "type": "normal",
         "power": 40,
-        "priority": 3,
-        "flinch_chance": 100
+        "accuracy": 95,
+        "priority": 3
     },
     "feint": {
         "id": "feint",
-        "name": "假動作",
+        "name": "佯攻",
         "type": "normal",
         "power": 30,
         "priority": 2
     },
     "hyper_beam": {
         "id": "hyper_beam",
-        "name": "能量波",
+        "name": "能量衝擊波",
         "type": "normal",
-        "power": 150,
-        "accuracy": 90
+"power": 150,
+        "accuracy": 20
     },
     "giga_impact": {
         "id": "giga_impact",
-        "name": "終極絕招",
+        "name": "終極衝擊",
         "type": "normal",
-        "power": 150,
-        "accuracy": 90
+"power": 150,
+        "accuracy": 20
     },
     "last_resort": {
         "id": "last_resort",
-        "name": "直球攻擊",
+        "name": "珍藏",
         "type": "normal",
-        "power": 140
+        "power": 140,
+        "accuracy": 30
     },
     "skull_bash": {
         "id": "skull_bash",
-        "name": "頭錘",
+        "name": "火箭頭錘",
         "type": "normal",
-        "power": 130
+        "power": 130,
+        "accuracy": 40
     },
     "mega_kick": {
         "id": "mega_kick",
         "name": "百萬噸重踢",
         "type": "normal",
-        "power": 120,
-        "accuracy": 75
+"power": 120,
+        "accuracy": 40
     },
     "thrash": {
         "id": "thrash",
         "name": "大鬧一番",
         "type": "normal",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "double_edge": {
         "id": "double_edge",
-        "name": "捨身攻擊",
+        "name": "捨身衝撞",
         "type": "normal",
         "power": 120,
-        "recoil": 0.33
+        "accuracy": 40
     },
     "growth": {
         "id": "growth",
@@ -286,14 +316,14 @@ export const SKILL_DATABASE = {
     },
     "egg_bomb": {
         "id": "egg_bomb",
-        "name": "炸彈",
+        "name": "炸蛋",
         "type": "normal",
-        "power": 100,
-        "accuracy": 75
+"power": 100,
+        "accuracy": 60
     },
     "sharpen": {
         "id": "sharpen",
-        "name": "鬼人化",
+        "name": "稜角化",
         "type": "normal",
         "power": 0,
         "priority": 2,
@@ -327,335 +357,321 @@ export const SKILL_DATABASE = {
     },
     "judgment": {
         "id": "judgment",
-        "name": "終極審判",
+        "name": "終極裁決",
         "type": "normal",
-        "power": 100
+        "power": 100,
+        "accuracy": 60
     },
     "take_down": {
         "id": "take_down",
         "name": "猛撞",
         "type": "normal",
         "power": 90,
-        "recoil": 0.25,
-        "accuracy": 85
+"accuracy": 70
     },
     "uproar": {
         "id": "uproar",
         "name": "吵鬧",
         "type": "normal",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "hyper_voice": {
         "id": "hyper_voice",
-        "name": "巨吼",
+        "name": "巨聲",
         "type": "normal",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "rock_climb": {
         "id": "rock_climb",
-        "name": "跳砍",
+        "name": "攀岩",
         "type": "normal",
         "power": 90,
-        "ailment": "confusion",
-        "ailment_chance": 20,
-        "accuracy": 85
+"accuracy": 70
     },
     "body_slam": {
         "id": "body_slam",
-        "name": "柔術",
+        "name": "重力壓制",
         "type": "normal",
         "power": 85,
-        "ailment": "paralysis",
-        "ailment_chance": 30
+        "accuracy": 75
     },
     "mega_punch": {
         "id": "mega_punch",
         "name": "百萬噸重拳",
         "type": "normal",
-        "power": 80,
-        "accuracy": 85
+"power": 80,
+        "accuracy": 75
     },
     "razor_wind": {
         "id": "razor_wind",
-        "name": "手刀",
-        "type": "normal",
-        "power": 80
-    },
-    "slam": {
-        "id": "slam",
-        "name": "互毆",
+        "name": "旋風刀",
         "type": "normal",
         "power": 80,
         "accuracy": 75
     },
-    "strength": {
-        "id": "strength",
-        "name": "怪力撞擊",
+    "slam": {
+        "id": "slam",
+        "name": "摔打",
         "type": "normal",
         "power": 80
+    },
+    "strength": {
+        "id": "strength",
+        "name": "怪力",
+        "type": "normal",
+        "power": 80,
+        "accuracy": 75
     },
     "hyper_fang": {
         "id": "hyper_fang",
-        "name": "必殺咬",
+        "name": "必殺門牙",
         "type": "normal",
         "power": 80,
-        "flinch_chance": 10,
-        "accuracy": 90
+"accuracy": 75
     },
     "tri_attack": {
         "id": "tri_attack",
-        "name": "三段攻擊",
+        "name": "三重攻擊",
         "type": "normal",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "crush_claw": {
         "id": "crush_claw",
-        "name": "尖爪",
+        "name": "撕裂爪",
         "type": "normal",
         "power": 75,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 50,
-        "stat_target": "enemy"
+        "accuracy": 80
     },
     "headbutt": {
         "id": "headbutt",
-        "name": "詠春",
+        "name": "頭錘",
         "type": "normal",
         "power": 70,
-        "flinch_chance": 30
+        "accuracy": 80
     },
     "dizzy_punch": {
         "id": "dizzy_punch",
         "name": "迷昏拳",
         "type": "normal",
         "power": 70,
-        "ailment": "confusion",
-        "ailment_chance": 20
+        "accuracy": 80
     },
     "slash": {
         "id": "slash",
-        "name": "快打斬",
+        "name": "劈開",
         "type": "normal",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "facade": {
         "id": "facade",
-        "name": "反擊拳",
+        "name": "硬撐",
         "type": "normal",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "smelling_salts": {
         "id": "smelling_salts",
-        "name": "大叫",
+        "name": "清醒",
         "type": "normal",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "secret_power": {
         "id": "secret_power",
-        "name": "秘密力量",
+        "name": "秘密之力",
         "type": "normal",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "stomp": {
         "id": "stomp",
-        "name": "大象踏",
+        "name": "踩踏",
         "type": "normal",
         "power": 65,
-        "flinch_chance": 30
+        "accuracy": 85
     },
     "sky_attack": {
         "id": "sky_attack",
-        "name": "天擊",
+        "name": "天際猛擊",
         "type": "flying",
         "power": 140,
-        "flinch_chance": 30,
-        "accuracy": 90
+"accuracy": 30
     },
     "brave_bird": {
         "id": "brave_bird",
-        "name": "神鳥",
+        "name": "勇鳥猛攻",
         "type": "flying",
         "power": 120,
-        "recoil": 0.33
+        "accuracy": 40
     },
     "dragon_ascent": {
         "id": "dragon_ascent",
-        "name": "天空衝擊",
+        "name": "天際衝擊",
         "type": "flying",
         "power": 120,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            },
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 40
     },
     "hurricane": {
         "id": "hurricane",
-        "name": "暴風之夜",
+        "name": "暴風",
         "type": "flying",
         "power": 110,
-        "ailment": "confusion",
-        "ailment_chance": 30,
-        "accuracy": 70
+"accuracy": 50
     },
     "aeroblast": {
         "id": "aeroblast",
-        "name": "上升氣旋",
+        "name": "氣旋攻擊",
         "type": "flying",
-        "power": 100,
-        "accuracy": 95
+"power": 100,
+        "accuracy": 60
     },
     "beak_blast": {
         "id": "beak_blast",
-        "name": "鳥嘴炮",
+        "name": "鳥嘴加農炮",
         "type": "flying",
         "power": 100,
+        "accuracy": 60,
         "priority": -3
     },
     "bleakwind_storm": {
         "id": "bleakwind_storm",
-        "name": "築巢",
+        "name": "枯葉風暴",
         "type": "flying",
-        "power": 100
+        "power": 100,
+        "accuracy": 60
     },
     "fly": {
         "id": "fly",
         "name": "飛翔",
         "type": "flying",
-        "power": 90,
-        "accuracy": 95
+"power": 90,
+        "accuracy": 70
     },
     "floaty_fall": {
         "id": "floaty_fall",
-        "name": "墜落",
+        "name": "飄飄墜落",
         "type": "flying",
         "power": 90,
-        "flinch_chance": 30,
-        "accuracy": 95
+"accuracy": 70
     },
     "bounce": {
         "id": "bounce",
-        "name": "跳起",
+        "name": "彈跳",
         "type": "flying",
         "power": 85,
-        "ailment": "paralysis",
-        "ailment_chance": 30,
-        "accuracy": 85
+"accuracy": 75
     },
     "drill_peck": {
         "id": "drill_peck",
-        "name": "啄彈",
+        "name": "啄鑽",
         "type": "flying",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "oblivion_wing": {
         "id": "oblivion_wing",
         "name": "死亡之翼",
         "type": "flying",
         "power": 80,
-        "drain": 0.75
+        "accuracy": 75
     },
     "air_slash": {
         "id": "air_slash",
-        "name": "空氣刀",
+        "name": "空氣斬",
         "type": "flying",
         "power": 75,
-        "flinch_chance": 30,
-        "accuracy": 95
+"accuracy": 80
     },
     "chatter": {
         "id": "chatter",
         "name": "瘋狂大鬧",
         "type": "flying",
         "power": 65,
-        "ailment": "confusion",
-        "ailment_chance": 100
+        "accuracy": 85
     },
     "wing_attack": {
         "id": "wing_attack",
-        "name": "翅膀拍擊",
+        "name": "翅膀攻擊",
         "type": "flying",
-        "power": 80
+"power": 80,
+        "accuracy": 75
     },
     "air_cutter": {
         "id": "air_cutter",
-        "name": "空氣刃",
+        "name": "空氣利刃",
         "type": "flying",
-        "power": 60,
-        "accuracy": 95
+"power": 60,
+        "accuracy": 85
     },
     "aerial_ace": {
         "id": "aerial_ace",
-        "name": "燕歸來",
+        "name": "燕返",
         "type": "flying",
-        "power": 90
+"power": 90,
+        "accuracy": 70
     },
     "pluck": {
         "id": "pluck",
-        "name": "捕食",
+        "name": "啄食",
         "type": "flying",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "sky_drop": {
         "id": "sky_drop",
         "name": "自由落體",
         "type": "flying",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "acrobatics": {
         "id": "acrobatics",
-        "name": "高速飛行",
+        "name": "雜技",
         "type": "flying",
-        "power": 55
+        "power": 55,
+        "accuracy": 90
     },
     "gust": {
         "id": "gust",
-        "name": "旋風",
+        "name": "起風",
         "type": "flying",
-        "power": 40
+        "power": 40,
+        "accuracy": 95
     },
     "dual_wingbeat": {
         "id": "dual_wingbeat",
-        "name": "羽毛攻擊",
+        "name": "雙翼",
         "type": "flying",
-        "power": 40
+        "power": 40,
+        "accuracy": 95
     },
     "peck": {
         "id": "peck",
-        "name": "鷹爪",
+        "name": "啄",
         "type": "flying",
         "power": 35
     },
     "gunk_shot": {
         "id": "gunk_shot",
-        "name": "垃圾山",
+        "name": "垃圾射擊",
         "type": "poison",
         "power": 120,
-        "ailment": "poison",
-        "ailment_chance": 30,
-        "accuracy": 80
+"accuracy": 40
     },
     "belch": {
         "id": "belch",
-        "name": "嘔吐物",
+        "name": "打嗝",
         "type": "poison",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "acid_armor": {
         "id": "acid_armor",
-        "name": "酸性鎧甲",
+        "name": "溶化",
         "type": "poison",
         "power": 0,
         "priority": 2,
@@ -670,7 +686,7 @@ export const SKILL_DATABASE = {
     },
     "coil": {
         "id": "coil",
-        "name": "生猛毒藥",
+        "name": "盤蜷",
         "type": "poison",
         "power": 0,
         "priority": 2,
@@ -689,193 +705,174 @@ export const SKILL_DATABASE = {
     },
     "noxious_torque": {
         "id": "noxious_torque",
-        "name": "傳染病",
+        "name": "劇毒暴衝",
         "type": "poison",
-        "power": 100
+        "power": 100,
+        "accuracy": 60
     },
     "malignant_chain": {
         "id": "malignant_chain",
-        "name": "邪毒娃娃",
+        "name": "邪毒鎖鏈",
         "type": "poison",
-        "power": 100
+        "power": 100,
+        "accuracy": 60
     },
     "sludge_wave": {
         "id": "sludge_wave",
-        "name": "垃圾山",
+        "name": "污泥波",
         "type": "poison",
         "power": 95,
-        "ailment": "poison",
-        "ailment_chance": 10
+        "accuracy": 70
     },
     "sludge_bomb": {
         "id": "sludge_bomb",
-        "name": "毒氣炸彈",
+        "name": "污泥炸彈",
         "type": "poison",
         "power": 90,
-        "ailment": "poison",
-        "ailment_chance": 30
+        "accuracy": 70
     },
     "shell_side_arm": {
         "id": "shell_side_arm",
-        "name": "生化武器",
+        "name": "臂貝武器",
         "type": "poison",
         "power": 90,
-        "ailment": "poison",
-        "ailment_chance": 20
+        "accuracy": 70
     },
     "poison_jab": {
         "id": "poison_jab",
-        "name": "劇毒",
+        "name": "毒擊",
         "type": "poison",
         "power": 80,
-        "ailment": "poison",
-        "ailment_chance": 30
+        "accuracy": 75
     },
     "dire_claw": {
         "id": "dire_claw",
-        "name": "毒爪",
+        "name": "克命爪",
         "type": "poison",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "cross_poison": {
         "id": "cross_poison",
-        "name": "毒刃",
+        "name": "十字毒刃",
         "type": "poison",
         "power": 70,
-        "ailment": "poison",
-        "ailment_chance": 10
+        "accuracy": 80
     },
     "sludge": {
         "id": "sludge",
-        "name": "污泥炸彈",
+        "name": "污泥攻擊",
         "type": "poison",
         "power": 65,
-        "ailment": "poison",
-        "ailment_chance": 30
+        "accuracy": 85
     },
     "venoshock": {
         "id": "venoshock",
-        "name": "毒液術",
+        "name": "毒液衝擊",
         "type": "poison",
-        "power": 65
+        "power": 65,
+        "accuracy": 85
     },
     "barb_barrage": {
         "id": "barb_barrage",
-        "name": "毒千本",
+        "name": "毒千針",
         "type": "poison",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "poison_fang": {
         "id": "poison_fang",
-        "name": "劇毒之牙",
+        "name": "劇毒牙",
         "type": "poison",
         "power": 50,
-        "ailment": "poison",
-        "ailment_chance": 50
+        "accuracy": 90
     },
     "poison_tail": {
         "id": "poison_tail",
-        "name": "毒液",
+        "name": "毒尾",
         "type": "poison",
         "power": 50,
-        "ailment": "poison",
-        "ailment_chance": 10
+        "accuracy": 90
     },
     "clear_smog": {
         "id": "clear_smog",
-        "name": "毒煙",
+        "name": "清除之煙",
         "type": "poison",
-        "power": 50
+        "power": 50,
+        "accuracy": 90
     },
     "acid": {
         "id": "acid",
-        "name": "腐蝕液",
+        "name": "溶解液",
         "type": "poison",
         "power": 40,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "accuracy": 95
     },
     "acid_spray": {
         "id": "acid_spray",
-        "name": "胃酸",
+        "name": "酸液炸彈",
         "type": "poison",
         "power": 40,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -2
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 95
     },
     "smog": {
         "id": "smog",
-        "name": "汙染",
+        "name": "濁霧",
         "type": "poison",
-        "power": 60,
-        "ailment": "poison",
-        "ailment_chance": 40,
-        "accuracy": 70
+"power": 60,
+        "accuracy": 85
     },
     "mortal_spin": {
         "id": "mortal_spin",
-        "name": "吐滿地",
+        "name": "晶光转转",
         "type": "poison",
-        "power": 39
+        "power": 30
     },
     "poison_sting": {
         "id": "poison_sting",
         "name": "毒針",
         "type": "poison",
-        "power": 15,
-        "ailment": "poison",
-        "ailment_chance": 30
+        "power": 15
     },
     "accelerock": {
         "id": "accelerock",
-        "name": "岩落",
+        "name": "衝岩",
         "type": "rock",
         "power": 40,
+        "accuracy": 95,
         "priority": 1
     },
     "rock_wrecker": {
         "id": "rock_wrecker",
         "name": "岩石炮",
         "type": "rock",
-        "power": 150,
-        "accuracy": 90
+"power": 150,
+        "accuracy": 20
     },
     "head_smash": {
         "id": "head_smash",
-        "name": "頭錘",
+        "name": "雙刃頭錘",
         "type": "rock",
-        "power": 150,
-        "accuracy": 80
+"power": 150,
+        "accuracy": 20
     },
     "meteor_beam": {
         "id": "meteor_beam",
-        "name": "隕石術",
+        "name": "流星光束",
         "type": "rock",
-        "power": 120,
-        "accuracy": 90
+"power": 120,
+        "accuracy": 40
     },
     "rock_polish": {
         "id": "rock_polish",
-        "name": "打磨石頭",
+        "name": "岩石打磨",
         "type": "rock",
         "power": 0,
         "priority": 2,
         "stat_changes": [
             {
                 "stat": "spd",
-                "change": 3
+                "change": 2
             }
         ],
         "stat_chance": 100,
@@ -883,144 +880,112 @@ export const SKILL_DATABASE = {
     },
     "stone_edge": {
         "id": "stone_edge",
-        "name": "巨岩拳",
+        "name": "尖石攻擊",
         "type": "rock",
-        "power": 100,
-        "accuracy": 80
+"power": 100,
+        "accuracy": 60
     },
     "diamond_storm": {
         "id": "diamond_storm",
-        "name": "鑽石撞擊",
+        "name": "鑽石風暴",
         "type": "rock",
         "power": 100,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": 2
-            }
-        ],
-        "stat_chance": 50,
-        "stat_target": "enemy"
+        "accuracy": 60
     },
     "mighty_cleave": {
         "id": "mighty_cleave",
-        "name": "硬化攻擊",
+        "name": "強刃攻擊",
         "type": "rock",
-        "power": 95
+        "power": 95,
+        "accuracy": 70
     },
     "power_gem": {
         "id": "power_gem",
-        "name": "寶石之心",
+        "name": "力量寶石",
         "type": "rock",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "rock_slide": {
         "id": "rock_slide",
-        "name": "土石流",
+        "name": "岩崩",
         "type": "rock",
         "power": 75,
-        "flinch_chance": 30,
-        "accuracy": 90
+"accuracy": 80
     },
     "stone_axe": {
         "id": "stone_axe",
-        "name": "岩手",
+        "name": "岩斧",
         "type": "rock",
-        "power": 65
+        "power": 65,
+        "accuracy": 85
     },
     "ancient_power": {
         "id": "ancient_power",
-        "name": "巨神兵",
+        "name": "原始之力",
         "type": "rock",
         "power": 60,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": 1
-            },
-            {
-                "stat": "def",
-                "change": 1
-            },
-            {
-                "stat": "atk",
-                "change": 1
-            },
-            {
-                "stat": "def",
-                "change": 1
-            },
-            {
-                "stat": "spd",
-                "change": 1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "accuracy": 85
     },
     "rock_tomb": {
         "id": "rock_tomb",
-        "name": "路線封鎖",
+        "name": "岩石封鎖",
         "type": "rock",
         "power": 60,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 85
     },
     "rock_throw": {
         "id": "rock_throw",
-        "name": "小心落石",
+        "name": "落石",
         "type": "rock",
-        "power": 60,
-        "accuracy": 90
+"power": 60,
+        "accuracy": 85
     },
     "smack_down": {
         "id": "smack_down",
-        "name": "石頭攻擊",
+        "name": "擊落",
         "type": "rock",
-        "power": 50
+        "power": 50,
+        "accuracy": 90
     },
     "salt_cure": {
         "id": "salt_cure",
-        "name": "粗鹽",
+        "name": "鹽醃",
         "type": "rock",
-        "power": 40
+        "power": 40,
+        "accuracy": 95
     },
     "rollout": {
         "id": "rollout",
-        "name": "滾動之軀",
+        "name": "滾動",
         "type": "rock",
-        "power": 35
+        "power": 30
     },
     "rock_blast": {
         "id": "rock_blast",
-        "name": "岩石衝撞",
+        "name": "岩石爆擊",
         "type": "rock",
-        "power": 40,
-        "accuracy": 90
+"power": 40,
+        "accuracy": 95
     },
     "first_impression": {
         "id": "first_impression",
-        "name": "虎頭蜂針",
+        "name": "迎頭一擊",
         "type": "bug",
         "power": 90,
+        "accuracy": 70,
         "priority": 2
     },
     "megahorn": {
         "id": "megahorn",
-        "name": "觸角攻擊",
+        "name": "超級角擊",
         "type": "bug",
-        "power": 120,
-        "accuracy": 85
+"power": 120,
+        "accuracy": 40
     },
     "tail_glow": {
         "id": "tail_glow",
-        "name": "螢火蟲之光",
+        "name": "螢火",
         "type": "bug",
         "power": 0,
         "priority": 2,
@@ -1035,7 +1000,7 @@ export const SKILL_DATABASE = {
     },
     "defend_order": {
         "id": "defend_order",
-        "name": "甲殼防禦",
+        "name": "防禦指令",
         "type": "bug",
         "power": 0,
         "priority": 2,
@@ -1054,7 +1019,7 @@ export const SKILL_DATABASE = {
     },
     "quiver_dance": {
         "id": "quiver_dance",
-        "name": "蝴蝶之舞",
+        "name": "蝶舞",
         "type": "bug",
         "power": 0,
         "priority": 2,
@@ -1080,664 +1045,538 @@ export const SKILL_DATABASE = {
         "name": "蟲鳴",
         "type": "bug",
         "power": 90,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "accuracy": 70
     },
     "attack_order": {
         "id": "attack_order",
-        "name": "蟻兵攻擊",
+        "name": "攻擊指令",
         "type": "bug",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "pollen_puff": {
         "id": "pollen_puff",
-        "name": "花粉",
+        "name": "花粉團",
         "type": "bug",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "leech_life": {
         "id": "leech_life",
         "name": "吸血",
         "type": "bug",
         "power": 80,
-        "drain": 0.5
+        "accuracy": 75
     },
     "x_scissor": {
         "id": "x_scissor",
-        "name": "巨型鉗",
+        "name": "十字剪",
         "type": "bug",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "lunge": {
         "id": "lunge",
-        "name": "蟲蟲撲擊",
+        "name": "猛撲",
         "type": "bug",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "signal_beam": {
         "id": "signal_beam",
-        "name": "信號光彈",
+        "name": "信號光束",
         "type": "bug",
         "power": 75,
-        "ailment": "confusion",
-        "ailment_chance": 10
+        "accuracy": 80
     },
     "u_turn": {
         "id": "u_turn",
-        "name": "蟲蜂飛行",
+        "name": "急速折返",
         "type": "bug",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "skitter_smack": {
         "id": "skitter_smack",
-        "name": "爬行啃咬",
+        "name": "爬擊",
         "type": "bug",
         "power": 70,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 80
     },
     "steamroller": {
         "id": "steamroller",
-        "name": "瘋狂啃咬",
+        "name": "瘋狂滾壓",
         "type": "bug",
         "power": 65,
-        "flinch_chance": 30
+        "accuracy": 85
     },
     "silver_wind": {
         "id": "silver_wind",
-        "name": "治癒花粉",
+        "name": "銀色旋風",
         "type": "bug",
         "power": 60,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": 1
-            },
-            {
-                "stat": "def",
-                "change": 1
-            },
-            {
-                "stat": "atk",
-                "change": 1
-            },
-            {
-                "stat": "def",
-                "change": 1
-            },
-            {
-                "stat": "spd",
-                "change": 1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "accuracy": 85
     },
     "bug_bite": {
         "id": "bug_bite",
         "name": "蟲咬",
         "type": "bug",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "struggle_bug": {
         "id": "struggle_bug",
-        "name": "蟲蟲振翅",
+        "name": "蟲之抵抗",
         "type": "bug",
         "power": 50,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 90
     },
     "fell_stinger": {
         "id": "fell_stinger",
         "name": "致命針刺",
         "type": "bug",
-        "power": 50
+        "power": 50,
+        "accuracy": 90
     },
     "pounce": {
         "id": "pounce",
-        "name": "蟲蟲撲擊",
+        "name": "虫扑",
         "type": "bug",
         "power": 50,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 90
     },
     "fury_cutter": {
         "id": "fury_cutter",
-        "name": "居合斬",
+        "name": "連斬",
         "type": "bug",
-        "power": 60,
-        "accuracy": 95
+"power": 60,
+        "accuracy": 85
     },
     "twineedle": {
         "id": "twineedle",
-        "name": "雙針攻擊",
+        "name": "雙針",
         "type": "bug",
-        "power": 40,
-        "ailment": "poison",
-        "ailment_chance": 20
+"power": 40,
+        "accuracy": 95
     },
     "pin_missile": {
         "id": "pin_missile",
-        "name": "飛針",
+        "name": "飛彈針",
         "type": "bug",
-        "power": 55,
-        "accuracy": 95
+"power": 55,
+        "accuracy": 90
     },
     "infestation": {
         "id": "infestation",
         "name": "死纏爛打",
         "type": "bug",
-        "power": 35,
-        "ailment": "trap",
-        "ailment_chance": 100
+"power": 35
     },
     "shadow_sneak": {
         "id": "shadow_sneak",
-        "name": "偷襲",
+        "name": "影子偷襲",
         "type": "ghost",
         "power": 40,
+        "accuracy": 95,
         "priority": 1
     },
     "shadow_force": {
         "id": "shadow_force",
-        "name": "潛襲",
+        "name": "暗影潛襲",
         "type": "ghost",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "astral_barrage": {
         "id": "astral_barrage",
-        "name": "無光",
+        "name": "星碎",
         "type": "ghost",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "poltergeist": {
         "id": "poltergeist",
-        "name": "靈",
+        "name": "靈騷",
         "type": "ghost",
-        "power": 110
+        "power": 110,
+        "accuracy": 50
     },
     "moongeist_beam": {
         "id": "moongeist_beam",
-        "name": "黑暗",
+        "name": "暗影之光",
         "type": "ghost",
-        "power": 100
+        "power": 100,
+        "accuracy": 60
     },
     "phantom_force": {
         "id": "phantom_force",
-        "name": "幻影奇襲",
+        "name": "潛靈奇襲",
         "type": "ghost",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "spectral_thief": {
         "id": "spectral_thief",
-        "name": "黑夜",
+        "name": "暗影偷盜",
         "type": "ghost",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "shadow_bone": {
         "id": "shadow_bone",
         "name": "暗影之骨",
         "type": "ghost",
         "power": 85,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 20,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "shadow_ball": {
         "id": "shadow_ball",
-        "name": "暗影巨兵",
+        "name": "暗影球",
         "type": "ghost",
-        "power": 60,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -2
-            }
-        ],
-        "stat_chance": 20,
-        "stat_target": "enemy"
+"power": 60,
+        "accuracy": 85
     },
     "spirit_shackle": {
         "id": "spirit_shackle",
-        "name": "影子人",
+        "name": "縫影",
         "type": "ghost",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "bitter_malice": {
         "id": "bitter_malice",
-        "name": "冤魂",
+        "name": "冤冤相報",
         "type": "ghost",
-        "power": 75
+        "power": 75,
+        "accuracy": 80
     },
     "shadow_claw": {
         "id": "shadow_claw",
-        "name": "魅影突襲",
+        "name": "暗影爪",
         "type": "ghost",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "hex": {
         "id": "hex",
         "name": "禍不單行",
         "type": "ghost",
-        "power": 40
+"power": 40,
+        "accuracy": 95
     },
     "shadow_punch": {
         "id": "shadow_punch",
         "name": "暗影拳",
         "type": "ghost",
-        "power": 90
+"power": 90,
+        "accuracy": 70
     },
     "ominous_wind": {
         "id": "ominous_wind",
-        "name": "招魂術",
+        "name": "奇異之風",
         "type": "ghost",
-        "power": 60
+        "power": 60,
+"accuracy": 85
     },
     "infernal_parade": {
         "id": "infernal_parade",
-        "name": "群魔遊行",
+        "name": "群魔乱舞",
         "type": "ghost",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "last_respects": {
         "id": "last_respects",
-        "name": "見鬼",
+        "name": "扫墓",
         "type": "ghost",
-        "power": 50
+        "power": 50,
+        "accuracy": 90
     },
     "rage_fist": {
         "id": "rage_fist",
-        "name": "龍火拳",
+        "name": "愤怒之拳",
         "type": "ghost",
-        "power": 50
+        "power": 50,
+        "accuracy": 90
     },
     "astonish": {
         "id": "astonish",
-        "name": "火爆彈頭",
+        "name": "驚嚇",
         "type": "ghost",
-        "power": 30,
-        "flinch_chance": 30
+        "power": 30
     },
     "eruption": {
         "id": "eruption",
-        "name": "火山爆發",
+        "name": "噴火",
         "type": "fire",
-        "power": 150
+        "power": 150,
+        "accuracy": 20
     },
     "blast_burn": {
         "id": "blast_burn",
-        "name": "爆炸陷阱",
+        "name": "爆炸烈焰",
         "type": "fire",
-        "power": 150,
-        "accuracy": 90
+"power": 150,
+        "accuracy": 20
     },
     "shell_trap": {
         "id": "shell_trap",
-        "name": "燃燒彈",
+        "name": "陷阱甲殼",
         "type": "fire",
         "power": 150,
+        "accuracy": 20,
         "priority": -3
     },
     "mind_blown": {
         "id": "mind_blown",
-        "name": "核彈頭",
+        "name": "驚爆大頭",
         "type": "fire",
-        "power": 150
+        "power": 150,
+        "accuracy": 20
     },
     "overheat": {
         "id": "overheat",
-        "name": "超溫攻擊",
+        "name": "過熱",
         "type": "fire",
         "power": 130,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -2
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 40
     },
     "blue_flare": {
         "id": "blue_flare",
-        "name": "青炎",
+        "name": "青焰",
         "type": "fire",
         "power": 130,
-        "ailment": "burn",
-        "ailment_chance": 20,
-        "accuracy": 85
+"accuracy": 40
     },
     "burn_up": {
         "id": "burn_up",
-        "name": "燃燒殆盡",
+        "name": "燃盡",
         "type": "fire",
-        "power": 130
+        "power": 130,
+        "accuracy": 40
     },
     "flare_blitz": {
         "id": "flare_blitz",
-        "name": "閃焰火光",
+        "name": "閃焰衝鋒",
         "type": "fire",
         "power": 120,
-        "recoil": 0.33,
-        "ailment": "burn",
-        "ailment_chance": 10
+        "accuracy": 40
     },
     "pyro_ball": {
         "id": "pyro_ball",
-        "name": "火薔薇",
+        "name": "火焰球",
         "type": "fire",
         "power": 120,
-        "ailment": "burn",
-        "ailment_chance": 10,
-        "accuracy": 90
+"accuracy": 40
     },
     "raging_fury": {
         "id": "raging_fury",
-        "name": "大怒神",
+        "name": "大愤慨",
         "type": "fire",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "armor_cannon": {
         "id": "armor_cannon",
-        "name": "熔岩火炮",
+        "name": "铠农炮",
         "type": "fire",
         "power": 120,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            },
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 40
     },
     "fire_blast": {
         "id": "fire_blast",
-        "name": "爆炎",
+        "name": "大字爆炎",
         "type": "fire",
         "power": 110,
-        "ailment": "burn",
-        "ailment_chance": 10,
-        "accuracy": 85
+"accuracy": 50
     },
     "sacred_fire": {
         "id": "sacred_fire",
-        "name": "聖火",
+        "name": "神聖之火",
         "type": "fire",
         "power": 100,
-        "ailment": "burn",
-        "ailment_chance": 50
+        "accuracy": 60
     },
     "magma_storm": {
         "id": "magma_storm",
         "name": "熔岩風暴",
         "type": "fire",
         "power": 100,
-        "ailment": "trap",
-        "ailment_chance": 100,
-        "accuracy": 75
+"accuracy": 60
     },
     "inferno": {
         "id": "inferno",
         "name": "煉獄",
         "type": "fire",
         "power": 100,
-        "ailment": "burn",
-        "ailment_chance": 100,
-        "accuracy": 50
+"accuracy": 60
     },
     "searing_shot": {
         "id": "searing_shot",
-        "name": "火焰球",
+        "name": "火焰彈",
         "type": "fire",
         "power": 100,
-        "ailment": "burn",
-        "ailment_chance": 30
+        "accuracy": 60
     },
     "fusion_flare": {
         "id": "fusion_flare",
-        "name": "雙重火力",
+        "name": "交錯火焰",
         "type": "fire",
-        "power": 100
+        "power": 100,
+        "accuracy": 60
     },
     "heat_wave": {
         "id": "heat_wave",
-        "name": "烈焰風暴",
+        "name": "熱風",
         "type": "fire",
         "power": 95,
-        "ailment": "burn",
-        "ailment_chance": 10,
-        "accuracy": 90
+"accuracy": 70
     },
     "flamethrower": {
         "id": "flamethrower",
-        "name": "烈焰射線",
+        "name": "噴射火焰",
         "type": "fire",
         "power": 90,
-        "ailment": "burn",
-        "ailment_chance": 10
+        "accuracy": 70
     },
     "bitter_blade": {
         "id": "bitter_blade",
-        "name": "火箭拳",
+        "name": "悔念剑",
         "type": "fire",
         "power": 90,
-        "drain": 0.5
+        "accuracy": 70
     },
     "blaze_kick": {
         "id": "blaze_kick",
-        "name": "熔岩踢",
+        "name": "火焰踢",
         "type": "fire",
         "power": 85,
-        "ailment": "burn",
-        "ailment_chance": 10,
-        "accuracy": 90
+"accuracy": 75
     },
     "lava_plume": {
         "id": "lava_plume",
-        "name": "噴火",
+        "name": "噴煙",
         "type": "fire",
         "power": 80,
-        "ailment": "burn",
-        "ailment_chance": 30
+        "accuracy": 75
     },
     "fire_pledge": {
         "id": "fire_pledge",
         "name": "火之誓約",
         "type": "fire",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "fiery_dance": {
         "id": "fiery_dance",
         "name": "火之舞",
         "type": "fire",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": 1
-            }
-        ],
-        "stat_chance": 50,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "fire_lash": {
         "id": "fire_lash",
         "name": "火焰鞭",
         "type": "fire",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "torch_song": {
         "id": "torch_song",
-        "name": "烈火高歌",
+        "name": "闪焰高歌",
         "type": "fire",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": 1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "blazing_torque": {
         "id": "blazing_torque",
-        "name": "滅火烈炎",
+        "name": "灼热暴冲",
         "type": "fire",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "fire_punch": {
         "id": "fire_punch",
-        "name": "火拳",
+        "name": "火焰拳",
         "type": "fire",
         "power": 75,
-        "ailment": "burn",
-        "ailment_chance": 10
+        "accuracy": 80
     },
     "mystical_fire": {
         "id": "mystical_fire",
         "name": "魔法火焰",
         "type": "fire",
         "power": 75,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 80
     },
     "temper_flare": {
         "id": "temper_flare",
-        "name": "熱情之炎",
+        "name": "豁出去",
         "type": "fire",
-        "power": 75
+        "power": 75,
+        "accuracy": 80
     },
     "flame_burst": {
         "id": "flame_burst",
-        "name": "烈焰射",
+        "name": "烈焰濺射",
         "type": "fire",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "burning_jealousy": {
         "id": "burning_jealousy",
-        "name": "忌妒之火",
+        "name": "妒火",
         "type": "fire",
         "power": 70,
-        "ailment": "burn",
-        "ailment_chance": 100
+        "accuracy": 80
     },
     "fire_fang": {
         "id": "fire_fang",
-        "name": "火之牙",
+        "name": "火焰牙",
         "type": "fire",
         "power": 65,
-        "ailment": "burn",
-        "ailment_chance": 10,
-        "flinch_chance": 10,
-        "accuracy": 95
+"accuracy": 85
     },
     "flame_wheel": {
         "id": "flame_wheel",
-        "name": "火焰",
+        "name": "火焰輪",
         "type": "fire",
         "power": 60,
-        "ailment": "burn",
-        "ailment_chance": 10
+        "accuracy": 85
     },
     "incinerate": {
         "id": "incinerate",
-        "name": "燒盡之劍",
+        "name": "燒盡",
         "type": "fire",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "sizzly_slide": {
         "id": "sizzly_slide",
-        "name": "火爆殺",
+        "name": "熊熊火爆",
         "type": "fire",
         "power": 60,
-        "ailment": "burn",
-        "ailment_chance": 100
+        "accuracy": 85
     },
     "flame_charge": {
         "id": "flame_charge",
-        "name": "火焰襲擊",
+        "name": "蓄能焰襲",
         "type": "fire",
         "power": 50,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": 1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 90
     },
     "fire_spin": {
         "id": "fire_spin",
         "name": "火之旋渦",
         "type": "fire",
-        "power": 35,
-        "ailment": "trap",
-        "ailment_chance": 100,
-        "accuracy": 85
+"power": 35
     },
     "jet_punch": {
         "id": "jet_punch",
         "name": "水槍拳",
         "type": "water",
         "power": 60,
+        "accuracy": 85,
         "priority": 1
     },
     "aqua_jet": {
@@ -1745,6 +1584,7 @@ export const SKILL_DATABASE = {
         "name": "水火箭",
         "type": "water",
         "power": 40,
+        "accuracy": 95,
         "priority": 1
     },
     "water_shuriken": {
@@ -1758,42 +1598,43 @@ export const SKILL_DATABASE = {
         "id": "hydro_cannon",
         "name": "加農水柱",
         "type": "water",
-        "power": 150,
-        "accuracy": 90
+"power": 150,
+        "accuracy": 20
     },
     "water_spout": {
         "id": "water_spout",
-        "name": "暴風雨",
+        "name": "高潮",
         "type": "water",
-        "power": 150
+        "power": 150,
+        "accuracy": 20
     },
     "wave_crash": {
         "id": "wave_crash",
-        "name": "生生流轉",
+        "name": "冲水",
         "type": "water",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "hydro_pump": {
         "id": "hydro_pump",
         "name": "水砲台",
         "type": "water",
-        "power": 110,
-        "accuracy": 80
+"power": 110,
+        "accuracy": 50
     },
     "steam_eruption": {
         "id": "steam_eruption",
         "name": "水蒸汽爆",
         "type": "water",
         "power": 110,
-        "ailment": "burn",
-        "ailment_chance": 30
+        "accuracy": 50
     },
     "origin_pulse": {
         "id": "origin_pulse",
         "name": "海浪波動",
         "type": "water",
-        "power": 110,
-        "accuracy": 85
+"power": 110,
+        "accuracy": 50
     },
     "withdraw": {
         "id": "withdraw",
@@ -1814,314 +1655,266 @@ export const SKILL_DATABASE = {
         "id": "crabhammer",
         "name": "螃蟹拳",
         "type": "water",
-        "power": 100,
-        "accuracy": 90
+"power": 100,
+        "accuracy": 60
     },
     "surf": {
         "id": "surf",
         "name": "衝浪",
         "type": "water",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "muddy_water": {
         "id": "muddy_water",
         "name": "下雨",
         "type": "water",
-        "power": 90,
-        "accuracy": 85
+"power": 90,
+        "accuracy": 70
     },
     "aqua_tail": {
         "id": "aqua_tail",
         "name": "水流擊",
         "type": "water",
-        "power": 90,
-        "accuracy": 90
+"power": 90,
+        "accuracy": 70
     },
     "sparkling_aria": {
         "id": "sparkling_aria",
         "name": "泡影之歌",
         "type": "water",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "splishy_splash": {
         "id": "splishy_splash",
         "name": "滔滔衝浪",
         "type": "water",
         "power": 90,
-        "ailment": "paralysis",
-        "ailment_chance": 30
+        "accuracy": 70
     },
     "liquidation": {
         "id": "liquidation",
         "name": "水流破",
         "type": "water",
         "power": 85,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 20,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "fishious_rend": {
         "id": "fishious_rend",
         "name": "水魚咬",
         "type": "water",
-        "power": 85
+        "power": 85,
+        "accuracy": 75
     },
     "waterfall": {
         "id": "waterfall",
         "name": "瀑布",
         "type": "water",
         "power": 80,
-        "flinch_chance": 20
+        "accuracy": 75
     },
     "dive": {
         "id": "dive",
         "name": "潛水",
         "type": "water",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "scald": {
         "id": "scald",
         "name": "風平浪靜",
         "type": "water",
         "power": 80,
-        "ailment": "burn",
-        "ailment_chance": 30
+        "accuracy": 75
     },
     "water_pledge": {
         "id": "water_pledge",
         "name": "水之誓約",
         "type": "water",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "snipe_shot": {
         "id": "snipe_shot",
         "name": "水面斬",
         "type": "water",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "aqua_step": {
         "id": "aqua_step",
         "name": "流流水舞",
         "type": "water",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": 1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "hydro_steam": {
         "id": "hydro_steam",
         "name": "水蒸氣",
         "type": "water",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "razor_shell": {
         "id": "razor_shell",
         "name": "水之利刃",
         "type": "water",
         "power": 75,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 50,
-        "stat_target": "enemy"
+        "accuracy": 80
     },
     "aqua_cutter": {
         "id": "aqua_cutter",
         "name": "水之亂斬",
         "type": "water",
-        "power": 70
+        "power": 70,
+        "accuracy": 80
     },
     "bubble_beam": {
         "id": "bubble_beam",
         "name": "水壓光線",
         "type": "water",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": -1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "octazooka": {
         "id": "octazooka",
         "name": "蠑螈水炮",
         "type": "water",
-        "power": 65,
-        "accuracy": 85
+        "power": 65
     },
     "brine": {
         "id": "brine",
         "name": "鹽水",
         "type": "water",
-        "power": 65
+        "power": 65,
+        "accuracy": 85
     },
     "water_pulse": {
         "id": "water_pulse",
         "name": "水滴之聲",
         "type": "water",
         "power": 60,
-        "ailment": "confusion",
-        "ailment_chance": 20
+        "accuracy": 85
     },
     "bouncy_bubble": {
         "id": "bouncy_bubble",
         "name": "水氣泡",
         "type": "water",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "flip_turn": {
         "id": "flip_turn",
         "name": "快速滑水",
         "type": "water",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "chilling_water": {
         "id": "chilling_water",
         "name": "冷水澡",
         "type": "water",
         "power": 50,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 90
     },
     "bubble": {
         "id": "bubble",
         "name": "泡沫",
         "type": "water",
         "power": 40,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": -1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "accuracy": 95
     },
     "clamp": {
         "id": "clamp",
         "name": "水之夾擊",
         "type": "water",
         "power": 45,
-        "ailment": "trap",
-        "ailment_chance": 100,
-        "accuracy": 85
+"accuracy": 95
     },
     "whirlpool": {
         "id": "whirlpool",
         "name": "潮旋",
         "type": "water",
         "power": 40,
-        "ailment": "trap",
-        "ailment_chance": 100,
-        "accuracy": 85
+"accuracy": 95
     },
     "triple_dive": {
         "id": "triple_dive",
         "name": "三連潛",
         "type": "water",
-        "power": 50
+        "power": 50,
+        "accuracy": 90
     },
     "surging_strikes": {
         "id": "surging_strikes",
         "name": "水流衝擊",
         "type": "water",
-        "power": 45
+        "power": 45,
+        "accuracy": 95
     },
     "frenzy_plant": {
         "id": "frenzy_plant",
         "name": "魔性植物",
         "type": "grass",
-        "power": 150,
-        "accuracy": 90
+"power": 150,
+        "accuracy": 20
     },
     "chloroblast": {
         "id": "chloroblast",
         "name": "葉子爆震",
         "type": "grass",
-        "power": 150,
-        "accuracy": 95
+"power": 150,
+        "accuracy": 20
     },
     "leaf_storm": {
         "id": "leaf_storm",
         "name": "飛葉暴風",
         "type": "grass",
         "power": 130,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -2
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 40
     },
     "solar_blade": {
         "id": "solar_blade",
         "name": "太陽花",
         "type": "grass",
-        "power": 125
+        "power": 125,
+        "accuracy": 40
     },
     "solar_beam": {
         "id": "solar_beam",
         "name": "太陽能量束",
         "type": "grass",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "petal_dance": {
         "id": "petal_dance",
         "name": "花之舞",
         "type": "grass",
-        "power": 120
+        "power": 120,
+        "accuracy": 40
     },
     "power_whip": {
         "id": "power_whip",
         "name": "強力鞭打",
         "type": "grass",
-        "power": 120,
-        "accuracy": 85
+"power": 120,
+        "accuracy": 40
     },
     "wood_hammer": {
         "id": "wood_hammer",
         "name": "木槌",
         "type": "grass",
         "power": 120,
-        "recoil": 0.33
+        "accuracy": 40
     },
     "seed_flare": {
         "id": "seed_flare",
         "name": "種子閃光彈",
         "type": "grass",
         "power": 120,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -2
-            }
-        ],
-        "stat_chance": 40,
-        "stat_target": "enemy"
+        "accuracy": 40
     },
     "cotton_guard": {
         "id": "cotton_guard",
@@ -2143,210 +1936,175 @@ export const SKILL_DATABASE = {
         "name": "種子轟炸",
         "type": "grass",
         "power": 100,
-        "ailment": "leech-seed",
-        "ailment_chance": 100
+        "accuracy": 60
     },
     "leaf_blade": {
         "id": "leaf_blade",
         "name": "葉子飛刃",
         "type": "grass",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "energy_ball": {
         "id": "energy_ball",
         "name": "植物球",
         "type": "grass",
         "power": 90,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 10,
-        "stat_target": "enemy"
+        "accuracy": 70
     },
     "petal_blizzard": {
         "id": "petal_blizzard",
         "name": "花瓣暴風",
         "type": "grass",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "seed_bomb": {
         "id": "seed_bomb",
         "name": "種子炸藥",
         "type": "grass",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "grass_pledge": {
         "id": "grass_pledge",
         "name": "草之誓約",
         "type": "grass",
-        "power": 80
+        "power": 80,
+        "accuracy": 75
     },
     "drum_beating": {
         "id": "drum_beating",
         "name": "花擊",
         "type": "grass",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "apple_acid": {
         "id": "apple_acid",
         "name": "蘋果酸",
         "type": "grass",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "grav_apple": {
         "id": "grav_apple",
         "name": "地心引力",
         "type": "grass",
         "power": 80,
-        "stat_changes": [
-            {
-                "stat": "def",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 75
     },
     "giga_drain": {
         "id": "giga_drain",
         "name": "無盡吸取",
         "type": "grass",
         "power": 70,
-        "drain": 0.7
+        "accuracy": 80
     },
     "horn_leech": {
         "id": "horn_leech",
         "name": "木遁",
         "type": "grass",
         "power": 75,
-        "drain": 0.5
+        "accuracy": 80
     },
     "trop_kick": {
         "id": "trop_kick",
         "name": "草葉踢",
         "type": "grass",
         "power": 70,
-        "stat_changes": [
-            {
-                "stat": "atk",
-                "change": -1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 80
     },
     "flower_trick": {
         "id": "flower_trick",
         "name": "千變花樣",
         "type": "grass",
-        "power": 90
+        "power": 90,
+        "accuracy": 70
     },
     "leaf_tornado": {
         "id": "leaf_tornado",
         "name": "青草漩渦",
         "type": "grass",
-        "power": 65,
-        "accuracy": 90
+"power": 65,
+        "accuracy": 85
     },
     "needle_arm": {
         "id": "needle_arm",
         "name": "花之尖刺",
         "type": "grass",
         "power": 60,
-        "flinch_chance": 30
+        "accuracy": 85
     },
     "magical_leaf": {
         "id": "magical_leaf",
         "name": "魔法葉子",
         "type": "grass",
-        "power": 60
+        "power": 60,
+        "accuracy": 85
     },
     "razor_leaf": {
         "id": "razor_leaf",
         "name": "飛葉刀刃",
         "type": "grass",
-        "power": 55,
-        "accuracy": 95
+"power": 55,
+        "accuracy": 90
     },
     "grassy_glide": {
         "id": "grassy_glide",
         "name": "草之滑梯",
         "type": "grass",
-        "power": 55
+        "power": 55,
+        "accuracy": 90
     },
     "trailblaze": {
         "id": "trailblaze",
         "name": "青草腳",
         "type": "grass",
         "power": 50,
-        "stat_changes": [
-            {
-                "stat": "spd",
-                "change": 1
-            }
-        ],
-        "stat_chance": 100,
-        "stat_target": "enemy"
+        "accuracy": 90
     },
     "mega_drain": {
         "id": "mega_drain",
         "name": "極限吸收",
         "type": "grass",
         "power": 60,
-        "drain": 0.6
+        "accuracy": 85
     },
     "leafage": {
         "id": "leafage",
         "name": "花葉攻擊",
         "type": "grass",
-        "power": 55
+        "power": 55,
+        "accuracy": 90
     },
     "branch_poke": {
         "id": "branch_poke",
         "name": "樹木刺",
         "type": "grass",
-        "power": 40
+        "power": 40,
+        "accuracy": 95
     },
     "snap_trap": {
         "id": "snap_trap",
         "name": "捕獸夾",
         "type": "grass",
-        "power": 35,
-        "ailment": "trap",
-        "ailment_chance": 100
+        "power": 35
     },
     "bullet_seed": {
         "id": "bullet_seed",
         "name": "果子機槍",
         "type": "grass",
-        "power": 40
+        "power": 40,
+        "accuracy": 95
     },
     "absorb": {
         "id": "absorb",
         "name": "吸收",
         "type": "grass",
         "power": 40,
-        "drain": 0.5
-    },
+        "accuracy": 95
+    }
 };
 
 export const TYPE_SKILLS = {
@@ -2404,7 +2162,6 @@ export const OBTAINABLE_MONSTER_IDS = [
 
     // --- 4. 靈魂進化 - 水系 (Water Soul) ---
     1004, 1005, 1006,       // 泡泡獸線
-    1028, 1029,             // 泡泡獸線 (熱血/無俚頭分支)
 
     // --- 5. 靈魂進化 - 草系 (Grass Soul) ---
     1007, 1008, 1009,       // 棉棉獸線

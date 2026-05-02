@@ -18,19 +18,14 @@ const PHYSICS = {
 const ADV_ITEMS = [
     { id: '001', name: "活力飯糰", desc: "永久提升基礎戰力 10 點", rarity: 1 },
     { id: '002', name: "戰鬥蛋白粉", desc: "提升 2 點攻擊力與戰力", rarity: 4 },
-    { id: '003', name: "跑步鞋", desc: "重置 60 秒冒險冷卻", rarity: 2 },
     { id: '004', name: "覺醒之核", desc: "提升基礎戰力與全屬性", rarity: 3 },
     { id: '005', name: "奇異糖果", desc: "隨機大幅提升戰鬥屬性", rarity: 5 },
-    { id: '006', skillId: 'body_slam', name: "柔術秘笈書", desc: "讓怪獸學會招式「柔術」(30%麻痺)", rarity: 5 },
-    { id: '007', skillId: 'chatter', name: "瘋狂大鬧秘笈書", desc: "讓怪獸學會招式「瘋狂大鬧」(100%混亂)", rarity: 2 },
-    { id: '008', skillId: 'inferno', name: "煉獄秘笈書", desc: "讓怪獸學會招式「煉獄」(100%燒傷)", rarity: 5 },
-    { id: '009', skillId: 'rock_wrecker', name: "岩石炮秘笈書", desc: "讓怪獸學會招式「岩石炮」(強力物理攻擊)", rarity: 5 },
-    { id: '010', skillId: 'sappy_seed', name: "種子轟炸秘笈書", desc: "讓怪獸學會招式「種子轟炸」(100%寄生)", rarity: 5 },
-    { id: '011', skillId: 'magma_storm', name: "熔岩風暴秘笈書", desc: "讓怪獸學會招式「熔岩風暴」(100%束縛)", rarity: 5 },
     { id: '012', skillId: 'harden', name: "堅硬秘笈書", desc: "讓怪獸學會招式「堅硬防守」(防禦+2)", rarity: 3 },
     { id: '013', skillId: 'double_team', name: "影子分身術秘笈書", desc: "讓怪獸學會招式「影子分身術」(速度+2)", rarity: 4 },
     { id: '014', skillId: 'swords_dance', name: "戰舞秘笈書", desc: "讓怪獸學會招式「戰舞」(攻擊+2)", rarity: 5 },
-    { id: '015', skillId: 'leech_life', name: "吸取秘笈書", desc: "讓怪獸學會招式「吸取」(傷害 50% 轉為恢復)", rarity: 5 }
+    { id: '016', skillId: 'cross_defense', name: "十字防守秘笈書", desc: "讓怪獸學會招式「十字防守」(該回合免疫攻擊，連續使用命中減半)", rarity: 5 },
+    { id: '017', skillId: 'reflect_shield', name: "反射盾秘笈書", desc: "讓怪獸學會招式「反射盾」(受到傷害時反射 25% 傷害)", rarity: 2 },
+    { id: '018', skillId: 'guardian_shield', name: "守護者之盾秘笈書", desc: "讓怪獸學會招式「守護者之盾」(施放後獲得 30% 最大生命值的護盾)", rarity: 2 }
 ];
 
 // ==========================================
@@ -88,7 +83,7 @@ import { getTypeMultiplier } from '../monsterData';
 const ADV_BATTLE_RULES = {
     BASE_HP: 100, BASE_ATK: 10, BASE_DEF: 10, BASE_SPD: 1,
     HIT_RATE: 0.9,
-    CD_MS: 60000, // 1分鐘
+    CD_MS: 1000, // 1秒
     STAGE_MULT: { 0: 0.5, 1: 1.0, 2: 1.5, 3: 2.5, 4: 4.0, 5: 6.0, 6: 10.0 }
 };
 

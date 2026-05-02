@@ -217,6 +217,9 @@ export default function App() {
             d.moves = [getStarterMove(monId), d.bonusMoveId].filter(Boolean);
         }
 
+        // 資料遷移：如果沒有 moveUpgrades，初始化空物件
+        if (!d.moveUpgrades) d.moveUpgrades = {};
+
         return d;
     });
 
@@ -1700,6 +1703,10 @@ export default function App() {
             playBloop('success');
             return;
         }
+        // 附魔選擇階段不攔截 B 鍵（由 UI 按鈕操作）
+        if (tournament.isTournamentOpen && ['champion_reward_move', 'champion_reward_effect', 'card_selection'].includes(tournament.tPhase)) {
+            return;
+        }
 
         if (isEvolving || isAdvMode) {
             // --- 戰鬥播報模式 (Step-by-Step) --- 
@@ -2465,7 +2472,7 @@ export default function App() {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {}
                 },
                 enemy: {
                     id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
@@ -2492,7 +2499,7 @@ export default function App() {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {}
                 },
                 enemy: {
                     id: enemyData?.id || 1000, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
@@ -2525,7 +2532,7 @@ export default function App() {
                 active: true, mode: 'trainer', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {}
                 },
                 enemy: {
                     id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves,
@@ -2678,11 +2685,7 @@ export default function App() {
                     });
                     updateDialogue("使用了戰鬥蛋白粉！攻擊潛能提升了");
                     break;
-                case '003': // 跑步鞋
-                    // 減少 60 分鐘冷卻：將上次冒險時間往前推移 3600 秒
-                    setLastAdvTime(prev => Math.max(1, prev - 3600000));
-                    updateDialogue("穿上跑步鞋，感覺還能再戰！");
-                    break;
+
                 case '004': // 覺醒之核 (全面提升)
                     setAdvStats(prev => {
                         const nextEVs = { ...prev.evs };
@@ -2755,8 +2758,14 @@ export default function App() {
                     nextMoves.push(newSkillId);
                 }
             } else {
-                // 替換招式
+                // 替換招式 → 清除被替換技能的附魔數據
+                const oldMoveId = nextMoves[replaceIdx];
                 nextMoves[replaceIdx] = newSkillId;
+                if (oldMoveId && prev.moveUpgrades?.[oldMoveId]) {
+                    const nextUpgrades = { ...(prev.moveUpgrades || {}) };
+                    delete nextUpgrades[oldMoveId];
+                    return { ...prev, moves: nextMoves, moveUpgrades: nextUpgrades };
+                }
             }
             return { ...prev, moves: nextMoves };
         });
@@ -3141,8 +3150,18 @@ export default function App() {
                                 currentRound={tournament.currentRound}
                                 opponents={tournament.opponents}
                                 nextTournamentPhase={tournament.nextTournamentPhase}
+                                prevTournamentPhase={tournament.prevTournamentPhase}
                                 myMonsterId={getMonsterIdWrapped()}
                                 playerName={user?.displayName || '玩家'}
+                                cardOptions={tournament.cardOptions}
+                                pickRogueCard={tournament.pickRogueCard}
+                                advStats={advStats}
+                                rewardOptions={tournament.rewardOptions}
+                                selectedRewardMoveIdx={tournament.selectedRewardMoveIdx}
+                                setSelectedRewardMoveIdx={tournament.setSelectedRewardMoveIdx}
+                                selectedRewardEffectIdx={tournament.selectedRewardEffectIdx}
+                                setSelectedRewardEffectIdx={tournament.setSelectedRewardEffectIdx}
+                                confirmChampionReward={tournament.confirmChampionReward}
                             />
 
                             {/* 冒險或連線對戰系統 Overlay */}
