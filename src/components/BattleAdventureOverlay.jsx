@@ -32,7 +32,7 @@ export default function BattleAdventureOverlay({
 
     return (
         <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{ 
-            backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/共用底圖.png")`,
+            backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/${battleState.active ? '對戰底圖.png' : '共用底圖.png'}")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
         }}>
