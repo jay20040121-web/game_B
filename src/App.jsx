@@ -1487,6 +1487,29 @@ export default function App() {
             playBloop('pop');
             return;
         }
+
+        // 🔹 聯盟大賽冠軍獎勵：選擇技能
+        if (tournament.isTournamentOpen && tournament.tPhase === 'champion_reward_move') {
+            tournament.setSelectedRewardMoveIdx(prev => (prev + 1) % (advStats.moves.length || 1));
+            playBloop('pop');
+            return;
+        }
+
+        // 🔹 聯盟大賽冠軍獎勵：選擇效果
+        if (tournament.isTournamentOpen && tournament.tPhase === 'champion_reward_effect') {
+            tournament.setSelectedRewardEffectIdx(prev => (prev + 1) % (tournament.rewardOptions.length || 1));
+            playBloop('pop');
+            return;
+        }
+
+        // 🔹 聯盟大賽肉鴿選卡 (優先度低於技能學習，避免衝突)
+        if (tournament.isTournamentOpen && tournament.tPhase === 'rogue_selection' && !pendingSkillLearn) {
+            const numOptions = tournament.rogueOptions?.length || 1;
+            tournament.setSelectedCardIdx(prev => (prev + 1) % numOptions);
+            playBloop('pop');
+            return;
+        }
+
         if (isStatusUIOpen || isAdvMode) return;
         if (isInventoryOpen) {
             if (isUsingItem) return; // 使用中禁止切換
@@ -1657,7 +1680,7 @@ export default function App() {
         }
 
         // --- 聯盟大賽手動轉場 ---
-        if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'champion', 'lost'].includes(tournament.tPhase)) {
+        if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'rogue_selection', 'champion_reward_move', 'champion_reward_effect', 'champion', 'lost'].includes(tournament.tPhase)) {
             tournament.nextTournamentPhase();
             playBloop('success');
             return;
@@ -1851,6 +1874,12 @@ export default function App() {
                 return getTodayStr(d);
             });
             playBloop('pop');
+            return;
+        }
+
+        // --- 聯盟大賽返回邏輯 ---
+        if (tournament.isTournamentOpen) {
+            tournament.prevTournamentPhase();
             return;
         }
         if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') && battleState.phase === 'player_action') {
@@ -2068,6 +2097,35 @@ export default function App() {
         }
     };
 
+<<<<<<< Updated upstream
+=======
+    // --- 進化表演結束回調 ---
+    const handleEvolutionFinish = () => {
+        const nextBranch = window._nextBranch || 'C';
+        const evolvedId = window._evolvedId || 1000;
+        const evolvedName = MONSTER_NAMES[evolvedId] || nextBranch;
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
+        setTodayHasEvolved(true);
+
+        setEvolutionStage(prev => prev + 1);
+        setEvolutionBranch(nextBranch);
+        setLastEvolutionTime(Date.now());
+        setStageTrainWins(0);
+        setIsEvolving(false);
+        setEvolutionDetails(null);
+        updateDialogue("進化成功！");
+        unlockMonster(evolvedId);
+
+        // 清除全域暫存
+        delete window._nextBranch;
+        delete window._evolvedId;
+    };
+
+>>>>>>> Stashed changes
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
@@ -2201,6 +2259,7 @@ export default function App() {
                     updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
                     setTodayHasEvolved(true);
 
+<<<<<<< Updated upstream
                     setEvolutionStage(evolutionStage + 1);
                     setEvolutionBranch(nextBranch);
                     setLastEvolutionTime(Date.now());
@@ -2209,6 +2268,21 @@ export default function App() {
                     updateDialogue("進化成功！");
                     unlockMonster(evolvedId);
                 }, 2500);
+=======
+                // 提前預載進化後的圖片，消除載入延遲
+                const assetId = MONSTER_ASSET_IDS[evolvedId] || evolvedId;
+                const base = import.meta.env.BASE_URL;
+                const img = new Image();
+                img.src = `${base}assets/exclusive/idle/${assetId}.gif`;
+
+                setIsEvolving(true);
+                updateDialogue("進化中！！");
+
+                // 實際的狀態更新邏輯，將在 EvolutionPerformance 結束時呼叫 (由 handleEvolutionFinish 觸發)
+                // 這裡暫時只設定 nextBranch 以供回傳使用
+                window._nextBranch = nextBranch;
+                window._evolvedId = evolvedId;
+>>>>>>> Stashed changes
             }
         }, 500);
 
@@ -2392,7 +2466,8 @@ export default function App() {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    moveUpgrades: advStats.moveUpgrades || {}
                 },
                 enemy: {
                     id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
@@ -2419,7 +2494,8 @@ export default function App() {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    moveUpgrades: advStats.moveUpgrades || {}
                 },
                 enemy: {
                     id: enemyData?.id || 1000, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
@@ -2452,7 +2528,8 @@ export default function App() {
                 active: true, mode: 'trainer', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    moveUpgrades: advStats.moveUpgrades || {}
                 },
                 enemy: {
                     id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves,
@@ -2901,9 +2978,23 @@ export default function App() {
 
     // --- 聯盟大賽 (Tournament System) ---
     const tournament = useTournament({
-        user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
-        advStats, soulTagCounts, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
-        pendingSkillLearn
+        user,
+        derivedLevel,
+        evolutionStage,
+        myMonsterId: getMonsterIdWrapped(),
+        advStats,
+        soulTagCounts,
+        leaderboard,
+        updateDialogue,
+        setAlertMsg, // 🔹 新增這行，用來彈出警告視窗
+        battleState,
+        setBattleState,
+        setAdvStats,
+        setInventory,
+        playBloop,
+        ADV_ITEMS,
+        pendingSkillLearn,
+        setAdvCurrentHP
     });
 
     // --- PVP 殭屍對局檢測 (Zombie Match Detector) ---
@@ -3056,6 +3147,16 @@ export default function App() {
                                 nextTournamentPhase={tournament.nextTournamentPhase}
                                 myMonsterId={getMonsterIdWrapped()}
                                 playerName={user?.displayName || '玩家'}
+                                rogueOptions={tournament.rogueOptions}
+                                selectedCardIdx={tournament.selectedCardIdx}
+                                pendingSkillLearn={!!pendingSkillLearn}
+                                tournamentBuffs={tournament.tournamentBuffs}
+                                rewardOptions={tournament.rewardOptions}
+                                selectedRewardMoveIdx={tournament.selectedRewardMoveIdx}
+                                selectedRewardEffectIdx={tournament.selectedRewardEffectIdx}
+                                playerMoves={(advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean)}
+                                moves={advStats.moves}
+                                moveUpgrades={advStats.moveUpgrades || {}}
                             />
 
                             {/* 冒險或連線對戰系統 Overlay */}

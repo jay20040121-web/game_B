@@ -72,8 +72,17 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         }
     }
 
+<<<<<<< Updated upstream
     const calcDamage = (attacker, move, defender) => {
         if (!move.power || move.power === 0) return { dmg: 0, msg: "" };
+=======
+    const calcDamage = (attacker, move, defender, isPlayerAttacker) => {
+        const isStatusMove = !move.power || move.power === 0;
+        const isPureBuff = isStatusMove && (!move.accuracy || move.stat_target === 'self');
+
+        // BUFF 類技能或無精準度要求的技能必定命中
+        if (isPureBuff) return { dmg: 0, msg: "HIT" };
+>>>>>>> Stashed changes
 
         const attackerEffSpd = attacker.spd * getStatMultiplier(attacker.statStages?.spd || 0) * (attacker.status === 'paralysis' ? 0.5 : 1);
         const defenderEffSpd = defender.spd * getStatMultiplier(defender.statStages?.spd || 0) * (defender.status === 'paralysis' ? 0.5 : 1);
@@ -95,6 +104,11 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         if (attacker.status === 'burn') effectiveAtk *= 0.5;
 
         let baseDmg = (Math.floor((2 * attackerLevel) / 5 + 2) * move.power * (effectiveAtk / effectiveDef)) / 50 + 2;
+
+        // 🔹 聯盟大賽肉鴿強化：先制戰術 (Haste)
+        if (isPlayerAttacker && prev.turn === 1 && prev.rogueBuffs?.haste > 1) {
+            baseDmg *= prev.rogueBuffs.haste;
+        }
 
         const attackerTypes = Array.isArray(attacker.type) ? attacker.type : [attacker.type];
         if (attackerTypes.includes(move.type)) baseDmg *= 1.5;
@@ -148,9 +162,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name}]！` });
 
+<<<<<<< Updated upstream
         const isStatusMove = !move.power || move.power === 0;
 
         const result = calcDamage(attacker, move, defender);
+=======
+        const result = calcDamage(attacker, move, defender, isPlayer);
+>>>>>>> Stashed changes
 
         if (isStatusMove) {
             if (move.accuracy && rFunc() * 100 > move.accuracy) {
@@ -168,16 +186,76 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             nextQueue.push({ type: 'msg', text: `${targetName} ${m.text}` });
         });
 
+<<<<<<< Updated upstream
         if (!isStatusMove && result.dmg > 0) {
             const actualDmg = Math.min(defender.hp, result.dmg);
             nextQueue.push({
                 type: 'damage', target: isPlayer ? 'enemy' : 'player',
                 value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`
+=======
+        // 🔹 聯盟大賽：冠軍技能強化 (Move Upgrades)
+        if (isPlayer && prev.moveUpgrades?.[move.id]?.ailments) {
+            const upgrades = prev.moveUpgrades[move.id].ailments;
+            Object.entries(upgrades).forEach(([ailId, chance]) => {
+                // 只有在防禦者還沒有狀態時才觸發 (除非是混亂這種可並存的，但目前引擎一次只處理一個 status)
+                if (!defender.status && rFunc() * 100 < chance) {
+                    defender.status = ailId;
+                    const ailmentMap = { burn: "燒傷了！", paralysis: "麻痺了！", poison: "中毒了！", confusion: "混亂了！" };
+                    nextQueue.push({ type: 'msg', text: `${defenderName}${ailmentMap[ailId] || '陷入了狀態！'} (來自技能強化)` });
+                    
+                    // 設定持續回合 (比照原有邏輯)
+                    if (ailId === 'sleep') defender.statusTurns = Math.floor(rFunc() * 3) + 1;
+                    else if (ailId === 'confusion') defender.statusTurns = Math.floor(rFunc() * 3) + 2;
+                }
+>>>>>>> Stashed changes
             });
-            defender.hp = Math.max(0, defender.hp - actualDmg);
+        }
+
+        if (result.dmg > 0) {
+            let remainingDmg = result.dmg;
+            // 🔹 聯盟大賽肉鴿強化：護盾 (Shield)
+            if (defender.shield && defender.shield > 0) {
+                const absorb = Math.min(defender.shield, remainingDmg);
+                defender.shield -= absorb;
+                remainingDmg -= absorb;
+                nextQueue.push({ type: 'msg', text: `${defenderName} 的護盾吸收了 ${absorb} 點傷害！` });
+            }
+
+            if (remainingDmg > 0) {
+                const actualHpDmg = Math.min(defender.hp, remainingDmg);
+                nextQueue.push({
+                    type: 'damage', target: isPlayer ? 'enemy' : 'player',
+                    value: actualHpDmg, text: `對 ${defenderName} 造成了 ${actualHpDmg} 點傷害！${result.msg}`
+                });
+                defender.hp = Math.max(0, defender.hp - actualHpDmg);
+            } else if (result.dmg > 0) {
+                // 傷害被護盾完全抵消，但仍顯示一條訊息表示命中
+                nextQueue.push({ type: 'msg', text: `對 ${defenderName} 的 HP 沒有造成實質傷害！` });
+            }
+
+            // 🔹 聯盟大賽肉鴿強化：吸血 (Lifesteal)
+            if (isPlayer && prev.rogueBuffs?.lifesteal > 0) {
+                const healAmt = Math.floor(result.dmg * prev.rogueBuffs.lifesteal);
+                if (healAmt > 0) {
+                    attacker.hp = Math.min(attacker.maxHp, attacker.hp + healAmt);
+                    nextQueue.push({ type: 'msg', text: `✨ 吸血效果！恢復了 ${healAmt} 點生命！` });
+                }
+            }
+
+            // 🔹 聯盟大賽肉鴿強化：反傷 (Reflect)
+            if (!isPlayer && prev.rogueBuffs?.reflect > 0) {
+                const reflectDmg = Math.floor(result.dmg * prev.rogueBuffs.reflect);
+                if (reflectDmg > 0) {
+                    attacker.hp = Math.max(0, attacker.hp - reflectDmg);
+                    nextQueue.push({
+                        type: 'damage', target: 'enemy',
+                        value: reflectDmg, text: `💥 反彈傷害！${attackerName} 遭到了回擊！`
+                    });
+                }
+            }
 
             if (effects.recoilPct > 0) {
-                const recoilDmg = Math.floor(actualDmg * effects.recoilPct);
+                const recoilDmg = Math.floor(result.dmg * effects.recoilPct);
                 if (recoilDmg > 0) {
                     nextQueue.push({
                         type: 'damage', target: isPlayer ? 'player' : 'enemy',
@@ -187,7 +265,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 }
             }
             if (effects.drainPct > 0) {
-                const drainHeal = Math.floor(actualDmg * effects.drainPct);
+                const drainHeal = Math.floor(result.dmg * effects.drainPct);
                 if (drainHeal > 0) {
                     nextQueue.push({
                         type: 'heal', target: isPlayer ? 'player' : 'enemy',

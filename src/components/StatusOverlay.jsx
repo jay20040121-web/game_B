@@ -1,5 +1,5 @@
 import React from 'react';
-import { SPECIES_BASE_STATS, NATURE_CONFIG, calcFinalStat } from '../monsterData';
+import { SPECIES_BASE_STATS, NATURE_CONFIG, calcFinalStat, SKILL_DATABASE } from '../monsterData';
 
 export default function StatusOverlay({
     isStatusUIOpen,
@@ -99,6 +99,37 @@ export default function StatusOverlay({
 
                 <div className="text-[10px] font-black text-center text-white mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
                     累積特訓次數: {trainWins} 次
+                </div>
+
+                {/* 🔹 新增：招式清單與附魔顯示 */}
+                <div className="mt-2 bg-black/20 p-2 rounded-md border border-white/10">
+                    <div className="text-[8px] text-white/50 uppercase tracking-widest mb-1.5 border-b border-white/5 pb-0.5">目前招式與附魔 (Moves & Enchantments)</div>
+                    <div className="grid grid-cols-2 gap-2">
+                        {(advStats.moves || []).map((mid, i) => {
+                            const move = SKILL_DATABASE[mid];
+                            const upgrade = advStats.moveUpgrades?.[mid];
+                            if (!move) return <div key={i} className="text-[9px] text-white/20 italic">--- 空白 ---</div>;
+                            
+                            return (
+                                <div key={i} className="flex flex-col gap-0.5">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-[10px] font-bold text-white truncate max-w-[50px]">{move.name}</span>
+                                        {upgrade && <span className="text-[8px] text-yellow-400 animate-pulse">★</span>}
+                                    </div>
+                                    <div className="flex gap-1 flex-wrap">
+                                        <span className="text-[7px] px-1 bg-white/10 rounded-sm text-white/60">
+                                            威力 {move.power}
+                                        </span>
+                                        {upgrade?.ailments && Object.entries(upgrade.ailments).map(([ail, chance]) => (
+                                            <span key={ail} className="text-[7px] px-1 bg-[#673ab7] rounded-sm text-white font-bold">
+                                                {{burn:'燒',paralysis:'麻',poison:'毒',confusion:'混'}[ail] || ail}+{chance}%
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>

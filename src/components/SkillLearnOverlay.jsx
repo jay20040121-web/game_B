@@ -118,6 +118,7 @@ export default function SkillLearnOverlay({
                                         <div className="flex items-center gap-1">
                                             <span className="text-[10px] font-black">
                                                 {isSelected ? '▶ ' : ''}{moveDef?.name || '---'} 
+                                                {advStats.moveUpgrades?.[moveId] && <span className="text-[#673ab7] ml-0.5 animate-pulse">★</span>}
                                             </span>
                                             {moveDef?.ailment && moveDef.ailment !== 'none' && (
                                                 <span className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
@@ -130,6 +131,14 @@ export default function SkillLearnOverlay({
                                                      moveDef.ailment === 'paralysis' ? '麻' :
                                                      moveDef.ailment === 'poison' ? '毒' : '狀'}
                                                 </span>
+                                            )}
+                                            {/* 🔹 顯示附加的冠軍附魔標籤 */}
+                                            {advStats.moveUpgrades?.[moveId]?.ailments && (
+                                                Object.keys(advStats.moveUpgrades[moveId].ailments).map(ail => (
+                                                    <span key={ail} className={`text-[7px] px-0.5 rounded-[1px] border border-white/20 leading-none py-0.5 font-black bg-[#673ab7] text-white`}>
+                                                        {{ burn: '燒', paralysis: '麻', poison: '毒', confusion: '混' }[ail] || '＋'}
+                                                    </span>
+                                                ))
                                             )}
                                             {moveDef?.stat_changes && moveDef.stat_changes.some(s => s.change > 0) && (
                                                 <span className="text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black bg-[#42a5f5] text-white uppercase">

@@ -60,7 +60,13 @@ export default function BattleAdventureOverlay({
                                 </span>
                             )}
                         </div>
-                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner">
+                        {/* Enemy Shield & HP Bar */}
+                        {battleState?.enemy?.shield > 0 && (
+                            <div className="w-20 h-1 bg-black/40 border border-white/20 rounded-sm overflow-hidden mb-0.5">
+                                <div className="h-full bg-[#80deea] transition-all duration-300" style={{ width: `${Math.min(100, (battleState.enemy.shield / battleState.enemy.maxHp) * 100)}%` }} />
+                            </div>
+                        )}
+                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
                             <div className="h-full transition-all duration-300" style={{ width: `${(battleState?.enemy?.hp / battleState?.enemy?.maxHp) * 100}%`, backgroundColor: (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.5 ? '#2ecc71' : (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
                         </div>
                     </div>
@@ -86,7 +92,13 @@ export default function BattleAdventureOverlay({
                             )}
                             <div className="text-[10px] font-bold text-white text-right truncate">Lv.{Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1))}</div>
                         </div>
-                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner">
+                        {/* Player Shield & HP Bar */}
+                        {battleState?.player?.shield > 0 && (
+                            <div className="w-20 h-1 bg-black/40 border border-white/20 rounded-sm overflow-hidden mb-0.5">
+                                <div className="h-full bg-[#80deea] transition-all duration-300" style={{ width: `${Math.min(100, (battleState.player.shield / battleState.player.maxHp) * 100)}%` }} />
+                            </div>
+                        )}
+                        <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
                             <div className="h-full transition-all duration-300" style={{ width: `${((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) * 100}%`, backgroundColor: ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.5 ? '#2ecc71' : ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
                         </div>
                     </div>
@@ -127,7 +139,12 @@ export default function BattleAdventureOverlay({
                                         >
                                             {move ? (
                                                 <div className="flex items-center gap-1">
-                                                    <span>{move.name}</span>
+                                                    <span className="flex items-center gap-1">
+                                                        {move.name}
+                                                        {battleState.moveUpgrades?.[move.id] && (
+                                                            <span className="text-[7px] text-[#9c27b0] animate-pulse">★</span>
+                                                        )}
+                                                    </span>
                                                     {(move.ailment && move.ailment !== 'none') && (
                                                         <span className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
                                                             move.ailment === 'burn' ? 'bg-[#ff5252] text-white' :
@@ -139,6 +156,14 @@ export default function BattleAdventureOverlay({
                                                              move.ailment === 'paralysis' ? '麻' :
                                                              move.ailment === 'poison' ? '毒' : '狀'}
                                                         </span>
+                                                    )}
+                                                    {/* 🔹 顯示附加的冠軍附魔標籤 */}
+                                                    {battleState.moveUpgrades?.[move.id]?.ailments && (
+                                                        Object.keys(battleState.moveUpgrades[move.id].ailments).map(ail => (
+                                                            <span key={ail} className={`text-[7px] px-0.5 rounded-[1px] border border-white/20 leading-none py-0.5 font-black bg-[#673ab7] text-white shadow-[0_0_2px_#9c27b0]`}>
+                                                                {{ burn: '燒', paralysis: '麻', poison: '毒', confusion: '混' }[ail] || '＋'}
+                                                            </span>
+                                                        ))
                                                     )}
                                                     {(move.stat_changes && move.stat_changes.some(s => s.change > 0)) && (
                                                         <span className="text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black bg-[#42a5f5] text-white uppercase">
