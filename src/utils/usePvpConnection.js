@@ -55,14 +55,15 @@ export const usePvpConnection = (deps) => {
 
     // 對戰結束後的統一結算邏輯
     const handleBattleEnd = (isWin) => {
-        const bpGain = isWin ? 10 : 5;
-        const msg = isWin ? `對戰勝利！獲得 ${bpGain} 點戰力！` : `對戰結束，獲得 ${bpGain} 點戰力！`;
+        // 🛑 核心修正：移除 PvP 戰力獲取，防止玩家刷等級
+        const bpGain = 0; 
+        const msg = isWin ? `對戰勝利！` : `對戰結束！`;
         const logMsg = isWin 
-            ? `在一場精彩的連線對決中獲得了勝利，戰力 +${bpGain}。` 
-            : `在一場連線對決中落敗，獲得了 ${bpGain} 點戰力的鼓勵。`;
+            ? `在一場精彩的連線對決中獲得了勝利。` 
+            : `完成了一場連線對決。`;
 
-        // 1. 更新戰力
-        if (setAdvStats) {
+        // 1. 更新戰力 (已停用)
+        if (bpGain > 0 && setAdvStats) {
             setAdvStats(prev => ({
                 ...prev,
                 basePower: prev.basePower + bpGain
