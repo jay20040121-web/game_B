@@ -2812,7 +2812,7 @@ export default function App() {
         const savedDeathBranch = latestStats.current.deathBranch;
 
         setIsBooting(true); // 觸發啟動彩蛋畫面
-        setBootMonsterId(Math.floor(Math.random() * 149) + 1); // 重新開機隨機抽一個 ID
+        setBootMonsterId(Math.floor(Math.random() * 30) + 1000); // 重新開機隨機抽一個 ID (1000-1029)
 
         setHunger(60);
         setMood(50);
