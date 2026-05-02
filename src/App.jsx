@@ -7,6 +7,7 @@ import SkillLearnOverlay from './components/SkillLearnOverlay';
 import DebugPanel from './components/DebugPanel';
 import { MonsterpediaOverlay } from './components/MonsterpediaOverlay';
 import { SoulExpeditionOverlay } from './components/SoulExpeditionOverlay';
+import EvolutionPerformance from './components/EvolutionPerformance';
 import React, { useState, useEffect, useRef } from 'react';
 import './styles.css';
 import {
@@ -171,6 +172,7 @@ export default function App() {
     const [activeIndex, setActiveIndex] = useState(-1);
     const [dialogue, setDialogue] = useState("像素怪獸\n按A開始冒險"); // 初始顯示改為登入標語，點擊 A 後才切換回遊戲招呼語
     const [marqueeKey, setMarqueeKey] = useState(0);
+    const [evolutionDetails, setEvolutionDetails] = useState(null); // { fromId, toId }
     const [loadedImages, setLoadedImages] = useState({}); // 追蹤哪些自定義圖標已成功載入
 
     const [isConfirmingFarewell, setIsConfirmingFarewell] = useState(false); // 二次確認開關
@@ -1468,7 +1470,7 @@ export default function App() {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z' }));
             return;
         }
-        if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
+        if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
         if (alertMsg) {
             setAlertMsg("");
             playBloop('pop');
@@ -1602,7 +1604,7 @@ export default function App() {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
             return;
         }
-        if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
+        if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
         const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
         if (alertMsg) {
@@ -1863,7 +1865,7 @@ export default function App() {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
             return;
         }
-        if (isCloudLoading || isInteractAnimating) return; // 雲端同步或互動表演中禁止操作
+        if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
         if (alertMsg) return; // 警告視窗顯示時，C 鍵完全鎖定不執行任何動作
         if (isLeaderboardOpen) {
             setIsLeaderboardOpen(false);
@@ -2098,6 +2100,32 @@ export default function App() {
         }
     };
 
+    // --- 進化表演結束回調 ---
+    const handleEvolutionFinish = () => {
+        const nextBranch = window._nextBranch || 'C';
+        const evolvedId = window._evolvedId || 1000;
+        const evolvedName = MONSTER_NAMES[evolvedId] || nextBranch;
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
+        setTodayHasEvolved(true);
+
+        setEvolutionStage(prev => prev + 1);
+        setEvolutionBranch(nextBranch);
+        setLastEvolutionTime(Date.now());
+        setStageTrainWins(0);
+        setIsEvolving(false);
+        setEvolutionDetails(null);
+        updateDialogue("進化成功！");
+        unlockMonster(evolvedId);
+        
+        // 清除全域暫存
+        delete window._nextBranch;
+        delete window._evolvedId;
+    };
+
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
@@ -2235,34 +2263,29 @@ export default function App() {
                     nextBranch = 'C';
                 }
 
+                // 提前計算進化後的 ID 並設定細節
+                const currentId = getMonsterIdWrapped(evolutionBranch, evolutionStage);
+                const evolvedId = getMonsterIdWrapped(nextBranch, evolutionStage + 1);
+                setEvolutionDetails({ fromId: currentId, toId: evolvedId });
+
                 // 提前預載進化後的圖片，消除載入延遲
-                const preEvolvedId = getMonsterIdWrapped(nextBranch, evolutionStage + 1);
-                const assetId = MONSTER_ASSET_IDS[preEvolvedId] || preEvolvedId;
+                const assetId = MONSTER_ASSET_IDS[evolvedId] || evolvedId;
                 const base = import.meta.env.BASE_URL;
                 const img = new Image();
                 img.src = `${base}assets/exclusive/idle/${assetId}.gif`;
 
-                setTimeout(() => {
-                    const now = new Date();
-                    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                    const evolvedId = getMonsterIdWrapped(nextBranch, evolutionStage + 1);
-                    const evolvedName = MONSTER_NAMES[evolvedId] || nextBranch;
-                    updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
-                    setTodayHasEvolved(true);
+                setIsEvolving(true);
+                updateDialogue("進化中！！");
 
-                    setEvolutionStage(evolutionStage + 1);
-                    setEvolutionBranch(nextBranch);
-                    setLastEvolutionTime(Date.now());
-                    setStageTrainWins(0);
-                    setIsEvolving(false);
-                    updateDialogue("進化成功！");
-                    unlockMonster(evolvedId);
-                }, 2500);
+                // 實際的狀態更新邏輯，將在 EvolutionPerformance 結束時呼叫 (由 handleEvolutionFinish 觸發)
+                // 這裡暫時只設定 nextBranch 以供回傳使用
+                window._nextBranch = nextBranch; 
+                window._evolvedId = evolvedId;
             }
         }, 500);
 
         return () => clearInterval(checkEvolutionInterval);
-    }, [isBooting, evolutionStage, isDead, isEvolving, birthTime, derivedLevel, miniGame, isRunaway, debugOverrides, isDuplicateTab]);
+    }, [isBooting, evolutionStage, isDead, isEvolving, birthTime, derivedLevel, miniGame, isRunaway, debugOverrides, isDuplicateTab, evolutionBranch, soulTagCounts]);
 
     useEffect(() => {
         if (!miniGame || miniGame.status === 'result') return;
@@ -3435,11 +3458,7 @@ export default function App() {
                                         </div>
 
                                         <div className="w-full flex-1 relative z-10 overflow-hidden flex flex-col items-center justify-center">
-                                            {isEvolving && (
-                                                <div className="absolute inset-0 bg-[#8fa07e]/80 flex items-center justify-center z-[100]">
-                                                    <span className="animate-pulse text-[14px] tracking-widest font-bold">進化中...</span>
-                                                </div>
-                                            )}
+                                            {/* Evolution Performance will be rendered at the root level for better overlay coverage */}
 
                                             {miniGame && (
                                                 <div className="absolute inset-0 z-60 flex flex-col items-center justify-start pt-8 pointer-events-none">
@@ -3668,6 +3687,15 @@ export default function App() {
                             ></button>
                         </div>
                     </div>
+
+                    {/* --- 全螢幕進化演出 (Full-screen Evolution Performance) --- */}
+                    {isEvolving && evolutionDetails && (
+                        <EvolutionPerformance
+                            fromId={evolutionDetails.fromId}
+                            toId={evolutionDetails.toId}
+                            onFinish={handleEvolutionFinish}
+                        />
+                    )}
                 </div>
             </div>
         </div>
