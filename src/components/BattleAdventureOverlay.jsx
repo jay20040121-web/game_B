@@ -245,19 +245,7 @@ export default function BattleAdventureOverlay({
                                         {matchStatus === 'searching' ? '等待對手連線...' : '進入房間'}
                                     </button>
 
-                                    <div className="flex items-center gap-2 w-full">
-                                        <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
-                                        <span className="text-[8px] font-bold opacity-50">OR</span>
-                                        <div className="h-[1px] bg-[#1a1a1a]/30 flex-1"></div>
-                                    </div>
 
-                                    <button
-                                        onClick={() => (matchStatus !== 'searching') && startTournament()}
-                                        disabled={matchStatus === 'searching'}
-                                        className={`w-full py-1.5 border-2 border-[#1a1a1a] text-[10px] font-black transition-all ${matchStatus === 'searching' ? 'bg-gray-400 text-gray-700 opacity-50 cursor-not-allowed' : 'bg-[#ffca28] text-[#1a1a1a] shadow-[2px_2px_0_#1a1a1a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none'}`}
-                                    >
-                                        🏆 聯盟大賽
-                                    </button>
                                 </div>
 
                                 <div className="mt-auto text-[8px] font-black text-white opacity-60 flex flex-col items-center gap-0.5">

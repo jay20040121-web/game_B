@@ -878,7 +878,7 @@ export default function App() {
         { id: 'status', sprite: ICONS.status, label: '狀態(可觀看寵物成長資訊)', img: `${base}assets/BG/M1.png` },
         { id: 'interact', sprite: ICONS.feed, label: '互動(餵食或撫摸寵物)', img: `${base}assets/BG/M2.png` },
         { id: 'talk', sprite: ICONS.heart, label: '談心(根據喜好改變寵物特性)', img: `${base}assets/BG/M3.png` },
-        { id: 'train', sprite: ICONS.train, label: '特訓(提升寵物戰鬥力)', img: `${base}assets/BG/M4.png` },
+        { id: 'tournament', sprite: ICONS.train, label: '聯盟大會(參加錦標賽)', img: `${base}assets/BG/M4.png` },
         { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)', img: `${base}assets/BG/M5.png` },
         { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)', img: `${base}assets/BG/M6.png` },
         { id: 'pedia', sprite: ICONS.footprint, label: '圖鑑(查看已收集的像素怪獸)', img: `${base}assets/BG/M7.png` },
@@ -2045,30 +2045,15 @@ export default function App() {
                 setIsStatusUIOpen(true);
                 updateDialogue("查看狀態中...", true);
                 break;
-            case 'train':
+            case 'tournament':
                 if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
                 }
-                recordGameAction(); // 進入特訓視為一動作
-                miniGameResultFired.current = false;
-                const roll = Math.random();
-                if (roll < 0.33) {
-                    const targetTime = Date.now() + 4000;
-                    setMiniGame({ type: 'reaction', status: 'ready', targetTime, count: 3, result: null });
-                    updateDialogue("倒數結束~GO要趕快按B鍵往前衝刺。", true);
-                } else if (roll < 0.66) {
-                    setMiniGame({ type: 'charge_click', status: 'idle', energy: 0, startTime: Date.now(), result: null });
-                    updateDialogue("連戳B鍵直到紅條達標...", true);
-                } else {
-                    const spinItems = ['ghost', 'redHeart', 'ghost', 'redHeart', 'ghost', 'redHeart'];
-                    setMiniGame({ type: 'spin_heart', status: 'idle', items: spinItems, currentIdx: 0, result: null });
-                    updateDialogue("當出現紅色愛心時按B鍵！", true);
-                }
-                posRef.current = { x: 128, y: 190 };
-                velRef.current = { x: 0, y: 0 };
-                logEvent("開始特訓。");
+                setIsPvpMode(false);
+                tournament.startTournament();
+                logEvent("報名聯盟大賽。");
                 setActiveIndex(-1);
                 break;
             case 'connect':
