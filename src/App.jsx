@@ -1612,6 +1612,7 @@ export default function App() {
 
     const handleB = (clickIdx = null) => {
         if (isCloudLoading || isInteractAnimating || isEvolving) return; 
+        const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
         // 優先級最高：技能順序調整模式
         if (isSkillRearrangeOpen) {
