@@ -116,7 +116,7 @@ export function TournamentOverlay({
             {tPhase === 'card_selection' && (
                 <div className="flex flex-col items-center w-full animate-fade-in">
                     <h2 className="text-[#ffca28] text-sm font-black mb-1 drop-shadow-md">挑選獎勵卡片</h2>
-                    <p className="text-[8px] text-gray-300 mb-4 italic">選擇一項能力來強化後續賽事</p>
+                    <div className="text-[7px] text-red-400 font-bold mb-3 animate-pulse">※ 請直接點擊螢幕內的卡片進行選擇</div>
                     
                     <div className="flex flex-col gap-3 w-full px-2">
                         {cardOptions.map((card, idx) => (
@@ -153,7 +153,7 @@ export function TournamentOverlay({
             {tPhase === 'champion_reward_move' && (
                 <div className="flex flex-col items-center w-full animate-fade-in">
                     <h2 className="text-[#ffca28] text-sm font-black mb-1">🏆 冠軍附魔</h2>
-                    <p className="text-[8px] text-gray-300 mb-3 italic">選擇要附魔的技能</p>
+                    <div className="text-[7px] text-red-400 font-bold mb-3 animate-pulse">※ 請點擊要強化的技能</div>
                     
                     <div className="flex flex-col gap-2 w-full px-2">
                         {(advStats?.moves || []).map((moveId, idx) => {
@@ -204,9 +204,7 @@ export function TournamentOverlay({
             {tPhase === 'champion_reward_effect' && (
                 <div className="flex flex-col items-center w-full animate-fade-in">
                     <h2 className="text-[#ffca28] text-sm font-black mb-1">🏆 選擇附魔效果</h2>
-                    <p className="text-[8px] text-gray-300 mb-3 italic">
-                        為 [{SKILL_DATABASE[advStats?.moves?.[selectedRewardMoveIdx]]?.name || '???'}] 選擇附魔
-                    </p>
+                    <div className="text-[7px] text-red-400 font-bold mb-3 animate-pulse">※ 請點擊要附加的效果</div>
                     
                     <div className="flex flex-col gap-2 w-full px-2">
                         {rewardOptions.map((effect, idx) => {
