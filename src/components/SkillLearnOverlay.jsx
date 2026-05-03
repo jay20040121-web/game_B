@@ -79,7 +79,7 @@ export default function SkillLearnOverlay({
                     )}
                 </div>
                 <div className="text-[9px] text-[#383a37] mb-2 text-center flex flex-col items-center gap-0.5">
-                    <div>({TYPE_MAP?.[pendingSkillLearn.skill.type] || '屬'} / 威力:{pendingSkillLearn.skill.power})</div>
+                    <div>({TYPE_MAP?.[pendingSkillLearn.skill.type] || '屬'} / 威力:{pendingSkillLearn.skill.power} / 命中:{pendingSkillLearn.skill.accuracy || '--'})</div>
                     {pendingSkillLearn.skill.ailment && pendingSkillLearn.skill.ailment !== 'none' && (
                         <div className="text-[8px] text-red-700 font-black">
                             效果: {pendingSkillLearn.skill.ailment_chance || 100}% 造成{
@@ -168,7 +168,7 @@ export default function SkillLearnOverlay({
                                             {moveDef && <span className="opacity-60 text-[8px]">[{TYPE_MAP?.[moveDef.type] || '屬'}]</span>}
                                         </div>
                                         {moveDef && (
-                                            <span className="text-[8px] opacity-70">威力:{moveDef.power}</span>
+                                            <span className="text-[8px] opacity-70">威力:{moveDef.power} / 命中:{moveDef.accuracy || '--'}</span>
                                         )}
                                     </div>
                                     {((moveDef?.ailment && moveDef.ailment !== 'none') || (moveDef?.stat_changes && moveDef.stat_changes.some(s => s.change > 0))) && (

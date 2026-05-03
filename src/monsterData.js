@@ -2327,3 +2327,41 @@ export const calcFinalStat = (type, speciesId, iv, ev, level, natureMod = 1.0) =
         return Math.floor((Math.floor(((2 * base + iv + (ev / 4)) * level) / 100) + 5) * natureMod);
     }
 };
+
+/**
+ * 將戰鬥力 (basePower) 轉換為等級 (Level 1-100)
+ * 1-30級：每 10 點一級 (門檻: 100, 110, ..., 390)
+ * 31-100級：升級所需點數依二次曲線成長，99級升100級需約 300 點 (原本的 30 倍)
+ */
+export const getLevelByPower = (power) => {
+    const p = power || 100;
+    if (p < 100) return 1;
+    if (p <= 390) {
+        return Math.floor((p - 100) / 10) + 1;
+    }
+    
+    // 30 級以後使用迴圈計算門檻
+    let currentThreshold = 390;
+    for (let lv = 30; lv < 100; lv++) {
+        // 增量公式：10 + a * (x^2), 其中 a = 290 / 4900 ≈ 0.0592
+        const nextRequired = 10 + (290 / 4900) * Math.pow(lv - 29, 2);
+        currentThreshold += nextRequired;
+        if (p < currentThreshold) return lv;
+    }
+    return 100;
+};
+
+/**
+ * 取得特定等級所需的總戰鬥力門檻 (用於進度條或計算)
+ */
+export const getPowerThreshold = (level) => {
+    const lv = Math.max(1, Math.min(100, level));
+    if (lv <= 1) return 100;
+    if (lv <= 30) return 100 + (lv - 1) * 10;
+    
+    let total = 390;
+    for (let i = 30; i < lv; i++) {
+        total += 10 + (290 / 4900) * Math.pow(i - 29, 2);
+    }
+    return Math.floor(total);
+};

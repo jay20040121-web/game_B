@@ -7,6 +7,7 @@ import SkillLearnOverlay from './components/SkillLearnOverlay';
 import DebugPanel from './components/DebugPanel';
 import { MonsterpediaOverlay } from './components/MonsterpediaOverlay';
 import { SoulExpeditionOverlay } from './components/SoulExpeditionOverlay';
+import SkillRearrangeOverlay from './components/SkillRearrangeOverlay';
 import EvolutionPerformance from './components/EvolutionPerformance';
 import React, { useState, useEffect, useRef } from 'react';
 import './styles.css';
@@ -21,6 +22,7 @@ import {
     getTypeMultiplier,
     generateMoves,
     calcFinalStat,
+    getLevelByPower,
     OBTAINABLE_MONSTER_IDS,
     TRAINER_POOLS,
     MONSTER_ASSET_IDS
@@ -223,12 +225,14 @@ export default function App() {
         return d;
     });
 
-    const derivedLevel = Math.min(100, Math.max(1, Math.floor(((advStats?.basePower || 100) - 100) / 10) + 1));
+    const derivedLevel = getLevelByPower(advStats?.basePower);
     const previousLevelRef = useRef(derivedLevel);
     const [pendingSkillLearn, setPendingSkillLearn] = useState(null);
     const [skillSelectIdx, setSkillSelectIdx] = useState(0);
     const [isConfirmingReplace, setIsConfirmingReplace] = useState(false);
     const [tempReplaceIdx, setTempReplaceIdx] = useState(-1);
+    const [isSkillRearrangeOpen, setIsSkillRearrangeOpen] = useState(false);
+    const [usingItemIdx, setUsingItemIdx] = useState(-1);
 
     // 換招式系統
     useEffect(() => {
@@ -301,7 +305,7 @@ export default function App() {
 
     // 取得自身的戰鬥數值用於 INIT 傳送
     function generateMyBattleStats() {
-        const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
+        const level = getLevelByPower(advStats.basePower);
         const speciesId = getMonsterIdWrapped();
 
         // --- 性格修正系統 (Nature Modifiers) ---
@@ -962,12 +966,11 @@ export default function App() {
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
-        const thresh = debugOverrides.evolutionMs ?? (EVO_TIMES[evolutionStage] || EVO_TIMES.FINAL_LIFETIME);
-
-        // Total drop phase logic: Ensure it drops 100 units over the entire phase
-        const TARGET_DROP_PER_STAGE = 100;
+        // 固定衰減速度：每 6 小時從 100 點歸零 (不再隨進化時間變動)
+        const DECAY_FULL_MS = debugOverrides.evolutionMs ?? (6 * 3600 * 1000);
+        const TARGET_DROP = 100;
         const TICK_MS = 1000;
-        const dropPerTick = TARGET_DROP_PER_STAGE * (TICK_MS / thresh);
+        const dropPerTick = TARGET_DROP * (TICK_MS / DECAY_FULL_MS);
 
         const decayTimer = setInterval(() => {
             setHunger(h => Math.max(0, h - dropPerTick));
@@ -1488,6 +1491,11 @@ export default function App() {
             playBloop('fail');
             return;
         }
+        if (isSkillRearrangeOpen) {
+            window.dispatchEvent(new CustomEvent('rearrangeA'));
+            playBloop('pop');
+            return;
+        }
         if (isDiaryOpen) {
             // A 鍵：日記翻到前一天
             setDiaryViewDate(prev => {
@@ -1603,16 +1611,16 @@ export default function App() {
     };
 
     const handleB = (clickIdx = null) => {
-        if (isExpeditionOpen) {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
+        if (isCloudLoading || isInteractAnimating || isEvolving) return; 
+
+        // 優先級最高：技能順序調整模式
+        if (isSkillRearrangeOpen) {
+            window.dispatchEvent(new CustomEvent('rearrangeB'));
             return;
         }
-        if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
-        const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
-        if (alertMsg) {
-            setAlertMsg("");
-            playBloop('pop');
+        if (isExpeditionOpen) {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
             return;
         }
         if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer' || battleState.mode === 'tournament')) {
@@ -1868,6 +1876,10 @@ export default function App() {
     };
 
     const handleC = () => {
+        if (isSkillRearrangeOpen) {
+            window.dispatchEvent(new CustomEvent('rearrangeC'));
+            return;
+        }
         if (isExpeditionOpen) {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
             return;
@@ -2390,7 +2402,7 @@ export default function App() {
         };
     };
     function generateBattleState(mode, myId, pvpOpponentData = null) {
-        const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
+        const level = getLevelByPower(advStats.basePower);
         const speciesId = getMonsterIdWrapped();
 
         // --- 性格修正系統 (Nature Modifiers) ---
@@ -2661,12 +2673,12 @@ export default function App() {
                     setAdvStats(prev => ({ ...prev, basePower: prev.basePower + 10 }));
                     updateDialogue(`吃了${item.name}，戰力提升，感覺等級快升了！`);
                     break;
-                case '002': // 戰鬥蛋白粉 (增加 10 點攻擊努力值)
+                case '002': // 戰鬥蛋白粉 (增加 5 點攻擊努力值與戰力)
                     setAdvStats(prev => {
                         const nextEVs = { ...prev.evs };
-                        const canAdd = Math.min(10, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs.atk);
+                        const canAdd = Math.min(5, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs.atk);
                         if (canAdd > 0) nextEVs.atk += canAdd;
-                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 10 };
+                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 5 };
                     });
                     updateDialogue("使用了戰鬥蛋白粉！攻擊潛能提升了");
                     break;
@@ -2693,6 +2705,49 @@ export default function App() {
                         return { ...prev, evs: nextEVs, basePower: prev.basePower + 50 };
                     });
                     updateDialogue("奇異糖果真奇異！一項屬性潛能大幅爆發");
+                    break;
+                case '019': // 技能轉換器
+                    if ((advStats.moves || []).length < 4) {
+                        setAlertMsg("技能尚未全滿 (4招)，無法使用");
+                        updateDialogue("怪獸的技能還沒滿 4 招，無法使用轉換器！");
+                        success = false;
+                    } else {
+                        setIsUsingItem(false);
+                        setIsInventoryOpen(false);
+                        setUsingItemIdx(itemIdx);
+                        setIsSkillRearrangeOpen(true);
+                        playBloop('success');
+                        return; // 不在此處消耗，待調整完成後才消耗
+                    }
+                    break;
+                case '020': // 個體值提升劑
+                    {
+                        const currentIVs = advStats.ivs || { hp: 0, atk: 0, def: 0, spd: 0 };
+                        const upgradeableStats = Object.keys(currentIVs).filter(k => currentIVs[k] < 31);
+
+                        if (upgradeableStats.length === 0) {
+                            setAlertMsg("該怪獸已是最強！");
+                            updateDialogue("它的潛能已經開發到了極限。");
+                            success = false;
+                        } else {
+                            const target = upgradeableStats[Math.floor(Math.random() * upgradeableStats.length)];
+                            const upgradeMap = (val) => {
+                                if (val < 10) return 10;  // D -> C
+                                if (val < 15) return 15;  // C -> B
+                                if (val < 25) return 25;  // B -> A
+                                if (val < 31) return 31;  // A -> S
+                                return 31;
+                            };
+                            const newVal = upgradeMap(currentIVs[target]);
+                            setAdvStats(prev => {
+                                const nextIVs = { ...prev.ivs };
+                                nextIVs[target] = newVal;
+                                return { ...prev, ivs: nextIVs };
+                            });
+                            const statNameMap = { hp: '生命', atk: '攻擊', def: '防禦', spd: '速度' };
+                            updateDialogue(`使用了個體值提升劑！${statNameMap[target]}天賦提升到了 ${getIVGrade(newVal)} 級！`);
+                        }
+                    }
                     break;
                 default:
                     updateDialogue(`未知物品 (ID: ${item.id})，無法使用`);
@@ -2732,6 +2787,28 @@ export default function App() {
         }
         setIsConfirmingFarewell(true);
         updateDialogue("確定要終止生命嗎？", true);
+    };
+
+    const handleConfirmRearrange = (newMoves) => {
+        setAdvStats(prev => ({ ...prev, moves: newMoves }));
+        setIsSkillRearrangeOpen(false);
+        
+        // 消耗道具
+        if (usingItemIdx !== -1) {
+            setInventory(prev => {
+                const next = [...prev];
+                if (next[usingItemIdx] && (next[usingItemIdx].count || 1) > 1) {
+                    next[usingItemIdx] = { ...next[usingItemIdx], count: next[usingItemIdx].count - 1 };
+                    return next;
+                }
+                return next.filter((_, i) => i !== usingItemIdx);
+            });
+            setUsingItemIdx(-1);
+        }
+        
+        updateDialogue("技能順序調整完成！消耗了一個技能轉換器。");
+        recordGameAction();
+        playSoundEffect('success');
     };
 
     const handleLearnSkill = (newSkillId, replaceIdx = -1) => {
@@ -2831,9 +2908,12 @@ export default function App() {
         setDeathBranch(null); // 重置 D線籤
 
         // --- 修正戰力與技能繼承邏輯 ---
-        // 取得死前戰力的 10% 漲幅作為遺產，加上基礎 100 戰力
-        const prevBasePower = latestStats.current.advStats?.basePower || 100;
-        const inheritedPower = Math.floor((prevBasePower - 100) * 0.1); // 繼承 10% 的努力成果，而非總戰力
+        // 取得死前等級，最高上限以 100 級為基準進行繼承計算
+        const prevPower = latestStats.current.advStats?.basePower || 100;
+        const prevLevel = getLevelByPower(prevPower);
+
+        // 改為用等級去繼承：每級提供 1 點額外初始戰力 (最高繼承 99 點，即下一代從 10 級開始)
+        const inheritedPower = Math.max(0, prevLevel - 1);
 
         // 判斷下一代初始招式
         const nextId = savedDeathBranch === 'G1' ? "1019" : "1000";
@@ -2872,12 +2952,20 @@ export default function App() {
         };
         nextIVs[bestStatKey] = bestIVValue; // 繼承前代最強的一項基因
 
+        // --- 附魔繼承：保留繼承技能的強化數據 ---
+        const prevUpgrades = latestStats.current.advStats?.moveUpgrades || {};
+        const nextUpgrades = {};
+        combinedMoves.forEach(mv => {
+            if (prevUpgrades[mv]) nextUpgrades[mv] = prevUpgrades[mv];
+        });
+
         setAdvStats({
             basePower: 100 + inheritedPower,
             ivs: nextIVs,
             evs: { hp: 0, atk: 0, def: 0, spd: 0 },
             bonusMoveId: nextBonusId, // 記錄原本隨機出的，但不一定在 moves 陣列中
-            moves: combinedMoves
+            moves: combinedMoves,
+            moveUpgrades: nextUpgrades
         });
 
         // 給予玩家反饋提示
@@ -3623,6 +3711,22 @@ export default function App() {
                                                 </div>
                                             ))}
                                         </div>
+
+                                        {/* 技能順序調整 */}
+                                        {isSkillRearrangeOpen && (
+                                            <SkillRearrangeOverlay
+                                                isOpen={isSkillRearrangeOpen}
+                                                moves={advStats.moves || []}
+                                                moveUpgrades={advStats.moveUpgrades || {}}
+                                                SKILL_DATABASE={SKILL_DATABASE}
+                                                TYPE_MAP={TYPE_MAP}
+                                                onClose={() => {
+                                                    setIsSkillRearrangeOpen(false);
+                                                    setUsingItemIdx(-1);
+                                                }}
+                                                onConfirm={handleConfirmRearrange}
+                                            />
+                                        )}
 
                                         {/* 全域警告彈窗 (Alert Modal) */}
                                         {alertMsg && (

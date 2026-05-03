@@ -1,5 +1,5 @@
 import React from 'react';
-import { SPECIES_BASE_STATS, NATURE_CONFIG, calcFinalStat } from '../monsterData';
+import { SPECIES_BASE_STATS, NATURE_CONFIG, calcFinalStat, getLevelByPower } from '../monsterData';
 
 export default function StatusOverlay({
     isStatusUIOpen,
@@ -68,7 +68,7 @@ export default function StatusOverlay({
 
                 <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 px-1.5 py-1 mt-0.5">
                     {(() => {
-                        const level = Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1));
+                        const level = getLevelByPower(advStats.basePower);
                         const sid = getMonsterId();
                         const tagEntries = Object.entries(soulTagCounts || {});
                         const dominantTag = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
