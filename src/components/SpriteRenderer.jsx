@@ -7,20 +7,42 @@ import { MONSTER_ASSET_IDS } from '../monsterData';
 const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
-    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/idle/${assetId}.gif` : `${base}assets/exclusive/sprites/${assetId}.png`);
+    
+    // --- Progressive Loading Logic ---
+    const staticSrc = `${base}assets/exclusive/sprites/${assetId}.png`;
+    const animatedSrc = `${base}assets/exclusive/idle/${assetId}.gif`;
+    
+    const [imgSrc, setImgSrc] = useState(staticSrc); // Default to static PNG for instant load
+    const [isGifLoaded, setIsGifLoaded] = useState(false);
     const [naturalWidth, setNaturalWidth] = useState(0);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `${base}assets/exclusive/idle/${currentAssetId}.gif` : `${base}assets/exclusive/sprites/${currentAssetId}.png`);
+        const newStatic = `${base}assets/exclusive/sprites/${currentAssetId}.png`;
+        const newAnimated = `${base}assets/exclusive/idle/${currentAssetId}.gif`;
+        
+        setImgSrc(newStatic);
+        setIsGifLoaded(false);
+
+        if (animated) {
+            // Background load the GIF
+            const img = new Image();
+            img.src = newAnimated;
+            img.onload = () => {
+                setImgSrc(newAnimated);
+                setIsGifLoaded(true);
+            };
+            img.onerror = () => {
+                // If GIF fails, we stay with PNG
+                setIsGifLoaded(false);
+            };
+        }
     }, [id, animated, base]);
 
     if (!id) return null;
 
     const baseSize = 68;
     const targetSize = baseSize * scale;
-
-    // 根據原始圖片解析度決定內部縮放比例 (64px 使用 0.55, 128px 使用 0.7)
     const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
 
     return (
@@ -41,7 +63,8 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
         >
             <img 
                 src={imgSrc}
-                className="pixel-rendering"
+                loading="lazy"
+                className={`pixel-rendering ${!isGifLoaded && animated ? 'opacity-70 grayscale-[0.3]' : ''}`}
                 onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
                 style={{ 
                     filter: silhouette 
@@ -55,18 +78,11 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
                     imageRendering: 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    // 動態調整縮放倍率
                     transform: `scale(${innerScale}) translateY(0)`,
-                    transformOrigin: 'bottom center'
+                    transformOrigin: 'bottom center',
+                    transition: 'opacity 0.3s ease-in-out'
                 }}
                 alt="Monster Sprite"
-                onError={() => {
-                    const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-                    const base = import.meta.env.BASE_URL;
-                    if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        setImgSrc(`${base}assets/exclusive/sprites/${currentAssetId}.png`);
-                    }
-                }}
             />
         </div>
     );
@@ -78,20 +94,40 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
 const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
-    const [imgSrc, setImgSrc] = useState(animated ? `${base}assets/exclusive/back/${assetId}.gif` : `${base}assets/exclusive/back/${assetId}.png`);
+
+    // --- Progressive Loading Logic ---
+    const staticSrc = `${base}assets/exclusive/back/${assetId}.png`;
+    const animatedSrc = `${base}assets/exclusive/back/${assetId}.gif`;
+
+    const [imgSrc, setImgSrc] = useState(staticSrc);
+    const [isGifLoaded, setIsGifLoaded] = useState(false);
     const [naturalWidth, setNaturalWidth] = useState(0);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-        setImgSrc(animated ? `${base}assets/exclusive/back/${currentAssetId}.gif` : `${base}assets/exclusive/back/${currentAssetId}.png`);
+        const newStatic = `${base}assets/exclusive/back/${currentAssetId}.png`;
+        const newAnimated = `${base}assets/exclusive/back/${currentAssetId}.gif`;
+
+        setImgSrc(newStatic);
+        setIsGifLoaded(false);
+
+        if (animated) {
+            const img = new Image();
+            img.src = newAnimated;
+            img.onload = () => {
+                setImgSrc(newAnimated);
+                setIsGifLoaded(true);
+            };
+            img.onerror = () => {
+                setIsGifLoaded(false);
+            };
+        }
     }, [id, animated, base]);
 
     if (!id) return null;
 
     const baseSize = 68;
     const targetSize = baseSize * scale;
-
-    // 與正面一致：128px 使用 0.7, 64px 使用 0.55
     const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
 
     return (
@@ -112,7 +148,8 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
         >
             <img 
                 src={imgSrc}
-                className="pixel-rendering"
+                loading="lazy"
+                className={`pixel-rendering ${!isGifLoaded && animated ? 'opacity-70 grayscale-[0.2]' : ''}`}
                 onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
                 style={{ 
                     filter: pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)',
@@ -124,19 +161,11 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
                     imageRendering: 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    // 動態調整縮放倍率
                     transform: `scale(${innerScale}) translateY(0)`,
-                    transformOrigin: 'bottom center'
+                    transformOrigin: 'bottom center',
+                    transition: 'opacity 0.3s ease-in-out'
                 }}
                 alt="Monster Back Sprite"
-                onError={() => {
-                    const currentAssetId = MONSTER_ASSET_IDS[id] || id;
-                    const base = import.meta.env.BASE_URL;
-                    if (imgSrc.toLowerCase().endsWith('.gif')) {
-                        // 如果 GIF 找不到，優先找 exclusive 資料夾內的 PNG
-                        setImgSrc(`${base}assets/exclusive/back/${currentAssetId}.png`);
-                    }
-                }}
             />
         </div>
     );

@@ -696,15 +696,9 @@ export default function App() {
                 if (document.hidden) return;
                 setIsBootMonsterVisible(false); // 觸發淡出
 
-                // 提前抽卡並預載圖片，消除載入延遲
-                const nextId = Math.floor(Math.random() * 30) + 1000;
-                const assetId = MONSTER_ASSET_IDS[nextId] || nextId;
-                const base = import.meta.env.BASE_URL;
-                const img = new Image();
-                img.src = `${base}assets/exclusive/idle/${assetId}.gif`;
-
                 setTimeout(() => {
                     setBootMonsterPosIdx(prev => (prev + 1) % 2); // 只在兩個位置循環
+                    const nextId = Math.floor(Math.random() * 30) + 1000;
                     setBootMonsterId(nextId); // 每次跳轉都更換怪獸 ID (1000-1027)
                     setIsBootMonsterVisible(true); // 觸發淡入
                 }, 1000); // 1秒的淡出過渡
