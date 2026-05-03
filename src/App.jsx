@@ -9,6 +9,7 @@ import { MonsterpediaOverlay } from './components/MonsterpediaOverlay';
 import { SoulExpeditionOverlay } from './components/SoulExpeditionOverlay';
 import SkillRearrangeOverlay from './components/SkillRearrangeOverlay';
 import EvolutionPerformance from './components/EvolutionPerformance';
+import MemoryCapsulePerformance from './components/MemoryCapsulePerformance';
 import React, { useState, useEffect, useRef } from 'react';
 import './styles.css';
 import {
@@ -23,6 +24,7 @@ import {
     generateMoves,
     calcFinalStat,
     getLevelByPower,
+    getPowerThreshold,
     OBTAINABLE_MONSTER_IDS,
     TRAINER_POOLS,
     MONSTER_ASSET_IDS
@@ -103,6 +105,8 @@ export default function App() {
 
     const [steps, setSteps] = useState(getInit('steps', 0));
     const [interactionLogs, setInteractionLogs] = useState(getInit('interactionLogs', []));
+    const [showMemoryPerformance, setShowMemoryPerformance] = useState(false);
+    const [memoryPerformanceMonsterId, setMemoryPerformanceMonsterId] = useState(null);
     const [interactionCount, setInteractionCount] = useState(getInit('interactionCount', 0));
     const [isDead, setIsDead] = useState(getInit('isDead', false));
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
@@ -154,7 +158,8 @@ export default function App() {
         evolutionMs: null,
         encounterRates: null, // { trainer, wild, gather }
         catchRate: null,
-        adventureCD: null
+        adventureCD: null,
+        memoryRate: null
     });
 
     const [miniGame, setMiniGame] = useState(null);
@@ -737,7 +742,10 @@ export default function App() {
                 changed = true;
             }
 
-            const existing = merged.find(it => it.id === updatedItem.id);
+            // 如果是特殊道具（如回憶膠囊），不參與合併，保持獨立性
+            const isUnique = !!updatedItem.snapshot;
+            const existing = isUnique ? null : merged.find(it => it.id === updatedItem.id);
+            
             if (existing) {
                 existing.count = (existing.count || 1) + (updatedItem.count || 1);
                 changed = true;
@@ -2144,6 +2152,43 @@ export default function App() {
 
             if (totalElapsed >= lifespan) {
                 clearInterval(checkEvolutionInterval);
+
+                const currentLevel = getLevelByPower(advStats.basePower);
+                let memoryCapsuleGranted = false;
+                let snapshot = null;
+
+                // --- 🌟 回憶膠囊獲得判定 (使用 Debug 覆蓋或預設 100%) ---
+                const mRate = debugOverrides.memoryRate ?? 1.0;
+                if (currentLevel >= 100 && Math.random() < mRate) {
+                    memoryCapsuleGranted = true;
+                    // 捕捉快照
+                    snapshot = {
+                        speciesId: getMonsterIdWrapped(),
+                        evolutionStage,
+                        evolutionBranch,
+                        advStats: JSON.parse(JSON.stringify(advStats)),
+                        bondValue,
+                        talkCount,
+                        lockedAffinity,
+                        soulAffinityCounts: { ...soulAffinityCounts },
+                        soulTagCounts: { ...soulTagCounts },
+                        interactionLogs: [...interactionLogs],
+                        interactionCount
+                    };
+
+                    // 加入背包
+                    setInventory(prev => {
+                        const itemDef = ADV_ITEMS.find(it => it.id === '021');
+                        const newItem = { 
+                            ...itemDef, 
+                            count: 1, 
+                            instanceId: Date.now(), // 確保每個膠囊獨立
+                            snapshot 
+                        };
+                        return [...prev, newItem];
+                    });
+                }
+
                 // D線抽籤：20% 機率靈魂重生
                 const dRoll = Math.random();
                 const dLine = dRoll < 0.20 ? (Math.random() < 0.5 ? 'G1' : 'G2') : null;
@@ -2151,14 +2196,26 @@ export default function App() {
                 setIsGenerating(true);
                 setIsDead(true);
                 velRef.current = { x: 0, y: -0.1 };
+                
                 setTimeout(() => {
-                    let words = dLine
-                        ? "靈魂不滅...我還會回來的..."
-                        : "謝謝你陪我走到最後一刻...";
+                    let words = "";
+                    if (memoryCapsuleGranted) {
+                        // --- 🌟 觸發全螢幕演出 ---
+                        setMemoryPerformanceMonsterId(getMonsterIdWrapped());
+                        setShowMemoryPerformance(true);
+                        words = "主人我們的回憶是不會消失的，這個給你只要你願意我會再出現在你身旁";
+                    } else if (dLine) {
+                        words = "靈魂不滅...我還會回來的...";
+                    } else {
+                        words = "謝謝你陪我走到最後一刻...";
+                    }
+                    
                     setFinalWords(words);
                     setIsGenerating(false);
                     updateDialogue(words);
+                    recordGameAction(); // 確保獲得道具後有存檔
                 }, 1500);
+
                 setTimeout(() => {
                     setShowRestartHint(true);
                 }, 2500);
@@ -2750,6 +2807,40 @@ export default function App() {
                         }
                     }
                     break;
+                case '021': // 回憶膠囊
+                    if (!item.snapshot) {
+                        updateDialogue("這個膠囊似乎是空的...");
+                        success = false;
+                    } else {
+                        const sn = item.snapshot;
+                        // --- 🌟 全面恢復數據 ---
+                        setEvolutionStage(sn.evolutionStage);
+                        setEvolutionBranch(sn.evolutionBranch);
+                        setAdvStats(sn.advStats);
+                        setBondValue(sn.bondValue);
+                        setTalkCount(sn.talkCount);
+                        setLockedAffinity(sn.lockedAffinity);
+                        setSoulAffinityCounts(sn.soulAffinityCounts);
+                        setSoulTagCounts(sn.soulTagCounts);
+                        setInteractionLogs(sn.interactionLogs);
+                        setInteractionCount(sn.interactionCount);
+                        
+                        // 重置生理狀態
+                        setHunger(100);
+                        setMood(100);
+                        setIsPooping(false);
+                        setIsSleeping(false);
+                        setLastEvolutionTime(Date.now());
+                        setBirthTime(Date.now()); // 獲得重生的 7 天壽命
+                        
+                        updateDialogue(`✨ 回憶湧現！${MONSTER_NAMES[sn.speciesId] || '同伴'} 回到了你的身邊！`);
+                        playBloop('success');
+                        
+                        // 復活後強制刷新等級 Ref，防止學習邏輯錯誤
+                        const newLevel = getLevelByPower(sn.advStats.basePower);
+                        previousLevelRef.current = newLevel;
+                    }
+                    break;
                 default:
                     updateDialogue(`未知物品 (ID: ${item.id})，無法使用`);
                     success = false;
@@ -3124,6 +3215,18 @@ export default function App() {
                 inventory={inventory}
                 setInventory={setInventory}
                 updateDialogue={updateDialogue}
+                // --- ✨ 新增傳遞給 Debug 的狀態 ---
+                evolutionStage={evolutionStage}
+                evolutionBranch={evolutionBranch}
+                bondValue={bondValue}
+                talkCount={talkCount}
+                lockedAffinity={lockedAffinity}
+                soulAffinityCounts={soulAffinityCounts}
+                soulTagCounts={soulTagCounts}
+                interactionLogs={interactionLogs}
+                interactionCount={interactionCount}
+                getMonsterIdWrapped={getMonsterIdWrapped}
+                getPowerThreshold={getPowerThreshold}
             />
 
             {/* --- 自動縮放包裝容器 (Responsive Wrapper) --- */}
@@ -3803,6 +3906,16 @@ export default function App() {
                             fromId={evolutionDetails.fromId}
                             toId={evolutionDetails.toId}
                             onFinish={handleEvolutionFinish}
+                        />
+                    )}
+                    {/* --- 全螢幕回憶膠囊演出 --- */}
+                    {showMemoryPerformance && (
+                        <MemoryCapsulePerformance 
+                            monsterId={memoryPerformanceMonsterId}
+                            onFinish={() => {
+                                setShowMemoryPerformance(false);
+                                updateDialogue(`獲得了 ${MONSTER_NAMES[memoryPerformanceMonsterId]} 的回憶膠囊。`);
+                            }}
                         />
                     )}
                 </div>

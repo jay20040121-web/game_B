@@ -2340,7 +2340,7 @@ export const getLevelByPower = (power) => {
         // 增量公式：10 + a * (x^2), 其中 a = 290 / 4900 ≈ 0.0592
         const nextRequired = 10 + (290 / 4900) * Math.pow(lv - 29, 2);
         currentThreshold += nextRequired;
-        if (p < currentThreshold) return lv;
+        if (p < Math.floor(currentThreshold)) return lv;
     }
     return 100;
 };

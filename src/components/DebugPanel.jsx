@@ -8,7 +8,12 @@ import { ADV_ITEMS, DIARY_ITEM } from '../data/gameConfig';
  */
 const DebugPanel = ({
     show, onClose, debugOverrides, setDebugOverrides,
-    advStats, setAdvStats, inventory, setInventory, updateDialogue
+    advStats, setAdvStats, inventory, setInventory, updateDialogue,
+    // --- ✨ 解構新傳入的狀態 ---
+    evolutionStage, evolutionBranch, bondValue, talkCount,
+    lockedAffinity, soulAffinityCounts, soulTagCounts,
+    interactionLogs, interactionCount, getMonsterIdWrapped,
+    getPowerThreshold
 }) => {
     if (!show) return null;
 
@@ -106,6 +111,18 @@ const DebugPanel = ({
                             </div>
                         </div>
                         <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
+                            <div style={{ marginBottom: '5px' }}>回憶膠囊機率 (目前: {debugOverrides.memoryRate !== null ? debugOverrides.memoryRate * 100 + '%' : '預設 100%'})</div>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                {[0, 0.5, 1.0].map(rate => (
+                                    <button key={rate} style={{ padding: '8px 12px', cursor: 'pointer', background: debugOverrides.memoryRate === rate ? '#f39c12' : '#333', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, memoryRate: rate }))}>
+                                        {rate * 100}%
+                                    </button>
+                                ))}
+                                <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, memoryRate: null }))}>重置</button>
+                            </div>
+                        </div>
+
+                        <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
                             <div style={{ marginBottom: '5px' }}>冒險事件強制觸發:</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                                 <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 1, trainer: 0, gather: 0 } }))}>必遇野怪</button>
@@ -128,12 +145,70 @@ const DebugPanel = ({
                             <input type="number" value={itemCount} onChange={e => setItemCount(parseInt(e.target.value) || 1)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
                             <button onClick={addItems} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>執行新增</button>
                         </div>
+
+                        <div style={{ marginTop: '20px', padding: '15px', border: '2px dashed #f39c12', borderRadius: '8px' }}>
+                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>🧪 專屬測試工具</div>
+                            <button 
+                                onClick={() => {
+                                    const snapshot = {
+                                        speciesId: getMonsterIdWrapped(),
+                                        evolutionStage: evolutionStage,
+                                        evolutionBranch: evolutionBranch,
+                                        advStats: JSON.parse(JSON.stringify(advStats)),
+                                        bondValue: bondValue,
+                                        talkCount: talkCount,
+                                        lockedAffinity: lockedAffinity,
+                                        soulAffinityCounts: { ...soulAffinityCounts },
+                                        soulTagCounts: { ...soulTagCounts },
+                                        interactionLogs: [...interactionLogs],
+                                        interactionCount: interactionCount
+                                    };
+
+                                    const itemDef = ADV_ITEMS.find(it => it.id === '021');
+                                    setInventory(prev => [
+                                        ...prev, 
+                                        { ...itemDef, count: 1, instanceId: Date.now(), snapshot }
+                                    ]);
+                                    updateDialogue("Debug: 已產出當前怪獸的回憶膠囊！");
+                                }}
+                                style={{ width: '100%', padding: '12px', background: '#f39c12', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', borderRadius: '4px' }}
+                            >
+                                📸 產出回憶膠囊 (捕捉當前怪獸快照)
+                            </button>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>※ 此按鈕會將目前怪獸的所有狀態封裝進膠囊，方便測試復活邏輯。</p>
+                        </div>
                     </div>
                 )}
 
                 {activeTab === 'stats' && (
-                    <div>
-                        <div style={{ marginBottom: '15px', borderBottom: '1px solid #444', paddingBottom: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
+                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>⭐ 等級調整 (Level)</div>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <input 
+                                    type="number" 
+                                    min="1" 
+                                    max="100" 
+                                    defaultValue={Math.floor((advStats.basePower - 100) / 10) + 1} 
+                                    id="debug-level-input"
+                                    style={{ flex: 1, padding: '10px', background: '#333', color: 'white', border: '1px solid #555' }} 
+                                />
+                                <button 
+                                    onClick={() => {
+                                        const lv = parseInt(document.getElementById('debug-level-input').value) || 1;
+                                        const newPower = getPowerThreshold(lv);
+                                        setAdvStats(prev => ({ ...prev, basePower: newPower }));
+                                        updateDialogue(`Debug: 等級已精準調整為 Lv.${lv}`);
+                                    }}
+                                    style={{ padding: '10px 20px', background: '#f39c12', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                    設定等級
+                                </button>
+                            </div>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 設定為 100 級後配合「進化時間」設為 10s 可測試正規死亡流程。</p>
+                        </div>
+
+                        <div style={{ marginBottom: '10px', borderBottom: '1px solid #444', paddingBottom: '5px' }}>
                             <strong>努力值調整 (EVs)</strong> - 當前總計: <span style={{ color: totalEvs > 510 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{totalEvs}</span> / 510
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -153,7 +228,7 @@ const DebugPanel = ({
                                 </div>
                             ))}
                         </div>
-                        <button onClick={applyEvs} style={{ width: '100%', padding: '15px', marginTop: '25px', background: '#2980b9', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>立刻保存並套用數值</button>
+                        <button onClick={applyEvs} style={{ width: '100%', padding: '15px', marginTop: '10px', background: '#2980b9', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>立刻保存並套用努力值</button>
                     </div>
                 )}
             </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { MONSTER_NAMES } from '../monsterData';
 
 export default function InventoryOverlay({
     isInventoryOpen,
@@ -55,6 +56,11 @@ export default function InventoryOverlay({
                                             {isSelected && (
                                                 <>
                                                     <div className="text-[9px] leading-tight mt-1 px-1">{item.desc}</div>
+                                                    {item.snapshot && (
+                                                        <div className="text-[9px] text-[#ffeb3b] font-bold mt-1">
+                                                            [ 紀錄：{MONSTER_NAMES[item.snapshot.speciesId] || '未知同伴'} ]
+                                                        </div>
+                                                    )}
                                                     <div className={`mt-2 text-[10px] font-black ${isUsingItem ? 'bg-gray-400' : 'bg-[#ff5252]'} text-white px-3 py-0.5 rounded-full border border-[#1a1a1a] ${!isUsingItem && 'animate-pulse'}`}>
                                                         {isUsingItem ? "正在使用..." : "[B] 確認使用"}
                                                     </div>
