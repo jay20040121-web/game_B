@@ -10,7 +10,7 @@ const DebugPanel = ({
     show, onClose, debugOverrides, setDebugOverrides,
     advStats, setAdvStats, inventory, setInventory, updateDialogue,
     // --- ✨ 解構新傳入的狀態 ---
-    evolutionStage, evolutionBranch, bondValue, talkCount,
+    evolutionStage, evolutionBranch, bondValue, setBondValue, talkCount,
     lockedAffinity, soulAffinityCounts, soulTagCounts,
     interactionLogs, interactionCount, getMonsterIdWrapped,
     getPowerThreshold
@@ -182,6 +182,19 @@ const DebugPanel = ({
 
                 {activeTab === 'stats' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
+                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>💖 羈絆值調整 (Bond)</div>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <input 
+                                    type="range" min="0" max="100" value={bondValue} 
+                                    onChange={e => setBondValue(parseInt(e.target.value) || 0)}
+                                    style={{ flex: 1, cursor: 'pointer' }}
+                                />
+                                <span style={{ width: '40px', textAlign: 'right', fontWeight: 'bold' }}>{bondValue}</span>
+                            </div>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 羈絆值會影響進化分支 (例如靈魂進化需要 80 以上)。</p>
+                        </div>
+
                         <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
                             <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>⭐ 等級調整 (Level)</div>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

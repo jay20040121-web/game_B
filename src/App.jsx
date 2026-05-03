@@ -2286,19 +2286,26 @@ export default function App() {
                     // D 線完全封閉，沿原線繼續 (優先度高於靈魂進化，防止凱西被劫持)
                     nextBranch = evolutionBranch;
 
-                } else if (soulNext || evolutionBranch.endsWith('_SOUL') || evolutionBranch === 'W_SOUL_ALT') {
+                } else if (soulNext || evolutionBranch.endsWith('_SOUL') || evolutionBranch.endsWith('_ALT')) {
 
                     // 靈魂進化線最高優先
                     if (soulNext) {
                         nextBranch = soulNext;
                     } else {
-                        // 水系靈魂分支判斷 (Stage 2 <-> Stage 3 <-> Stage 4 皆可互相切換)
+                        // 水系/火系靈魂分支判斷 (Stage 2 <-> Stage 3 <-> Stage 4 皆可互相切換)
                         if (['W_SOUL', 'W_SOUL_ALT'].includes(evolutionBranch)) {
                             const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
                             if (['nonsense', 'passionate'].includes(dominantNature)) {
                                 nextBranch = 'W_SOUL_ALT';
                             } else {
                                 nextBranch = 'W_SOUL';
+                            }
+                        } else if (['F_SOUL', 'F_SOUL_ALT'].includes(evolutionBranch)) {
+                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
+                            if (['gentle', 'rational'].includes(dominantNature)) {
+                                nextBranch = 'F_SOUL_ALT';
+                            } else {
+                                nextBranch = 'F_SOUL';
                             }
                         } else {
                             nextBranch = evolutionBranch;
@@ -3219,6 +3226,7 @@ export default function App() {
                 evolutionStage={evolutionStage}
                 evolutionBranch={evolutionBranch}
                 bondValue={bondValue}
+                setBondValue={setBondValue}
                 talkCount={talkCount}
                 lockedAffinity={lockedAffinity}
                 soulAffinityCounts={soulAffinityCounts}

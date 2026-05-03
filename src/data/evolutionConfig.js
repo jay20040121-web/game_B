@@ -52,8 +52,14 @@ export const EVOLUTION_CHAINS = {
     // --- 魂系分支 (Soul Lines) ---
     "SOUL_FIRE": {
         stage2: { "F_SOUL": { id: 1001, desc: `${getMName(1001)}` } },
-        stage3: { "F_SOUL": { id: 1002, from: "F_SOUL", desc: `${getMName(1002)} (無條件進化)` } },
-        stage4: { "F_SOUL": { id: 1003, from: "F_SOUL", desc: `${getMName(1003)} (無條件進化)` } }
+        stage3: {
+            "F_SOUL": { id: 1002, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1002)} (其餘條件)` },
+            "F_SOUL_ALT": { id: 1030, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1030)} (溫柔/理性)` }
+        },
+        stage4: {
+            "F_SOUL": { id: 1003, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1003)} (其餘條件)` },
+            "F_SOUL_ALT": { id: 1031, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1031)} (溫柔/理性)` }
+        }
     },
 
     "SOUL_WATER": {

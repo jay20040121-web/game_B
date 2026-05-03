@@ -27,6 +27,10 @@ export const MONSTER_REGISTRY = [
     { id: 1028, name: "守護龍仔", types: ["water"], baseStats: { hp: 60, atk: 85, def: 60, spd: 70 } },
     { id: 1029, name: "守護龍獸", types: ["water"], baseStats: { hp: 90, atk: 110, def: 80, spd: 93 } },
 
+    // === 火系靈魂 (溫柔/理性分支) ===
+    { id: 1030, name: "喵星人", types: ["fire"], baseStats: { hp: 75, atk: 70, def: 60, spd: 90 } },
+    { id: 1031, name: "喵星特務X", types: ["fire"], baseStats: { hp: 100, atk: 90, def: 80, spd: 115 } },
+
     // === 草系靈魂 ===
     { id: 1007, name: "綿綿獸", types: ["grass"], baseStats: { hp: 45, atk: 65, def: 65, spd: 45 } },
     { id: 1008, name: "甜點獸", types: ["grass"], baseStats: { hp: 60, atk: 80, def: 80, spd: 60 } },
@@ -38,16 +42,16 @@ export const MONSTER_REGISTRY = [
     { id: 1012, name: "女王蜂", types: ["bug"], baseStats: { hp: 80, atk: 90, def: 110, spd: 90 } },
 
     // === 一般線 A (尼多朗) ===
-    { id: 1013, name: "咪兔", types: ["poison"], baseStats: { hp: 46, atk: 57, def: 40, spd: 50 } },
-    { id: 1014, name: "野性咪兔", types: ["poison"], baseStats: { hp: 61, atk: 72, def: 65, spd: 65 } },
-    { id: 1015, name: "王者咪兔", types: ["poison"], baseStats: { hp: 91, atk: 92, def: 90, spd: 65 } },
+    { id: 1013, name: "黑德魯", types: ["poison"], baseStats: { hp: 46, atk: 57, def: 40, spd: 50 } },
+    { id: 1014, name: "野性德魯", types: ["poison"], baseStats: { hp: 61, atk: 72, def: 65, spd: 65 } },
+    { id: 1015, name: "王者德魯", types: ["poison"], baseStats: { hp: 91, atk: 92, def: 90, spd: 65 } },
 
     // === 一般線 C (咪球) ===
-    { id: 1016, name: "咪球", types: ["normal"], baseStats: { hp: 50, atk: 56, def: 50, spd: 72 } },
-    { id: 1017, name: "狐狸咪", types: ["normal"], baseStats: { hp: 55, atk: 81, def: 50, spd: 97 } },
+    { id: 1016, name: "伊麗莎", types: ["normal"], baseStats: { hp: 50, atk: 56, def: 50, spd: 72 } },
+    { id: 1017, name: "麗莎狐", types: ["normal"], baseStats: { hp: 55, atk: 81, def: 50, spd: 97 } },
 
     // === 一般線 FAIL ===
-    { id: 1018, name: "天后咪", types: ["normal"], baseStats: { hp: 81, atk: 85, def: 80, spd: 80 } },
+    { id: 1018, name: "女皇莎白", types: ["normal"], baseStats: { hp: 81, atk: 85, def: 80, spd: 80 } },
 
     // === 死亡重生 G1 ===
     { id: 1019, name: "幽燭燭", types: ["ghost"], baseStats: { hp: 30, atk: 100, def: 35, spd: 80 } },
