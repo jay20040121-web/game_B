@@ -739,7 +739,7 @@ export default function App() {
             // 如果是特殊道具（如回憶膠囊），不參與合併，保持獨立性
             const isUnique = !!updatedItem.snapshot;
             const existing = isUnique ? null : merged.find(it => it.id === updatedItem.id);
-            
+
             if (existing) {
                 existing.count = (existing.count || 1) + (updatedItem.count || 1);
                 changed = true;
@@ -1162,13 +1162,18 @@ export default function App() {
 
     function executeBattleTurn(playerAction = 'attack', actionMove = null, pvpEnemyMove = null) {
         setBattleState(prev => {
-            return processBattleTurn(prev, playerAction, actionMove, pvpEnemyMove, {
-                isHost,
-                pvpRemoteMoveRef,
-                connInstance,
-                setPendingPlayerMove,
-                getSmartMove
-            });
+            try {
+                return processBattleTurn(prev, playerAction, actionMove, pvpEnemyMove, {
+                    isHost,
+                    pvpRemoteMoveRef,
+                    connInstance,
+                    setPendingPlayerMove,
+                    getSmartMove
+                });
+            } catch (err) {
+                console.error("[Battle] Turn Error:", err);
+                return prev;
+            }
         });
     };
 
@@ -1293,73 +1298,79 @@ export default function App() {
         const timer = setTimeout(() => {
             // 模擬按下 B 鍵觸發更新
             setBattleState(prev => {
-                if (prev.stepQueue.length > 30) return prev; // Safety net
+                try {
+                    if (prev.stepQueue.length > 30) return prev; // Safety net
 
-                // 執行與 handleB 邏輯相同的狀態更新
-                if (prev.stepQueue.length > 0) {
-                    const nextStep = prev.stepQueue[0];
-                    const updated = { ...prev, stepQueue: prev.stepQueue.slice(1), activeMsg: nextStep.text || "" };
+                    // 執行與 handleB 邏輯相同的狀態更新
+                    if (prev.stepQueue.length > 0) {
+                        const nextStep = prev.stepQueue[0];
+                        console.log("[Battle Animation] Step:", nextStep);
+                        const updated = { ...prev, stepQueue: prev.stepQueue.slice(1), activeMsg: nextStep.text || "" };
 
-                    if (nextStep.type === 'damage') {
-                        if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.max(0, updated.enemy.hp - nextStep.value) };
-                        else updated.player = { ...updated.player, hp: Math.max(0, updated.player.hp - nextStep.value) };
-                        updated.flashTarget = nextStep.target;
-                        playBloop('pop');
-                    } else if (nextStep.type === 'heal') {
-                        if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };
-                        else updated.player = { ...updated.player, hp: Math.min(updated.player.maxHp, updated.player.hp + nextStep.value) };
-                        updated.flashTarget = null;
-                        playBloop('success');
-                    } else if (nextStep.type === 'run') {
-                        updated.phase = 'end';
-                        setTimeout(() => resolveBattleLoss(true), 1200);
+                        if (nextStep.type === 'damage') {
+                            if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.max(0, updated.enemy.hp - nextStep.value) };
+                            else updated.player = { ...updated.player, hp: Math.max(0, updated.player.hp - nextStep.value) };
+                            updated.flashTarget = nextStep.target;
+                            playBloop('pop');
+                        } else if (nextStep.type === 'heal') {
+                            if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };
+                            else updated.player = { ...updated.player, hp: Math.min(updated.player.maxHp, updated.player.hp + nextStep.value) };
+                            updated.flashTarget = null;
+                            playBloop('success');
+                        } else if (nextStep.type === 'run') {
+                            updated.phase = 'end';
+                            setTimeout(() => resolveBattleLoss(true), 1200);
+                        } else {
+                            updated.flashTarget = null;
+                        }
+
+                        if (updated.player.hp <= 0 || updated.enemy.hp <= 0) updated.stepQueue = [];
+                        return updated;
                     } else {
-                        updated.flashTarget = null;
-                    }
+                        console.log("[Battle Animation] End");
+                        // 隊列結束，進行最後的數值校準
+                        const finalPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
+                        const finalEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
 
-                    if (updated.player.hp <= 0 || updated.enemy.hp <= 0) updated.stepQueue = [];
-                    return updated;
-                } else {
-                    // 隊列結束，進行最後的數值校準
-                    const finalPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
-                    const finalEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
+                        if (prev.player.hp <= 0 || prev.enemy.hp <= 0) {
+                            const isWin = prev.enemy.hp <= 0;
+                            const next = {
+                                ...prev,
+                                phase: 'end',
+                                activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...",
+                                flashTarget: null,
+                                player: { ...prev.player, hp: finalPlayerHp },
+                                enemy: { ...prev.enemy, hp: finalEnemyHp }
+                            };
 
-                    if (prev.player.hp <= 0 || prev.enemy.hp <= 0) {
-                        const isWin = prev.enemy.hp <= 0;
-                        const next = {
+                            // 動態計算經驗值 (與 handleB 邏輯同步)
+                            const scaling = 1 + evolutionStage * 0.2;
+                            const gain = Math.floor((prev.mode === 'trainer' ? 5 : 2) + scaling);
+
+                            setTimeout(() => isWin ? resolveBattleWin(gain, prev.enemy) : resolveBattleLoss(), 1500);
+                            return next;
+                        }
+
+                        // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
+                        const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
+
+                        // 利用計算結果進行最終 HP 校準，同時百分之百保留本地所有其他屬性 (如 moves)
+                        const finalPlayer = { ...prev.player, hp: finalPlayerHp };
+                        const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
+
+                        return {
                             ...prev,
-                            phase: 'end',
-                            activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...",
+                            phase: nextPhase,
+                            activeMsg: "",
+                            turn: prev.turn + 1,
                             flashTarget: null,
-                            player: { ...prev.player, hp: finalPlayerHp },
-                            enemy: { ...prev.enemy, hp: finalEnemyHp }
+                            player: finalPlayer,
+                            enemy: finalEnemy
                         };
-
-                        // 動態計算經驗值 (與 handleB 邏輯同步)
-                        const scaling = 1 + evolutionStage * 0.2;
-                        const gain = Math.floor((prev.mode === 'trainer' ? 5 : 2) + scaling);
-
-                        setTimeout(() => isWin ? resolveBattleWin(gain, prev.enemy) : resolveBattleLoss(), 1500);
-                        return next;
                     }
-
-                    // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
-                    const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
-
-                    // 利用計算結果進行最終 HP 校準，同時百分之百保留本地所有其他屬性 (如 moves)
-                    const finalPlayer = { ...prev.player, hp: finalPlayerHp };
-                    const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
-
-                    return {
-                        ...prev,
-                        phase: nextPhase,
-                        activeMsg: "",
-                        turn: prev.turn + 1,
-                        flashTarget: null,
-                        player: finalPlayer,
-                        enemy: finalEnemy
-                    };
-
+                } catch (err) {
+                    console.error("[Battle Animation] Fatal Error:", err);
+                    return { ...prev, phase: 'player_action', stepQueue: [] };
                 }
             });
         }, delay);
@@ -1613,7 +1624,7 @@ export default function App() {
     };
 
     const handleB = (clickIdx = null) => {
-        if (isCloudLoading || isInteractAnimating || isEvolving) return; 
+        if (isCloudLoading || isInteractAnimating || isEvolving) return;
         const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
         // 優先級最高：技能順序調整模式
@@ -2115,7 +2126,7 @@ export default function App() {
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        
+
         updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
         setTodayHasEvolved(true);
 
@@ -2127,7 +2138,7 @@ export default function App() {
         setEvolutionDetails(null);
         updateDialogue("進化成功！");
         unlockMonster(evolvedId);
-        
+
         // 清除全域暫存
         delete window._nextBranch;
         delete window._evolvedId;
@@ -2173,11 +2184,11 @@ export default function App() {
                     // 加入背包
                     setInventory(prev => {
                         const itemDef = ADV_ITEMS.find(it => it.id === '021');
-                        const newItem = { 
-                            ...itemDef, 
-                            count: 1, 
+                        const newItem = {
+                            ...itemDef,
+                            count: 1,
                             instanceId: Date.now(), // 確保每個膠囊獨立
-                            snapshot 
+                            snapshot
                         };
                         return [...prev, newItem];
                     });
@@ -2190,7 +2201,7 @@ export default function App() {
                 setIsGenerating(true);
                 setIsDead(true);
                 velRef.current = { x: 0, y: -0.1 };
-                
+
                 setTimeout(() => {
                     let words = "";
                     if (memoryCapsuleGranted) {
@@ -2203,7 +2214,7 @@ export default function App() {
                     } else {
                         words = "謝謝你陪我走到最後一刻...";
                     }
-                    
+
                     setFinalWords(words);
                     setIsGenerating(false);
                     updateDialogue(words);
@@ -2342,7 +2353,7 @@ export default function App() {
 
                 // 實際的狀態更新邏輯，將在 EvolutionPerformance 結束時呼叫 (由 handleEvolutionFinish 觸發)
                 // 這裡暫時只設定 nextBranch 以供回傳使用
-                window._nextBranch = nextBranch; 
+                window._nextBranch = nextBranch;
                 window._evolvedId = evolvedId;
             }
         }, 500);
@@ -2528,11 +2539,15 @@ export default function App() {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {}
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {},
+                    protectLeft: 3,
+                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 }
                 },
                 enemy: {
                     id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    protectLeft: 3,
+                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 }
                 },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
@@ -2548,18 +2563,31 @@ export default function App() {
             eSPD = (enemyData?.stats?.spd) || 90;
             eType = enemyData?.type || 'normal';
             // 重要：一定要使用傳過來的招式，而非本地生成的
-            const eMoves = (enemyData?.moves || generateMoves(1, eType, null, eLevel, true)).map(id => SKILL_DATABASE[id]).filter(Boolean);
+            const rawEnemyMoves = enemyData?.moves || generateMoves(1, eType, null, eLevel, true);
+            const eMoves = rawEnemyMoves.map(m => {
+                if (typeof m === 'string') return SKILL_DATABASE[m];
+                if (typeof m === 'object' && m !== null) return m; // 已經是物件了，直接用
+                return null;
+            }).filter(Boolean);
+            if (eMoves.length === 0) eMoves.push(SKILL_DATABASE.tackle);
 
-            const initMsg = `連線成功！${enemyData?.name || '神祕對手'} (Lv.${eLevel}) 降臨！`;
+            const initMsg = `連線成功！${enemyData?.name || '網路玩家'} (Lv.${eLevel}) 降臨！`;
             resultState = {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {}
+                    name: user?.displayName || "你",
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    moveUpgrades: advStats.moveUpgrades || {},
+                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
+                    protectLeft: 3
                 },
                 enemy: {
-                    id: enemyData?.id || 1000, name: (enemyData?.name || '神祕對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    id: enemyData?.id || 1000, name: (enemyData?.name || '網路玩家'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    moveUpgrades: enemyData?.moveUpgrades || {},
+                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
+                    protectLeft: 3
                 },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
@@ -2825,7 +2853,7 @@ export default function App() {
                         setSoulTagCounts(sn.soulTagCounts);
                         setInteractionLogs(sn.interactionLogs);
                         setInteractionCount(sn.interactionCount);
-                        
+
                         // 重置生理狀態
                         setHunger(100);
                         setMood(100);
@@ -2833,10 +2861,10 @@ export default function App() {
                         setIsSleeping(false);
                         setLastEvolutionTime(Date.now());
                         setBirthTime(Date.now()); // 獲得重生的 7 天壽命
-                        
+
                         updateDialogue(`✨ 回憶湧現！${MONSTER_NAMES[sn.speciesId] || '同伴'} 回到了你的身邊！`);
                         playBloop('success');
-                        
+
                         // 復活後強制刷新等級 Ref，防止學習邏輯錯誤
                         const newLevel = getLevelByPower(sn.advStats.basePower);
                         previousLevelRef.current = newLevel;
@@ -2885,7 +2913,7 @@ export default function App() {
     const handleConfirmRearrange = (newMoves) => {
         setAdvStats(prev => ({ ...prev, moves: newMoves }));
         setIsSkillRearrangeOpen(false);
-        
+
         // 消耗道具
         if (usingItemIdx !== -1) {
             setInventory(prev => {
@@ -2898,7 +2926,7 @@ export default function App() {
             });
             setUsingItemIdx(-1);
         }
-        
+
         updateDialogue("技能順序調整完成！消耗了一個技能轉換器。");
         recordGameAction();
         playSoundEffect('success');
@@ -3914,7 +3942,7 @@ export default function App() {
                     )}
                     {/* --- 全螢幕回憶膠囊演出 --- */}
                     {showMemoryPerformance && (
-                        <MemoryCapsulePerformance 
+                        <MemoryCapsulePerformance
                             monsterId={memoryPerformanceMonsterId}
                             onFinish={() => {
                                 setShowMemoryPerformance(false);

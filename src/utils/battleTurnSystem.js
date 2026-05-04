@@ -9,13 +9,12 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     // --- PvP 模式特殊預處理 ---
     if (prev.mode === 'pvp' && playerAction === 'attack') {
         if (isHost.current) {
+            // 【主機端邏輯】：收集雙方招式，然後進行結算
             if (!pvpEnemyMove) {
                 if (pvpRemoteMoveRef.current) {
                     pvpEnemyMove = pvpRemoteMoveRef.current;
                     pvpRemoteMoveRef.current = null;
-                    if (connInstance.current) {
-                        connInstance.current.send({ type: 'ACTION', data: { move: actionMove, turnId: prev.turn } });
-                    }
+                    // 主機端在結算前，可以選擇是否告知客機自己出招了（選用）
                 } else {
                     setPendingPlayerMove(actionMove);
                     if (connInstance.current) {
@@ -25,18 +24,18 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 }
             }
         } else {
-            if (pvpEnemyMove) {
-                return { ...prev, phase: 'waiting_opponent', logs: [...prev.logs, "等待對手出招..."] };
-            }
-            if (pvpRemoteMoveRef.current) {
-                pvpRemoteMoveRef.current = null;
-            }
+            // 【客機端邏輯】：只負責發送招式給主機，然後「絕對」等待 RESULT 封包
             setPendingPlayerMove(actionMove);
             if (connInstance.current) {
                 connInstance.current.send({ type: 'ACTION', data: { move: actionMove, turnId: prev.turn } });
             }
             return { ...prev, phase: 'waiting_opponent', logs: [...prev.logs, "等待對手出招..."] };
         }
+    }
+
+    // 非主機端在 PVP 模式下不准進入下方的計算邏輯
+    if (prev.mode === 'pvp' && !isHost.current) {
+        return { ...prev, phase: 'waiting_opponent' };
     }
 
     const nextQueue = [];
@@ -87,7 +86,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         const defenderEffSpd = defender.spd * getStatMultiplier(defender.statStages?.spd || 0) * (defender.status === 'paralysis' ? 0.5 : 1);
 
         const speedRatio = attackerEffSpd / defenderEffSpd;
-        
+
         // 取得技能基礎命中 (預設 100)，加上附魔命中加成
         const enchantAccBonus = attacker.moveUpgrades?.[move.id]?.ailments?.accuracy || 0;
         const baseAccuracy = ((move.accuracy || 100) + enchantAccBonus) / 100;
@@ -137,8 +136,16 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         return { dmg: finalDmg, msg: effectMsg };
     };
 
-    const updatedPlayer = { ...prev.player };
-    const updatedEnemy = { ...prev.enemy };
+    const updatedPlayer = {
+        ...prev.player,
+        statStages: { ...prev.player.statStages },
+        rogueEffects: { ...(prev.player.rogueEffects || {}) }
+    };
+    const updatedEnemy = {
+        ...prev.enemy,
+        statStages: { ...prev.enemy.statStages },
+        rogueEffects: { ...(prev.enemy.rogueEffects || {}) }
+    };
 
     const addMoveExecution = (side, move) => {
         const isPlayer = side === 'player';
@@ -147,10 +154,10 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         // 在 PVP 模式下，動態帶入各自的名字，避免雙方看到硬編碼的「你」
         let attackerName = isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name;
         let defenderName = isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你');
-        
+
         if (prev.mode === 'pvp') {
-            attackerName = isPlayer ? (updatedPlayer.name || '玩家') : (updatedEnemy.name || '對手');
-            defenderName = isPlayer ? (updatedEnemy.name || '對手') : (updatedPlayer.name || '玩家');
+            attackerName = attacker.name || (isPlayer ? '網路玩家' : '網路玩家');
+            defenderName = defender.name || (isPlayer ? '網路玩家' : '網路玩家');
         }
 
         const preCheck = checkPreTurnStatus(attacker, rFunc);
@@ -172,17 +179,19 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             return;
         }
 
-        nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name}]！` });
+        if (!move) {
+            console.warn(`[Battle] ${attackerName} 嘗試使用不存在的招式`, move);
+            move = SKILL_DATABASE.tackle;
+        }
+        nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name || '未知招式'}]！` });
 
         if (move.isProtect) {
-            let protectChance = 1.0 / Math.pow(2, attacker.consecutiveProtect || 0);
-            if (rFunc() < protectChance) {
+            if ((attacker.protectLeft || 0) > 0) {
                 attacker.isProtected = true;
-                attacker.consecutiveProtect = (attacker.consecutiveProtect || 0) + 1;
-                nextQueue.push({ type: 'msg', text: `${attackerName} 進入了防禦狀態，可以抵擋攻擊！` });
+                attacker.protectLeft = (attacker.protectLeft || 0) - 1;
+                nextQueue.push({ type: 'msg', text: `${attackerName} 進入了防護狀態！(剩餘次數: ${attacker.protectLeft})` });
             } else {
-                attacker.consecutiveProtect = 0;
-                nextQueue.push({ type: 'msg', text: `但是防禦失敗了！` });
+                nextQueue.push({ type: 'msg', text: `但是防禦次數已用盡，失敗了！` });
             }
             return;
         } else {
@@ -190,7 +199,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         }
 
         if (move.addReflect) {
-            attacker.rogueEffects = attacker.rogueEffects || {};
+            attacker.rogueEffects = { ...(attacker.rogueEffects || {}) };
             attacker.rogueEffects.reflect = (attacker.rogueEffects.reflect || 0) + move.addReflect;
             nextQueue.push({ type: 'msg', text: `${attackerName} 周圍展開了反射盾！` });
             return;
@@ -263,12 +272,12 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     attacker.hp = Math.max(0, attacker.hp - recoilDmg);
                 }
             }
-            
+
             // --- Roguelike 特殊效果: Lifesteal (吸血鬼之牙) + 附魔吸血 ---
             const rogueLifesteal = attacker.rogueEffects?.lifesteal || 0;
             const enchantLifesteal = attacker.moveUpgrades?.[move.id]?.ailments?.lifesteal || 0;
             const totalDrainPct = (effects.drainPct || 0) + rogueLifesteal + (enchantLifesteal / 100);
-            
+
             if (totalDrainPct > 0) {
                 const drainHeal = Math.floor(actualDmg * totalDrainPct);
                 if (drainHeal > 0) {
@@ -353,7 +362,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     const finalBattleState = {
         ...prev,
         // 修正：播報期間不應提前增加 turn，統一由 App.js 播報結束後累加，防止跳號
-        turn: prev.turn, 
+        turn: prev.turn,
         phase: 'action_streaming',
         stepQueue: nextQueue.slice(1),
         activeMsg: nextQueue[0]?.text || "",
@@ -370,24 +379,45 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             if (step.type === 'damage' || step.type === 'heal') {
                 return { ...step, target: step.target === 'player' ? 'enemy' : 'player' };
             }
+            if (step.type === 'msg' && step.text) {
+                // 🔹 文本替換：將對方的「你」換成對方的名字，將自己的名字換成「你」
+                let newText = step.text;
+                const pName = updatedPlayer.name || '你';
+                const eName = updatedEnemy.name || '網路玩家';
+
+                // 這邊邏輯較為複雜，簡單化：在對手端，原先的 player(Host) 是「網路玩家」，原先的 enemy(Client) 是「你」
+                // 使用 split/join 替代 RegExp 以避免特殊字元造成崩潰
+                if (pName !== '你') {
+                    newText = newText.split(pName).join('【TEMP_P】');
+                } else {
+                    newText = newText.split('你').join('【TEMP_P】');
+                }
+
+                newText = newText.split(eName).join('你');
+                newText = newText.split('【TEMP_P】').join(pName === '你' ? '網路玩家' : pName);
+
+                return { ...step, text: newText };
+            }
             return step;
         });
 
         const connRef = connInstance.current;
         setTimeout(() => {
             try {
-                connRef.send({ 
-                    type: 'RESULT', 
-                    data: { 
+                connRef.send({
+                    type: 'RESULT',
+                    data: {
                         stepQueue: flippedQueue,
                         turnId: prev.turn,
                         playerHpBefore: prev.enemy.hp,
                         enemyHpBefore: prev.player.hp,
-                        playerHpAfter: updatedEnemy.hp, 
+                        playerHpAfter: updatedEnemy.hp,
                         enemyHpAfter: updatedPlayer.hp,
-                        playerStatStagesAfter: updatedEnemy.statStages,
-                        enemyStatStagesAfter: updatedPlayer.statStages
-                    } 
+                        // 🔹 傳送完整的物件快照，確保所有狀態（狀態異常、Rogue效果、能力階級）同步
+                        playerStateAfter: updatedEnemy,
+                        enemyStateAfter: updatedPlayer,
+                        turnId: prev.turn
+                    }
                 });
             } catch (e) { console.error("PVP Result Send Error:", e); }
         }, 0);

@@ -56,10 +56,10 @@ export const usePvpConnection = (deps) => {
     // 對戰結束後的統一結算邏輯
     const handleBattleEnd = (isWin) => {
         // 🛑 核心修正：移除 PvP 戰力獲取，防止玩家刷等級
-        const bpGain = 0; 
+        const bpGain = 0;
         const msg = isWin ? `對戰勝利！` : `對戰結束！`;
-        const logMsg = isWin 
-            ? `在一場精彩的連線對決中獲得了勝利。` 
+        const logMsg = isWin
+            ? `在一場精彩的連線對決中獲得了勝利。`
             : `完成了一場連線對決。`;
 
         // 1. 更新戰力 (已停用)
@@ -137,7 +137,8 @@ export const usePvpConnection = (deps) => {
                     name: deps.user?.displayName || "網路玩家",
                     stats: { hp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, level: pLevel },
                     type: pType,
-                    moves: pMoves
+                    moves: pMoves,
+                    moveUpgrades: deps.advStats?.moveUpgrades || {}
                 }
             });
         });
@@ -157,35 +158,40 @@ export const usePvpConnection = (deps) => {
                 }
 
                 pvpRemoteMoveRef.current = payload.data.move;
-                setPendingPlayerMove(prevMove => {
-                    if (prevMove) {
-                        const myMove = prevMove;
-                        // ⏱️ 沉默緩衝 5 秒：當雙方都確認後，延遲 5 秒結算以確保同步
-                        setTimeout(() => executeBattleTurn('attack', myMove, pvpRemoteMoveRef.current), 5000);
-                        return null;
-                    }
-                    return prevMove;
-                });
+
+                // 只有主機端收到對手行動後，才需要主動觸發計算
+                if (isHost.current) {
+                    setPendingPlayerMove(prevMove => {
+                        if (prevMove) {
+                            // 立即執行計算 (或加極短延遲確保封包穩定)
+                            executeBattleTurn('attack', prevMove, pvpRemoteMoveRef.current);
+                            return null;
+                        }
+                        return prevMove;
+                    });
+                }
+                // 客機端 (isHost === false) 不需要做任何事，只需靜待 RESULT 封包即可
             } else if (payload.type === 'RESULT') {
                 // 客戶端接收主機端算好的結果，直接套用
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
-                    const { 
-                        stepQueue, 
-                        playerHpAfter, enemyHpAfter, 
+                    const {
+                        stepQueue,
+                        playerHpAfter, enemyHpAfter,
                         playerHpBefore, enemyHpBefore,
-                        playerStatStagesAfter, enemyStatStagesAfter,
-                        turnId 
+                        playerStateAfter, enemyStateAfter,
+                        turnId
                     } = payload.data;
-                    
-                    // 防呆：如果回合序號對不上，可能發生了嚴重的延遲或封包遺失
-                    if (turnId !== undefined && turnId !== prev.turn) {
-                        console.warn(`[PVP] 回合序號不符！本地 ${prev.turn} vs 收到 ${turnId}`);
+
+                    console.log(`[PVP] 收到結果封包 Turn: ${turnId}`, payload.data);
+
+                    if (!stepQueue || stepQueue.length === 0) {
+                        console.warn("[PVP] 收到空結果隊列，跳過更新");
+                        return prev;
                     }
 
-                    if (!stepQueue || stepQueue.length === 0) return prev;
                     const first = stepQueue[0];
-                    
+
                     return {
                         ...prev,
                         phase: 'action_streaming',
@@ -193,20 +199,24 @@ export const usePvpConnection = (deps) => {
                         activeMsg: first.text || "",
                         lastStep: first,
                         flashTarget: null,
-                        // 修正：在播放動畫前，先將 HP 基準線與能力階級與主機對齊，防止動畫過程出現跳號或計算不一
-                        player: { 
-                            ...prev.player, 
+                        // 修正：在播放動畫前，將 HP 基準線與所有能力狀態與主機對齊
+                        player: {
+                            ...(playerStateAfter || prev.player),
                             hp: playerHpBefore !== undefined ? playerHpBefore : prev.player.hp,
-                            statStages: playerStatStagesAfter || prev.player.statStages 
+                            // 核心修正：防止同步時因格式問題導致招式表消失
+                            moves: (playerStateAfter?.moves?.length > 0) ? playerStateAfter.moves : prev.player.moves,
+                            protectLeft: playerStateAfter?.protectLeft !== undefined ? playerStateAfter.protectLeft : (prev.player.protectLeft || 0),
+                            isProtected: false
                         },
-                        enemy: { 
-                            ...prev.enemy, 
+                        enemy: {
+                            ...(enemyStateAfter || prev.enemy),
                             hp: enemyHpBefore !== undefined ? enemyHpBefore : prev.enemy.hp,
-                            statStages: enemyStatStagesAfter || prev.enemy.statStages
+                            moves: (enemyStateAfter?.moves?.length > 0) ? enemyStateAfter.moves : prev.enemy.moves,
+                            protectLeft: enemyStateAfter?.protectLeft !== undefined ? enemyStateAfter.protectLeft : (prev.enemy.protectLeft || 0),
+                            isProtected: false
                         },
                         playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : prev.player.hp,
                         enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : prev.enemy.hp,
-                        // 播報期間維持當前回合 ID
                         turn: turnId !== undefined ? turnId : prev.turn
                     };
                 });
@@ -261,7 +271,7 @@ export const usePvpConnection = (deps) => {
                 clearTimeout(connectionTimeout);
                 updateDialogue(`房間建立完成！\n等待對手輸入密碼 ${pvpRoomPassword} ...`, true);
             }
-            
+
             // 如果我是挑戰者 (B)，開啟後立即連向 A
             if (role === 'B') {
                 const targetId = customId.replace(/_B$/, '_A');
@@ -356,7 +366,7 @@ export const usePvpConnection = (deps) => {
         pvpCurrentHP,
         pvpOpponentHP,
         pendingPlayerMove,
-        
+
         // --- Methods / Setters ---
         setIsPvpMode,
         setMatchStatus,
