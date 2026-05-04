@@ -1,5 +1,6 @@
 import React from 'react';
 import { ADV_ITEMS, DIARY_ITEM } from '../data/gameConfig';
+import { getLevelByPower } from '../monsterData';
 
 /**
  * 🛠️ 偵錯面板元件 (Debug Panel)
@@ -202,7 +203,7 @@ const DebugPanel = ({
                                     type="number" 
                                     min="1" 
                                     max="100" 
-                                    defaultValue={Math.floor((advStats.basePower - 100) / 10) + 1} 
+                                    defaultValue={getLevelByPower(advStats.basePower)} 
                                     id="debug-level-input"
                                     style={{ flex: 1, padding: '10px', background: '#333', color: 'white', border: '1px solid #555' }} 
                                 />

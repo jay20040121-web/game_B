@@ -1,6 +1,6 @@
 import React from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
-import { getTypeMultiplier } from '../monsterData';
+import { getTypeMultiplier, getLevelByPower } from '../monsterData';
 
 export default function BattleAdventureOverlay({
     isAdvMode,
@@ -92,7 +92,7 @@ export default function BattleAdventureOverlay({
                                     {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.player.status] || '狀'}
                                 </span>
                             )}
-                            <div className="text-[10px] font-bold text-white text-right truncate">Lv.{Math.min(100, Math.max(1, Math.floor(((advStats.basePower || 100) - 100) / 10) + 1))}</div>
+                            <div className="text-[10px] font-bold text-white text-right truncate">Lv.{getLevelByPower(advStats.basePower)}</div>
                         </div>
                         <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
                             <div className="h-full transition-all duration-300 absolute left-0 top-0 z-[1]" style={{ width: `${Math.min(100, ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) * 100)}%`, backgroundColor: ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.5 ? '#2ecc71' : ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
