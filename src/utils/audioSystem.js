@@ -1,13 +1,24 @@
 // Web Audio API 8-bit 音效產生器 (使用 Singleton 以避免建立過多 Context 導致故障)
 let audioCtx = null;
 
-export const playBloop = (type) => {
+const SOUND_MAP = {
+    select: './assets/sound/選擇按鈕.wav',
+    confirm: './assets/sound/確認按鈕.wav',
+    back: './assets/sound/取消按鈕.wav',
+    success: './assets/sound/獲勝.wav',
+    fail: './assets/sound/失敗.wav',
+    attack: './assets/sound/攻擊音效.wav',
+    pop: './assets/sound/選擇按鈕.wav',
+    heartbeat: './assets/sound/確認按鈕.wav',
+};
+
+// 將原本的 Web Audio 邏輯獨立出來作為備援
+const playSyntheticSound = (type) => {
     try {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
         
-        // 瀏覽器安全規定：必須在使用者互動後 resume
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
@@ -54,4 +65,23 @@ export const playBloop = (type) => {
     } catch (e) {
         console.warn("Audio Context Error:", e);
     }
+};
+
+export const playBloop = (type) => {
+    // 優先嘗試播放音效檔案
+    if (SOUND_MAP[type]) {
+        const audio = new Audio(SOUND_MAP[type]);
+        audio.volume = 0.4;
+        
+        audio.play().catch(e => {
+            console.warn(`[AudioSystem] File play failed for type "${type}":`, e.message);
+            // 只有在非「使用者未互動」的錯誤下，才執行合成音效作為最後手段
+            if (e.name !== 'NotAllowedError') {
+                playSyntheticSound(type);
+            }
+        });
+        return;
+    }
+
+    playSyntheticSound(type);
 };

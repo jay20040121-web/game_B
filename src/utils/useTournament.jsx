@@ -214,7 +214,7 @@ export function useTournament({
     const prevTournamentPhase = () => {
         if (tPhase === 'champion_reward_effect') {
             setTPhase('champion_reward_move');
-            playBloop('pop');
+            playBloop('back');
         }
     };
 
@@ -348,7 +348,7 @@ export function useTournament({
             setCardOptions(shuffled.slice(0, 3));
             setTPhase('card_selection');
         }
-        playBloop('success');
+        playBloop('confirm');
     };
 
     const pickRogueCard = (card) => {
@@ -356,7 +356,7 @@ export function useTournament({
         setBracket(prev => advanceBracket(prev));
         setCurrentRound(prev => prev + 1);
         setTPhase('bracket');
-        playBloop('success');
+        playBloop('confirm');
     };
 
     // --- 冠軍附魔邏輯 ---
@@ -401,7 +401,7 @@ export function useTournament({
         if (rerollCount <= 0) return;
         setRerollCount(prev => prev - 1);
         generateChampionRewards();
-        playBloop('success');
+        playBloop('confirm');
     };
 
     const confirmChampionReward = (overrideEffectIdx = null) => {

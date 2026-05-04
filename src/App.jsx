@@ -506,7 +506,7 @@ export default function App() {
             if (result.user) {
                 updateDialogue(`🎉 登入成功: ${result.user.displayName}`, false);
                 setAlertMsg(`成功連動帳號: ${result.user.displayName}`);
-                playBloop('success');
+                playBloop('confirm');
                 setTimeout(() => loadFromCloud(result.user), 1000);
             }
         } catch (e) {
@@ -548,7 +548,7 @@ export default function App() {
                 localStorage.removeItem('pixel_monster_save');
                 sessionStorage.removeItem('pixel_monster_save');
             } catch (e) { }
-            playBloop('pop');
+            playBloop('confirm');
             updateDialogue("已退出登入並清除本地快取。");
             setTimeout(() => window.location.reload(), 1000);
         } catch (e) { console.error(e); }
@@ -1153,14 +1153,17 @@ export default function App() {
 
             updateDialogue(`✨ ${pendingWildCapture.name} 成為了你的新夥伴！`);
             unlockMonster(pendingWildCapture.id);
+            playBloop('confirm');
         } else {
             updateDialogue("保持現狀也很不錯。");
+            playBloop('back');
         }
         setPendingWildCapture(null);
         setIsAdvMode(false); // 結束冒險模式
     };
 
     function executeBattleTurn(playerAction = 'attack', actionMove = null, pvpEnemyMove = null) {
+        if (playerAction === 'attack') playBloop('attack');
         setBattleState(prev => {
             try {
                 return processBattleTurn(prev, playerAction, actionMove, pvpEnemyMove, {
@@ -1311,7 +1314,7 @@ export default function App() {
                             if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.max(0, updated.enemy.hp - nextStep.value) };
                             else updated.player = { ...updated.player, hp: Math.max(0, updated.player.hp - nextStep.value) };
                             updated.flashTarget = nextStep.target;
-                            playBloop('pop');
+                            playBloop('attack');
                         } else if (nextStep.type === 'heal') {
                             if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };
                             else updated.player = { ...updated.player, hp: Math.min(updated.player.maxHp, updated.player.hp + nextStep.value) };
@@ -1449,7 +1452,7 @@ export default function App() {
             setPendingAdvLogs(logs.slice(1));
             setIsAdvStreaming(true);
         }
-        playBloop('pop');
+        playBloop('confirm');
     };
 
     const resolveBattleLoss = (isRun = false) => {
@@ -1481,7 +1484,7 @@ export default function App() {
             setPendingAdvLogs(logs.slice(1));
             setIsAdvStreaming(true);
         }
-        playBloop('pop');
+        playBloop('confirm');
     };
 
     const handleA = () => {
@@ -1492,12 +1495,12 @@ export default function App() {
         if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
         if (alertMsg) {
             setAlertMsg("");
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isLeaderboardOpen) {
             setLeaderboardPage(prev => (prev + 1) % 10);
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isPvpMode && matchStatus !== 'matched') {
@@ -1506,7 +1509,7 @@ export default function App() {
         }
         if (isSkillRearrangeOpen) {
             window.dispatchEvent(new CustomEvent('rearrangeA'));
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isDiaryOpen) {
@@ -1517,7 +1520,7 @@ export default function App() {
                 d.setDate(d.getDate() - 1);
                 return getTodayStr(d);
             });
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament')) {
@@ -1525,24 +1528,24 @@ export default function App() {
                 // Bug Fix #3: 游標只在有效招式間循環，避免選到空格浪費操作
                 const numMoves = battleState.player?.moves?.length || 1;
                 setBattleState(prev => ({ ...prev, menuIdx: ((prev.menuIdx || 0) + 1) % numMoves }));
-                playBloop('pop');
+                playBloop('select');
             }
             return; // 戰鬥期間攔截 A 鍵，防止穿透
         }
         if (pendingWildCapture && !isAdvStreaming) {
             confirmWildCapture(false); // A 鍵一律為 NO
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isConfirmingReplace) {
             setSkillSelectIdx(prev => (prev + 1) % 2); // 0: YES, 1: NO
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (pendingSkillLearn && !isAdvMode && !isPvpMode && !battleState.active) {
             const maxIdx = advStats.moves.length < 4 ? 2 : advStats.moves.length; // 沒滿時 0:學 1:棄; 滿了時 0-3:換 4:棄
             setSkillSelectIdx(prev => (prev + 1) % (maxIdx + 1));
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isStatusUIOpen || isAdvMode) return;
@@ -1550,13 +1553,14 @@ export default function App() {
             if (isUsingItem) return; // 使用中禁止切換
             if (inventory.length > 0) {
                 setSelectedItemIdx(prev => (prev + 1) % inventory.length);
-                playBloop('pop');
+                playBloop('select');
             }
             return;
         }
         if (isConfirmingFarewell) {
             setIsConfirmingFarewell(false);
             updateDialogue("吼吼吼～");
+            playBloop('back');
             return;
         }
         if (isPediaOpen) {
@@ -1566,7 +1570,7 @@ export default function App() {
                 const monsterCount = OBTAINABLE_MONSTER_IDS.length;
                 setPediaIdx(prev => (prev + 1) % monsterCount);
             }
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isBooting) {
@@ -1579,7 +1583,7 @@ export default function App() {
             } else {
                 updateDialogue("主人歡迎回來~", true);
             }
-            playBloop('success');
+            playBloop('confirm');
             return;
         }
 
@@ -1602,12 +1606,13 @@ export default function App() {
             setInteractMenuIdx(prev => (prev + 1) % 3);
             const labels = ["餵食", "撫摸", "結束互動"];
             updateDialogue(`選擇：${labels[(interactMenuIdx + 1) % 3]}`);
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         const next = (activeIndex + 1) % menuItems.length;
         setActiveIndex(next);
         updateDialogue(menuItems[next].label);
+        playBloop('select');
     };
 
     const handleBDown = () => {
@@ -1667,7 +1672,7 @@ export default function App() {
         if (isDiaryOpen) {
             // B 鍵：關閉日記
             setIsDiaryOpen(false);
-            playBloop('pop');
+            playBloop('back');
             return;
         }
         // 1. 優先處理技能學習/替換介面 (Skill Learn Overlay)
@@ -1683,7 +1688,7 @@ export default function App() {
                     setIsConfirmingReplace(false);
                     setSkillSelectIdx(0);
                 }
-                playBloop('success');
+                playBloop('confirm');
                 return;
             }
 
@@ -1706,7 +1711,7 @@ export default function App() {
                         setSkillSelectIdx(0); // 預設跳到 否 (0)
                     }
                 }
-                playBloop('success');
+                playBloop('confirm');
                 return;
             }
         }
@@ -1722,7 +1727,7 @@ export default function App() {
         // --- 聯盟大賽手動轉場 ---
         if (tournament.isTournamentOpen && ['intro', 'bracket', 'battle_intro', 'champion', 'lost'].includes(tournament.tPhase)) {
             tournament.nextTournamentPhase();
-            playBloop('success');
+            playBloop('confirm');
             return;
         }
         // 附魔選擇階段不攔截 B 鍵（由 UI 按鈕操作）
@@ -1770,7 +1775,7 @@ export default function App() {
                         setAdvLog(prev => [...prev.filter(l => l.msg), nextLine]);
                         if (nextLine.hpRatio !== undefined) setAdvCurrentHP(nextLine.hpRatio);
                         setPendingAdvLogs(prev => prev.slice(1));
-                        playBloop('pop');
+                        playBloop('confirm');
                     }
                     return;
                 } else {
@@ -1779,7 +1784,7 @@ export default function App() {
                     setIsAdvMode(false);
                     setLastAdvTime(Date.now());
                     updateDialogue("冒險結束。");
-                    playBloop('success');
+                    playBloop('confirm');
                     return;
                 }
             }
@@ -1858,7 +1863,7 @@ export default function App() {
             } else { // 結束互動
                 setIsInteractMenuOpen(false);
                 updateDialogue("結束互動。");
-                playBloop('pop');
+                playBloop('back');
             }
             return;
         }
@@ -1876,7 +1881,7 @@ export default function App() {
                     return;
                 }
             }
-            playBloop('success');
+            playBloop('confirm');
             return;
         }
 
@@ -1903,7 +1908,7 @@ export default function App() {
         if (isLeaderboardOpen) {
             setIsLeaderboardOpen(false);
             setAlertMsg("");
-            playBloop('pop');
+            playBloop('back');
             return;
         }
         if (isPvpMode) {
@@ -1912,7 +1917,7 @@ export default function App() {
             } else {
                 updateDialogue("對戰中無法逃跑！", true);
             }
-            playBloop('pop');
+            playBloop('back');
             return;
         }
         if (isDiaryOpen) {
@@ -1925,14 +1930,14 @@ export default function App() {
                 d.setDate(d.getDate() + 1);
                 return getTodayStr(d);
             });
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (battleState.active && (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') && battleState.phase === 'player_action') {
             // 返回上層選單（因為目前沒有上層，所以提示無法返回或不做事）
             const tempLogs = [...battleState.logs, "無法返回！"];
             setBattleState(prev => ({ ...prev, logs: tempLogs.slice(-5) }));
-            playBloop('pop');
+            playBloop('back');
             return;
         }
         if (isAdvMode) {
@@ -1950,29 +1955,31 @@ export default function App() {
         if (isConfirmingReplace) {
             setIsConfirmingReplace(false);
             setSkillSelectIdx(0);
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (pendingSkillLearn && !isAdvMode && !isPvpMode && !battleState.active) {
             setPendingSkillLearn(null);
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isStatusUIOpen) {
             setIsStatusUIOpen(false);
             updateDialogue("吼吼吼～");
+            playBloop('back');
             return;
         }
         if (isInventoryOpen) {
             if (isUsingItem) return; // 使用中禁止關閉背包
             setIsInventoryOpen(false);
             updateDialogue("吼吼吼～");
+            playBloop('back');
             return;
         }
         if (isInteractMenuOpen) {
             setIsInteractMenuOpen(false);
             updateDialogue("吼吼吼～");
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isPediaOpen) {
@@ -1981,12 +1988,13 @@ export default function App() {
             } else {
                 setIsPediaOpen(false);
             }
-            playBloop('pop');
+            playBloop('select');
             return;
         }
         if (isConfirmingFarewell) {
             setIsConfirmingFarewell(false);
             updateDialogue("吼吼吼～");
+            playBloop('back');
             return;
         }
         if (miniGame) {
@@ -2016,6 +2024,7 @@ export default function App() {
                 setPediaIdx(0);
                 setIsPediaDetailOpen(false);
                 updateDialogue("圖鑑系統開啟。", true);
+                playBloop('confirm');
                 break;
             case 'interact':
                 if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
@@ -2026,6 +2035,7 @@ export default function App() {
                 setIsInteractMenuOpen(true);
                 setInteractMenuIdx(0);
                 updateDialogue("選擇互動方式：", true);
+                playBloop('confirm');
                 break;
             case 'feed':
                 if (hunger >= 100) {
@@ -2050,6 +2060,7 @@ export default function App() {
                 setIsExpeditionOpen(true);
                 recordGameAction();
                 logEvent("開始與怪獸談心。");
+                playBloop('confirm');
                 break;
             case 'pet':
                 if (mood >= 100) {
@@ -2070,6 +2081,7 @@ export default function App() {
                 }
                 setIsStatusUIOpen(true);
                 updateDialogue("查看狀態中...", true);
+                playBloop('confirm');
                 break;
             case 'tournament':
                 if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
@@ -2081,6 +2093,7 @@ export default function App() {
                 tournament.startTournament();
                 logEvent("報名聯盟大賽。");
                 setActiveIndex(-1);
+                playBloop('confirm');
                 break;
             case 'connect':
                 if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
@@ -2094,6 +2107,7 @@ export default function App() {
                 syncMatchStatus('idle');
                 updateDialogue("宇宙連線大廳", true);
                 logEvent(`進入連線大廳`);
+                playBloop('confirm');
                 break;
             case 'info':
                 if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
@@ -2104,6 +2118,7 @@ export default function App() {
                 setIsInventoryOpen(true);
                 setSelectedItemIdx(0);
                 updateDialogue("查看背包中...", true);
+                playBloop('confirm');
                 break;
             case 'adventure':
                 if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
@@ -2112,6 +2127,7 @@ export default function App() {
                     return;
                 }
                 startAdventure();
+                playBloop('confirm');
                 break;
             default:
                 updateDialogue("開發中");
@@ -2960,6 +2976,7 @@ export default function App() {
 
     const confirmFarewellAction = () => {
         setIsConfirmingFarewell(false);
+        playBloop('confirm');
         // D線抽籤：20% 機率靈魂重生
         const dRoll = Math.random();
         const dLine = dRoll < 0.20 ? 'G1' : null;
@@ -3918,21 +3935,28 @@ export default function App() {
                         </div>
                         <div className="w-full mt-2 px-4 flex justify-between items-center">
                             <button
-                                onClick={isDead ? handleRestart : triggerFarewell}
+                                onClick={() => {
+                                    if (isDead) handleRestart();
+                                    else triggerFarewell();
+                                    playBloop('confirm');
+                                }}
                                 disabled={!isDead && isGenerating}
                                 className={`w-[125px] h-[48px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
                                 style={{
-                                     backgroundImage: `url('${base}assets/BG/ED.png')`,
-                                     backgroundSize: 'contain',
-                                     backgroundPosition: 'center',
-                                     backgroundRepeat: 'no-repeat',
-                                     backgroundColor: 'transparent',
+                                    backgroundImage: `url('${base}assets/BG/ED.png')`,
+                                    backgroundSize: 'contain',
+                                    backgroundPosition: 'center',
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundColor: 'transparent',
                                 }}
                             ></button>
 
                             {/* 新手教學按鈕 (預留) */}
                             <button
-                                onClick={() => { console.log("Tutorial Clicked!"); }}
+                                onClick={() => {
+                                    console.log("Tutorial Clicked!");
+                                    playBloop('confirm');
+                                }}
                                 className="w-[125px] h-[48px] border-none brightness-100 active:brightness-90 transition-all"
                                 style={{
                                     backgroundImage: `url('${base}assets/BG/指導手冊.png')`,
