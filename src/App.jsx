@@ -3916,14 +3916,27 @@ export default function App() {
                                 </div>
                             ))}
                         </div>
-                        <div className="w-full mt-2 px-6 flex justify-center">
+                        <div className="w-full mt-2 px-4 flex justify-between items-center">
                             <button
                                 onClick={isDead ? handleRestart : triggerFarewell}
                                 disabled={!isDead && isGenerating}
-                                className={`w-[160px] h-[68px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
+                                className={`w-[125px] h-[48px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
                                 style={{
-                                    backgroundImage: `url('${base}assets/BG/ED.png')`,
-                                    backgroundSize: '100% 100%',
+                                     backgroundImage: `url('${base}assets/BG/ED.png')`,
+                                     backgroundSize: 'contain',
+                                     backgroundPosition: 'center',
+                                     backgroundRepeat: 'no-repeat',
+                                     backgroundColor: 'transparent',
+                                }}
+                            ></button>
+
+                            {/* 新手教學按鈕 (預留) */}
+                            <button
+                                onClick={() => { console.log("Tutorial Clicked!"); }}
+                                className="w-[125px] h-[48px] border-none brightness-100 active:brightness-90 transition-all"
+                                style={{
+                                    backgroundImage: `url('${base}assets/BG/指導手冊.png')`,
+                                    backgroundSize: 'contain',
                                     backgroundPosition: 'center',
                                     backgroundRepeat: 'no-repeat',
                                     backgroundColor: 'transparent',
