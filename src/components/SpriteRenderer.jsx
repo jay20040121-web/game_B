@@ -45,6 +45,14 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const targetSize = baseSize * scale;
     const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
 
+    // --- Sprite Offsets ---
+    // 可以在這裡針對各別怪獸 ID 設定垂直位移 (向下為正，向上為負)
+    const SPRITE_OFFSETS = {
+        '1014': '20px', // 針對 ID 1014 下調 20px
+    };
+    // 只有在載入並顯示 GIF 時才套用位移 (避免影響圖鑑等使用靜態圖的畫面)
+    const offsetY = (isGifLoaded && animated) ? (SPRITE_OFFSETS[String(id)] || '0px') : '0px';
+
     return (
         <div 
             className={`dithered-monster-container ${className}`}
@@ -78,7 +86,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
                     imageRendering: 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    transform: `scale(${innerScale}) translateY(0)`,
+                    transform: `scale(${innerScale}) translateY(${offsetY})`,
                     transformOrigin: 'bottom center',
                     transition: 'opacity 0.3s ease-in-out'
                 }}
@@ -130,6 +138,14 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
     const targetSize = baseSize * scale;
     const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
 
+    // --- Sprite Offsets ---
+    // 可以在這裡針對各別怪獸 ID 設定垂直位移 (向下為正，向上為負)
+    const SPRITE_OFFSETS = {
+        '1014': '20px', // 針對 ID 1014 下調 20px
+    };
+    // 只有在載入並顯示 GIF 時才套用位移 (避免影響靜態圖)
+    const offsetY = (isGifLoaded && animated) ? (SPRITE_OFFSETS[String(id)] || '0px') : '0px';
+
     return (
         <div 
             className={`dithered-monster-container ${className}`}
@@ -161,7 +177,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
                     imageRendering: 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    transform: `scale(${innerScale}) translateY(0)`,
+                    transform: `scale(${innerScale}) translateY(${offsetY})`,
                     transformOrigin: 'bottom center',
                     transition: 'opacity 0.3s ease-in-out'
                 }}
