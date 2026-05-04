@@ -49,6 +49,7 @@ export function useTournament({
     const [currentRound, setCurrentRound] = useState(1);
     const [rogueBuffs, setRogueBuffs] = useState([]);
     const [cardOptions, setCardOptions] = useState([]);
+    const [rerollCount, setRerollCount] = useState(0);
 
     // 冠軍附魔選擇狀態
     const [rewardOptions, setRewardOptions] = useState([]); // 隨機抽出的 3 個附魔效果
@@ -332,6 +333,13 @@ export function useTournament({
 
         if (currentRound >= 4) {
             // 決賽勝利 → 進入冠軍附魔選擇
+            // 🔹 計算重來骰子次數
+            let rc = 0;
+            rogueBuffs.forEach(cardId => {
+                if (cardId === 'reroll_dice') rc++;
+            });
+            setRerollCount(rc);
+
             generateChampionRewards();
             setTPhase('champion_reward_move');
         } else {
@@ -353,10 +361,47 @@ export function useTournament({
 
     // --- 冠軍附魔邏輯 ---
     const generateChampionRewards = () => {
-        const shuffled = [...ENCHANT_EFFECTS].sort(() => 0.5 - Math.random());
-        setRewardOptions(shuffled.slice(0, 3));
+        // 🔹 計算機率加成
+        let weightAcc = 1;
+        let weightSpd = 1;
+        rogueBuffs.forEach(cardId => {
+            if (cardId === 'focus_acc') weightAcc += 3;
+            if (cardId === 'focus_spd') weightSpd += 3;
+        });
+
+        // 🔹 加權抽取
+        const pool = [];
+        ENCHANT_EFFECTS.forEach(eff => {
+            let w = 1;
+            if (eff.id === 'accuracy') w = weightAcc;
+            if (eff.id === 'priority') w = weightSpd;
+            for (let i = 0; i < w; i++) pool.push(eff);
+        });
+
+        const selected = [];
+        const tempPool = [...pool];
+        while (selected.length < 3 && tempPool.length > 0) {
+            const idx = Math.floor(Math.random() * tempPool.length);
+            const picked = tempPool[idx];
+            if (!selected.find(s => s.id === picked.id)) {
+                selected.push(picked);
+            }
+            // 移除已抽中的所有實例以確保不重複
+            for (let i = tempPool.length - 1; i >= 0; i--) {
+                if (tempPool[i].id === picked.id) tempPool.splice(i, 1);
+            }
+        }
+
+        setRewardOptions(selected);
         setSelectedRewardMoveIdx(0);
         setSelectedRewardEffectIdx(0);
+    };
+
+    const rerollChampionRewards = () => {
+        if (rerollCount <= 0) return;
+        setRerollCount(prev => prev - 1);
+        generateChampionRewards();
+        playBloop('success');
     };
 
     const confirmChampionReward = (overrideEffectIdx = null) => {
@@ -459,6 +504,8 @@ export function useTournament({
         setSelectedRewardMoveIdx,
         selectedRewardEffectIdx,
         setSelectedRewardEffectIdx,
-        confirmChampionReward
+        confirmChampionReward,
+        rerollCount,
+        rerollChampionRewards
     };
 }

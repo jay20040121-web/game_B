@@ -20,7 +20,9 @@ export function TournamentOverlay({
     setSelectedRewardMoveIdx,
     selectedRewardEffectIdx = 0,
     setSelectedRewardEffectIdx,
-    confirmChampionReward
+    confirmChampionReward,
+    rerollCount,
+    rerollChampionRewards
 }) {
     if (!isTournamentOpen) return null;
 
@@ -240,6 +242,15 @@ export function TournamentOverlay({
                             );
                         })}
                     </div>
+
+                    {rerollCount > 0 && (
+                        <button 
+                            onClick={() => rerollChampionRewards()}
+                            className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-[#f39c12] hover:bg-[#e67e22] text-black text-[9px] font-bold rounded-full shadow-lg transition-all active:scale-95 animate-bounce"
+                        >
+                            🎲 重來骰子 (剩餘 {rerollCount} 次)
+                        </button>
+                    )}
                     
                     <button 
                         onClick={() => prevTournamentPhase()}

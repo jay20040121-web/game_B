@@ -2732,12 +2732,12 @@ export default function App() {
                     setAdvStats(prev => ({ ...prev, basePower: prev.basePower + 10 }));
                     updateDialogue(`吃了${item.name}，戰力提升，感覺等級快升了！`);
                     break;
-                case '002': // 戰鬥蛋白粉 (增加 5 點攻擊努力值與戰力)
+                case '002': // 戰鬥蛋白粉 (增加 10 點攻擊努力值與戰力)
                     setAdvStats(prev => {
                         const nextEVs = { ...prev.evs };
-                        const canAdd = Math.min(5, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs.atk);
+                        const canAdd = Math.min(10, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs.atk);
                         if (canAdd > 0) nextEVs.atk += canAdd;
-                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 5 };
+                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 10 };
                     });
                     updateDialogue("使用了戰鬥蛋白粉！攻擊潛能提升了");
                     break;
@@ -2747,10 +2747,10 @@ export default function App() {
                         const nextEVs = { ...prev.evs };
                         const stats = ['hp', 'atk', 'def', 'spd'];
                         stats.forEach(s => {
-                            const canAdd = Math.min(8, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[s]);
+                            const canAdd = Math.min(15, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[s]);
                             if (canAdd > 0) nextEVs[s] += canAdd;
                         });
-                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 30 };
+                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 80 };
                     });
                     updateDialogue("覺醒之核發光了！全屬性潛能開發成功");
                     break;
@@ -2759,9 +2759,9 @@ export default function App() {
                         const nextEVs = { ...prev.evs };
                         const pool = ['hp', 'atk', 'def', 'spd'];
                         const target = pool[Math.floor(Math.random() * 4)];
-                        const canAdd = Math.min(20, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[target]);
+                        const canAdd = Math.min(50, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[target]);
                         if (canAdd > 0) nextEVs[target] += canAdd;
-                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 50 };
+                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 150 };
                     });
                     updateDialogue("奇異糖果真奇異！一項屬性潛能大幅爆發");
                     break;
@@ -3341,6 +3341,8 @@ export default function App() {
                                 selectedRewardEffectIdx={tournament.selectedRewardEffectIdx}
                                 setSelectedRewardEffectIdx={tournament.setSelectedRewardEffectIdx}
                                 confirmChampionReward={tournament.confirmChampionReward}
+                                rerollCount={tournament.rerollCount}
+                                rerollChampionRewards={tournament.rerollChampionRewards}
                             />
 
                             {/* 冒險或連線對戰系統 Overlay */}

@@ -86,5 +86,34 @@ export const ROGUE_CARDS = [
         type: 'special',
         effect: 'haste',
         value: 1.5
+    },
+
+    // --- 獎勵加成類 (影響冠軍附魔階段) ---
+    {
+        id: 'reroll_dice',
+        name: '重來骰子',
+        desc: '冠軍附魔階段可重新刷新選項 (可疊加次數)',
+        rarity: 2,
+        type: 'reward',
+        effect: 'reroll',
+        value: 1
+    },
+    {
+        id: 'focus_acc',
+        name: '專注命中',
+        desc: '冠軍附魔出現「鷹眼」機率提高 (可疊加)',
+        rarity: 2,
+        type: 'reward',
+        effect: 'focus_acc',
+        value: 1
+    },
+    {
+        id: 'focus_spd',
+        name: '專注速度',
+        desc: '冠軍附魔出現「迅捷」機率提高 (可疊加)',
+        rarity: 2,
+        type: 'reward',
+        effect: 'focus_spd',
+        value: 1
     }
 ];

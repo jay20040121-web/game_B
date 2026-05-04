@@ -17,12 +17,12 @@ const PHYSICS = {
 // ==========================================
 const ADV_ITEMS = [
     { id: '001', name: "活力飯糰", desc: "永久提升基礎戰力 10 點", rarity: 1 },
-    { id: '002', name: "戰鬥蛋白粉", desc: "提升 5 點攻擊力與戰力", rarity: 2 },
+    { id: '002', name: "戰鬥蛋白粉", desc: "提升 10 點攻擊力與戰力", rarity: 2 },
     { id: '004', name: "覺醒之核", desc: "提升基礎戰力與全屬性", rarity: 3 },
     { id: '005', name: "奇異糖果", desc: "隨機大幅提升戰鬥屬性", rarity: 5 },
-    { id: '012', skillId: 'harden', name: "堅硬秘笈書", desc: "讓怪獸學會招式「堅硬防守」(防禦+2)", rarity: 3 },
+    { id: '012', skillId: 'harden', name: "堅硬秘笈書", desc: "讓怪獸學會招式「堅硬防守」(防禦+2)", rarity: 4 },
     { id: '013', skillId: 'double_team', name: "影子分身術秘笈書", desc: "讓怪獸學會招式「影子分身術」(速度+2)", rarity: 4 },
-    { id: '014', skillId: 'swords_dance', name: "戰舞秘笈書", desc: "讓怪獸學會招式「戰舞」(攻擊+2)", rarity: 3 },
+    { id: '014', skillId: 'swords_dance', name: "戰舞秘笈書", desc: "讓怪獸學會招式「戰舞」(攻擊+2)", rarity: 4 },
     { id: '016', skillId: 'cross_defense', name: "十字防守秘笈書", desc: "讓怪獸學會招式「十字防守」(該回合免疫攻擊，連續使用命中減半)", rarity: 5 },
     { id: '017', skillId: 'reflect_shield', name: "反射盾秘笈書", desc: "讓怪獸學會招式「反射盾」(受到傷害時反射 25% 傷害)", rarity: 4 },
     { id: '018', skillId: 'guardian_shield', name: "守護者之盾秘笈書", desc: "讓怪獸學會招式「守護者之盾」(施放後獲得 30% 最大生命值的護盾)", rarity: 4 },
