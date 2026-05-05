@@ -8,6 +8,19 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     
+    // --- Global Setting for Animation ---
+    const [globalAnimated, setGlobalAnimated] = useState(() => localStorage.getItem('pixel_monster_sprite_format') !== 'png');
+
+    useEffect(() => {
+        const handleUpdate = () => {
+            setGlobalAnimated(localStorage.getItem('pixel_monster_sprite_format') !== 'png');
+        };
+        window.addEventListener('pixel_monster_settings_update', handleUpdate);
+        return () => window.removeEventListener('pixel_monster_settings_update', handleUpdate);
+    }, []);
+
+    const effectiveAnimated = animated && globalAnimated;
+
     // --- Progressive Loading Logic ---
     const staticSrc = `${base}assets/exclusive/sprites/${assetId}.png`;
     const animatedSrc = `${base}assets/exclusive/idle/${assetId}.gif`;
@@ -23,8 +36,9 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
         
         setImgSrc(newStatic);
         setIsGifLoaded(false);
+        setNaturalWidth(0); // Reset width when ID changes
 
-        if (animated) {
+        if (effectiveAnimated) {
             // Background load the GIF
             const img = new Image();
             img.src = newAnimated;
@@ -37,7 +51,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
                 setIsGifLoaded(false);
             };
         }
-    }, [id, animated, base]);
+    }, [id, effectiveAnimated, base]);
 
     if (!id) return null;
 
@@ -51,7 +65,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
         '1014': '20px', // 針對 ID 1014 下調 20px
     };
     // 只有在載入並顯示 GIF 時才套用位移 (避免影響圖鑑等使用靜態圖的畫面)
-    const offsetY = (isGifLoaded && animated) ? (SPRITE_OFFSETS[String(id)] || '0px') : '0px';
+    const offsetY = (isGifLoaded && effectiveAnimated) ? (SPRITE_OFFSETS[String(id)] || '0px') : '0px';
 
     return (
         <div 
@@ -72,7 +86,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
             <img 
                 src={imgSrc}
                 loading="lazy"
-                className={`pixel-rendering ${!isGifLoaded && animated ? 'opacity-70 grayscale-[0.3]' : ''}`}
+                className={`pixel-rendering ${!isGifLoaded && effectiveAnimated ? 'opacity-70 grayscale-[0.3]' : ''}`}
                 onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
                 style={{ 
                     filter: silhouette 
@@ -103,6 +117,19 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
 
+    // --- Global Setting for Animation ---
+    const [globalAnimated, setGlobalAnimated] = useState(() => localStorage.getItem('pixel_monster_sprite_format') !== 'png');
+
+    useEffect(() => {
+        const handleUpdate = () => {
+            setGlobalAnimated(localStorage.getItem('pixel_monster_sprite_format') !== 'png');
+        };
+        window.addEventListener('pixel_monster_settings_update', handleUpdate);
+        return () => window.removeEventListener('pixel_monster_settings_update', handleUpdate);
+    }, []);
+
+    const effectiveAnimated = animated && globalAnimated;
+
     // --- Progressive Loading Logic ---
     const staticSrc = `${base}assets/exclusive/back/${assetId}.png`;
     const animatedSrc = `${base}assets/exclusive/back/${assetId}.gif`;
@@ -118,8 +145,9 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
 
         setImgSrc(newStatic);
         setIsGifLoaded(false);
+        setNaturalWidth(0);
 
-        if (animated) {
+        if (effectiveAnimated) {
             const img = new Image();
             img.src = newAnimated;
             img.onload = () => {
@@ -130,7 +158,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
                 setIsGifLoaded(false);
             };
         }
-    }, [id, animated, base]);
+    }, [id, effectiveAnimated, base]);
 
     if (!id) return null;
 
@@ -144,7 +172,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
         '1014': '20px', // 針對 ID 1014 下調 20px
     };
     // 只有在載入並顯示 GIF 時才套用位移 (避免影響靜態圖)
-    const offsetY = (isGifLoaded && animated) ? (SPRITE_OFFSETS[String(id)] || '0px') : '0px';
+    const offsetY = (isGifLoaded && effectiveAnimated) ? (SPRITE_OFFSETS[String(id)] || '0px') : '0px';
 
     return (
         <div 
@@ -165,7 +193,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
             <img 
                 src={imgSrc}
                 loading="lazy"
-                className={`pixel-rendering ${!isGifLoaded && animated ? 'opacity-70 grayscale-[0.2]' : ''}`}
+                className={`pixel-rendering ${!isGifLoaded && effectiveAnimated ? 'opacity-70 grayscale-[0.2]' : ''}`}
                 onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
                 style={{ 
                     filter: pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)',

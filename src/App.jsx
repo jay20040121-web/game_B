@@ -10,6 +10,7 @@ import { SoulExpeditionOverlay } from './components/SoulExpeditionOverlay';
 import SkillRearrangeOverlay from './components/SkillRearrangeOverlay';
 import EvolutionPerformance from './components/EvolutionPerformance';
 import MemoryCapsulePerformance from './components/MemoryCapsulePerformance';
+import SettingsOverlay from './components/SettingsOverlay';
 import React, { useState, useEffect, useRef } from 'react';
 import './styles.css';
 import {
@@ -42,7 +43,7 @@ import {
 } from './data/gameConfig';
 
 import { auth, db, googleProvider } from './utils/firebase';
-import { playBloop } from './utils/audioSystem';
+import { playBloop, playBGM } from './utils/audioSystem';
 import { SAVE_VERSION, isInAppBrowser, loadSaveData } from './utils/storageSystem';
 import { isLocalhost, FIRESTORE_COLLECTION, PEER_PREFIX } from './utils/envConfig';
 import { processBattleTurn } from './utils/battleTurnSystem';
@@ -113,9 +114,26 @@ export default function App() {
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
 
     // --- 自動縮放系統 (Auto-Scaling) ---
+    const [manualScale, setManualScale] = useState(() => {
+        const saved = localStorage.getItem('pixel_monster_scale');
+        return saved ? parseFloat(saved) : null;
+    });
+
+    useEffect(() => {
+        if (manualScale !== null) {
+            localStorage.setItem('pixel_monster_scale', manualScale);
+        } else {
+            localStorage.removeItem('pixel_monster_scale');
+        }
+    }, [manualScale]);
+
     const [displayScale, setDisplayScale] = useState(1);
     useEffect(() => {
         const handleResize = () => {
+            if (manualScale !== null) {
+                setDisplayScale(manualScale);
+                return;
+            }
             // 基準尺寸 320x620 (完全同步 Git 原始縮放邏輯)
             const scaleW = window.innerWidth / 320;
             const scaleH = (window.innerHeight - 20) / 620;
@@ -125,7 +143,9 @@ export default function App() {
         handleResize();
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [manualScale]);
+
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
 
 
@@ -1163,7 +1183,7 @@ export default function App() {
     };
 
     function executeBattleTurn(playerAction = 'attack', actionMove = null, pvpEnemyMove = null) {
-        if (playerAction === 'attack') playBloop('attack');
+        if (playerAction === 'attack') playBloop('confirm');
         setBattleState(prev => {
             try {
                 return processBattleTurn(prev, playerAction, actionMove, pvpEnemyMove, {
@@ -3226,6 +3246,25 @@ export default function App() {
         return () => clearTimeout(timer);
     }, [isPvpMode, battleState.phase]);
 
+    // --- BGM 場景切換系統 ---
+    useEffect(() => {
+        const base = import.meta.env.BASE_URL;
+
+        // 戰鬥狀態：PVP 模式、聯盟大會、冒險模式，或戰鬥狀態為 active
+        const isBattleMode = isPvpMode || tournament?.isTournamentOpen || isAdvMode || battleState?.active;
+
+        // 談心系統 (包含靈魂探險介面與 miniGame 觸發的談心)
+        const isTalkMode = isExpeditionOpen || (miniGame && miniGame.type === 'talk');
+
+        if (isTalkMode) {
+            playBGM(`${base}assets/BGM/談心系統.mp3`);
+        } else if (isBattleMode) {
+            playBGM(`${base}assets/BGM/對戰音樂.mp3`);
+        } else {
+            playBGM(`${base}assets/BGM/主畫面.mp3`);
+        }
+    }, [isPvpMode, tournament?.isTournamentOpen, isAdvMode, battleState?.active, miniGame, isExpeditionOpen]);
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
             <style dangerouslySetInnerHTML={{ __html: BATTLE_STYLES }} />
@@ -3901,19 +3940,19 @@ export default function App() {
                             <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 4px 15px rgba(0,0,0,0.8)', zIndex: 100 }} />
                         </div>
 
-                        <div className="mt-7 w-full flex justify-between px-6 mb-2">
+                        <div className="mt-5 w-full flex justify-between px-4 mb-1">
                             {[
                                 { key: 'A', name: '選擇' },
                                 { key: 'B', name: '確定' },
                                 { key: 'C', name: '返回' }
                             ].map((btn) => (
-                                <div key={btn.key} className="flex flex-col items-center gap-1">
+                                <div key={btn.key} className="flex flex-col items-center gap-0.5">
                                     <button
                                         onMouseDown={() => { setBtnPressed(btn.key); if (btn.key === 'B') handleBDown(); }}
                                         onMouseUp={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
                                         onMouseLeave={() => { setBtnPressed(null); if (btn.key === 'B') handleBUp(); }}
                                         className={`
-                                  w-[54px] h-[54px] rounded-full shadow-[0_4px_6px_rgba(0,0,0,0.6)]
+                                  w-[48px] h-[48px] rounded-full shadow-[0_4px_6px_rgba(0,0,0,0.6)]
                                   transition-all active:translate-y-[2px] active:shadow-sm
                                   ${btnPressed === btn.key ? 'brightness-75' : 'brightness-100'}
                                   flex items-center justify-center
@@ -3927,13 +3966,13 @@ export default function App() {
                                         }}
                                         onClick={() => btn.key === 'A' ? handleA() : btn.key === 'B' ? handleB() : handleC()}
                                     ></button>
-                                    <span className="text-[12px] font-bold text-[#e0e0e0] tracking-widest mt-1 opacity-80">
+                                    <span className="text-[11px] font-bold text-[#e0e0e0] tracking-widest mt-0.5 opacity-80">
                                         {btn.name}
                                     </span>
                                 </div>
                             ))}
                         </div>
-                        <div className="w-full mt-2 px-4 flex justify-between items-center">
+                        <div className="w-full mt-1 px-4 flex justify-between items-center">
                             <button
                                 onClick={() => {
                                     if (isDead) handleRestart();
@@ -3941,7 +3980,7 @@ export default function App() {
                                     playBloop('confirm');
                                 }}
                                 disabled={!isDead && isGenerating}
-                                className={`w-[125px] h-[48px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
+                                className={`w-[110px] h-[40px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
                                 style={{
                                     backgroundImage: `url('${base}assets/BG/ED.png')`,
                                     backgroundSize: 'contain',
@@ -3957,7 +3996,7 @@ export default function App() {
                                     console.log("Tutorial Clicked!");
                                     playBloop('confirm');
                                 }}
-                                className="w-[125px] h-[48px] border-none brightness-100 active:brightness-90 transition-all"
+                                className="w-[110px] h-[40px] border-none brightness-100 active:brightness-90 transition-all"
                                 style={{
                                     backgroundImage: `url('${base}assets/BG/指導手冊.png')`,
                                     backgroundSize: 'contain',
@@ -3967,7 +4006,34 @@ export default function App() {
                                 }}
                             ></button>
                         </div>
+
+                        {/* 設定按鈕 */}
+                        <div className="w-full mt-2 flex justify-center items-center pb-2">
+                            <button
+                                onClick={() => {
+                                    setIsSettingsOpen(true);
+                                    playBloop('confirm');
+                                }}
+                                className="w-[45px] h-[45px] border-none brightness-100 active:brightness-90 transition-all"
+                                style={{
+                                    backgroundImage: `url('${base}assets/BG/設定.png')`,
+                                    backgroundSize: 'contain',
+                                    backgroundPosition: 'center',
+                                    backgroundRepeat: 'no-repeat',
+                                    backgroundColor: 'transparent',
+                                }}
+                            ></button>
+                        </div>
                     </div>
+
+                    {/* --- 系統設定 UI --- */}
+                    <SettingsOverlay
+                        isSettingsOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
+                        manualScale={manualScale}
+                        setManualScale={setManualScale}
+                        setIsBooting={setIsBooting}
+                    />
 
                     {/* --- 全螢幕進化演出 (Full-screen Evolution Performance) --- */}
                     {isEvolving && evolutionDetails && (
