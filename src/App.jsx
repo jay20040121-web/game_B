@@ -11,6 +11,7 @@ import SkillRearrangeOverlay from './components/SkillRearrangeOverlay';
 import EvolutionPerformance from './components/EvolutionPerformance';
 import MemoryCapsulePerformance from './components/MemoryCapsulePerformance';
 import SettingsOverlay from './components/SettingsOverlay';
+import TutorialAI from './components/TutorialAI';
 import React, { useState, useEffect, useRef } from 'react';
 import './styles.css';
 import {
@@ -146,6 +147,7 @@ export default function App() {
     }, [manualScale]);
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isTutorialOpen, setIsTutorialOpen] = useState(false);
 
 
 
@@ -3990,10 +3992,11 @@ export default function App() {
                                 }}
                             ></button>
 
-                            {/* 新手教學按鈕 (預留) */}
+                            {/* 新手教學按鈕 */}
                             <button
                                 onClick={() => {
                                     console.log("Tutorial Clicked!");
+                                    setIsTutorialOpen(true);
                                     playBloop('confirm');
                                 }}
                                 className="w-[110px] h-[40px] border-none brightness-100 active:brightness-90 transition-all"
@@ -4033,6 +4036,11 @@ export default function App() {
                         manualScale={manualScale}
                         setManualScale={setManualScale}
                         setIsBooting={setIsBooting}
+                    />
+
+                    <TutorialAI 
+                        isOpen={isTutorialOpen}
+                        onClose={() => setIsTutorialOpen(false)}
                     />
 
                     {/* --- 全螢幕進化演出 (Full-screen Evolution Performance) --- */}
