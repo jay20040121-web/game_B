@@ -18,6 +18,7 @@ export function TournamentOverlay({
     rewardOptions = [],
     selectedRewardMoveIdx = 0,
     setSelectedRewardMoveIdx,
+    selectChampionRewardMove,
     selectedRewardEffectIdx = 0,
     setSelectedRewardEffectIdx,
     confirmChampionReward,
@@ -172,8 +173,8 @@ export function TournamentOverlay({
                                     key={idx}
                                     onClick={() => {
                                         if (!isAttack || isMaxed) return;
-                                        setSelectedRewardMoveIdx(idx);
-                                        nextTournamentPhase(); // 進入選效果階段
+                                        selectChampionRewardMove ? selectChampionRewardMove(idx) : setSelectedRewardMoveIdx(idx);
+                                        if (!selectChampionRewardMove) nextTournamentPhase(); // 進入選效果階段
                                     }}
                                     disabled={!isAttack || isMaxed}
                                     className={`

@@ -136,6 +136,32 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         return { dmg: finalDmg, msg: effectMsg };
     };
 
+    const applyEnchantAilment = (attacker, move, defender, defenderName) => {
+        const enchantData = attacker.moveUpgrades?.[move.id]?.ailments || {};
+        if (Object.keys(enchantData).length === 0 || defender.status) return;
+
+        const ailmentTypes = ['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep']
+            .filter(ailment => (enchantData[ailment] || 0) > 0)
+            .sort((a, b) => (enchantData[b] || 0) - (enchantData[a] || 0));
+        for (const ailment of ailmentTypes) {
+            const chance = enchantData[ailment] || 0;
+            if (chance > 0 && rFunc() * 100 < chance) {
+                defender.status = ailment;
+                const ailmentNameMap = {
+                    'burn': '燒傷', 'paralysis': '麻痺', 'poison': '中毒',
+                    'confusion': '混亂', 'leech-seed': '寄生種子', 'trap': '束縛',
+                    'freeze': '冰凍', 'sleep': '睡眠'
+                };
+                if (ailment === 'sleep') defender.statusTurns = Math.floor(rFunc() * 3) + 1;
+                else if (ailment === 'confusion') defender.statusTurns = Math.floor(rFunc() * 3) + 2;
+                else if (ailment === 'leech-seed' || ailment === 'trap') defender.statusTurns = 5;
+                else if (ailment === 'freeze') defender.statusTurns = Math.floor(rFunc() * 2) + 1;
+                nextQueue.push({ type: 'msg', text: `${defenderName} ${ailmentNameMap[ailment] || ailment}了！(附魔效果)` });
+                break;
+            }
+        }
+    };
+
     const updatedPlayer = {
         ...prev.player,
         statStages: { ...prev.player.statStages },
@@ -225,6 +251,8 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             return;
         }
 
+        applyEnchantAilment(attacker, move, defender, defenderName);
+
         const effects = applyMoveEffects(move, defender, attacker, rFunc);
         effects.messages.forEach(m => {
             const targetName = m.targetType === 'source' ? attackerName : defenderName;
@@ -233,7 +261,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         // --- 附魔系統：追加異常狀態機率 ---
         const enchantData = attacker.moveUpgrades?.[move.id]?.ailments || {};
-        if (Object.keys(enchantData).length > 0 && !defender.status) {
+        if (false && Object.keys(enchantData).length > 0 && !defender.status) {
             const ailmentTypes = ['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep'];
             for (const ailment of ailmentTypes) {
                 const chance = enchantData[ailment] || 0;

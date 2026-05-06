@@ -45,6 +45,50 @@ export const getBgmVolume = () => bgmVolume;
 
 let currentBgmAudio = null;
 let currentBgmSrc = null;
+let isWaitingForBgmUnlock = false;
+
+const removeBgmUnlockListeners = () => {
+    if (typeof window === 'undefined') return;
+    window.removeEventListener('pointerdown', unlockBgmPlayback, true);
+    window.removeEventListener('keydown', unlockBgmPlayback, true);
+    window.removeEventListener('touchstart', unlockBgmPlayback, true);
+    isWaitingForBgmUnlock = false;
+};
+
+const ensureBgmUnlockListeners = () => {
+    if (typeof window === 'undefined' || isWaitingForBgmUnlock) return;
+    isWaitingForBgmUnlock = true;
+    window.addEventListener('pointerdown', unlockBgmPlayback, { capture: true, passive: true });
+    window.addEventListener('keydown', unlockBgmPlayback, { capture: true });
+    window.addEventListener('touchstart', unlockBgmPlayback, { capture: true, passive: true });
+};
+
+function unlockBgmPlayback() {
+    if (!isBgmEnabled || !currentBgmAudio) {
+        removeBgmUnlockListeners();
+        return;
+    }
+
+    currentBgmAudio.play()
+        .then(removeBgmUnlockListeners)
+        .catch(e => {
+            console.warn('BGM unlock failed:', e);
+            ensureBgmUnlockListeners();
+        });
+}
+
+const playCurrentBgmAudio = () => {
+    if (!currentBgmAudio) return;
+
+    currentBgmAudio.play()
+        .then(removeBgmUnlockListeners)
+        .catch(e => {
+            console.warn('BGM play failed:', e);
+            if (e?.name === 'NotAllowedError') {
+                ensureBgmUnlockListeners();
+            }
+        });
+};
 
 export const playBGM = (src) => {
     if (!isBgmEnabled) {
@@ -53,7 +97,7 @@ export const playBGM = (src) => {
     }
     if (currentBgmAudio) {
         if (currentBgmSrc === src) {
-            currentBgmAudio.play().catch(e => console.warn('BGM play failed:', e));
+            playCurrentBgmAudio();
             return;
         }
         currentBgmAudio.pause();
@@ -62,7 +106,7 @@ export const playBGM = (src) => {
     currentBgmAudio = new Audio(src);
     currentBgmAudio.loop = true;
     currentBgmAudio.volume = bgmVolume;
-    currentBgmAudio.play().catch(e => console.warn('BGM play failed:', e));
+    playCurrentBgmAudio();
 };
 
 export const stopBGM = () => {
@@ -71,6 +115,7 @@ export const stopBGM = () => {
         currentBgmAudio = null;
         currentBgmSrc = null;
     }
+    removeBgmUnlockListeners();
 };
 
 const SOUND_MAP = {

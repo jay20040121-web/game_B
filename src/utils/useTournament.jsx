@@ -26,6 +26,12 @@ const ENCHANT_EFFECTS = [
     { id: 'priority', name: '迅捷附魔', type: 'stat', value: 0.5, desc: '技能優先度 +0.5 (疊加至 1.0 必定先制)' }
 ];
 
+const isEnchantableMove = (moveId, moveUpgrades = {}) => {
+    const moveData = SKILL_DATABASE[moveId];
+    if (!moveData || (moveData.power || 0) <= 0) return false;
+    return (moveUpgrades?.[moveId]?.count || 0) < 10;
+};
+
 export function useTournament({
     user,
     derivedLevel,
@@ -214,8 +220,21 @@ export function useTournament({
     const prevTournamentPhase = () => {
         if (tPhase === 'champion_reward_effect') {
             setTPhase('champion_reward_move');
+            setSelectedRewardEffectIdx(0);
             playBloop('back');
         }
+    };
+
+    const selectChampionRewardMove = (moveIdx) => {
+        const moveId = advStats.moves?.[moveIdx];
+        if (!isEnchantableMove(moveId, advStats.moveUpgrades)) {
+            playBloop('fail');
+            return;
+        }
+
+        setSelectedRewardMoveIdx(moveIdx);
+        generateChampionRewards(moveIdx);
+        setTPhase('champion_reward_effect');
     };
 
     const startTournamentBattle = () => {
@@ -340,8 +359,15 @@ export function useTournament({
             });
             setRerollCount(rc);
 
-            generateChampionRewards();
-            setTPhase('champion_reward_move');
+            if ((advStats.moves || []).some(moveId => isEnchantableMove(moveId, advStats.moveUpgrades))) {
+                setSelectedRewardMoveIdx(0);
+                generateChampionRewards(0);
+                setTPhase('champion_reward_move');
+            } else {
+                updateDialogue('【冠軍附魔】沒有可附魔的攻擊技能，略過附魔獎勵。');
+                window.alert('附魔已滿：身上四個技能都不能附魔，輔助技能無法附魔，攻擊技能最高只能到 10/10 MAX。');
+                closeTournament();
+            }
         } else {
             // 🔹 玩家贏了，先進入卡片挑選階段
             const shuffled = [...ROGUE_CARDS].sort(() => Math.random() - 0.5);
@@ -360,7 +386,7 @@ export function useTournament({
     };
 
     // --- 冠軍附魔邏輯 ---
-    const generateChampionRewards = () => {
+    const generateChampionRewards = (moveIdx = selectedRewardMoveIdx) => {
         // 🔹 計算機率加成
         let weightAcc = 1;
         let weightSpd = 1;
@@ -370,8 +396,11 @@ export function useTournament({
         });
 
         // 🔹 加權抽取
+        const selectedMoveId = advStats.moves?.[moveIdx];
+        const currentMoveUpgrades = advStats.moveUpgrades?.[selectedMoveId]?.ailments || {};
         const pool = [];
         ENCHANT_EFFECTS.forEach(eff => {
+            if (eff.type === 'ailment' && (currentMoveUpgrades[eff.id] || 0) >= 100) return;
             let w = 1;
             if (eff.id === 'accuracy') w = weightAcc;
             if (eff.id === 'priority') w = weightSpd;
@@ -393,7 +422,6 @@ export function useTournament({
         }
 
         setRewardOptions(selected);
-        setSelectedRewardMoveIdx(0);
         setSelectedRewardEffectIdx(0);
     };
 
@@ -502,6 +530,7 @@ export function useTournament({
         rewardOptions,
         selectedRewardMoveIdx,
         setSelectedRewardMoveIdx,
+        selectChampionRewardMove,
         selectedRewardEffectIdx,
         setSelectedRewardEffectIdx,
         confirmChampionReward,

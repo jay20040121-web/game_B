@@ -699,17 +699,6 @@ export default function App() {
     const [isBootMonsterVisible, setIsBootMonsterVisible] = useState(true);
 
     // 啟動畫面心跳聲
-    useEffect(() => {
-        let timer;
-        if (isBooting) {
-            timer = setInterval(() => {
-                if (document.hidden) return;
-                playBloop('heartbeat');
-            }, 2000);
-        }
-        return () => clearInterval(timer);
-    }, [isBooting]);
-
     // 啟動畫面怪獸跳槽動畫 (四個角落巡迴 + 倒掛效果)
     useEffect(() => {
         let timer;
@@ -3205,6 +3194,7 @@ export default function App() {
         setAlertMsg,
         playBloop,
         user,
+        advStats,
         generateBattleState,
         setAdvStats,
         logEvent,
@@ -3424,6 +3414,7 @@ export default function App() {
                                 rewardOptions={tournament.rewardOptions}
                                 selectedRewardMoveIdx={tournament.selectedRewardMoveIdx}
                                 setSelectedRewardMoveIdx={tournament.setSelectedRewardMoveIdx}
+                                selectChampionRewardMove={tournament.selectChampionRewardMove}
                                 selectedRewardEffectIdx={tournament.selectedRewardEffectIdx}
                                 setSelectedRewardEffectIdx={tournament.setSelectedRewardEffectIdx}
                                 confirmChampionReward={tournament.confirmChampionReward}
