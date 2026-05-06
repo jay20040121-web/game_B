@@ -425,7 +425,11 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         player: { ...updatedPlayer, hp: prev.player.hp, shield: prev.player.shield || 0, isProtected: false },
         enemy: { ...updatedEnemy, hp: prev.enemy.hp, shield: prev.enemy.shield || 0, isProtected: false },
         playerHpAfter: updatedPlayer.hp,
-        enemyHpAfter: updatedEnemy.hp
+        enemyHpAfter: updatedEnemy.hp,
+        playerShieldAfter: updatedPlayer.shield || 0,
+        enemyShieldAfter: updatedEnemy.shield || 0,
+        playerStateAfter: updatedPlayer,
+        enemyStateAfter: updatedEnemy
     };
 
     if (prev.mode === 'pvp' && isHost.current && connInstance.current) {
@@ -469,6 +473,8 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         enemyShieldBefore: prev.player.shield || 0,
                         playerHpAfter: updatedEnemy.hp,
                         enemyHpAfter: updatedPlayer.hp,
+                        playerShieldAfter: updatedEnemy.shield || 0,
+                        enemyShieldAfter: updatedPlayer.shield || 0,
                         // 🔹 傳送完整的物件快照，確保所有狀態（狀態異常、Rogue效果、能力階級）同步
                         playerStateAfter: updatedEnemy,
                         enemyStateAfter: updatedPlayer,

@@ -152,7 +152,7 @@ export const usePvpConnection = (deps) => {
             } else if (payload.type === 'ACTION') {
                 // 🛑 回合驗證：僅忽略舊回合封包，允許當前或超前封包（用於緩衝）
                 const currentTurn = battleStateRef.current?.turn || 1;
-                if (payload.data.turnId !== undefined && payload.data.turnId < currentTurn) {
+                if (payload.data.turnId !== undefined && payload.data.turnId !== currentTurn) {
                     console.log(`[PVP] 忽略舊回合封包: 收到 ${payload.data.turnId}, 當前 ${currentTurn}`);
                     return;
                 }
@@ -173,11 +173,14 @@ export const usePvpConnection = (deps) => {
                 // 客機端 (isHost === false) 不需要做任何事，只需靜待 RESULT 封包即可
             } else if (payload.type === 'RESULT') {
                 // 客戶端接收主機端算好的結果，直接套用
+                setPendingPlayerMove(null);
+                pvpRemoteMoveRef.current = null;
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
                     const {
                         stepQueue,
                         playerHpAfter, enemyHpAfter,
+                        playerShieldAfter, enemyShieldAfter,
                         playerHpBefore, enemyHpBefore,
                         playerShieldBefore, enemyShieldBefore,
                         playerStateAfter, enemyStateAfter,
@@ -185,6 +188,11 @@ export const usePvpConnection = (deps) => {
                     } = payload.data;
 
                     console.log(`[PVP] 收到結果封包 Turn: ${turnId}`, payload.data);
+
+                    if (turnId !== undefined && prev.turn !== undefined && turnId < prev.turn) {
+                        console.warn(`[PVP] 忽略舊結果封包: 收到 ${turnId}, 當前 ${prev.turn}`);
+                        return prev;
+                    }
 
                     if (!stepQueue || stepQueue.length === 0) {
                         console.warn("[PVP] 收到空結果隊列，跳過更新");
@@ -220,6 +228,10 @@ export const usePvpConnection = (deps) => {
                         },
                         playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : prev.player.hp,
                         enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : prev.enemy.hp,
+                        playerShieldAfter: playerShieldAfter !== undefined ? playerShieldAfter : (prev.player.shield || 0),
+                        enemyShieldAfter: enemyShieldAfter !== undefined ? enemyShieldAfter : (prev.enemy.shield || 0),
+                        playerFinalState: playerStateAfter || null,
+                        enemyFinalState: enemyStateAfter || null,
                         turn: turnId !== undefined ? turnId : prev.turn
                     };
                 });

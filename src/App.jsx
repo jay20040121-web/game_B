@@ -1363,6 +1363,8 @@ export default function App() {
                         // 隊列結束，進行最後的數值校準
                         const finalPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
                         const finalEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
+                        const finalPlayerShield = prev.playerShieldAfter !== undefined ? prev.playerShieldAfter : (prev.player.shield || 0);
+                        const finalEnemyShield = prev.enemyShieldAfter !== undefined ? prev.enemyShieldAfter : (prev.enemy.shield || 0);
 
                         if (prev.player.hp <= 0 || prev.enemy.hp <= 0) {
                             const isWin = prev.enemy.hp <= 0;
@@ -1371,8 +1373,20 @@ export default function App() {
                                 phase: 'end',
                                 activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...",
                                 flashTarget: null,
-                                player: { ...prev.player, hp: finalPlayerHp },
-                                enemy: { ...prev.enemy, hp: finalEnemyHp }
+                                player: {
+                                    ...(prev.playerFinalState || prev.player),
+                                    hp: finalPlayerHp,
+                                    shield: finalPlayerShield,
+                                    moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
+                                },
+                                enemy: {
+                                    ...(prev.enemyFinalState || prev.enemy),
+                                    hp: finalEnemyHp,
+                                    shield: finalEnemyShield,
+                                    moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves
+                                },
+                                playerFinalState: null,
+                                enemyFinalState: null
                             };
 
                             // 動態計算經驗值 (與 handleB 邏輯同步)
@@ -1387,8 +1401,18 @@ export default function App() {
                         const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
 
                         // 利用計算結果進行最終 HP 校準，同時百分之百保留本地所有其他屬性 (如 moves)
-                        const finalPlayer = { ...prev.player, hp: finalPlayerHp };
-                        const finalEnemy = { ...prev.enemy, hp: finalEnemyHp };
+                        const finalPlayer = {
+                            ...(prev.playerFinalState || prev.player),
+                            hp: finalPlayerHp,
+                            shield: finalPlayerShield,
+                            moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
+                        };
+                        const finalEnemy = {
+                            ...(prev.enemyFinalState || prev.enemy),
+                            hp: finalEnemyHp,
+                            shield: finalEnemyShield,
+                            moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves
+                        };
 
                         return {
                             ...prev,
@@ -1397,7 +1421,9 @@ export default function App() {
                             turn: prev.turn + 1,
                             flashTarget: null,
                             player: finalPlayer,
-                            enemy: finalEnemy
+                            enemy: finalEnemy,
+                            playerFinalState: null,
+                            enemyFinalState: null
                         };
                     }
                 } catch (err) {
