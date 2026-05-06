@@ -179,6 +179,7 @@ export const usePvpConnection = (deps) => {
                         stepQueue,
                         playerHpAfter, enemyHpAfter,
                         playerHpBefore, enemyHpBefore,
+                        playerShieldBefore, enemyShieldBefore,
                         playerStateAfter, enemyStateAfter,
                         turnId
                     } = payload.data;
@@ -203,6 +204,7 @@ export const usePvpConnection = (deps) => {
                         player: {
                             ...(playerStateAfter || prev.player),
                             hp: playerHpBefore !== undefined ? playerHpBefore : prev.player.hp,
+                            shield: playerShieldBefore !== undefined ? playerShieldBefore : (prev.player.shield || 0),
                             // 核心修正：防止同步時因格式問題導致招式表消失
                             moves: (playerStateAfter?.moves?.length > 0) ? playerStateAfter.moves : prev.player.moves,
                             protectLeft: playerStateAfter?.protectLeft !== undefined ? playerStateAfter.protectLeft : (prev.player.protectLeft || 0),
@@ -211,6 +213,7 @@ export const usePvpConnection = (deps) => {
                         enemy: {
                             ...(enemyStateAfter || prev.enemy),
                             hp: enemyHpBefore !== undefined ? enemyHpBefore : prev.enemy.hp,
+                            shield: enemyShieldBefore !== undefined ? enemyShieldBefore : (prev.enemy.shield || 0),
                             moves: (enemyStateAfter?.moves?.length > 0) ? enemyStateAfter.moves : prev.enemy.moves,
                             protectLeft: enemyStateAfter?.protectLeft !== undefined ? enemyStateAfter.protectLeft : (prev.enemy.protectLeft || 0),
                             isProtected: false

@@ -47,7 +47,7 @@ import { auth, db, googleProvider } from './utils/firebase';
 import { playBloop, playBGM } from './utils/audioSystem';
 import { SAVE_VERSION, isInAppBrowser, loadSaveData } from './utils/storageSystem';
 import { isLocalhost, FIRESTORE_COLLECTION, PEER_PREFIX } from './utils/envConfig';
-import { processBattleTurn } from './utils/battleTurnSystem';
+import { processBattleTurn, splitShieldDamage } from './utils/battleTurnSystem';
 import { usePvpConnection } from './utils/usePvpConnection';
 import { getMonsterId } from './utils/monsterIdMapper';
 import { useLeaderboard } from './utils/useLeaderboard';
@@ -1322,13 +1322,31 @@ export default function App() {
                         const updated = { ...prev, stepQueue: prev.stepQueue.slice(1), activeMsg: nextStep.text || "" };
 
                         if (nextStep.type === 'damage') {
-                            if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.max(0, updated.enemy.hp - nextStep.value) };
-                            else updated.player = { ...updated.player, hp: Math.max(0, updated.player.hp - nextStep.value) };
+                            const applyDamageStep = (target) => {
+                                const split = nextStep.shieldValue !== undefined && nextStep.hpValue !== undefined
+                                    ? {
+                                        nextShield: Math.max(0, (target.shield || 0) - nextStep.shieldValue),
+                                        nextHp: Math.max(0, target.hp - nextStep.hpValue)
+                                    }
+                                    : splitShieldDamage(target, nextStep.value);
+                                return {
+                                    ...target,
+                                    shield: split.nextShield,
+                                    hp: split.nextHp
+                                };
+                            };
+                            if (nextStep.target === 'enemy') updated.enemy = applyDamageStep(updated.enemy);
+                            else updated.player = applyDamageStep(updated.player);
                             updated.flashTarget = nextStep.target;
                             playBloop('attack');
                         } else if (nextStep.type === 'heal') {
                             if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };
                             else updated.player = { ...updated.player, hp: Math.min(updated.player.maxHp, updated.player.hp + nextStep.value) };
+                            updated.flashTarget = null;
+                            playBloop('success');
+                        } else if (nextStep.type === 'shield') {
+                            if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, shield: (updated.enemy.shield || 0) + nextStep.value };
+                            else updated.player = { ...updated.player, shield: (updated.player.shield || 0) + nextStep.value };
                             updated.flashTarget = null;
                             playBloop('success');
                         } else if (nextStep.type === 'run') {

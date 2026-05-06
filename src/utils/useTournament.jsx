@@ -315,8 +315,9 @@ export function useTournament({
             player: {
                 id: myId,
                 name: "您的怪獸",
-                hp: Math.floor(finalMaxHP * (1 + specialEffects.shield)),
+                hp: finalMaxHP,
                 maxHp: finalMaxHP,
+                shield: Math.floor(finalMaxHP * specialEffects.shield),
                 atk: finalATK,
                 def: finalDEF,
                 spd: finalSPD,

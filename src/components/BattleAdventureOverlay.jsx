@@ -62,13 +62,18 @@ export default function BattleAdventureOverlay({
                         </div>
                         <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
                             <div className="h-full transition-all duration-300 absolute left-0 top-0 z-[1]" style={{ width: `${Math.min(100, (battleState?.enemy?.hp / battleState?.enemy?.maxHp) * 100)}%`, backgroundColor: (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.5 ? '#2ecc71' : (battleState?.enemy?.hp / battleState?.enemy?.maxHp) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
-                            {battleState?.enemy?.hp > battleState?.enemy?.maxHp && (
+                            {false && battleState?.enemy?.hp > battleState?.enemy?.maxHp && (
                                 <div className="h-full transition-all duration-300 absolute left-0 top-0 bg-[#4dd0e1] z-[2] opacity-80" style={{ width: `${Math.min(100, ((battleState.enemy.hp - battleState.enemy.maxHp) / battleState.enemy.maxHp) * 100)}%` }} />
                             )}
                         </div>
-                        {battleState?.enemy?.hp > battleState?.enemy?.maxHp && (
+                        {(battleState?.enemy?.shield || 0) > 0 && (
+                            <div className="w-20 h-1.5 bg-[#12343b] border border-[#1a1a1a] rounded-sm overflow-hidden mt-0.5 shadow-inner relative">
+                                <div className="h-full transition-all duration-300 absolute left-0 top-0 bg-[#4dd0e1]" style={{ width: `${Math.min(100, ((battleState.enemy.shield || 0) / (battleState.enemy.maxHp || 1)) * 100)}%` }} />
+                            </div>
+                        )}
+                        {(battleState?.enemy?.shield || 0) > 0 && (
                             <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-left w-full drop-shadow-md">
-                                🛡️ {battleState.enemy.hp - battleState.enemy.maxHp}
+                                🛡️ {battleState.enemy.shield}
                             </div>
                         )}
                     </div>
@@ -96,13 +101,18 @@ export default function BattleAdventureOverlay({
                         </div>
                         <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
                             <div className="h-full transition-all duration-300 absolute left-0 top-0 z-[1]" style={{ width: `${Math.min(100, ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) * 100)}%`, backgroundColor: ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.5 ? '#2ecc71' : ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.25 ? '#f1c40f' : '#e74c3c' }} />
-                            {battleState?.player?.hp > battleState?.player?.maxHp && (
+                            {false && battleState?.player?.hp > battleState?.player?.maxHp && (
                                 <div className="h-full transition-all duration-300 absolute left-0 top-0 bg-[#4dd0e1] z-[2] opacity-80" style={{ width: `${Math.min(100, ((battleState.player.hp - battleState.player.maxHp) / battleState.player.maxHp) * 100)}%` }} />
                             )}
                         </div>
-                        {battleState?.player?.hp > battleState?.player?.maxHp && (
+                        {(battleState?.player?.shield || 0) > 0 && (
+                            <div className="w-20 h-1.5 bg-[#12343b] border border-[#1a1a1a] rounded-sm overflow-hidden mt-0.5 shadow-inner relative">
+                                <div className="h-full transition-all duration-300 absolute left-0 top-0 bg-[#4dd0e1]" style={{ width: `${Math.min(100, ((battleState.player.shield || 0) / (battleState.player.maxHp || 1)) * 100)}%` }} />
+                            </div>
+                        )}
+                        {(battleState?.player?.shield || 0) > 0 && (
                             <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-right w-full drop-shadow-md">
-                                🛡️ {battleState.player.hp - battleState.player.maxHp}
+                                🛡️ {battleState.player.shield}
                             </div>
                         )}
                     </div>

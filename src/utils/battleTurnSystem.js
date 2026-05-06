@@ -1,6 +1,23 @@
 import { SKILL_DATABASE, getTypeMultiplier } from '../monsterData';
 import { checkPreTurnStatus, applyMoveEffects, processPostTurnStatus, getStatMultiplier } from './battleEngine';
 
+export const splitShieldDamage = (target, amount) => {
+    const hp = Math.max(0, target?.hp || 0);
+    const shield = Math.max(0, target?.shield || 0);
+    const damage = Math.max(0, amount || 0);
+    const actual = Math.min(hp + shield, damage);
+    const shieldValue = Math.min(shield, actual);
+    const hpValue = actual - shieldValue;
+
+    return {
+        actual,
+        shieldValue,
+        hpValue,
+        nextShield: Math.max(0, shield - shieldValue),
+        nextHp: Math.max(0, hp - hpValue)
+    };
+};
+
 export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) => {
     const { isHost, pvpRemoteMoveRef, connInstance, setPendingPlayerMove, getSmartMove } = deps;
 
@@ -173,6 +190,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         rogueEffects: { ...(prev.enemy.rogueEffects || {}) }
     };
 
+    const applyDamageToState = (target, amount) => {
+        const result = splitShieldDamage(target, amount);
+        target.shield = result.nextShield;
+        target.hp = result.nextHp;
+        return result;
+    };
+
     const addMoveExecution = (side, move) => {
         const isPlayer = side === 'player';
         const attacker = isPlayer ? updatedPlayer : updatedEnemy;
@@ -233,8 +257,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         if (move.addShield) {
             const shieldAmt = Math.floor(attacker.maxHp * move.addShield);
-            attacker.hp += shieldAmt;
+            attacker.shield = (attacker.shield || 0) + shieldAmt;
             nextQueue.push({ type: 'msg', text: `${attackerName} 獲得了 ${shieldAmt} 點生命護盾！` });
+            nextQueue.push({ type: 'shield', target: isPlayer ? 'player' : 'enemy', value: shieldAmt, text: `${attackerName} 獲得了 ${shieldAmt} 點生命護盾！` });
             return;
         }
 
@@ -283,12 +308,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         }
 
         if (result.dmg > 0) {
-            const actualDmg = Math.min(defender.hp, result.dmg);
+            const { actual: actualDmg, shieldValue: shieldDmg, hpValue: hpDmg } = applyDamageToState(defender, result.dmg);
             nextQueue.push({
                 type: 'damage', target: isPlayer ? 'enemy' : 'player',
                 value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`
             });
-            defender.hp = Math.max(0, defender.hp - actualDmg);
+            nextQueue[nextQueue.length - 1].shieldValue = shieldDmg;
+            nextQueue[nextQueue.length - 1].hpValue = hpDmg;
 
             if (effects.recoilPct > 0) {
                 const recoilDmg = Math.floor(actualDmg * effects.recoilPct);
@@ -297,7 +323,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         type: 'damage', target: isPlayer ? 'player' : 'enemy',
                         value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！`
                     });
-                    attacker.hp = Math.max(0, attacker.hp - recoilDmg);
+                    applyDamageToState(attacker, recoilDmg);
                 }
             }
 
@@ -326,7 +352,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         type: 'damage', target: isPlayer ? 'player' : 'enemy',
                         value: reflectDmg, text: `${defenderName} 的棘刺反射了傷害！`
                     });
-                    attacker.hp = Math.max(0, attacker.hp - reflectDmg);
+                    applyDamageToState(attacker, reflectDmg);
                 }
             }
         }
@@ -396,15 +422,15 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         activeMsg: nextQueue[0]?.text || "",
         lastStep: nextQueue[0] || null,
         // 核心修正：確保 player/enemy 完整繼承所有更新後的屬性 (包含 statStages/protect), 但 HP 保持在起始點供動畫播放
-        player: { ...updatedPlayer, hp: prev.player.hp, isProtected: false },
-        enemy: { ...updatedEnemy, hp: prev.enemy.hp, isProtected: false },
+        player: { ...updatedPlayer, hp: prev.player.hp, shield: prev.player.shield || 0, isProtected: false },
+        enemy: { ...updatedEnemy, hp: prev.enemy.hp, shield: prev.enemy.shield || 0, isProtected: false },
         playerHpAfter: updatedPlayer.hp,
         enemyHpAfter: updatedEnemy.hp
     };
 
     if (prev.mode === 'pvp' && isHost.current && connInstance.current) {
         const flippedQueue = nextQueue.map(step => {
-            if (step.type === 'damage' || step.type === 'heal') {
+            if (step.type === 'damage' || step.type === 'heal' || step.type === 'shield') {
                 return { ...step, target: step.target === 'player' ? 'enemy' : 'player' };
             }
             if (step.type === 'msg' && step.text) {
@@ -439,6 +465,8 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         turnId: prev.turn,
                         playerHpBefore: prev.enemy.hp,
                         enemyHpBefore: prev.player.hp,
+                        playerShieldBefore: prev.enemy.shield || 0,
+                        enemyShieldBefore: prev.player.shield || 0,
                         playerHpAfter: updatedEnemy.hp,
                         enemyHpAfter: updatedPlayer.hp,
                         // 🔹 傳送完整的物件快照，確保所有狀態（狀態異常、Rogue效果、能力階級）同步
