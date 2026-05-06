@@ -57,16 +57,27 @@ export default function TutorialAI({ isOpen, onClose }) {
         // 模擬 AI 思考與打字
         setTimeout(() => {
             const response = getResponse(query);
-            simulateTyping(response.answer, response.image, response.followUp);
+            const steps = response.steps || [{ text: response.answer, image: response.image }];
+            simulateTyping(steps, response.followUp);
         }, 600);
     };
 
-    const simulateTyping = (fullText, image = null, followUp = null) => {
+    const simulateTyping = (steps, followUp = null) => {
+        if (!steps || steps.length === 0) {
+            setIsTyping(false);
+            if (followUp && followUp.length > 0) setQuickQuestions(followUp);
+            else setQuickQuestions(QUICK_QUESTIONS);
+            return;
+        }
+
+        const currentStep = steps[0];
+        const remainingSteps = steps.slice(1);
+
         let currentText = "";
-        const words = fullText.split("");
+        const words = currentStep.text.split("");
         let i = 0;
 
-        setMessages(prev => [...prev, { role: 'ai', text: "", image, typing: true }]);
+        setMessages(prev => [...prev, { role: 'ai', text: "", image: currentStep.image, typing: true }]);
 
         const interval = setInterval(() => {
             if (i < words.length) {
@@ -79,20 +90,28 @@ export default function TutorialAI({ isOpen, onClose }) {
                 i++;
             } else {
                 clearInterval(interval);
-                setIsTyping(false);
-                // 更新關聯問題
-                if (followUp && followUp.length > 0) {
-                    setQuickQuestions(followUp);
-                } else {
-                    setQuickQuestions(QUICK_QUESTIONS); // 回到預設問題
-                }
                 setMessages(prev => {
                     const next = [...prev];
                     next[next.length - 1].typing = false;
                     return next;
                 });
+
+                if (remainingSteps.length > 0) {
+                    // 等待一下再開始下一段
+                    setTimeout(() => {
+                        simulateTyping(remainingSteps, followUp);
+                    }, 800);
+                } else {
+                    setIsTyping(false);
+                    // 更新關聯問題
+                    if (followUp && followUp.length > 0) {
+                        setQuickQuestions(followUp);
+                    } else {
+                        setQuickQuestions(QUICK_QUESTIONS);
+                    }
+                }
             }
-        }, 30); // 打字速度
+        }, 30);
     };
 
     return (
@@ -101,7 +120,7 @@ export default function TutorialAI({ isOpen, onClose }) {
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
 
             {/* 主視窗 */}
-            <div className="relative w-full max-w-[280px] h-[450px] bg-[#8fa07e] border-[4px] border-[#1a1a1a] shadow-[8px_8px_0_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="relative w-full h-full bg-[#8fa07e] border-[4px] border-[#1a1a1a] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
 
                 {/* 標題列 */}
                 <div className="bg-[#1a1a1a] text-[#8fa07e] px-3 py-2 flex justify-between items-center font-black text-[12px]">
