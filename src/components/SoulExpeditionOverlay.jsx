@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SOUL_QUESTIONS } from '../data/gameConfig';
 import { DitheredSprite } from './SpriteRenderer';
 
@@ -8,7 +8,10 @@ import { DitheredSprite } from './SpriteRenderer';
 const SOUL_CARDS = [
     { id: 'resonance', name: '靈魂共鳴', desc: '羈絆獲得效率翻倍', icon: '💎', effect: 'double_bond' },
     { id: 'energetic', name: '精力充沛', desc: '探險消耗減半', icon: '⚡', effect: 'half_energy_drain' },
-    { id: 'fountain', name: '活力噴泉', desc: '立即回復 50 點活力', icon: '🌊', effect: 'instant_heal' },
+    { id: 'fountain', name: '活力噴泉', desc: '立即回復 50 點活力', icon: '🌊', effect: 'instant_heal_50', kind: 'heal', heal: 50 },
+    { id: 'rest_brew', name: '休息茶', desc: '立即回復 35 點活力', icon: '🍵', effect: 'instant_heal_35', kind: 'heal', heal: 35 },
+    { id: 'snack_break', name: '小點心', desc: '立即回復 25 點活力', icon: '🍙', effect: 'instant_heal_25', kind: 'heal', heal: 25 },
+    { id: 'mystery_blessing', name: '神秘加護', desc: '隨機獲得一種屬性或個性加護', icon: '🎴', effect: 'mystery_blessing' },
     { id: 'fire_awaken', name: '火之加護', desc: '火屬性點數額外 +1', icon: '🔥', effect: 'bonus_fire' },
     { id: 'water_awaken', name: '水之加護', desc: '水屬性點數額外 +1', icon: '💧', effect: 'bonus_water' },
     { id: 'grass_awaken', name: '草之加護', desc: '草屬性點數額外 +1', icon: '🌿', effect: 'bonus_grass' },
@@ -20,30 +23,30 @@ const SOUL_CARDS = [
     { id: 'nonsense_awaken', name: '搞怪之魂', desc: '搞怪個性點數額外 +1', icon: '🤡', effect: 'bonus_nonsense' },
 ];
 
-// QTE 按鍵對照表
-const BTN_LABELS = {
-    'A': '🅐 按鈕', 'B': '🅑 按鈕',
-    'UP': '⬆ 上', 'DOWN': '⬇ 下', 'LEFT': '⬅ 左', 'RIGHT': '➡ 右'
-};
+const JOKER_CARDS = [
+    { id: 'mirror_joker', name: '鏡面小丑', desc: '直接把目前最高與最低的性格數值互換。', icon: '🃏', effect: 'joker_mirror' },
+    { id: 'vitality_joker', name: '活力小丑', desc: '把目前剩餘活力轉成羈絆，活力歸 0 並結束遠征。', icon: '🃏', effect: 'joker_vitality' },
+    { id: 'stamina_joker', name: '體力小丑', desc: '之後所有加護選擇都只會出現活力補給。', icon: '🃏', effect: 'joker_stamina' },
+    { id: 'echo_joker', name: '回聲小丑', desc: '每次談心額外獲得更多羈絆，體力消耗倍數成長。', icon: '🃏', effect: 'joker_echo' },
+    { id: 'wild_joker', name: '情緒小丑', desc: '性格與屬性成長提高，但本次不會再進入加護選擇。', icon: '🃏', effect: 'joker_wild' },
+    { id: 'stack_joker', name: '收藏小丑', desc: '持有加護越多，談心羈絆越高；活力消耗小幅增加。', icon: '🃏', effect: 'joker_stack' },
+];
 
 // ==========================================
 // 靈魂談心主元件 (Soul Expedition Overlay)
 // ==========================================
-export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity, onClose, onComplete }) => {
+export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity, soulTagCounts = {}, onClose, onComplete }) => {
     // --- Core States ---
     const [progress, setProgress] = useState(0);
     const [energy, setEnergy] = useState(initialEnergy);
     const [activeBuffs, setActiveBuffs] = useState([]);
-    const [currentEvent, setCurrentEvent] = useState(null); // null | 'talk' | 'chance' | 'cards' | 'ending'
+    const [currentEvent, setCurrentEvent] = useState(null); // null | 'talk' | 'cards' | 'jokers' | 'ending'
     const [talkSelectIdx, setTalkSelectIdx] = useState(0); // 當前對話選項的游標
 
     // --- Event States ---
     const [qIdx, setQIdx] = useState(0);
-    const [chanceTime, setChanceTime] = useState(0);
-    const [chanceTargetBtn, setChanceTargetBtn] = useState('');
-    const [chanceType, setChanceType] = useState('press'); // 'press' or 'mash'
-    const [mashCount, setMashCount] = useState(0);
     const [cardChoices, setCardChoices] = useState([]);
+    const [jokerChoices, setJokerChoices] = useState([]);
     const [resultText, setResultText] = useState(null); // { text, color }
     const [isFinished, setIsFinished] = useState(false);
 
@@ -51,7 +54,8 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     const statsRef = useRef({
         bond: 0,
         affinities: { fire: 0, water: 0, grass: 0, bug: 0 },
-        tags: { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 }
+        tags: { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 },
+        tagOverride: null
     });
 
     // --- Internal Refs ---
@@ -61,11 +65,16 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     const energyRef = useRef(initialEnergy);
     const isFinishedRef = useRef(false);
     const lastCardMilestoneRef = useRef(0);
+    const activeBuffsRef = useRef([]);
+    const seenJokerIdsRef = useRef(new Set());
+    const forceNextCardEventRef = useRef(false);
+    const jokerMilestones = [5, 45, 80];
 
     // Keep refs in sync with state
     useEffect(() => { progressRef.current = progress; }, [progress]);
     useEffect(() => { energyRef.current = energy; }, [energy]);
     useEffect(() => { isFinishedRef.current = isFinished; }, [isFinished]);
+    useEffect(() => { activeBuffsRef.current = activeBuffs; }, [activeBuffs]);
 
     // --- Finish Handler ---
     const finishExpedition = useCallback(() => {
@@ -91,11 +100,23 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     // 事件觸發邏輯
     // ==========================================
     const triggerCardEvent = useCallback(() => {
-        // 移除過濾邏輯，讓所有卡片（包括加護）都能重複出現並堆疊
-        const shuffled = [...SOUL_CARDS].sort(() => 0.5 - Math.random());
+        const hasStaminaJoker = activeBuffsRef.current.includes('joker_stamina');
+        const pool = hasStaminaJoker
+            ? SOUL_CARDS.filter(card => card.kind === 'heal')
+            : SOUL_CARDS;
+        const shuffled = [...pool].sort(() => 0.5 - Math.random());
         setCardChoices(shuffled.slice(0, Math.min(3, shuffled.length)));
         setTalkSelectIdx(0);
         setCurrentEvent('cards');
+    }, [activeBuffs]);
+
+    const triggerJokerEvent = useCallback(() => {
+        const available = JOKER_CARDS.filter(card => !seenJokerIdsRef.current.has(card.id));
+        const jokerPool = available.length > 0 ? available : JOKER_CARDS;
+        const shuffled = [...jokerPool].sort(() => 0.5 - Math.random());
+        setJokerChoices(shuffled.slice(0, Math.min(3, shuffled.length)));
+        setTalkSelectIdx(0);
+        setCurrentEvent('jokers');
     }, []);
 
     // ==========================================
@@ -107,18 +128,28 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         const timer = setInterval(() => {
             if (isFinishedRef.current) { clearInterval(timer); return; }
 
-            // 每 20% 觸發一次卡片事件 (20, 40, 60, 80)
-            const nextP = Math.min(100, progressRef.current + 0.5);
-            const milestone = Math.floor(nextP / 20) * 20;
-            if (milestone > lastCardMilestoneRef.current && milestone < 100) {
-                lastCardMilestoneRef.current = milestone;
-                setProgress(milestone);
+            if (forceNextCardEventRef.current) {
+                forceNextCardEventRef.current = false;
                 triggerCardEvent();
                 return;
             }
 
-            const drainLevel = activeBuffs.filter(b => b === 'half_energy_drain').length;
-            const drain = 0.4 * Math.pow(0.5, drainLevel);
+            // 固定三個小丑牌觸發點
+            const nextP = Math.min(100, progressRef.current + 0.5);
+            const milestone = jokerMilestones.find((point) => point > lastCardMilestoneRef.current && nextP >= point);
+            if (milestone) {
+                lastCardMilestoneRef.current = milestone;
+                setProgress(milestone);
+                triggerJokerEvent();
+                return;
+            }
+
+            const currentBuffs = activeBuffsRef.current;
+            const drainLevel = currentBuffs.filter(b => b === 'half_energy_drain').length;
+            const jokerDrainCount = currentBuffs.filter(b => b.startsWith('joker_')).length;
+            const echoCount = currentBuffs.filter(b => b === 'joker_echo').length;
+            const wildJokerCount = currentBuffs.filter(b => b === 'joker_wild').length;
+            const drain = 0.4 * Math.pow(0.5, drainLevel) * Math.pow(1.35, echoCount) * (1 + jokerDrainCount * 0.08 + wildJokerCount * 0.2);
 
             setProgress(nextP);
             if (nextP >= 100) {
@@ -145,14 +176,14 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         }, 100);
 
         return () => clearInterval(timer);
-    }, [currentEvent, activeBuffs, finishExpedition, triggerCardEvent]);
+    }, [currentEvent, activeBuffs, finishExpedition, triggerCardEvent, triggerJokerEvent]);
 
     // ==========================================
     // 隨機事件觸發器
     // ==========================================
     const triggerRandomEvent = () => {
-        const r = Math.random() * 85; // 排除原本的 15% 卡片機率，維持 Talk/Chance 比例
-        if (r < 60) {
+        const r = Math.random() * 100;
+        if (r < 72) {
             // 靈魂談心 (60/85)
             let qi;
             if (lockedAffinity) {
@@ -173,35 +204,10 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             setTalkSelectIdx(0);
             setCurrentEvent('talk');
         } else {
-            // 偶然機遇 (25/85)
-            const btns = ['A', 'B'];
-            const type = Math.random() > 0.5 ? 'press' : 'mash';
-            setChanceTargetBtn(btns[Math.floor(Math.random() * btns.length)]);
-            setChanceType(type);
-            setMashCount(0);
-            setChanceTime(3000);
-            setCurrentEvent('chance');
+            triggerCardEvent();
         }
     };
 
-    // ==========================================
-    // QTE 倒計時 (偶然機遇)
-    // ==========================================
-    useEffect(() => {
-        if (currentEvent !== 'chance' || chanceTime <= 0) return;
-        const timer = setInterval(() => {
-            setChanceTime(prev => {
-                if (prev <= 100) {
-                    clearInterval(timer);
-                    showResult('未能趕上...', '#aaa');
-                    setTimeout(() => { setCurrentEvent(null); lastTickTimeRef.current = Date.now(); }, 800);
-                    return 0;
-                }
-                return prev - 100;
-            });
-        }, 100);
-        return () => clearInterval(timer);
-    }, [currentEvent, chanceTime]);
 
     // ==========================================
     // 結果提示
@@ -219,17 +225,21 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         if (!opt) return;
 
         // 堆疊邏輯：每多一張靈魂共鳴，倍率就再翻倍 (2^n)
-        const bondMult = Math.pow(2, activeBuffs.filter(b => b === 'double_bond').length);
-        const bondGain = 1 * bondMult;
+        const currentBuffs = activeBuffsRef.current;
+        const bondMult = Math.pow(2, currentBuffs.filter(b => b === 'double_bond').length);
+        const echoCount = currentBuffs.filter(b => b === 'joker_echo').length;
+        const stackBonus = currentBuffs.filter(b => b === 'joker_stack').length > 0 ? Math.floor(currentBuffs.length / 3) : 0;
+        const bondGain = Math.max(1, Math.floor((1 + stackBonus) * bondMult * Math.pow(1.5, echoCount)));
         statsRef.current.bond += bondGain;
 
         // 堆疊邏輯：每多一張對應加護，額外獲得 1 點
-        const bonusCount = activeBuffs.filter(b => b === `bonus_${opt.affinity}`).length;
-        let affBonus = 1 + bonusCount;
+        const bonusCount = currentBuffs.filter(b => b === `bonus_${opt.affinity}`).length;
+        const wildBonus = currentBuffs.filter(b => b === 'joker_wild').length;
+        let affBonus = 1 + bonusCount + wildBonus;
 
         // 堆疊邏輯：每多一張個性加護，額外獲得 1 點
-        const tagBonusCount = activeBuffs.filter(b => b === `bonus_${opt.tag}`).length;
-        let tagBonus = 1 + tagBonusCount;
+        const tagBonusCount = currentBuffs.filter(b => b === `bonus_${opt.tag}`).length;
+        let tagBonus = 1 + tagBonusCount + wildBonus;
 
         if (statsRef.current.affinities[opt.affinity] !== undefined) {
             statsRef.current.affinities[opt.affinity] += affBonus;
@@ -237,48 +247,47 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         if (statsRef.current.tags[opt.tag] !== undefined) {
             statsRef.current.tags[opt.tag] += tagBonus;
         }
-
         showResult(`♡ +${bondGain}`, '#ffca28');
         setCurrentEvent(null);
         lastTickTimeRef.current = Date.now();
-    }, [qIdx, activeBuffs]);
-
-    const handleChanceInput = useCallback((mappedBtn) => {
-        if (mappedBtn !== chanceTargetBtn) return;
-
-        const bondMult = Math.pow(2, activeBuffs.filter(b => b === 'double_bond').length);
-
-        if (chanceType === 'mash') {
-            setMashCount(prev => {
-                const next = prev + 1;
-                if (next >= 10) { // 連點 10 下成功
-                    const bondGain = 5 * bondMult;
-                    statsRef.current.bond += bondGain;
-                    setEnergy(e => Math.min(100, e + 20));
-                    showResult(`連點成功！♡ +${bondGain} ⚡+20`, '#4caf50');
-                    setCurrentEvent(null);
-                    lastTickTimeRef.current = Date.now();
-                }
-                return next;
-            });
-        } else {
-            // 單次按下成功
-            const bondGain = 3 * bondMult;
-            statsRef.current.bond += bondGain;
-            setEnergy(e => Math.min(100, e + 15));
-            showResult(`成功！♡ +${bondGain} ⚡+15`, '#4caf50');
-            setCurrentEvent(null);
-            lastTickTimeRef.current = Date.now();
-        }
-    }, [chanceTargetBtn, chanceType, activeBuffs]);
+    }, [qIdx]);
 
     const handleCardChoice = useCallback((card) => {
-        if (card.effect === 'instant_heal') {
-            setEnergy(e => Math.min(100, e + 50));
-            showResult('活力 +50！', '#4caf50');
+        if (card.effect.startsWith('instant_heal')) {
+            const healAmount = card.heal ?? 50;
+            setEnergy(e => Math.min(100, e + healAmount));
+            showResult(`活力 +${healAmount}！`, '#4caf50');
+        } else if (card.effect === 'mystery_blessing') {
+            const mysteryPool = [
+                'bonus_fire', 'bonus_water', 'bonus_grass', 'bonus_bug',
+                'bonus_passionate', 'bonus_stubborn', 'bonus_rational', 'bonus_gentle', 'bonus_nonsense'
+            ];
+            const picked = mysteryPool[Math.floor(Math.random() * mysteryPool.length)];
+            setActiveBuffs(prev => {
+                const next = [...prev, picked];
+                activeBuffsRef.current = next;
+                return next;
+            });
+
+            const field = picked.replace('bonus_', '');
+            if (statsRef.current.affinities[field] !== undefined) {
+                statsRef.current.affinities[field] += 1;
+            } else if (statsRef.current.tags[field] !== undefined) {
+                statsRef.current.tags[field] += 1;
+            }
+
+            const labelMap = {
+                fire: '火', water: '水', grass: '草', bug: '蟲',
+                passionate: '熱血', stubborn: '執著', rational: '冷靜', gentle: '溫柔', nonsense: '搞怪'
+            };
+            showResult(`神秘加護：${labelMap[field] || field}`, '#03a9f4');
         } else {
             // 允許堆疊，直接加入 Buff 陣列
-            setActiveBuffs(prev => [...prev, card.effect]);
+            setActiveBuffs(prev => {
+                const next = [...prev, card.effect];
+                activeBuffsRef.current = next;
+                return next;
+            });
 
             // 立即給予 1 點對應屬性/個性點數（每次獲得卡片都給 1 點）
             if (card.effect.startsWith('bonus_')) {
@@ -290,12 +299,74 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 }
             }
 
-            const count = activeBuffs.filter(b => b === card.effect).length + 1;
+            const count = activeBuffsRef.current.filter(b => b === card.effect).length;
             showResult(`${card.name} Lv.${count}！`, '#03a9f4');
         }
         setCurrentEvent(null);
         lastTickTimeRef.current = Date.now();
-    }, [activeBuffs]);
+    }, []);
+
+    const applyMirrorJoker = useCallback(() => {
+        const tagKeys = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'];
+        const current = { ...tagKeys.reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), ...(soulTagCounts || {}) };
+        const entries = tagKeys.map(key => [key, current[key] || 0]);
+        const highest = entries.reduce((a, b) => b[1] > a[1] ? b : a, entries[0]);
+        const lowest = entries.reduce((a, b) => b[1] < a[1] ? b : a, entries[0]);
+
+        if (highest[0] === lowest[0]) {
+            showResult('鏡面小丑：性格尚未分化', '#ffca28');
+            return;
+        }
+
+        const next = { ...current };
+        next[highest[0]] = lowest[1];
+        next[lowest[0]] = highest[1];
+        statsRef.current.tagOverride = next;
+
+        const labelMap = {
+            passionate: '熱血',
+            stubborn: '執著',
+            rational: '冷靜',
+            gentle: '溫柔',
+            nonsense: '搞怪'
+        };
+        showResult(`鏡面小丑：${labelMap[highest[0]]} ⇄ ${labelMap[lowest[0]]}`, '#ffca28');
+    }, [soulTagCounts]);
+
+    const handleJokerChoice = useCallback((card) => {
+        seenJokerIdsRef.current.add(card.id);
+        if (card.effect === 'joker_mirror') {
+            applyMirrorJoker();
+        }
+        if (card.effect === 'joker_vitality') {
+            const bondGain = Math.floor(Math.max(0, energyRef.current));
+            statsRef.current.bond += bondGain;
+            setEnergy(0);
+            energyRef.current = 0;
+            showResult(`活力小丑：羈絆 +${bondGain}`, '#ffca28');
+            setIsFinished(true);
+            setCurrentEvent('ending');
+            return;
+        }
+
+        setActiveBuffs(prev => {
+            const next = [...prev, card.effect];
+            activeBuffsRef.current = next;
+            return next;
+        });
+        const count = activeBuffsRef.current.filter(b => b === card.effect).length;
+        showResult(`${card.name} Lv.${count}`, '#ffca28');
+        if (card.effect === 'joker_wild') {
+            setCurrentEvent(null);
+            lastTickTimeRef.current = Date.now();
+            return;
+        }
+        if (card.effect === 'joker_stamina') {
+            forceNextCardEventRef.current = true;
+        }
+        setCurrentEvent(null);
+        lastTickTimeRef.current = Date.now();
+    }, [activeBuffs, applyMirrorJoker, triggerCardEvent]);
 
     // ==========================================
     // 鍵盤 / 按鈕輸入處理
@@ -317,11 +388,6 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
 
             // 如果不是結算狀態，但沒按到映射鍵就跳過
             if (!mappedBtn) return;
-
-            if (currentEvent === 'chance') {
-                handleChanceInput(mappedBtn);
-                return;
-            }
 
             if (currentEvent === 'talk') {
                 if (mappedBtn === 'UP') {
@@ -345,11 +411,23 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 }
                 return;
             }
+
+            if (currentEvent === 'jokers') {
+                const len = jokerChoices.length;
+                if (mappedBtn === 'UP') {
+                    setTalkSelectIdx(p => (p - 1 + len) % len);
+                } else if (mappedBtn === 'DOWN' || mappedBtn === 'A') {
+                    setTalkSelectIdx(p => (p + 1) % len);
+                } else if (mappedBtn === 'B') {
+                    handleJokerChoice(jokerChoices[talkSelectIdx]);
+                }
+                return;
+            }
         };
 
         window.addEventListener('keydown', handleKeyDown, true);
         return () => window.removeEventListener('keydown', handleKeyDown, true);
-    }, [currentEvent, talkSelectIdx, cardChoices, handleTalkChoice, handleCardChoice, handleChanceInput, confirmFinish]);
+    }, [currentEvent, talkSelectIdx, cardChoices, jokerChoices, handleTalkChoice, handleCardChoice, handleJokerChoice, confirmFinish]);
 
     // ==========================================
     // 渲染
@@ -506,34 +584,42 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 </div>
             )}
 
-            {/* --- 偶然機遇 (Chance QTE) --- */}
-            {currentEvent === 'chance' && (
-                <div className="absolute inset-0 z-[120] flex items-center justify-center p-4">
-                    <div className="bg-[#383a37]/90 backdrop-blur-[8px] border-2 border-white/30 shadow-2xl p-3 flex flex-col items-center w-full max-w-[200px] rounded-2xl animate-pop-in">
-                        <div className="text-[12px] font-black text-[#ff9800] mb-1.5 [text-shadow:0_0_8px_#ff9800]">
-                            ⚡ 偶然機遇！
+            {/* --- 能力覺醒 (Card Selection) --- */}
+            {currentEvent === 'jokers' && (
+                <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-[5px] p-4">
+                    <div className="bg-[#2b2538]/95 border-2 border-[#ffca28]/50 shadow-2xl p-3 w-full max-w-[230px] flex flex-col items-center rounded-2xl animate-slide-up">
+                        <div className="text-[13px] font-black text-[#ffca28] mb-1 [text-shadow:0_0_8px_rgba(255,202,40,0.5)]">
+                            🃏 小丑牌事件 🃏
                         </div>
-                        <div className="text-[9px] font-bold text-white/70 mb-3 text-center">
-                            {chanceType === 'mash' ? '快速連點 A/B 鍵！' : '請按下正確按鍵！'}
+                        <div className="text-[11px] text-white/60 mb-3 font-bold tracking-tight text-center">三選一，小丑牌會改變後續談心規則</div>
+                        <div className="flex flex-col gap-1.5 w-full">
+                            {jokerChoices.map((card, i) => (
+                                <div
+                                    key={card.id}
+                                    onClick={() => handleJokerChoice(card)}
+                                    className={`px-2 py-1.5 rounded-lg border transition-all flex items-center gap-2
+                                        ${talkSelectIdx === i
+                                            ? 'bg-[#ffca28]/20 border-[#ffca28] text-[#ffca28] scale-[1.02] shadow-[0_0_10px_rgba(255,202,40,0.18)]'
+                                            : 'bg-black/25 border-white/10 text-white/65 hover:bg-white/5'
+                                        }`}
+                                >
+                                    <div className="text-[16px] bg-white/10 w-8 h-8 flex items-center justify-center rounded-lg border border-white/10 shadow-inner">
+                                        {card.icon}
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                        <div className="text-[10px] font-black truncate">{card.name}</div>
+                                        <div className="text-[7px] opacity-70 leading-tight line-clamp-2">{card.desc}</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                        <div className="text-[24px] font-black text-white bg-white/10 border-2 border-white/20 px-4 py-1 rounded-xl shadow-inner mb-3 flex items-center gap-2">
-                            <span className="animate-pulse">{BTN_LABELS[chanceTargetBtn] || chanceTargetBtn}</span>
-                            {chanceType === 'mash' && <span className="text-[12px] text-[#ffca28] opacity-80">{mashCount}/10</span>}
+                        <div className="text-[7px] text-white/25 mt-3 font-black tracking-widest">
+                            [A] 切換選項 • [B] 接受小丑牌
                         </div>
-                        {/* 倒計時條 */}
-                        <div className="w-full h-[8px] bg-black/40 rounded-full border border-white/10 overflow-hidden p-[1px]">
-                            <div className="h-full rounded-full transition-all duration-100"
-                                style={{
-                                    width: `${(chanceTime / 3000) * 100}%`,
-                                    background: chanceTime > 1000 ? 'linear-gradient(90deg, #ff9800, #ffc107)' : 'linear-gradient(90deg, #ff5252, #ff1744)'
-                                }} />
-                        </div>
-                        <div className="text-[8px] text-white/30 mt-1.5 font-black">剩餘時間：{(chanceTime / 1000).toFixed(1)}s</div>
                     </div>
                 </div>
             )}
 
-            {/* --- 能力覺醒 (Card Selection) --- */}
             {currentEvent === 'cards' && (
                 <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-[4px] p-4">
                     <div className="bg-[#383a37]/90 border-2 border-white/20 shadow-2xl p-3 w-full max-w-[210px] flex flex-col items-center rounded-2xl animate-slide-up">

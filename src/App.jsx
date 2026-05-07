@@ -2333,7 +2333,7 @@ export default function App() {
                 }
 
                 // Determine basic soulNext based on locked affinity
-                if (stats.bondValue >= 80 && stats.lockedAffinity) {
+                if (stats.bondValue >= 40 && stats.lockedAffinity) {
                     if (evolutionStage === 1) {
                         if (stats.lockedAffinity === 'fire') soulNext = 'F_SOUL';
                         if (stats.lockedAffinity === 'water') soulNext = 'W_SOUL';
@@ -3516,6 +3516,7 @@ export default function App() {
                                 <SoulExpeditionOverlay
                                     monsterId={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()}
                                     initialEnergy={hunger}
+                                    soulTagCounts={soulTagCounts}
                                     onClose={() => setIsExpeditionOpen(false)}
                                     onComplete={({ finalEnergy, collectedStats }) => {
                                         setIsExpeditionOpen(false);
@@ -3526,7 +3527,7 @@ export default function App() {
 
                                         // Update Tags
                                         setSoulTagCounts(prev => {
-                                            const next = { ...prev };
+                                            const next = collectedStats.tagOverride ? { ...collectedStats.tagOverride } : { ...prev };
                                             for (let t in collectedStats.tags) {
                                                 if (collectedStats.tags[t] > 0) {
                                                     next[t] = (next[t] || 0) + collectedStats.tags[t];

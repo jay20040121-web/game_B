@@ -38,10 +38,10 @@ export const EVOLUTION_CHAINS = {
         },
         branches: [
             // 靈魂進化優先級最高
-            { to: "F_SOUL", condition: "bond >= 80 && affinity == 'fire'", desc: `火系靈魂 (${getMName(1001)}線)` },
-            { to: "W_SOUL", condition: "bond >= 80 && affinity == 'water'", desc: `水系靈魂 (${getMName(1004)}線)` },
-            { to: "GR_SOUL", condition: "bond >= 80 && affinity == 'grass'", desc: `草系靈魂 (${getMName(1007)}線)` },
-            { to: "B_SOUL", condition: "bond >= 80 && affinity == 'bug'", desc: `蟲系靈魂 (${getMName(1010)}線)` },
+            { to: "F_SOUL", condition: "bond >= 40 && affinity == 'fire'", desc: `火系靈魂 (${getMName(1001)}線)` },
+            { to: "W_SOUL", condition: "bond >= 40 && affinity == 'water'", desc: `水系靈魂 (${getMName(1004)}線)` },
+            { to: "GR_SOUL", condition: "bond >= 40 && affinity == 'grass'", desc: `草系靈魂 (${getMName(1007)}線)` },
+            { to: "B_SOUL", condition: "bond >= 40 && affinity == 'bug'", desc: `蟲系靈魂 (${getMName(1010)}線)` },
 
             // 基礎分支
             { to: "A", condition: "mood >= 50 && hunger >= 50", desc: `一般線 A (${getMName(1013)})` },

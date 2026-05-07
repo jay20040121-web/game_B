@@ -193,7 +193,7 @@ const DebugPanel = ({
                                 />
                                 <span style={{ width: '40px', textAlign: 'right', fontWeight: 'bold' }}>{bondValue}</span>
                             </div>
-                            <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 羈絆值會影響進化分支 (例如靈魂進化需要 80 以上)。</p>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 羈絆值會影響進化分支 (例如靈魂進化需要 40 以上)。</p>
                         </div>
 
                         <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
