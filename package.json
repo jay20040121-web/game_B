@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "firebase": "^10.7.1",
-    "framer-motion": "^10.16.4",
     "peerjs": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

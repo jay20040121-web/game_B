@@ -124,7 +124,7 @@ export default function TutorialAI({ isOpen, onClose }) {
 
                 {/* 標題列 */}
                 <div className="bg-[#1a1a1a] text-[#8fa07e] px-3 py-2 flex justify-between items-center font-black text-[12px]">
-                    <span>AI 助手 (BETA)</span>
+                    <span>教學手冊</span>
                     <button onClick={() => { playBloop('back'); onClose(); }} className="hover:text-white">✕</button>
                 </div>
 

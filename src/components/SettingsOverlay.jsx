@@ -89,7 +89,7 @@ export default function SettingsOverlay({
 
     return (
         <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" style={{
-            backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/通用底層.png")`,
+            backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/共用底圖.png")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
         }}>

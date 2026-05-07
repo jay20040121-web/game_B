@@ -50,6 +50,7 @@ node_modules/
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
+.vite/
 
 # Next.js build output
 .next
@@ -75,6 +76,7 @@ dist
 
 # Research and Backup (Project Specific)
 backups/
+local-assets/
 *.docx
 *.py
 *.ps1

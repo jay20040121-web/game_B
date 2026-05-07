@@ -136,7 +136,8 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - `public/assets/exclusive`
 - `public/assets/sound`
 - `public/assets/text`
-- `public/assets/說明圖`
+
+本機保留但不打包、不提交的原始/參考素材放在 `local-assets/`。不要從程式引用這個資料夾；需要進入遊戲的素材才放回 `public/assets/`。
 
 除非要同步更新所有引用，否則不要隨意改素材檔名，特別是中文檔名。
 
