@@ -6,7 +6,7 @@
 
 這個專案是 `pixel-monster-game`，使用 Vite + React 18 製作，是一款像素怪獸養成與對戰遊戲。核心體驗包含電子寵物式照顧、分支進化、冒險戰鬥、玩家連線對戰、怪獸收集、每日對戰日記、Firebase 雲端同步、排行榜與淘汰賽功能。
 
-本機資料夾名稱是 `game_A`，但目前 Git 遠端可能指向 GitHub 上的 `game_B` repository。任何 push、PR、部署前都要先用 `git remote -v` 確認遠端位置。
+本機資料夾名稱是 `game_B`，Git 遠端也指向 GitHub 上的 `game_B` repository。任何 push、PR、部署前仍要先用 `git remote -v` 確認遠端位置。
 
 ## 常用指令
 
