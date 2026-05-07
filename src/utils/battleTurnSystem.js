@@ -169,7 +169,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     'confusion': '混亂', 'leech-seed': '寄生種子', 'trap': '束縛',
                     'freeze': '冰凍', 'sleep': '睡眠'
                 };
-                if (ailment === 'sleep') defender.statusTurns = Math.floor(rFunc() * 3) + 1;
+                if (ailment === 'sleep') defender.statusTurns = Math.floor(rFunc() * 2) + 1;
                 else if (ailment === 'confusion') defender.statusTurns = Math.floor(rFunc() * 3) + 2;
                 else if (ailment === 'leech-seed' || ailment === 'trap') defender.statusTurns = 5;
                 else if (ailment === 'freeze') defender.statusTurns = Math.floor(rFunc() * 2) + 1;
@@ -297,7 +297,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         'confusion': '混亂', 'leech-seed': '寄生種子', 'trap': '束縛',
                         'freeze': '冰凍', 'sleep': '睡眠'
                     };
-                    if (ailment === 'sleep') defender.statusTurns = Math.floor(rFunc() * 3) + 1;
+                    if (ailment === 'sleep') defender.statusTurns = Math.floor(rFunc() * 2) + 1;
                     else if (ailment === 'confusion') defender.statusTurns = Math.floor(rFunc() * 3) + 2;
                     else if (ailment === 'leech-seed' || ailment === 'trap') defender.statusTurns = 5;
                     else if (ailment === 'freeze') defender.statusTurns = Math.floor(rFunc() * 2) + 1;

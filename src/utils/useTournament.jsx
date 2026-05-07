@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { OBTAINABLE_MONSTER_IDS, SPECIES_BASE_STATS, generateMoves, calcFinalStat, MONSTER_NAMES, SKILL_DATABASE, NATURE_CONFIG } from '../monsterData';
 import { ROGUE_CARDS } from '../data/rogueCards';
+import { generateNpcMoveUpgrades } from './npcEnchantSystem';
 
 // 🔹 訓練家擬人化名稱池
 const TRAINER_NAMES_POOL = [
@@ -41,6 +42,7 @@ export function useTournament({
     soulTagCounts,
     leaderboard,
     updateDialogue,
+    setAlertMsg,
     battleState,
     setBattleState,
     setAdvStats,
@@ -115,6 +117,7 @@ export function useTournament({
             def = calcFinalStat('def', id, ivs.def, evs.def, level);
             spd = calcFinalStat('spd', id, ivs.spd, evs.spd, level);
             moves = generateMoves(4, species.types);
+            const moveUpgrades = generateNpcMoveUpgrades(moves, derivedLevel);
 
             generated.push({
                 isPlayer: false,
@@ -131,6 +134,7 @@ export function useTournament({
                     def,
                     spd,
                     moves,
+                    moveUpgrades,
                     status: null,
                     statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 }
                 }
@@ -165,9 +169,10 @@ export function useTournament({
     const startTournament = () => {
         try {
             if (evolutionStage < 2) {
-                updateDialogue("需要將寵物培育至 Stage 2 以上才能報名大賽！");
+                const msg = "需要將寵物培育至 Stage 2 以上才能報名大賽！";
+                updateDialogue(msg);
+                setAlertMsg?.(msg);
                 playBloop('fail');
-                window.alert("需要將寵物培育至 Stage 2 (幼年期 II) 以上才能報名大賽！\n如果是剛開始的新寵物，請先給予飼料與對戰進行升級！");
                 return;
             }
             setIsTournamentOpen(true);
@@ -177,7 +182,10 @@ export function useTournament({
             setCurrentRound(1);
             setRogueBuffs([]);
         } catch (err) {
-            window.alert(`大賽引擎發生錯誤: ${err.message}`);
+            const msg = `大賽引擎發生錯誤：${err.message}`;
+            updateDialogue(msg);
+            setAlertMsg?.(msg);
+            playBloop('fail');
             console.error(err);
         }
     };
@@ -331,7 +339,8 @@ export function useTournament({
             },
             enemy: {
                 ...enemy.monster,
-                moves: enemy.monster.moves.map(id => SKILL_DATABASE[id]).filter(Boolean)
+                moves: enemy.monster.moves.map(id => SKILL_DATABASE[id]).filter(Boolean),
+                moveUpgrades: enemy.monster.moveUpgrades || {}
             },
             logs: [`【大會廣播】：當前戰鬥開始！`],
             stepQueue: [],
@@ -365,8 +374,10 @@ export function useTournament({
                 generateChampionRewards(0);
                 setTPhase('champion_reward_move');
             } else {
-                updateDialogue('【冠軍附魔】沒有可附魔的攻擊技能，略過附魔獎勵。');
-                window.alert('附魔已滿：身上四個技能都不能附魔，輔助技能無法附魔，攻擊技能最高只能到 10/10 MAX。');
+                const msg = '附魔已滿：身上四個技能都不能附魔。輔助技能無法附魔，攻擊技能最高只能到 10/10 MAX。';
+                updateDialogue(msg);
+                setAlertMsg?.(msg);
+                playBloop('fail');
                 closeTournament();
             }
         } else {

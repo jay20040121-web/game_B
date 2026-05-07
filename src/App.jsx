@@ -52,6 +52,7 @@ import { usePvpConnection } from './utils/usePvpConnection';
 import { getMonsterId } from './utils/monsterIdMapper';
 import { useLeaderboard } from './utils/useLeaderboard';
 import { useTournament } from './utils/useTournament';
+import { generateNpcMoveUpgrades } from './utils/npcEnchantSystem';
 import { TournamentOverlay } from './components/TournamentOverlay';
 
 
@@ -2606,6 +2607,7 @@ export default function App() {
 
             const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
             const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
+            const eMoveUpgrades = generateNpcMoveUpgrades(eMoves, level);
             resultState = {
                 active: true, mode: 'wild', phase: 'intro', turn: 1,
                 player: {
@@ -2617,6 +2619,7 @@ export default function App() {
                 enemy: {
                     id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    moveUpgrades: eMoveUpgrades,
                     protectLeft: 3,
                     rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 }
                 },
@@ -2681,6 +2684,7 @@ export default function App() {
             const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
             eType = eStatsRef.types;
             const eMoves = generateMoves(evolutionStage, eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
+            const eMoveUpgrades = generateNpcMoveUpgrades(eMoves, level);
 
             const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
             resultState = {
@@ -2691,7 +2695,8 @@ export default function App() {
                 },
                 enemy: {
                     id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    moveUpgrades: eMoveUpgrades
                 },
                 logs: [initMsg], initMsg,
                 stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
@@ -3265,7 +3270,7 @@ export default function App() {
     // --- 聯盟大賽 (Tournament System) ---
     const tournament = useTournament({
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
-        advStats, soulTagCounts, leaderboard, updateDialogue, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
+        advStats, soulTagCounts, leaderboard, updateDialogue, setAlertMsg, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
         pendingSkillLearn
     });
 
