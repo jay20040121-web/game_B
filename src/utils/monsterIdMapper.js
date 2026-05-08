@@ -7,12 +7,12 @@ import { EVOLUTION_CHAINS, WILD_EVOLUTION_MAP } from '../data/evolutionConfig';
  */
 export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulTagCounts = {}) {
     // 1. 處理死亡狀態
-    if (isDead) return 1019; // Gastly
+    if (isDead) return 1019; // 幽燭燭
 
     const cleanBranch = String(branch || "").trim();
     const numStage = parseInt(stage);
 
-    // 2. 處理野外怪獸進化 (WILD_ID 格式 - 僅保留波波線與小拳石線)
+    // 2. 處理野外怪獸進化 (WILD_ID 格式 - 僅保留小雞獸線與石精靈線)
     if (cleanBranch.startsWith('WILD_')) {
         return parseInt(cleanBranch.split('_')[1]);
     }
@@ -20,8 +20,8 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
     // 3. 處理靈魂重生特殊分支 (G1/G2)
     // 雖然這些現在也在 EVOLUTION_CHAINS 中，但保留特殊階段 1 的快速回傳作為保底
     if (numStage === 1) {
-        if (cleanBranch === 'G1') return 1019; // Gastly
-        // 如果是其他分支但階段是 1，預設回傳百變怪，或者進入下方的鏈查找
+        if (cleanBranch === 'G1') return 1019; // 幽燭燭
+        // 如果是其他分支但階段是 1，預設回傳起始怪獸，或者進入下方的鏈查找
     }
 
     // 4. 從 EVOLUTION_CHAINS 查找對應分支與階段的 ID
@@ -35,9 +35,9 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
     }
 
     // 5. 特殊相容性處理 (保底)
-    // 如果是階段 1 且沒找到，高機率是百變怪
+    // 如果是階段 1 且沒找到，高機率是起始怪獸
     if (numStage === 1) return 1000;
     
     // 如果是階段 2 且沒找到，可能是之前的 A/B/C 邏輯，回傳對應的保底 ID
-    return 1000; // 最終保底回傳百變怪
+    return 1000; // 最終保底回傳起始怪獸
 }

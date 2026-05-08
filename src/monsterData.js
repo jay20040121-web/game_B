@@ -2134,8 +2134,8 @@ export const TYPE_SKILLS = {
 // --- 其他戰鬥與遊戲邏輯 ---
 
 export const ADV_WILD_POOL = [
-    { id: 1022, name: "波波", weight: 1, power: 90, type: "flying" },
-    { id: 1025, name: "小拳石", weight: 1, power: 80, type: "rock" }
+    { id: 1022, name: MONSTER_NAMES[1022], weight: 1, power: 90, type: "flying" },
+    { id: 1025, name: MONSTER_NAMES[1025], weight: 1, power: 80, type: "rock" }
 ];
 
 // 已遷移至 src/data/evolutionConfig.js
@@ -2143,7 +2143,7 @@ export const ADV_WILD_POOL = [
 
 // 只有玩家能獲得的怪獸才會顯示在圖鑑中 (依進化鏈順序排列)
 export const OBTAINABLE_MONSTER_IDS = [
-    // --- 1. 百變怪 (起始) ---
+    // --- 1. 起始怪獸 ---
     1000,
 
     // --- 2. 一般線 (A, C, FAIL 分支) ---

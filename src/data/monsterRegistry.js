@@ -41,7 +41,7 @@ export const MONSTER_REGISTRY = [
     { id: 1011, name: "社畜蜂兵", types: ["bug"], baseStats: { hp: 80, atk: 50, def: 65, spd: 45 } },
     { id: 1012, name: "女王蜂", types: ["bug"], baseStats: { hp: 80, atk: 90, def: 110, spd: 90 } },
 
-    // === 一般線 A (尼多朗) ===
+    // === 一般線 A (德魯線) ===
     { id: 1013, name: "黑德魯", types: ["poison"], baseStats: { hp: 46, atk: 57, def: 40, spd: 50 } },
     { id: 1014, name: "野性德魯", types: ["poison"], baseStats: { hp: 61, atk: 72, def: 65, spd: 65 } },
     { id: 1015, name: "王者德魯", types: ["poison"], baseStats: { hp: 91, atk: 92, def: 90, spd: 65 } },
@@ -58,12 +58,12 @@ export const MONSTER_REGISTRY = [
     { id: 1020, name: "鍋爐燭燭", types: ["ghost"], baseStats: { hp: 45, atk: 115, def: 55, spd: 95 } },
     { id: 1021, name: "幽靈女王", types: ["ghost"], baseStats: { hp: 60, atk: 130, def: 75, spd: 110 } },
 
-    // === 野外 (波波線) ===
+    // === 野外 (小雞獸線) ===
     { id: 1022, name: "小雞獸", types: ["flying"], baseStats: { hp: 40, atk: 45, def: 40, spd: 56 } },
     { id: 1023, name: "捲尾麻雀", types: ["flying"], baseStats: { hp: 63, atk: 70, def: 55, spd: 71 } },
     { id: 1024, name: "US老鷹獸", types: ["flying"], baseStats: { hp: 83, atk: 90, def: 75, spd: 101 } },
 
-    // === 野外 (小拳石線) ===
+    // === 野外 (石精靈線) ===
     { id: 1025, name: "石精靈", types: ["rock"], baseStats: { hp: 40, atk: 80, def: 100, spd: 20 } },
     { id: 1026, name: "岩石巨兵", types: ["rock"], baseStats: { hp: 55, atk: 95, def: 115, spd: 35 } },
     { id: 1027, name: "石像魔", types: ["rock"], baseStats: { hp: 80, atk: 120, def: 130, spd: 45 } },

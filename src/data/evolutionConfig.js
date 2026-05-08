@@ -26,8 +26,8 @@ export const EVO_LEVELS = {
 };
 
 export const WILD_EVOLUTION_MAP = {
-    "1022": 1023, "1023": 1024,    // 波波線
-    "1025": 1026, "1026": 1027,    // 小拳石線
+    "1022": 1023, "1023": 1024,    // 小雞獸線
+    "1025": 1026, "1026": 1027,    // 石精靈線
 };
 
 export const EVOLUTION_CHAINS = {

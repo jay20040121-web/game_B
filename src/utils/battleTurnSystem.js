@@ -236,10 +236,10 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         // PvP 直接使用戰鬥物件上的名稱，避免把本機視角硬改成「你」
         let attackerName = isPvpMode
             ? (attacker.name || (isPlayer ? '玩家' : '對手'))
-            : (isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name);
+            : (isPlayer ? '你' : attacker.name);
         let defenderName = isPvpMode
             ? (defender.name || (isPlayer ? '對手' : '玩家'))
-            : (isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你'));
+            : (isPlayer ? defender.name : '你');
 
         const preCheck = checkPreTurnStatus(attacker, rFunc);
         attacker.status = preCheck.nextStatus;
@@ -419,7 +419,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     // 針對 PVP 模式優化播報名稱
     const pName = (prev.mode === 'pvp')
         ? (updatedPlayer.name || '玩家')
-        : (updatedPlayer.id === 151 ? '夢幻' : '你');
+        : '你';
     const eName = updatedEnemy.name || '對手';
 
     const pPost = processPostTurnStatus(updatedPlayer, updatedPlayer.maxHp, rFunc);

@@ -2421,7 +2421,7 @@ export default function App() {
                         nextBranch = evolutionBranch; // 已是最終型態
                     }
                 } else if (['G1'].includes(evolutionBranch)) {
-                    // D 線完全封閉，沿原線繼續 (優先度高於靈魂進化，防止凱西被劫持)
+                    // D 線完全封閉，沿原線繼續 (優先度高於靈魂進化，防止幽靈線被劫持)
                     nextBranch = evolutionBranch;
 
                 } else if (soulNext || evolutionBranch.endsWith('_SOUL') || evolutionBranch.endsWith('_ALT')) {
@@ -2450,7 +2450,7 @@ export default function App() {
                         }
                     }
                 } else if (evolutionStage === 1) {
-                    // ★ Stage 0→1（百變怪 Stage）：所有線可互通，依條件首次分支
+                    // ★ Stage 0→1（起始怪獸 Stage）：所有線可互通，依條件首次分支
                     if (m >= 50 && h >= 50) {
                         nextBranch = 'A';
                     } else {
@@ -2648,13 +2648,8 @@ export default function App() {
         let resultState;
 
         if (mode === 'wild') {
-            // 新手保護：在 Stage 1 時過濾掉岩石系等難度過高的怪獸
-            const filteredPool = (evolutionStage === 1)
-                ? ADV_WILD_POOL.filter(m => m.id !== 1025)
-                : ADV_WILD_POOL;
-
             // 自動根據池子數量分配平等的出現機率 (1/N)
-            enemyData = filteredPool[Math.floor(Math.random() * filteredPool.length)];
+            enemyData = ADV_WILD_POOL[Math.floor(Math.random() * ADV_WILD_POOL.length)];
             const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
             eType = eStatsRef.types;
             const isBaby = evolutionStage < 2;
@@ -2682,7 +2677,7 @@ export default function App() {
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {},
                     protectLeft: 3,
                     rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
-                    trait: playerTrait
+                    trait: monsterTraits?.trait || null
                 },
                 enemy: {
                     id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
