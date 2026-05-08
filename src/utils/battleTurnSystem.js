@@ -19,7 +19,7 @@ export const splitShieldDamage = (target, amount) => {
 };
 
 export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, deps) => {
-    const { isHost, pvpRemoteMoveRef, connInstance, setPendingPlayerMove, getSmartMove } = deps;
+    const { isHost, pvpRemoteMoveRef, connInstance, setPendingPlayerMove, getSmartMove, monsterTraits } = deps;
 
     if (!prev || prev.phase === 'end' || !prev.active || prev.phase === 'action_streaming') return prev;
 
@@ -56,6 +56,10 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     }
 
     const nextQueue = [];
+    const activeTrait = monsterTraits?.trait;
+    const traitMods = activeTrait?.modifiers || {};
+    const traitEffects = { ...(prev.traitEffects || {}) };
+    const hasEightGates = (traitMods.damageRampPerTurn || 0) > 0 && !traitEffects.eightGatesEnded && prev.mode !== 'pvp';
     const playerMoveList = prev.player.moves || [SKILL_DATABASE.tackle];
     const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList);
     const enemyMoveList = prev.enemy.moves || [SKILL_DATABASE.tackle];
@@ -308,7 +312,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         }
 
         if (result.dmg > 0) {
-            const { actual: actualDmg, shieldValue: shieldDmg, hpValue: hpDmg } = applyDamageToState(defender, result.dmg);
+            let finalDamage = result.dmg;
+            if (isPlayer && hasEightGates) {
+                const damageMultiplier = 1 + Math.max(0, prev.turn - 1) * traitMods.damageRampPerTurn;
+                finalDamage = Math.max(1, Math.floor(finalDamage * damageMultiplier));
+            }
+
+            const { actual: actualDmg, shieldValue: shieldDmg, hpValue: hpDmg } = applyDamageToState(defender, finalDamage);
             nextQueue.push({
                 type: 'damage', target: isPlayer ? 'enemy' : 'player',
                 value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`
@@ -413,6 +423,28 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         }
     }
 
+    if ((traitMods.battleRegenMaxHp || 0) > 0 && prev.mode !== 'pvp' && updatedPlayer.hp > 0 && updatedEnemy.hp > 0) {
+        const heal = Math.min(
+            updatedPlayer.maxHp - updatedPlayer.hp,
+            Math.max(1, Math.floor(updatedPlayer.maxHp * traitMods.battleRegenMaxHp))
+        );
+        if (heal > 0) {
+            nextQueue.push({ type: 'heal', target: 'player', value: heal, text: `${activeTrait.name}回復 ${heal} HP。` });
+            updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + heal);
+        }
+    }
+
+    if (hasEightGates && prev.turn >= (traitMods.rampTurns || 5) && updatedPlayer.hp > 0 && updatedEnemy.hp > 0) {
+        const nextHp = Math.max(1, Math.floor(updatedPlayer.hp * (1 - (traitMods.rampEndHpLoss || 0))));
+        const hpLoss = Math.max(0, updatedPlayer.hp - nextHp);
+        if (hpLoss > 0) {
+            nextQueue.push({ type: 'msg', text: `${activeTrait.name}結束，傷害倍率回到 100%。` });
+            nextQueue.push({ type: 'damage', target: 'player', value: hpLoss, text: `${activeTrait.name}反噬，HP 失去 80%。` });
+            updatedPlayer.hp = nextHp;
+        }
+        traitEffects.eightGatesEnded = true;
+    }
+
     const finalBattleState = {
         ...prev,
         // 修正：播報期間不應提前增加 turn，統一由 App.js 播報結束後累加，防止跳號
@@ -429,7 +461,8 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         playerShieldAfter: updatedPlayer.shield || 0,
         enemyShieldAfter: updatedEnemy.shield || 0,
         playerStateAfter: updatedPlayer,
-        enemyStateAfter: updatedEnemy
+        enemyStateAfter: updatedEnemy,
+        traitEffects
     };
 
     if (prev.mode === 'pvp' && isHost.current && connInstance.current) {

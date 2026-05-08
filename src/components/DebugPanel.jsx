@@ -1,6 +1,7 @@
 import React from 'react';
 import { ADV_ITEMS, DIARY_ITEM } from '../data/gameConfig';
 import { getLevelByPower } from '../monsterData';
+import { MONSTER_TRAITS } from '../data/monsterTraits';
 
 /**
  * 🛠️ 偵錯面板元件 (Debug Panel)
@@ -12,7 +13,7 @@ const DebugPanel = ({
     advStats, setAdvStats, inventory, setInventory, updateDialogue,
     // --- ✨ 解構新傳入的狀態 ---
     evolutionStage, evolutionBranch, bondValue, setBondValue, talkCount,
-    lockedAffinity, soulAffinityCounts, soulTagCounts,
+    lockedAffinity, soulAffinityCounts, soulTagCounts, monsterTraits, setMonsterTraits,
     interactionLogs, interactionCount, getMonsterIdWrapped,
     getPowerThreshold
 }) => {
@@ -161,6 +162,7 @@ const DebugPanel = ({
                                         lockedAffinity: lockedAffinity,
                                         soulAffinityCounts: { ...soulAffinityCounts },
                                         soulTagCounts: { ...soulTagCounts },
+                                        monsterTraits,
                                         interactionLogs: [...interactionLogs],
                                         interactionCount: interactionCount
                                     };
@@ -183,6 +185,39 @@ const DebugPanel = ({
 
                 {activeTab === 'stats' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ padding: '15px', border: '1px solid #8e44ad', backgroundColor: '#222', borderRadius: '8px' }}>
+                            <div style={{ color: '#d7a7ff', fontWeight: 'bold', marginBottom: '10px' }}>天賦切換</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                {MONSTER_TRAITS.map(trait => {
+                                    const active = monsterTraits?.trait?.id === trait.id;
+                                    return (
+                                        <button
+                                            key={trait.id}
+                                            onClick={() => {
+                                                setMonsterTraits({ trait });
+                                                updateDialogue(`Debug: 天賦切換為 ${trait.name}`);
+                                            }}
+                                            title={`增益: ${trait.bonus}\n代價: ${trait.drawback}`}
+                                            style={{
+                                                padding: '8px 10px',
+                                                cursor: 'pointer',
+                                                background: active ? '#8e44ad' : '#333',
+                                                color: 'white',
+                                                border: active ? '1px solid #d7a7ff' : '1px solid #555',
+                                                borderRadius: '4px',
+                                                fontWeight: active ? 'bold' : 'normal'
+                                            }}
+                                        >
+                                            {trait.name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div style={{ marginTop: '10px', fontSize: '12px', color: '#ccc' }}>
+                                目前: {monsterTraits?.trait?.name || '尚未覺醒'} / 增益: {monsterTraits?.trait?.bonus || '-'} / 代價: {monsterTraits?.trait?.drawback || '-'}
+                            </div>
+                        </div>
+
                         <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
                             <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>💖 羈絆值調整 (Bond)</div>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

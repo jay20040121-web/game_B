@@ -9,7 +9,7 @@ export default function StatusOverlay({
     mood,
     bondValue,
     advStats,
-    trainWins,
+    monsterTraits,
     getIVGrade
 }) {
     if (!isStatusUIOpen) return null;
@@ -79,10 +79,14 @@ export default function StatusOverlay({
                         else if (dominantTag === 'rational') { nMods.spd = 1.1; nMods.atk = 0.9; }
                         else if (dominantTag === 'nonsense') { nMods.spd = 1.1; nMods.def = 0.9; }
 
-                        const fHP = calcFinalStat('hp', sid, advStats.ivs.hp, advStats.evs.hp, level);
-                        const fATK = calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level, nMods.atk);
-                        const fDEF = calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def);
-                        const fSPD = calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd);
+                        const traitMods = monsterTraits?.trait?.modifiers || {};
+                        const levelTraitMod = level >= (traitMods.thresholdLevel || Infinity)
+                            ? (traitMods.highLevelStat || 1)
+                            : (traitMods.lowLevelStat || 1);
+                        const fHP = Math.floor(calcFinalStat('hp', sid, advStats.ivs.hp, advStats.evs.hp, level) * (traitMods.hp || 1) * levelTraitMod);
+                        const fATK = Math.floor(calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level, nMods.atk) * (traitMods.atk || 1) * levelTraitMod);
+                        const fDEF = Math.floor(calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def) * (traitMods.def || 1) * levelTraitMod);
+                        const fSPD = Math.floor(calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd) * (traitMods.spd || 1) * levelTraitMod);
 
                         return (
                             <>
@@ -97,8 +101,16 @@ export default function StatusOverlay({
                     })()}
                 </div>
 
-                <div className="text-[10px] font-black text-center text-white mt-0.5 opacity-70 border-t border-[#383a37]/30 pt-0.5">
-                    累積特訓次數: {trainWins} 次
+                <div className="text-[10px] font-black text-white mt-0.5 border-t border-[#383a37]/30 pt-1">
+                    <div className="bg-black/20 border border-white/10 rounded px-1.5 py-1 flex flex-col gap-0.5">
+                        <div className="text-[#ffca28]">天賦: {monsterTraits?.trait?.name || '尚未覺醒'}</div>
+                        <div className="text-[10px] text-[#9be58f] leading-tight">
+                            增益: {monsterTraits?.trait?.bonus || '下一次新生命會重新決定。'}
+                        </div>
+                        <div className="text-[10px] text-[#ff9f9f] leading-tight">
+                            代價: {monsterTraits?.trait?.drawback || '尚未顯現。'}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

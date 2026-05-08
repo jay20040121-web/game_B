@@ -33,6 +33,7 @@ import {
 } from './monsterData';
 
 import { EVO_TIMES, EVO_LEVELS, WILD_EVOLUTION_MAP } from './data/evolutionConfig';
+import { generateMonsterTraits, normalizeMonsterTraits } from './data/monsterTraits';
 
 import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } from './components/SpriteRenderer';
 
@@ -105,6 +106,7 @@ export default function App() {
     const [lockedAffinity, setLockedAffinity] = useState(getInit('lockedAffinity', null));
     const [soulAffinityCounts, setSoulAffinityCounts] = useState(getInit('soulAffinityCounts', { fire: 0, water: 0, grass: 0, bug: 0 }));
     const [soulTagCounts, setSoulTagCounts] = useState(getInit('soulTagCounts', { gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 }));
+    const [monsterTraits, setMonsterTraits] = useState(() => normalizeMonsterTraits(getInit('monsterTraits', null)));
 
     const [steps, setSteps] = useState(getInit('steps', 0));
     const [interactionLogs, setInteractionLogs] = useState(getInit('interactionLogs', []));
@@ -353,10 +355,16 @@ export default function App() {
         const dominantTag = best[1] > 0 ? best[0] : 'none';
         const pNatureMods = getNatureMods(dominantTag);
 
-        const pMaxHP = calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp);
-        const pATK = calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk);
-        const pDEF = calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def);
-        const pSPD = calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd);
+        const traitMods = monsterTraits?.trait?.modifiers || {};
+        const levelTraitMod = level >= (traitMods.thresholdLevel || Infinity)
+            ? (traitMods.highLevelStat || 1)
+            : (traitMods.lowLevelStat || 1);
+        const getTraitStatMod = (key) => (traitMods[key] || 1) * levelTraitMod;
+
+        const pMaxHP = Math.max(1, Math.floor(calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp) * getTraitStatMod('hp')));
+        const pATK = Math.max(1, Math.floor(calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk) * getTraitStatMod('atk')));
+        const pDEF = Math.max(1, Math.floor(calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def) * getTraitStatMod('def')));
+        const pSPD = Math.max(1, Math.floor(calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd) * getTraitStatMod('spd')));
 
         const statsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
         const pType = statsRef.types;
@@ -808,6 +816,7 @@ export default function App() {
                 trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords,
                 lastEvolutionTime, birthTime,
                 deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts,
+                monsterTraits,
                 advStats, inventory, lastAdvTime,
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
                 todayHasEvolved, todaySpecialEvent, todayEventPriority,
@@ -822,7 +831,7 @@ export default function App() {
             lastSavedDataRef.current = currentDataStr;
             lastSaveTimeRef.current = now;
         } catch (e) { }
-    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, birthTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, lastSaveTime]);
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, birthTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, monsterTraits, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, lastSaveTime]);
 
     // 2️⃣ 雲端同步：獨立監控重大行為，不受 hunger/mood 跳動影響
     useEffect(() => {
@@ -1183,7 +1192,8 @@ export default function App() {
                     pvpRemoteMoveRef,
                     connInstance,
                     setPendingPlayerMove,
-                    getSmartMove
+                    getSmartMove,
+                    monsterTraits
                 });
             } catch (err) {
                 console.error("[Battle] Turn Error:", err);
@@ -1338,6 +1348,28 @@ export default function App() {
                             };
                             if (nextStep.target === 'enemy') updated.enemy = applyDamageStep(updated.enemy);
                             else updated.player = applyDamageStep(updated.player);
+
+                            const activeTrait = monsterTraits?.trait;
+                            const canFeignDeathRevive =
+                                nextStep.target !== 'enemy' &&
+                                updated.mode !== 'pvp' &&
+                                updated.player.hp <= 0 &&
+                                updated.enemy.hp > 0 &&
+                                (activeTrait?.modifiers?.battleRevive || 0) > 0 &&
+                                !updated.traitRevivesUsed?.[activeTrait.id];
+
+                            if (canFeignDeathRevive) {
+                                updated.player = { ...updated.player, hp: 1 };
+                                updated.playerHpAfter = 1;
+                                if (updated.playerFinalState) {
+                                    updated.playerFinalState = { ...updated.playerFinalState, hp: 1 };
+                                }
+                                updated.traitRevivesUsed = {
+                                    ...(updated.traitRevivesUsed || {}),
+                                    [activeTrait.id]: true
+                                };
+                                updated.activeMsg = `${activeTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
+                            }
                             updated.flashTarget = nextStep.target;
                             playBloop('attack');
                         } else if (nextStep.type === 'heal') {
@@ -1435,7 +1467,7 @@ export default function App() {
         }, delay);
 
         return () => clearTimeout(timer);
-    }, [battleState.active, battleState.phase, battleState.stepQueue.length, evolutionStage]);
+    }, [battleState.active, battleState.phase, battleState.stepQueue.length, evolutionStage, monsterTraits]);
 
 
     const resolveBattleWin = (finalGain, enemy) => {
@@ -2249,6 +2281,7 @@ export default function App() {
                         lockedAffinity,
                         soulAffinityCounts: { ...soulAffinityCounts },
                         soulTagCounts: { ...soulTagCounts },
+                        monsterTraits,
                         interactionLogs: [...interactionLogs],
                         interactionCount
                     };
@@ -2563,10 +2596,16 @@ export default function App() {
         const pTag = best[1] > 0 ? best[0] : 'none';
         const pNatureMods = getNatureMods(pTag);
 
-        const pMaxHP = calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp);
-        const pATK = calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk);
-        const pDEF = calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def);
-        const pSPD = calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd);
+        const traitMods = monsterTraits?.trait?.modifiers || {};
+        const levelTraitMod = level >= (traitMods.thresholdLevel || Infinity)
+            ? (traitMods.highLevelStat || 1)
+            : (traitMods.lowLevelStat || 1);
+        const getTraitStatMod = (key) => (traitMods[key] || 1) * levelTraitMod;
+
+        const pMaxHP = Math.max(1, Math.floor(calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp) * getTraitStatMod('hp')));
+        const pATK = Math.max(1, Math.floor(calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk) * getTraitStatMod('atk')));
+        const pDEF = Math.max(1, Math.floor(calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def) * getTraitStatMod('def')));
+        const pSPD = Math.max(1, Math.floor(calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd) * getTraitStatMod('spd')));
 
         // --- 玩家戰鬥屬性 (Type) 與招式表 ---
         const pStatsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
@@ -2704,6 +2743,9 @@ export default function App() {
         }
 
         // --- 預先載入戰鬥圖片，消除載入延遲 ---
+        resultState.traitRevivesUsed = {};
+        resultState.traitEffects = {};
+
         const base = import.meta.env.BASE_URL;
         // 預載玩家背面 GIF
         const pAssetId = MONSTER_ASSET_IDS[resultState.player.id] || resultState.player.id;
@@ -2927,6 +2969,7 @@ export default function App() {
                         setLockedAffinity(sn.lockedAffinity);
                         setSoulAffinityCounts(sn.soulAffinityCounts);
                         setSoulTagCounts(sn.soulTagCounts);
+                        setMonsterTraits(normalizeMonsterTraits(sn.monsterTraits));
                         setInteractionLogs(sn.interactionLogs);
                         setInteractionCount(sn.interactionCount);
 
@@ -3187,6 +3230,7 @@ export default function App() {
             bug: prevAffinity === 'bug' ? 1 : 0
         });
         setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
+        setMonsterTraits(generateMonsterTraits());
 
         if (savedDeathBranch) {
             // D線觸發：靈魂重生為霧氣精靈線
@@ -3350,6 +3394,8 @@ export default function App() {
                 lockedAffinity={lockedAffinity}
                 soulAffinityCounts={soulAffinityCounts}
                 soulTagCounts={soulTagCounts}
+                monsterTraits={monsterTraits}
+                setMonsterTraits={setMonsterTraits}
                 interactionLogs={interactionLogs}
                 interactionCount={interactionCount}
                 getMonsterIdWrapped={getMonsterIdWrapped}
@@ -3500,7 +3546,7 @@ export default function App() {
                                 mood={mood}
                                 bondValue={bondValue}
                                 advStats={advStats}
-                                trainWins={trainWins}
+                                monsterTraits={monsterTraits}
                                 calcFinalStat={calcFinalStat}
                                 getIVGrade={getIVGrade}
                             />
