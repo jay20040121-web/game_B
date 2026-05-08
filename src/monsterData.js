@@ -1,4 +1,4 @@
-// Generated from PokeAPI (zh-Hant)
+﻿// Generated from PokeAPI (zh-Hant)
 
 // 怪獸名稱表 — 使用自有 ID 系統 (1000 起)
 import { MONSTER_REGISTRY } from './data/monsterRegistry';

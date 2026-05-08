@@ -386,8 +386,6 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     // ==========================================
     useEffect(() => {
         const handleKeyDown = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
             const key = e.key.toUpperCase();
 
             let mappedBtn = '';
@@ -395,6 +393,8 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             else if (key === 'X') mappedBtn = 'B';
             else if (key === 'C') mappedBtn = 'B'; // 手機版的 C 鍵在這邊暫時也當作 B 鍵功能
             if (currentEvent === 'ending') {
+                e.preventDefault();
+                e.stopPropagation();
                 confirmFinish();
                 return;
             }
@@ -403,6 +403,8 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             if (!mappedBtn) return;
 
             if (currentEvent === 'talk') {
+                e.preventDefault();
+                e.stopPropagation();
                 if (mappedBtn === 'UP') {
                     setTalkSelectIdx(p => (p - 1 + 3) % 3);
                 } else if (mappedBtn === 'DOWN' || mappedBtn === 'A') {
@@ -414,6 +416,8 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             }
 
             if (currentEvent === 'cards') {
+                e.preventDefault();
+                e.stopPropagation();
                 const len = cardChoices.length;
                 if (mappedBtn === 'UP') {
                     setTalkSelectIdx(p => (p - 1 + len) % len);
@@ -426,6 +430,8 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             }
 
             if (currentEvent === 'fateCards') {
+                e.preventDefault();
+                e.stopPropagation();
                 const len = fateCardChoices.length;
                 if (mappedBtn === 'UP') {
                     setTalkSelectIdx(p => (p - 1 + len) % len);

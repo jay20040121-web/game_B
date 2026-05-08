@@ -1269,16 +1269,26 @@ export default function App() {
         }
 
         if (bStateToTrigger) {
-            // 不再立即跳轉，而是推入播報隊列，等待玩家按 B
-            const battleIntroLog = {
-                msg: bStateToTrigger.initMsg,
-                hpRatio: 1,
-                iconId: bStateToTrigger.enemy.id,
-                triggerBattle: bStateToTrigger
-            };
-            setAdvLog(prev => [...prev, battleIntroLog]);
-            setPendingAdvLogs([battleIntroLog]); // 讓 handleB 處理最後的 triggerBattle
-            setIsAdvStreaming(true);
+            if (bStateToTrigger.mode === 'wild') {
+                // 野怪事件：直接進入掃蕩戰，完全不經過第二段日誌確認
+                setAdvLog([]);
+                setPendingAdvLogs([]);
+                setIsAdvStreaming(false);
+                setTimeout(() => {
+                    setBattleState({ ...bStateToTrigger, active: true });
+                }, 0);
+            } else {
+                // 訓練家事件：保留原本的播報確認流程
+                const battleIntroLog = {
+                    msg: bStateToTrigger.initMsg,
+                    hpRatio: 1,
+                    iconId: bStateToTrigger.enemy.id,
+                    triggerBattle: bStateToTrigger
+                };
+                setAdvLog(prev => [...prev, battleIntroLog]);
+                setPendingAdvLogs([battleIntroLog]);
+                setIsAdvStreaming(true);
+            }
         } else if (tempLog.length > 0) {
             // 採集事件：將採集日誌送入播報隊列
             const logs = [...tempLog, { msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: tempLog[tempLog.length - 1].hpRatio }];
@@ -1299,7 +1309,7 @@ export default function App() {
         if (battleState.phase === 'end') return;
 
         let timer;
-        if (battleState.mode === 'wild') {
+        if (battleState.encounterType === 'wild') {
             if (battleState.phase === 'intro') {
                 timer = setTimeout(() => setBattleState(p => ({ ...p, phase: 'combat' })), 1500);
             } else if (battleState.phase === 'combat') {
@@ -1449,7 +1459,7 @@ export default function App() {
                         }
 
                         // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
-                        const nextPhase = prev.mode === 'wild' ? 'combat' : 'player_action';
+                        const nextPhase = prev.encounterType === 'wild' ? 'combat' : 'player_action';
 
                         // 利用計算結果進行最終 HP 校準，同時百分之百保留本地所有其他屬性 (如 moves)
                         const finalPlayer = {
@@ -1495,7 +1505,7 @@ export default function App() {
         logs.push({ msg: `🏆 戰鬥勝利！獲得 ${finalGain} 點成長。`, hpRatio: 1, iconId: myId });
         applyAdvGain(finalGain, logs, advCurrentHP, myId);
         recordGameAction(); // 紀錄對戰勝利
-        if (battleState.mode === 'wild' && enemy) {
+        if (battleState.encounterType === 'wild' && enemy) {
             setTodayWildDefeated(n => n + 1);
             const priority = enemy.isElite ? 2 : 1;
             const prefix = enemy.isElite ? '擊敗了精英怪：' : '擊敗了野怪：';
@@ -1503,11 +1513,12 @@ export default function App() {
         }
 
         let shouldDropItem = false;
-        if (battleState.mode === 'trainer') shouldDropItem = true;
-        if (battleState.mode === 'wild' && (enemy.isElite || Math.random() < 0.15)) shouldDropItem = true;
+        const isWildEncounter = battleState.encounterType === 'wild';
+        if (!isWildEncounter && battleState.mode === 'trainer') shouldDropItem = true;
+        if (isWildEncounter && (enemy.isElite || Math.random() < 0.15)) shouldDropItem = true;
 
         if (shouldDropItem) {
-            const weights = { 1: 100, 2: 50, 3: 20, 4: 5, 5: battleState.mode === 'trainer' ? 1 : 2 };
+            const weights = { 1: 100, 2: 50, 3: 20, 4: 5, 5: isWildEncounter ? 2 : 1 };
             const pool = [];
             ADV_ITEMS.forEach(it => {
                 const w = weights[it.rarity] || 1;
@@ -1530,7 +1541,7 @@ export default function App() {
         }
 
         const catchRate = debugOverrides.catchRate ?? 0.1;
-        if (battleState.mode === 'wild' && enemy && Math.random() < catchRate) {
+        if (isWildEncounter && enemy && Math.random() < catchRate) {
             logs.push({ msg: `✨ 感覺 ${enemy.name || '它'} 想成為你的夥伴...`, hpRatio: 1 });
             logs.push({ promptCapture: { id: enemy.id, name: enemy.name, level: enemy.level } });
         }
@@ -1743,7 +1754,6 @@ export default function App() {
             window.dispatchEvent(new CustomEvent('rearrangeB'));
             return;
         }
-
         if (isExpeditionOpen) {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
             return;
@@ -2666,7 +2676,7 @@ export default function App() {
             const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
             const eMoveUpgrades = generateNpcMoveUpgrades(eMoves, level);
             resultState = {
-                active: true, mode: 'wild', phase: 'intro', turn: 1,
+                active: true, mode: 'trainer', encounterType: 'wild', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {},
@@ -4181,5 +4191,6 @@ export default function App() {
         </div>
     );
 }
+
 
 
