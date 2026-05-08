@@ -3516,7 +3516,7 @@ export default function App() {
                                 isDetailOpen={isPediaDetailOpen}
                             />
 
-                            {/* 靈魂遠征系統 */}
+                            {/* 靈魂談心系統 */}
                             {isExpeditionOpen && (
                                 <SoulExpeditionOverlay
                                     monsterId={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()}
@@ -3554,8 +3554,8 @@ export default function App() {
                                             });
                                         }
 
-                                        updateDialogue("遠征結束了！");
-                                        logEvent("完成了一次靈魂遠征。");
+                                        updateDialogue("談心結束了！");
+                                        logEvent("完成了一次靈魂談心。");
                                     }}
                                 />
                             )}

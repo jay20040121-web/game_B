@@ -23,14 +23,17 @@ const SOUL_CARDS = [
     { id: 'nonsense_awaken', name: '搞怪之魂', desc: '搞怪個性點數額外 +1', icon: '🤡', effect: 'bonus_nonsense' },
 ];
 
-const JOKER_CARDS = [
-    { id: 'mirror_joker', name: '鏡面小丑', desc: '直接把目前最高與最低的性格數值互換。', icon: '🃏', effect: 'joker_mirror' },
-    { id: 'vitality_joker', name: '活力小丑', desc: '把目前剩餘活力轉成羈絆，活力歸 0 並結束遠征。', icon: '🃏', effect: 'joker_vitality' },
-    { id: 'stamina_joker', name: '體力小丑', desc: '之後所有加護選擇都只會出現活力補給。', icon: '🃏', effect: 'joker_stamina' },
-    { id: 'echo_joker', name: '回聲小丑', desc: '每次談心額外獲得更多羈絆，體力消耗倍數成長。', icon: '🃏', effect: 'joker_echo' },
-    { id: 'wild_joker', name: '情緒小丑', desc: '性格與屬性成長提高，但本次不會再進入加護選擇。', icon: '🃏', effect: 'joker_wild' },
-    { id: 'stack_joker', name: '收藏小丑', desc: '持有加護越多，談心羈絆越高；活力消耗小幅增加。', icon: '🃏', effect: 'joker_stack' },
+const FATE_CARDS = [
+    { id: 'mirror_fate', name: '鏡面命運', desc: '直接把目前最高與最低的性格數值互換。', icon: '🔮', effect: 'fate_mirror' },
+    { id: 'exchange_fate', name: '替換命運', desc: '把本次獲得的屬性與性格點數全部轉換成羈絆。', icon: '🔮', effect: 'fate_exchange' },
+    { id: 'vitality_fate', name: '活力命運', desc: '把目前剩餘活力轉成羈絆，活力歸 0 並結束談心。', icon: '🔮', effect: 'fate_vitality' },
+    { id: 'stamina_fate', name: '體力命運', desc: '之後所有加護選擇都只會出現活力補給。', icon: '🔮', effect: 'fate_stamina' },
+    { id: 'echo_fate', name: '回聲命運', desc: '每次談心額外獲得更多羈絆，體力消耗倍數成長。', icon: '🔮', effect: 'fate_echo' },
+    { id: 'wild_fate', name: '情緒命運', desc: '性格與屬性成長提高，但本次不會再進入加護選擇。', icon: '🔮', effect: 'fate_wild' },
+    { id: 'stack_fate', name: '收藏命運', desc: '持有加護越多，談心羈絆越高；活力消耗小幅增加。', icon: '🔮', effect: 'fate_stack' },
 ];
+
+const FATE_CARD_TRIGGER_PROGRESS = 5;
 
 // ==========================================
 // 靈魂談心主元件 (Soul Expedition Overlay)
@@ -40,13 +43,13 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     const [progress, setProgress] = useState(0);
     const [energy, setEnergy] = useState(initialEnergy);
     const [activeBuffs, setActiveBuffs] = useState([]);
-    const [currentEvent, setCurrentEvent] = useState(null); // null | 'talk' | 'cards' | 'jokers' | 'ending'
+    const [currentEvent, setCurrentEvent] = useState(null); // null | 'talk' | 'cards' | 'fateCards' | 'ending'
     const [talkSelectIdx, setTalkSelectIdx] = useState(0); // 當前對話選項的游標
 
     // --- Event States ---
     const [qIdx, setQIdx] = useState(0);
     const [cardChoices, setCardChoices] = useState([]);
-    const [jokerChoices, setJokerChoices] = useState([]);
+    const [fateCardChoices, setFateCardChoices] = useState([]);
     const [resultText, setResultText] = useState(null); // { text, color }
     const [isFinished, setIsFinished] = useState(false);
 
@@ -66,9 +69,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     const isFinishedRef = useRef(false);
     const lastCardMilestoneRef = useRef(0);
     const activeBuffsRef = useRef([]);
-    const seenJokerIdsRef = useRef(new Set());
     const forceNextCardEventRef = useRef(false);
-    const jokerMilestones = [5, 45, 80];
 
     // Keep refs in sync with state
     useEffect(() => { progressRef.current = progress; }, [progress]);
@@ -100,8 +101,8 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     // 事件觸發邏輯
     // ==========================================
     const triggerCardEvent = useCallback(() => {
-        const hasStaminaJoker = activeBuffsRef.current.includes('joker_stamina');
-        const pool = hasStaminaJoker
+        const hasStaminaFateCard = activeBuffsRef.current.includes('fate_stamina');
+        const pool = hasStaminaFateCard
             ? SOUL_CARDS.filter(card => card.kind === 'heal')
             : SOUL_CARDS;
         const shuffled = [...pool].sort(() => 0.5 - Math.random());
@@ -110,13 +111,11 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         setCurrentEvent('cards');
     }, [activeBuffs]);
 
-    const triggerJokerEvent = useCallback(() => {
-        const available = JOKER_CARDS.filter(card => !seenJokerIdsRef.current.has(card.id));
-        const jokerPool = available.length > 0 ? available : JOKER_CARDS;
-        const shuffled = [...jokerPool].sort(() => 0.5 - Math.random());
-        setJokerChoices(shuffled.slice(0, Math.min(3, shuffled.length)));
+    const triggerFateCardEvent = useCallback(() => {
+        const shuffled = [...FATE_CARDS].sort(() => 0.5 - Math.random());
+        setFateCardChoices(shuffled.slice(0, Math.min(3, shuffled.length)));
         setTalkSelectIdx(0);
-        setCurrentEvent('jokers');
+        setCurrentEvent('fateCards');
     }, []);
 
     // ==========================================
@@ -134,22 +133,21 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 return;
             }
 
-            // 固定三個小丑牌觸發點
+            // 命運卡只在談心開局觸發一次，避免多張命運能力互相覆蓋節奏。
             const nextP = Math.min(100, progressRef.current + 0.5);
-            const milestone = jokerMilestones.find((point) => point > lastCardMilestoneRef.current && nextP >= point);
-            if (milestone) {
-                lastCardMilestoneRef.current = milestone;
-                setProgress(milestone);
-                triggerJokerEvent();
+            if (lastCardMilestoneRef.current < FATE_CARD_TRIGGER_PROGRESS && nextP >= FATE_CARD_TRIGGER_PROGRESS) {
+                lastCardMilestoneRef.current = FATE_CARD_TRIGGER_PROGRESS;
+                setProgress(FATE_CARD_TRIGGER_PROGRESS);
+                triggerFateCardEvent();
                 return;
             }
 
             const currentBuffs = activeBuffsRef.current;
             const drainLevel = currentBuffs.filter(b => b === 'half_energy_drain').length;
-            const jokerDrainCount = currentBuffs.filter(b => b.startsWith('joker_')).length;
-            const echoCount = currentBuffs.filter(b => b === 'joker_echo').length;
-            const wildJokerCount = currentBuffs.filter(b => b === 'joker_wild').length;
-            const drain = 0.4 * Math.pow(0.5, drainLevel) * Math.pow(1.35, echoCount) * (1 + jokerDrainCount * 0.08 + wildJokerCount * 0.2);
+            const fateDrainCount = currentBuffs.filter(b => b.startsWith('fate_')).length;
+            const echoFateCount = currentBuffs.filter(b => b === 'fate_echo').length;
+            const wildFateCount = currentBuffs.filter(b => b === 'fate_wild').length;
+            const drain = 0.4 * Math.pow(0.5, drainLevel) * Math.pow(1.35, echoFateCount) * (1 + fateDrainCount * 0.08 + wildFateCount * 0.2);
 
             setProgress(nextP);
             if (nextP >= 100) {
@@ -176,14 +174,15 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         }, 100);
 
         return () => clearInterval(timer);
-    }, [currentEvent, activeBuffs, finishExpedition, triggerCardEvent, triggerJokerEvent]);
+    }, [currentEvent, activeBuffs, finishExpedition, triggerCardEvent, triggerFateCardEvent]);
 
     // ==========================================
     // 隨機事件觸發器
     // ==========================================
     const triggerRandomEvent = () => {
         const r = Math.random() * 100;
-        if (r < 72) {
+        const forceTalkOnly = activeBuffsRef.current.includes('fate_wild');
+        if (forceTalkOnly || r < 72) {
             // 靈魂談心 (60/85)
             let qi;
             if (lockedAffinity) {
@@ -227,14 +226,14 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         // 堆疊邏輯：每多一張靈魂共鳴，倍率就再翻倍 (2^n)
         const currentBuffs = activeBuffsRef.current;
         const bondMult = Math.pow(2, currentBuffs.filter(b => b === 'double_bond').length);
-        const echoCount = currentBuffs.filter(b => b === 'joker_echo').length;
-        const stackBonus = currentBuffs.filter(b => b === 'joker_stack').length > 0 ? Math.floor(currentBuffs.length / 3) : 0;
-        const bondGain = Math.max(1, Math.floor((1 + stackBonus) * bondMult * Math.pow(1.5, echoCount)));
+        const echoFateCount = currentBuffs.filter(b => b === 'fate_echo').length;
+        const stackBonus = currentBuffs.filter(b => b === 'fate_stack').length > 0 ? Math.floor(currentBuffs.length / 3) : 0;
+        const bondGain = Math.max(1, Math.floor((1 + stackBonus) * bondMult * Math.pow(1.5, echoFateCount)));
         statsRef.current.bond += bondGain;
 
         // 堆疊邏輯：每多一張對應加護，額外獲得 1 點
         const bonusCount = currentBuffs.filter(b => b === `bonus_${opt.affinity}`).length;
-        const wildBonus = currentBuffs.filter(b => b === 'joker_wild').length;
+        const wildBonus = currentBuffs.filter(b => b === 'fate_wild').length;
         let affBonus = 1 + bonusCount + wildBonus;
 
         // 堆疊邏輯：每多一張個性加護，額外獲得 1 點
@@ -306,7 +305,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         lastTickTimeRef.current = Date.now();
     }, []);
 
-    const applyMirrorJoker = useCallback(() => {
+    const applyMirrorFateCard = useCallback(() => {
         const tagKeys = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'];
         const current = { ...tagKeys.reduce((acc, key) => ({ ...acc, [key]: 0 }), {}), ...(soulTagCounts || {}) };
         const entries = tagKeys.map(key => [key, current[key] || 0]);
@@ -314,7 +313,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         const lowest = entries.reduce((a, b) => b[1] < a[1] ? b : a, entries[0]);
 
         if (highest[0] === lowest[0]) {
-            showResult('鏡面小丑：性格尚未分化', '#ffca28');
+            showResult('鏡面命運：性格尚未分化', '#ffca28');
             return;
         }
 
@@ -330,43 +329,57 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             gentle: '溫柔',
             nonsense: '搞怪'
         };
-        showResult(`鏡面小丑：${labelMap[highest[0]]} ⇄ ${labelMap[lowest[0]]}`, '#ffca28');
+        showResult(`鏡面命運：${labelMap[highest[0]]} ⇄ ${labelMap[lowest[0]]}`, '#ffca28');
     }, [soulTagCounts]);
 
-    const handleJokerChoice = useCallback((card) => {
-        seenJokerIdsRef.current.add(card.id);
-        if (card.effect === 'joker_mirror') {
-            applyMirrorJoker();
+    const convertCurrentStatsToBond = useCallback(() => {
+        const affinityGain = Object.values(statsRef.current.affinities).reduce((sum, value) => sum + Math.max(0, value || 0), 0);
+        const tagGain = Object.values(statsRef.current.tags).reduce((sum, value) => sum + Math.max(0, value || 0), 0);
+        const converted = affinityGain + tagGain;
+
+        statsRef.current.bond += converted;
+        statsRef.current.affinities = { fire: 0, water: 0, grass: 0, bug: 0 };
+        statsRef.current.tags = { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 };
+
+        return converted;
+    }, []);
+
+    const handleFateCardChoice = useCallback((card) => {
+        if (card.effect === 'fate_mirror') {
+            applyMirrorFateCard();
         }
-        if (card.effect === 'joker_vitality') {
+        if (card.effect === 'fate_exchange') {
+            const converted = convertCurrentStatsToBond();
+            showResult(`替換命運：羈絆 +${converted}`, '#ffca28');
+        }
+        if (card.effect === 'fate_vitality') {
             const bondGain = Math.floor(Math.max(0, energyRef.current));
             statsRef.current.bond += bondGain;
             setEnergy(0);
             energyRef.current = 0;
-            showResult(`活力小丑：羈絆 +${bondGain}`, '#ffca28');
+            showResult(`活力命運：羈絆 +${bondGain}`, '#ffca28');
             setIsFinished(true);
             setCurrentEvent('ending');
             return;
         }
 
         setActiveBuffs(prev => {
-            const next = [...prev, card.effect];
+            const next = [...prev.filter(effect => !effect.startsWith('fate_')), card.effect];
             activeBuffsRef.current = next;
             return next;
         });
-        const count = activeBuffsRef.current.filter(b => b === card.effect).length;
-        showResult(`${card.name} Lv.${count}`, '#ffca28');
-        if (card.effect === 'joker_wild') {
+        showResult(`${card.name}！`, '#ffca28');
+        if (card.effect === 'fate_wild') {
             setCurrentEvent(null);
             lastTickTimeRef.current = Date.now();
             return;
         }
-        if (card.effect === 'joker_stamina') {
+        if (card.effect === 'fate_stamina') {
             forceNextCardEventRef.current = true;
         }
         setCurrentEvent(null);
         lastTickTimeRef.current = Date.now();
-    }, [activeBuffs, applyMirrorJoker, triggerCardEvent]);
+    }, [applyMirrorFateCard, convertCurrentStatsToBond]);
 
     // ==========================================
     // 鍵盤 / 按鈕輸入處理
@@ -412,14 +425,14 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 return;
             }
 
-            if (currentEvent === 'jokers') {
-                const len = jokerChoices.length;
+            if (currentEvent === 'fateCards') {
+                const len = fateCardChoices.length;
                 if (mappedBtn === 'UP') {
                     setTalkSelectIdx(p => (p - 1 + len) % len);
                 } else if (mappedBtn === 'DOWN' || mappedBtn === 'A') {
                     setTalkSelectIdx(p => (p + 1) % len);
                 } else if (mappedBtn === 'B') {
-                    handleJokerChoice(jokerChoices[talkSelectIdx]);
+                    handleFateCardChoice(fateCardChoices[talkSelectIdx]);
                 }
                 return;
             }
@@ -427,7 +440,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
 
         window.addEventListener('keydown', handleKeyDown, true);
         return () => window.removeEventListener('keydown', handleKeyDown, true);
-    }, [currentEvent, talkSelectIdx, cardChoices, jokerChoices, handleTalkChoice, handleCardChoice, handleJokerChoice, confirmFinish]);
+    }, [currentEvent, talkSelectIdx, cardChoices, fateCardChoices, handleTalkChoice, handleCardChoice, handleFateCardChoice, confirmFinish]);
 
     // ==========================================
     // 渲染
@@ -585,18 +598,18 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             )}
 
             {/* --- 能力覺醒 (Card Selection) --- */}
-            {currentEvent === 'jokers' && (
+            {currentEvent === 'fateCards' && (
                 <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-[5px] p-4">
                     <div className="bg-[#2b2538]/95 border-2 border-[#ffca28]/50 shadow-2xl p-3 w-full max-w-[230px] flex flex-col items-center rounded-2xl animate-slide-up">
                         <div className="text-[13px] font-black text-[#ffca28] mb-1 [text-shadow:0_0_8px_rgba(255,202,40,0.5)]">
-                            🃏 小丑牌事件 🃏
+                            🔮 命運卡事件 🔮
                         </div>
-                        <div className="text-[11px] text-white/60 mb-3 font-bold tracking-tight text-center">三選一，小丑牌會改變後續談心規則</div>
+                        <div className="text-[11px] text-white/60 mb-3 font-bold tracking-tight text-center">唯一一次三選一，命運卡會改變後續談心規則</div>
                         <div className="flex flex-col gap-1.5 w-full">
-                            {jokerChoices.map((card, i) => (
+                            {fateCardChoices.map((card, i) => (
                                 <div
                                     key={card.id}
-                                    onClick={() => handleJokerChoice(card)}
+                                    onClick={() => handleFateCardChoice(card)}
                                     className={`px-2 py-1.5 rounded-lg border transition-all flex items-center gap-2
                                         ${talkSelectIdx === i
                                             ? 'bg-[#ffca28]/20 border-[#ffca28] text-[#ffca28] scale-[1.02] shadow-[0_0_10px_rgba(255,202,40,0.18)]'
@@ -614,7 +627,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                             ))}
                         </div>
                         <div className="text-[7px] text-white/25 mt-3 font-black tracking-widest">
-                            [A] 切換選項 • [B] 接受小丑牌
+                            [A] 切換選項 • [B] 接受命運卡
                         </div>
                     </div>
                 </div>
