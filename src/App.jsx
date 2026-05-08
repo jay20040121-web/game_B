@@ -1389,6 +1389,13 @@ export default function App() {
                                 updated.activeMsg = `${targetTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
                             }
                             updated.flashTarget = nextStep.target;
+                            updated.damagePop = {
+                                id: `${Date.now()}-${nextStep.target}-${nextStep.value}`,
+                                target: nextStep.target,
+                                value: nextStep.value,
+                                effectType: nextStep.effectType,
+                                effectVariant: nextStep.effectVariant
+                            };
                             playBloop('attack');
                         } else if (nextStep.type === 'heal') {
                             if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };

@@ -2,6 +2,88 @@ import React from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 import { getTypeMultiplier, getLevelByPower } from '../monsterData';
 
+const DAMAGE_DIGIT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/傷害數字.png`;
+const DAMAGE_DIGIT_SIZE = 18;
+const DAMAGE_DIGIT_HEIGHT = 29;
+const DAMAGE_DIGIT_COLS = 5;
+const DAMAGE_DIGIT_ROWS = 2;
+const DAMAGE_DIGIT_LOWER_ROW_SHIFT = 20;
+const WATER_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/水.png`;
+const GENERIC_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/受擊特效.png`;
+const WATER_EFFECT_SIZE = 72;
+const WATER_EFFECT_COLS = 3;
+const WATER_EFFECT_ROWS = 3;
+
+function DamageEffect({ pop, className = "" }) {
+    if (!pop?.effectType) return null;
+
+    const variant = Math.max(0, Math.min(8, pop.effectVariant ?? 0));
+    const x = variant % WATER_EFFECT_COLS;
+    const y = Math.floor(variant / WATER_EFFECT_COLS);
+    const sheet = pop.effectType === 'water' ? WATER_EFFECT_SHEET : GENERIC_HIT_EFFECT_SHEET;
+
+    return (
+        <div
+            key={`${pop.id}-effect`}
+            className={`pointer-events-none absolute z-[150] w-[72px] h-[72px] water-effect-pop ${className}`}
+            style={{
+                backgroundImage: `url("${sheet}")`,
+                backgroundSize: `${WATER_EFFECT_SIZE * WATER_EFFECT_COLS}px ${WATER_EFFECT_SIZE * WATER_EFFECT_ROWS}px`,
+                backgroundPosition: `${-x * WATER_EFFECT_SIZE}px ${-y * WATER_EFFECT_SIZE}px`,
+                imageRendering: 'pixelated',
+                mixBlendMode: 'multiply'
+            }}
+        />
+    );
+}
+
+function DamageDigits({ pop, className = "" }) {
+    if (!pop?.value) return null;
+
+    const digits = String(Math.max(0, Math.floor(pop.value))).split('');
+
+    return (
+        <div
+            className={`pointer-events-none absolute z-[160] ${className}`}
+        >
+            <div key={pop.id} className="flex items-center justify-center gap-0.5 damage-number-pop">
+                {digits.map((digit, idx) => {
+                    const n = Number(digit);
+                    if (n < 0 || n > 9) {
+                        return (
+                            <span
+                                key={`${pop.id}-${idx}`}
+                                className="text-[18px] leading-none font-black text-[#ffca28] [text-shadow:2px_2px_0_#5b2500]"
+                            >
+                                {digit}
+                            </span>
+                        );
+                    }
+
+                    const x = n % DAMAGE_DIGIT_COLS;
+                    const y = Math.floor(n / DAMAGE_DIGIT_COLS);
+                    const digitOffsetY = y === 1 ? DAMAGE_DIGIT_LOWER_ROW_SHIFT : 0;
+
+                    return (
+                        <span
+                            key={`${pop.id}-${idx}`}
+                            className="block w-[18px] h-[29px]"
+                            style={{
+                                backgroundImage: `url("${DAMAGE_DIGIT_SHEET}")`,
+                                backgroundSize: `${DAMAGE_DIGIT_SIZE * DAMAGE_DIGIT_COLS}px ${DAMAGE_DIGIT_HEIGHT * DAMAGE_DIGIT_ROWS}px`,
+                                backgroundPosition: `${-x * DAMAGE_DIGIT_SIZE}px ${-y * DAMAGE_DIGIT_HEIGHT}px`,
+                                imageRendering: 'pixelated',
+                                mixBlendMode: 'multiply',
+                                transform: `translateY(${digitOffsetY}px)`
+                            }}
+                        />
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function BattleAdventureOverlay({
     isAdvMode,
     isTournamentOpen,
@@ -18,9 +100,9 @@ export default function BattleAdventureOverlay({
     pendingWildCapture
 }) {
     // 從封裝好的 pvp 物件中解構出需要的狀態與方法
-    const { 
-        isPvpMode, matchStatus, myPeerId, 
-        pvpRoomPassword, setPvpRoomPassword, joinPvpRoom 
+    const {
+        isPvpMode, matchStatus, myPeerId,
+        pvpRoomPassword, setPvpRoomPassword, joinPvpRoom
     } = pvp;
 
     // 嚴格檢查：如果是大賽模式且戰鬥未開始，或者是其他模式未開啟，就隱藏 (避免洩漏大廳/冒險介面)
@@ -31,7 +113,7 @@ export default function BattleAdventureOverlay({
     }
 
     return (
-        <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{ 
+        <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{
             backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/${battleState.active ? '對戰底圖.png' : '共用底圖.png'}")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
@@ -45,16 +127,36 @@ export default function BattleAdventureOverlay({
 
             {battleState.active ? (
                 <div className="flex-1 w-full relative pb-1 z-10">
+                    <style>{`
+                        @keyframes damage-number-pop {
+                            0% { opacity: 0; transform: translateY(8px) scale(0.8); }
+                            18% { opacity: 1; transform: translateY(0) scale(1.18); }
+                            72% { opacity: 1; transform: translateY(-14px) scale(1.05); }
+                            100% { opacity: 0; transform: translateY(-30px) scale(0.95); }
+                        }
+                        .damage-number-pop {
+                            animation: damage-number-pop 1150ms ease-out both;
+                        }
+                        @keyframes water-effect-pop {
+                            0% { opacity: 0; transform: translateY(4px) scale(0.82); }
+                            14% { opacity: 0.95; transform: translateY(0) scale(1); }
+                            70% { opacity: 0.7; transform: translateY(-6px) scale(1.08); }
+                            100% { opacity: 0; transform: translateY(-12px) scale(1.18); }
+                        }
+                        .water-effect-pop {
+                            animation: water-effect-pop 820ms ease-out both;
+                        }
+                    `}</style>
                     {/* Enemy Area */}
                     <div className="absolute top-2 left-2 flex flex-col items-start min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pl-2 shadow-sm backdrop-blur-[2px]">
                         <div className="flex items-center gap-1">
                             <div className="text-[10px] font-bold text-white truncate w-[60px] leading-tight">{battleState?.enemy?.name}</div>
                             {battleState?.enemy?.status && (
                                 <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.enemy.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                        battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                            battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                    battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                    battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                        battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                            battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
                                     }`}>
                                     {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.enemy.status] || '狀'}
                                 </span>
@@ -78,21 +180,49 @@ export default function BattleAdventureOverlay({
                         )}
                     </div>
                     <div className={`absolute -top-16 right-0 z-10 transform scale-[1.1] ${battleState.flashTarget === 'enemy' ? 'damage-flash' : ''}`}>
+                        {battleState.damagePop?.target === 'enemy' && (
+                            <>
+                                <DamageEffect
+                                    key={`${battleState.damagePop.id}-effect`}
+                                    pop={battleState.damagePop}
+                                    className="left-[20%] top-[40%] -translate-x-1/2 -translate-y-1/2"
+                                />
+                                <DamageDigits
+                                    key={battleState.damagePop.id}
+                                    pop={battleState.damagePop}
+                                    className="left-1/2 top-[68%] -translate-x-1/2 -translate-y-1/2"
+                                />
+                            </>
+                        )}
                         <DitheredSprite id={battleState?.enemy?.id} scale={2} />
                     </div>
 
                     {/* Player Area */}
                     <div className={`absolute bottom-6 -left-2 z-10 transform scale-[1.4] origin-bottom px-2 ${battleState.flashTarget === 'player' ? 'damage-flash' : ''}`}>
+                        {battleState.damagePop?.target === 'player' && (
+                            <>
+                                <DamageEffect
+                                    key={`${battleState.damagePop.id}-effect`}
+                                    pop={battleState.damagePop}
+                                    className="left-[20%] top-[40%] -translate-x-1/2 -translate-y-1/2"
+                                />
+                                <DamageDigits
+                                    key={battleState.damagePop.id}
+                                    pop={battleState.damagePop}
+                                    className="left-1/2 top-[72%] -translate-x-1/2 -translate-y-1/2"
+                                />
+                            </>
+                        )}
                         <DitheredBackSprite id={battleState?.player?.id} scale={2} />
                     </div>
                     <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pr-2 shadow-sm backdrop-blur-[2px]">
                         <div className="flex items-center gap-1">
                             {battleState?.player?.status && (
                                 <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.player.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                        battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                            battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                    battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
+                                    battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
+                                        battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                            battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
                                     }`}>
                                     {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.player.status] || '狀'}
                                 </span>
@@ -133,7 +263,7 @@ export default function BattleAdventureOverlay({
                                 {[0, 1, 2, 3].map((idx) => {
                                     const move = battleState.player?.moves?.[idx];
                                     const isSelected = (battleState.menuIdx || 0) === idx;
-                                    
+
                                     // ⚡ 屬性相剋色彩邏輯
                                     let moveColor = isSelected ? '#8fa07e' : 'white';
                                     if (move && battleState.enemy) {
@@ -147,8 +277,8 @@ export default function BattleAdventureOverlay({
                                             key={idx}
                                             style={{ color: moveColor }}
                                             className={`border-2 flex items-center justify-center transition-all relative ${isSelected
-                                                    ? 'border-[#1a1a1a] bg-[#383a37] invert-0'
-                                                    : 'border-[#1a1a1a] bg-[#ccd6be]/20'
+                                                ? 'border-[#1a1a1a] bg-[#383a37] invert-0'
+                                                : 'border-[#1a1a1a] bg-[#ccd6be]/20'
                                                 } ${!move ? 'opacity-30 border-dashed' : ''}`}
                                         >
                                             {move ? (
@@ -161,7 +291,9 @@ export default function BattleAdventureOverlay({
                                                             ailmentsToShow.push(move.ailment);
                                                         }
                                                         // 2. 附魔追加的異常與數值
-                                                        const enchantData = advStats?.moveUpgrades?.[move.id]?.ailments || {};
+                                                        const enchantData = battleState?.player?.moveUpgrades?.[move.id]?.ailments
+                                                            || advStats?.moveUpgrades?.[move.id]?.ailments
+                                                            || {};
                                                         Object.keys(enchantData).forEach(k => {
                                                             if (enchantData[k] > 0 && !ailmentsToShow.includes(k)) {
                                                                 ailmentsToShow.push(k);
@@ -169,28 +301,27 @@ export default function BattleAdventureOverlay({
                                                         });
 
                                                         return ailmentsToShow.map((ailment, idx) => (
-                                                            <span key={idx} className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
-                                                                ailment === 'burn' ? 'bg-[#ff5252] text-white' :
+                                                            <span key={idx} className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${ailment === 'burn' ? 'bg-[#ff5252] text-white' :
                                                                 ailment === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                                ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                                ailment === 'accuracy' ? 'bg-[#2196f3] text-white' :
-                                                                ailment === 'priority' ? 'bg-[#ff9800] text-white' :
-                                                                ailment === 'freeze' ? 'bg-[#80deea] text-black' :
-                                                                ailment === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                                ailment === 'lifesteal' ? 'bg-[#e91e63] text-white' :
-                                                                'bg-[#4db6ac] text-white'
-                                                            }`}>
+                                                                    ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
+                                                                        ailment === 'accuracy' ? 'bg-[#2196f3] text-white' :
+                                                                            ailment === 'priority' ? 'bg-[#ff9800] text-white' :
+                                                                                ailment === 'freeze' ? 'bg-[#80deea] text-black' :
+                                                                                    ailment === 'sleep' ? 'bg-[#90a4ae] text-white' :
+                                                                                        ailment === 'lifesteal' ? 'bg-[#e91e63] text-white' :
+                                                                                            'bg-[#4db6ac] text-white'
+                                                                }`}>
                                                                 {ailment === 'burn' ? '燒' :
-                                                                 ailment === 'paralysis' ? '麻' :
-                                                                 ailment === 'poison' ? '毒' :
-                                                                 ailment === 'confusion' ? '混' :
-                                                                 ailment === 'leech-seed' ? '吸' :
-                                                                 ailment === 'trap' ? '縛' :
-                                                                 ailment === 'accuracy' ? '準' :
-                                                                 ailment === 'priority' ? '先' :
-                                                                 ailment === 'freeze' ? '凍' :
-                                                                 ailment === 'sleep' ? '眠' :
-                                                                 ailment === 'lifesteal' ? '血' : '狀'}
+                                                                    ailment === 'paralysis' ? '麻' :
+                                                                        ailment === 'poison' ? '毒' :
+                                                                            ailment === 'confusion' ? '混' :
+                                                                                ailment === 'leech-seed' ? '吸' :
+                                                                                    ailment === 'trap' ? '縛' :
+                                                                                        ailment === 'accuracy' ? '準' :
+                                                                                            ailment === 'priority' ? '先' :
+                                                                                                ailment === 'freeze' ? '凍' :
+                                                                                                    ailment === 'sleep' ? '眠' :
+                                                                                                        ailment === 'lifesteal' ? '血' : '狀'}
                                                             </span>
                                                         ));
                                                     })()}

@@ -351,7 +351,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             const { actual: actualDmg, shieldValue: shieldDmg, hpValue: hpDmg } = applyDamageToState(defender, finalDamage);
             nextQueue.push({
                 type: 'damage', target: isPlayer ? 'enemy' : 'player',
-                value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`
+                value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`,
+                effectType: move.type,
+                effectVariant: Math.floor(rFunc() * 9)
             });
             nextQueue[nextQueue.length - 1].shieldValue = shieldDmg;
             nextQueue[nextQueue.length - 1].hpValue = hpDmg;
@@ -521,6 +523,8 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         enemyShieldAfter: updatedEnemy.shield || 0,
         playerStateAfter: updatedPlayer,
         enemyStateAfter: updatedEnemy,
+        playerFinalState: updatedPlayer,
+        enemyFinalState: updatedEnemy,
         traitUsage
     };
 
