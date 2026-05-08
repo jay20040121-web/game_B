@@ -15,7 +15,7 @@ export default function StatusOverlay({
     if (!isStatusUIOpen) return null;
 
     return (
-        <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{ 
+        <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{
             backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/共用底圖.png")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
@@ -72,7 +72,7 @@ export default function StatusOverlay({
                         const sid = getMonsterId();
                         const tagEntries = Object.entries(soulTagCounts || {});
                         const dominantTag = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                        
+
                         const nMods = { atk: 1.0, def: 1.0, spd: 1.0 };
                         if (dominantTag === 'passionate') { nMods.atk = 1.1; nMods.def = 0.9; }
                         else if (dominantTag === 'stubborn') { nMods.def = 1.1; nMods.spd = 0.9; }
@@ -101,7 +101,7 @@ export default function StatusOverlay({
                     })()}
                 </div>
 
-                <div className="text-[10px] font-black text-white mt-0.5 border-t border-[#383a37]/30 pt-1">
+                <div className="text-[10px] font-black text-white mt-0.5 border-t border-[#383a37]/30 pt-0">
                     <div className="bg-black/20 border border-white/10 rounded px-1.5 py-1 flex flex-col gap-0.5">
                         <div className="text-[#ffca28]">天賦: {monsterTraits?.trait?.name || '尚未覺醒'}</div>
                         <div className="text-[10px] text-[#9be58f] leading-tight">

@@ -1,4 +1,4 @@
-import BattleAdventureOverlay from './components/BattleAdventureOverlay';
+﻿import BattleAdventureOverlay from './components/BattleAdventureOverlay';
 import DiaryOverlay from './components/DiaryOverlay';
 import InventoryOverlay from './components/InventoryOverlay';
 import StatusOverlay from './components/StatusOverlay';
@@ -365,6 +365,7 @@ export default function App() {
         const pATK = Math.max(1, Math.floor(calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk) * getTraitStatMod('atk')));
         const pDEF = Math.max(1, Math.floor(calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def) * getTraitStatMod('def')));
         const pSPD = Math.max(1, Math.floor(calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd) * getTraitStatMod('spd')));
+        const playerTrait = monsterTraits?.trait || null;
 
         const statsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
         const pType = statsRef.types;
@@ -1349,26 +1350,33 @@ export default function App() {
                             if (nextStep.target === 'enemy') updated.enemy = applyDamageStep(updated.enemy);
                             else updated.player = applyDamageStep(updated.player);
 
-                            const activeTrait = monsterTraits?.trait;
+                            const targetKey = nextStep.target === 'enemy' ? 'enemy' : 'player';
+                            const target = updated[targetKey];
+                            const other = targetKey === 'player' ? updated.enemy : updated.player;
+                            const targetTrait = target?.trait || null;
+                            updated.traitUsage = updated.traitUsage || { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } };
+                            updated.traitUsage[targetKey] = updated.traitUsage[targetKey] || { revives: {}, eightGatesEnded: false };
                             const canFeignDeathRevive =
-                                nextStep.target !== 'enemy' &&
-                                updated.mode !== 'pvp' &&
-                                updated.player.hp <= 0 &&
-                                updated.enemy.hp > 0 &&
-                                (activeTrait?.modifiers?.battleRevive || 0) > 0 &&
-                                !updated.traitRevivesUsed?.[activeTrait.id];
+                                target?.hp <= 0 &&
+                                other?.hp > 0 &&
+                                (targetTrait?.modifiers?.battleRevive || 0) > 0 &&
+                                !updated.traitUsage[targetKey].revives?.[targetTrait.id];
 
                             if (canFeignDeathRevive) {
-                                updated.player = { ...updated.player, hp: 1 };
-                                updated.playerHpAfter = 1;
-                                if (updated.playerFinalState) {
+                                updated[targetKey] = { ...target, hp: 1 };
+                                if (targetKey === 'player') updated.playerHpAfter = 1;
+                                else updated.enemyHpAfter = 1;
+                                if (targetKey === 'player' && updated.playerFinalState) {
                                     updated.playerFinalState = { ...updated.playerFinalState, hp: 1 };
                                 }
-                                updated.traitRevivesUsed = {
-                                    ...(updated.traitRevivesUsed || {}),
-                                    [activeTrait.id]: true
+                                if (targetKey === 'enemy' && updated.enemyFinalState) {
+                                    updated.enemyFinalState = { ...updated.enemyFinalState, hp: 1 };
+                                }
+                                updated.traitUsage[targetKey].revives = {
+                                    ...(updated.traitUsage[targetKey].revives || {}),
+                                    [targetTrait.id]: true
                                 };
-                                updated.activeMsg = `${activeTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
+                                updated.activeMsg = `${targetTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
                             }
                             updated.flashTarget = nextStep.target;
                             playBloop('attack');
@@ -1394,13 +1402,23 @@ export default function App() {
                     } else {
                         console.log("[Battle Animation] End");
                         // 隊列結束，進行最後的數值校準
-                        const finalPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
-                        const finalEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
+                        const reviveIfNeeded = (side, currentHp, state, otherHp) => {
+                            const trait = state?.trait || (side === 'player' ? monsterTraits?.trait : null);
+                            const usage = prev.traitUsage?.[side];
+                            if (currentHp > 0 || otherHp <= 0) return currentHp;
+                            if (!trait?.modifiers?.battleRevive) return currentHp;
+                            if (usage?.revives?.[trait.id]) return currentHp;
+                            return 1;
+                        };
+                        const rawPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
+                        const rawEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
+                        const finalPlayerHp = reviveIfNeeded('player', rawPlayerHp, prev.playerFinalState || prev.player, rawEnemyHp);
+                        const finalEnemyHp = reviveIfNeeded('enemy', rawEnemyHp, prev.enemyFinalState || prev.enemy, rawPlayerHp);
                         const finalPlayerShield = prev.playerShieldAfter !== undefined ? prev.playerShieldAfter : (prev.player.shield || 0);
                         const finalEnemyShield = prev.enemyShieldAfter !== undefined ? prev.enemyShieldAfter : (prev.enemy.shield || 0);
 
-                        if (prev.player.hp <= 0 || prev.enemy.hp <= 0) {
-                            const isWin = prev.enemy.hp <= 0;
+                        if (finalPlayerHp <= 0 || finalEnemyHp <= 0) {
+                            const isWin = finalEnemyHp <= 0;
                             const next = {
                                 ...prev,
                                 phase: 'end',
@@ -2653,17 +2671,20 @@ export default function App() {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {},
                     protectLeft: 3,
-                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 }
+                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
+                    trait: playerTrait
                 },
                 enemy: {
                     id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
                     moveUpgrades: eMoveUpgrades,
                     protectLeft: 3,
-                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 }
+                    rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
+                    trait: null
                 },
                 logs: [initMsg], initMsg,
-                stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
+                stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0,
+                traitUsage: { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } }
             };
         } else if (mode === 'pvp' && pvpOpponentData) {
             eLevel = Math.min(100, pvpOpponentData?.stats?.level || level);
@@ -2684,26 +2705,29 @@ export default function App() {
             }).filter(Boolean);
             if (eMoves.length === 0) eMoves.push(SKILL_DATABASE.tackle);
 
-            const initMsg = `連線成功！${enemyData?.name || '網路玩家'} (Lv.${eLevel}) 降臨！`;
+            const initMsg = `連線成功！${enemyData?.name || '對手'} (Lv.${eLevel}) 降臨！`;
             resultState = {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    name: user?.displayName || "你",
+                    name: user?.displayName || "玩家",
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
                     moveUpgrades: advStats.moveUpgrades || {},
                     rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
-                    protectLeft: 3
+                    protectLeft: 3,
+                    trait: monsterTraits?.trait || null
                 },
                 enemy: {
-                    id: enemyData?.id || 1000, name: (enemyData?.name || '網路玩家'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
+                    id: enemyData?.id || 1000, name: (enemyData?.name || '對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
                     moveUpgrades: enemyData?.moveUpgrades || {},
                     rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
-                    protectLeft: 3
+                    protectLeft: 3,
+                    trait: enemyData?.trait || null
                 },
                 logs: [initMsg], initMsg,
-                stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
+                stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0,
+                traitUsage: { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } }
             };
         } else {
             enemyData = generateTrainerOpponent(evolutionStage);
@@ -2730,15 +2754,18 @@ export default function App() {
                 active: true, mode: 'trainer', phase: 'intro', turn: 1,
                 player: {
                     hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {}
+                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {},
+                    trait: monsterTraits?.trait || null
                 },
                 enemy: {
                     id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
+                    trait: null,
                     moveUpgrades: eMoveUpgrades
                 },
                 logs: [initMsg], initMsg,
-                stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0
+                stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0,
+                traitUsage: { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } }
             };
         }
 
@@ -3291,7 +3318,8 @@ export default function App() {
         generateBattleState,
         setAdvStats,
         logEvent,
-        updatePvpStats
+        updatePvpStats,
+        monsterTraits
     });
 
     const {
@@ -4153,4 +4181,5 @@ export default function App() {
         </div>
     );
 }
+
 

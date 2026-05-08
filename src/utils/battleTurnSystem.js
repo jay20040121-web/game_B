@@ -1,4 +1,4 @@
-import { SKILL_DATABASE, getTypeMultiplier } from '../monsterData';
+﻿import { SKILL_DATABASE, getTypeMultiplier } from '../monsterData';
 import { checkPreTurnStatus, applyMoveEffects, processPostTurnStatus, getStatMultiplier } from './battleEngine';
 
 export const splitShieldDamage = (target, amount) => {
@@ -56,10 +56,24 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     }
 
     const nextQueue = [];
-    const activeTrait = monsterTraits?.trait;
-    const traitMods = activeTrait?.modifiers || {};
-    const traitEffects = { ...(prev.traitEffects || {}) };
-    const hasEightGates = (traitMods.damageRampPerTurn || 0) > 0 && !traitEffects.eightGatesEnded && prev.mode !== 'pvp';
+    const playerTrait = prev.player?.trait || monsterTraits?.trait || null;
+    const enemyTrait = prev.enemy?.trait || null;
+    const traitUsage = {
+        player: {
+            revives: { ...(prev.traitUsage?.player?.revives || {}) },
+            eightGatesEnded: !!prev.traitUsage?.player?.eightGatesEnded
+        },
+        enemy: {
+            revives: { ...(prev.traitUsage?.enemy?.revives || {}) },
+            eightGatesEnded: !!prev.traitUsage?.enemy?.eightGatesEnded
+        }
+    };
+    const getTrait = (side) => (side === 'player' ? playerTrait : enemyTrait) || null;
+    const getTraitMods = (side) => getTrait(side)?.modifiers || {};
+    const activeTrait = playerTrait;
+    const traitMods = getTraitMods('player');
+    const traitEffects = traitUsage.player;
+    const hasEightGates = (traitMods.damageRampPerTurn || 0) > 0 && !traitEffects.eightGatesEnded;
     const playerMoveList = prev.player.moves || [SKILL_DATABASE.tackle];
     const playerMove = actionMove || getSmartMove(prev.player, prev.enemy, playerMoveList);
     const enemyMoveList = prev.enemy.moves || [SKILL_DATABASE.tackle];
@@ -201,18 +215,31 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         return result;
     };
 
+    const tryFeignDeath = (side) => {
+        const target = side === 'player' ? updatedPlayer : updatedEnemy;
+        const other = side === 'player' ? updatedEnemy : updatedPlayer;
+        const trait = getTrait(side);
+        if (!trait?.modifiers?.battleRevive) return false;
+        if (target.hp > 0 || other.hp <= 0) return false;
+        if (traitUsage[side].revives[trait.id]) return false;
+        traitUsage[side].revives[trait.id] = true;
+        target.hp = 1;
+        nextQueue.push({ type: 'msg', text: `${trait.name}觸發！HP 回到 1，戰鬥繼續。` });
+        return true;
+    };
+
     const addMoveExecution = (side, move) => {
         const isPlayer = side === 'player';
         const attacker = isPlayer ? updatedPlayer : updatedEnemy;
         const defender = isPlayer ? updatedEnemy : updatedPlayer;
-        // 在 PVP 模式下，動態帶入各自的名字，避免雙方看到硬編碼的「你」
-        let attackerName = isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name;
-        let defenderName = isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你');
-
-        if (prev.mode === 'pvp') {
-            attackerName = attacker.name || (isPlayer ? '網路玩家' : '網路玩家');
-            defenderName = defender.name || (isPlayer ? '網路玩家' : '網路玩家');
-        }
+        const isPvpMode = prev.mode === 'pvp';
+        // PvP 直接使用戰鬥物件上的名稱，避免把本機視角硬改成「你」
+        let attackerName = isPvpMode
+            ? (attacker.name || (isPlayer ? '玩家' : '對手'))
+            : (isPlayer ? (attacker.id === 151 ? '夢幻' : '你') : attacker.name);
+        let defenderName = isPvpMode
+            ? (defender.name || (isPlayer ? '對手' : '玩家'))
+            : (isPlayer ? defender.name : (defender.id === 151 ? '夢幻' : '你'));
 
         const preCheck = checkPreTurnStatus(attacker, rFunc);
         attacker.status = preCheck.nextStatus;
@@ -313,8 +340,11 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         if (result.dmg > 0) {
             let finalDamage = result.dmg;
-            if (isPlayer && hasEightGates) {
-                const damageMultiplier = 1 + Math.max(0, prev.turn - 1) * traitMods.damageRampPerTurn;
+            const attackerSide = isPlayer ? 'player' : 'enemy';
+            const attackerTraitMods = getTraitMods(attackerSide);
+            const attackerTraitUsage = traitUsage[attackerSide];
+            if ((attackerTraitMods.damageRampPerTurn || 0) > 0 && !attackerTraitUsage.eightGatesEnded) {
+                const damageMultiplier = 1 + Math.max(0, prev.turn - 1) * attackerTraitMods.damageRampPerTurn;
                 finalDamage = Math.max(1, Math.floor(finalDamage * damageMultiplier));
             }
 
@@ -325,6 +355,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             });
             nextQueue[nextQueue.length - 1].shieldValue = shieldDmg;
             nextQueue[nextQueue.length - 1].hpValue = hpDmg;
+            if (defender.hp <= 0) tryFeignDeath(isPlayer ? 'enemy' : 'player');
 
             if (effects.recoilPct > 0) {
                 const recoilDmg = Math.floor(actualDmg * effects.recoilPct);
@@ -334,6 +365,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         value: recoilDmg, text: `${attackerName} 受到了反作用力傷害！`
                     });
                     applyDamageToState(attacker, recoilDmg);
+                    if (attacker.hp <= 0) tryFeignDeath(isPlayer ? 'player' : 'enemy');
                 }
             }
 
@@ -363,6 +395,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         value: reflectDmg, text: `${defenderName} 的棘刺反射了傷害！`
                     });
                     applyDamageToState(attacker, reflectDmg);
+                    if (attacker.hp <= 0) tryFeignDeath(isPlayer ? 'player' : 'enemy');
                 }
             }
         }
@@ -384,7 +417,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     }
 
     // 針對 PVP 模式優化播報名稱
-    const pName = (prev.mode === 'pvp') ? (updatedPlayer.name || '玩家') : (updatedPlayer.id === 151 ? '夢幻' : '你');
+    const pName = (prev.mode === 'pvp')
+        ? (updatedPlayer.name || '玩家')
+        : (updatedPlayer.id === 151 ? '夢幻' : '你');
     const eName = updatedEnemy.name || '對手';
 
     const pPost = processPostTurnStatus(updatedPlayer, updatedPlayer.maxHp, rFunc);
@@ -423,7 +458,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         }
     }
 
-    if ((traitMods.battleRegenMaxHp || 0) > 0 && prev.mode !== 'pvp' && updatedPlayer.hp > 0 && updatedEnemy.hp > 0) {
+    if ((traitMods.battleRegenMaxHp || 0) > 0 && updatedPlayer.hp > 0 && updatedEnemy.hp > 0) {
         const heal = Math.min(
             updatedPlayer.maxHp - updatedPlayer.hp,
             Math.max(1, Math.floor(updatedPlayer.maxHp * traitMods.battleRegenMaxHp))
@@ -445,6 +480,30 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         traitEffects.eightGatesEnded = true;
     }
 
+    const enemyTraitMods = getTraitMods('enemy');
+    const enemyTraitUsage = traitUsage.enemy;
+    if ((enemyTraitMods.battleRegenMaxHp || 0) > 0 && updatedPlayer.hp > 0 && updatedEnemy.hp > 0) {
+        const heal = Math.min(
+            updatedEnemy.maxHp - updatedEnemy.hp,
+            Math.max(1, Math.floor(updatedEnemy.maxHp * enemyTraitMods.battleRegenMaxHp))
+        );
+        if (heal > 0) {
+            nextQueue.push({ type: 'heal', target: 'enemy', value: heal, text: `${enemyTrait?.name || '天賦'}回復 ${heal} HP。` });
+            updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + heal);
+        }
+    }
+
+    if ((enemyTraitMods.damageRampPerTurn || 0) > 0 && !enemyTraitUsage.eightGatesEnded && prev.turn >= (enemyTraitMods.rampTurns || 5) && updatedPlayer.hp > 0 && updatedEnemy.hp > 0) {
+        const nextHp = Math.max(1, Math.floor(updatedEnemy.hp * (1 - (enemyTraitMods.rampEndHpLoss || 0))));
+        const hpLoss = Math.max(0, updatedEnemy.hp - nextHp);
+        if (hpLoss > 0) {
+            nextQueue.push({ type: 'msg', text: `${enemyTrait?.name || '天賦'}結束，傷害倍率回到 100%。` });
+            nextQueue.push({ type: 'damage', target: 'enemy', value: hpLoss, text: `${enemyTrait?.name || '天賦'}反噬，HP 失去 80%。` });
+            updatedEnemy.hp = nextHp;
+        }
+        enemyTraitUsage.eightGatesEnded = true;
+    }
+
     const finalBattleState = {
         ...prev,
         // 修正：播報期間不應提前增加 turn，統一由 App.js 播報結束後累加，防止跳號
@@ -462,7 +521,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         enemyShieldAfter: updatedEnemy.shield || 0,
         playerStateAfter: updatedPlayer,
         enemyStateAfter: updatedEnemy,
-        traitEffects
+        traitUsage
     };
 
     if (prev.mode === 'pvp' && isHost.current && connInstance.current) {
@@ -471,23 +530,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 return { ...step, target: step.target === 'player' ? 'enemy' : 'player' };
             }
             if (step.type === 'msg' && step.text) {
-                // 🔹 文本替換：將對方的「你」換成對方的名字，將自己的名字換成「你」
-                let newText = step.text;
-                const pName = updatedPlayer.name || '你';
-                const eName = updatedEnemy.name || '網路玩家';
-
-                // 這邊邏輯較為複雜，簡單化：在對手端，原先的 player(Host) 是「網路玩家」，原先的 enemy(Client) 是「你」
-                // 使用 split/join 替代 RegExp 以避免特殊字元造成崩潰
-                if (pName !== '你') {
-                    newText = newText.split(pName).join('【TEMP_P】');
-                } else {
-                    newText = newText.split('你').join('【TEMP_P】');
-                }
-
-                newText = newText.split(eName).join('你');
-                newText = newText.split('【TEMP_P】').join(pName === '你' ? '網路玩家' : pName);
-
-                return { ...step, text: newText };
+                return step;
             }
             return step;
         });
@@ -511,6 +554,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         // 🔹 傳送完整的物件快照，確保所有狀態（狀態異常、Rogue效果、能力階級）同步
                         playerStateAfter: updatedEnemy,
                         enemyStateAfter: updatedPlayer,
+                        traitUsage,
                         turnId: prev.turn
                     }
                 });
@@ -520,3 +564,5 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
     return finalBattleState;
 };
+
+
