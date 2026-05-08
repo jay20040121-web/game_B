@@ -170,3 +170,32 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - 不要覆蓋使用者未提交的修改。
 - 預設分支是 `main`。
 - 推送前確認遠端，因為本機資料夾名稱和 GitHub repository 名稱可能不同。
+
+### 多台電腦同步與防止 main 分叉
+
+這個專案曾在 2026-05-08 發生過一次 `main` 分叉事故：公司電腦本機 `main` 留有 `05b34c4`、`6262543` 兩個 commit，但 GitHub 遠端 `main` 後來被家裡端推到 `acd26da`，且 `git fetch` 顯示 `forced update`。當時 GitHub Pages 是正確部署遠端最新 `main`，但公司本機和遠端已經不是同一條歷史。
+
+根本原因不是單純改資料夾或專案名稱，而是改名/搬移期間同時存在 `game_A`、`game_B` 多份 repo，加上後續同步時可能從舊基底推送，甚至 force update 遠端 `main`。之後請特別避免把備份資料夾或舊 repo 當成正式工作區繼續開發。
+
+跨公司/家裡電腦工作時，固定遵守：
+
+- 正式開發只使用 `game_B` 這一份 repo；`game_A` 或其他資料夾只能當備份，不要從裡面 push。
+- 每次開始工作前先跑：
+  - `git fetch origin`
+  - `git status --short --branch`
+  - `git log --oneline --left-right --graph HEAD...origin/main`
+- 若看到 `[behind]`、`ahead/behind`，或左右兩邊都有 commit，先停止開發並處理同步，不要直接 push。
+- 到家或換電腦後優先使用 `git pull --ff-only origin main`。如果 `--ff-only` 失敗，代表歷史已分叉，需要先人工檢查，不要用 force push 解決。
+- 推送前再次確認：
+  - `git remote -v`
+  - `git status --short --branch`
+  - `git log --oneline --left-right --graph HEAD...origin/main`
+- 推送前理想狀態只能是本機單純 ahead 遠端；不能 behind，也不能 ahead/behind 同時存在。
+- 不要對 `main` 使用 `git push --force`、`git push -f` 或 `git push --force-with-lease`，除非使用者明確要求且已備份。
+- 若需要整理歷史或改 repo 名稱，先建立備份分支，例如 `backup-before-rename-YYYYMMDD`，再操作。
+
+建議在 GitHub repository 的 `main` 設定 branch protection：
+
+- 禁止 force push。
+- 要求 PR 或至少避免直接改寫歷史。
+- 要求 GitHub Actions build/deploy 成功後才視為可發布版本。
