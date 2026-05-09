@@ -1423,8 +1423,18 @@ export default function App() {
                             }, 520);
                             playBloop('attack');
                         } else if (nextStep.type === 'heal') {
-                            if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };
-                            else updated.player = { ...updated.player, hp: Math.min(updated.player.maxHp, updated.player.hp + nextStep.value) };
+                            const targetKey = nextStep.target === 'enemy' ? 'enemy' : 'player';
+                            const target = updated[targetKey];
+                            const nextHp = Math.min(target.maxHp, target.hp + nextStep.value);
+                            const actualHeal = Math.max(0, nextHp - target.hp);
+                            updated[targetKey] = { ...target, hp: nextHp };
+                            if (actualHeal > 0) {
+                                updated.healPop = {
+                                    id: `${Date.now()}-${nextStep.target}-heal-${actualHeal}`,
+                                    target: nextStep.target,
+                                    value: actualHeal
+                                };
+                            }
                             updated.flashTarget = null;
                             playBloop('success');
                         } else if (nextStep.type === 'shield') {

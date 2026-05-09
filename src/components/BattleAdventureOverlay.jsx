@@ -3,6 +3,7 @@ import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 import { getTypeMultiplier, getLevelByPower } from '../monsterData';
 
 const DAMAGE_DIGIT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/傷害數字.png`;
+const HEAL_DIGIT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/回復數字.png`;
 const DAMAGE_DIGIT_SIZE = 18;
 const DAMAGE_DIGIT_HEIGHT = 29;
 const DAMAGE_DIGIT_COLS = 5;
@@ -54,7 +55,7 @@ function DamageEffect({ pop, className = "" }) {
     );
 }
 
-function DamageDigits({ pop, className = "" }) {
+function DamageDigits({ pop, className = "", sheet = DAMAGE_DIGIT_SHEET }) {
     if (!pop?.value) return null;
 
     const digits = String(Math.max(0, Math.floor(pop.value))).split('');
@@ -86,7 +87,7 @@ function DamageDigits({ pop, className = "" }) {
                             key={`${pop.id}-${idx}`}
                             className="block w-[18px] h-[29px]"
                             style={{
-                                backgroundImage: `url("${DAMAGE_DIGIT_SHEET}")`,
+                                backgroundImage: `url("${sheet}")`,
                                 backgroundSize: `${DAMAGE_DIGIT_SIZE * DAMAGE_DIGIT_COLS}px ${DAMAGE_DIGIT_HEIGHT * DAMAGE_DIGIT_ROWS}px`,
                                 backgroundPosition: `${-x * DAMAGE_DIGIT_SIZE}px ${-y * DAMAGE_DIGIT_HEIGHT}px`,
                                 imageRendering: 'pixelated',
@@ -99,6 +100,10 @@ function DamageDigits({ pop, className = "" }) {
             </div>
         </div>
     );
+}
+
+function HealDigits({ pop, className = "" }) {
+    return <DamageDigits pop={pop} className={className} sheet={HEAL_DIGIT_SHEET} />;
 }
 
 export default function BattleAdventureOverlay({
@@ -211,6 +216,13 @@ export default function BattleAdventureOverlay({
                                 />
                             </>
                         )}
+                        {battleState.healPop?.target === 'enemy' && (
+                            <HealDigits
+                                key={battleState.healPop.id}
+                                pop={battleState.healPop}
+                                className="left-1/2 top-[64%] -translate-x-1/2 -translate-y-1/2"
+                            />
+                        )}
                         <DitheredSprite id={battleState?.enemy?.id} scale={2} />
                     </div>
 
@@ -229,6 +241,13 @@ export default function BattleAdventureOverlay({
                                     className="left-1/2 top-[72%] -translate-x-1/2 -translate-y-1/2"
                                 />
                             </>
+                        )}
+                        {battleState.healPop?.target === 'player' && (
+                            <HealDigits
+                                key={battleState.healPop.id}
+                                pop={battleState.healPop}
+                                className="left-1/2 top-[68%] -translate-x-1/2 -translate-y-1/2"
+                            />
                         )}
                         <DitheredBackSprite id={battleState?.player?.id} scale={2} />
                     </div>
