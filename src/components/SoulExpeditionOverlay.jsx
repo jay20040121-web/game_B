@@ -34,6 +34,26 @@ const FATE_CARDS = [
 ];
 
 const FATE_CARD_TRIGGER_PROGRESS = 5;
+const BLESSING_CARD_TRIGGER_PROGRESS = [20, 40, 60];
+
+const createEmptySoulStats = () => ({
+    bond: 0,
+    affinities: { fire: 0, water: 0, grass: 0, bug: 0 },
+    tags: { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 },
+    tagOverride: null
+});
+
+const convertSoulStatsToBond = (stats) => {
+    const affinityGain = Object.values(stats.affinities).reduce((sum, value) => sum + Math.max(0, value || 0), 0);
+    const tagGain = Object.values(stats.tags).reduce((sum, value) => sum + Math.max(0, value || 0), 0);
+    const converted = affinityGain + tagGain;
+
+    stats.bond += converted;
+    stats.affinities = { fire: 0, water: 0, grass: 0, bug: 0 };
+    stats.tags = { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 };
+
+    return converted;
+};
 
 // ==========================================
 // 靈魂談心主元件 (Soul Expedition Overlay)
@@ -54,12 +74,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     const [isFinished, setIsFinished] = useState(false);
 
     // --- Stats Accumulator ---
-    const statsRef = useRef({
-        bond: 0,
-        affinities: { fire: 0, water: 0, grass: 0, bug: 0 },
-        tags: { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 },
-        tagOverride: null
-    });
+    const statsRef = useRef(createEmptySoulStats());
 
     // --- Internal Refs ---
     const eventTickRef = useRef(0);
@@ -68,6 +83,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     const energyRef = useRef(initialEnergy);
     const isFinishedRef = useRef(false);
     const lastCardMilestoneRef = useRef(0);
+    const blessingMilestoneIdxRef = useRef(0);
     const activeBuffsRef = useRef([]);
     const forceNextCardEventRef = useRef(false);
 
@@ -80,6 +96,11 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     // --- Finish Handler ---
     const finishExpedition = useCallback(() => {
         if (isFinishedRef.current) return;
+        isFinishedRef.current = true;
+
+        if (activeBuffsRef.current.includes('fate_exchange')) {
+            convertSoulStatsToBond(statsRef.current);
+        }
         
         // 抵達終點獎勵：如果進度 100%，額外加 10 點羈絆
         if (progressRef.current >= 100) {
@@ -143,6 +164,15 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             }
 
             const currentBuffs = activeBuffsRef.current;
+            const forceTalkOnly = currentBuffs.includes('fate_wild');
+            const nextBlessingMilestone = BLESSING_CARD_TRIGGER_PROGRESS[blessingMilestoneIdxRef.current];
+            if (!forceTalkOnly && nextBlessingMilestone && nextP >= nextBlessingMilestone) {
+                blessingMilestoneIdxRef.current += 1;
+                setProgress(nextBlessingMilestone);
+                triggerCardEvent();
+                return;
+            }
+
             const drainLevel = currentBuffs.filter(b => b === 'half_energy_drain').length;
             const fateDrainCount = currentBuffs.filter(b => b.startsWith('fate_')).length;
             const echoFateCount = currentBuffs.filter(b => b === 'fate_echo').length;
@@ -227,8 +257,9 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         const currentBuffs = activeBuffsRef.current;
         const bondMult = Math.pow(2, currentBuffs.filter(b => b === 'double_bond').length);
         const echoFateCount = currentBuffs.filter(b => b === 'fate_echo').length;
-        const stackBonus = currentBuffs.filter(b => b === 'fate_stack').length > 0 ? Math.floor(currentBuffs.length / 3) : 0;
-        const bondGain = Math.max(1, Math.floor((1 + stackBonus) * bondMult * Math.pow(1.5, echoFateCount)));
+        const blessingCount = currentBuffs.filter(b => !b.startsWith('fate_')).length;
+        const stackBonus = currentBuffs.includes('fate_stack') ? blessingCount : 0;
+        const bondGain = Math.max(1, Math.floor((1 + stackBonus) * bondMult) + echoFateCount);
         statsRef.current.bond += bondGain;
 
         // 堆疊邏輯：每多一張對應加護，額外獲得 1 點
@@ -240,13 +271,20 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
         const tagBonusCount = currentBuffs.filter(b => b === `bonus_${opt.tag}`).length;
         let tagBonus = 1 + tagBonusCount + wildBonus;
 
-        if (statsRef.current.affinities[opt.affinity] !== undefined) {
-            statsRef.current.affinities[opt.affinity] += affBonus;
+        if (currentBuffs.includes('fate_exchange')) {
+            const converted = (statsRef.current.affinities[opt.affinity] !== undefined ? affBonus : 0)
+                + (statsRef.current.tags[opt.tag] !== undefined ? tagBonus : 0);
+            statsRef.current.bond += converted;
+            showResult(`♡ +${bondGain + converted}`, '#ffca28');
+        } else {
+            if (statsRef.current.affinities[opt.affinity] !== undefined) {
+                statsRef.current.affinities[opt.affinity] += affBonus;
+            }
+            if (statsRef.current.tags[opt.tag] !== undefined) {
+                statsRef.current.tags[opt.tag] += tagBonus;
+            }
+            showResult(`♡ +${bondGain}`, '#ffca28');
         }
-        if (statsRef.current.tags[opt.tag] !== undefined) {
-            statsRef.current.tags[opt.tag] += tagBonus;
-        }
-        showResult(`♡ +${bondGain}`, '#ffca28');
         setCurrentEvent(null);
         lastTickTimeRef.current = Date.now();
     }, [qIdx]);
@@ -269,7 +307,9 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             });
 
             const field = picked.replace('bonus_', '');
-            if (statsRef.current.affinities[field] !== undefined) {
+            if (activeBuffsRef.current.includes('fate_exchange')) {
+                statsRef.current.bond += 1;
+            } else if (statsRef.current.affinities[field] !== undefined) {
                 statsRef.current.affinities[field] += 1;
             } else if (statsRef.current.tags[field] !== undefined) {
                 statsRef.current.tags[field] += 1;
@@ -291,7 +331,9 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             // 立即給予 1 點對應屬性/個性點數（每次獲得卡片都給 1 點）
             if (card.effect.startsWith('bonus_')) {
                 const field = card.effect.replace('bonus_', '');
-                if (statsRef.current.affinities[field] !== undefined) {
+                if (activeBuffsRef.current.includes('fate_exchange')) {
+                    statsRef.current.bond += 1;
+                } else if (statsRef.current.affinities[field] !== undefined) {
                     statsRef.current.affinities[field] += 1;
                 } else if (statsRef.current.tags[field] !== undefined) {
                     statsRef.current.tags[field] += 1;
@@ -333,18 +375,12 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     }, [soulTagCounts]);
 
     const convertCurrentStatsToBond = useCallback(() => {
-        const affinityGain = Object.values(statsRef.current.affinities).reduce((sum, value) => sum + Math.max(0, value || 0), 0);
-        const tagGain = Object.values(statsRef.current.tags).reduce((sum, value) => sum + Math.max(0, value || 0), 0);
-        const converted = affinityGain + tagGain;
-
-        statsRef.current.bond += converted;
-        statsRef.current.affinities = { fire: 0, water: 0, grass: 0, bug: 0 };
-        statsRef.current.tags = { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 };
-
-        return converted;
+        return convertSoulStatsToBond(statsRef.current);
     }, []);
 
     const handleFateCardChoice = useCallback((card) => {
+        const shouldShowCardName = !['fate_mirror', 'fate_exchange'].includes(card.effect);
+
         if (card.effect === 'fate_mirror') {
             applyMirrorFateCard();
         }
@@ -358,6 +394,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             setEnergy(0);
             energyRef.current = 0;
             showResult(`活力命運：羈絆 +${bondGain}`, '#ffca28');
+            isFinishedRef.current = true;
             setIsFinished(true);
             setCurrentEvent('ending');
             return;
@@ -368,7 +405,9 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             activeBuffsRef.current = next;
             return next;
         });
-        showResult(`${card.name}！`, '#ffca28');
+        if (shouldShowCardName) {
+            showResult(`${card.name}！`, '#ffca28');
+        }
         if (card.effect === 'fate_wild') {
             setCurrentEvent(null);
             lastTickTimeRef.current = Date.now();
@@ -530,7 +569,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                                     return acc;
                                 }, {});
                                 return Object.entries(counts).map(([effect, count]) => {
-                                    const card = SOUL_CARDS.find(c => c.effect === effect);
+                                    const card = SOUL_CARDS.find(c => c.effect === effect) || FATE_CARDS.find(c => c.effect === effect);
                                     if (!card) return null;
                                     return (
                                         <div key={effect} className="flex items-center bg-white/10 backdrop-blur-sm rounded border border-white/10 px-1 gap-0.5" title={`${card.name} Lv.${count}`}>

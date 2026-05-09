@@ -9,10 +9,27 @@ const DAMAGE_DIGIT_COLS = 5;
 const DAMAGE_DIGIT_ROWS = 2;
 const DAMAGE_DIGIT_LOWER_ROW_SHIFT = 20;
 const WATER_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/水.png`;
+const FIRE_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/火.png`;
+const POISON_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/毒.png`;
+const GRASS_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/草.png`;
+const GHOST_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/鬼.png`;
+const FLYING_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/飛.png`;
+const BUG_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/蟲.png`;
+const ROCK_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/岩.png`;
 const GENERIC_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/受擊特效.png`;
 const WATER_EFFECT_SIZE = 72;
 const WATER_EFFECT_COLS = 3;
 const WATER_EFFECT_ROWS = 3;
+const TYPE_EFFECT_SHEETS = {
+    fire: FIRE_EFFECT_SHEET,
+    water: WATER_EFFECT_SHEET,
+    poison: POISON_EFFECT_SHEET,
+    grass: GRASS_EFFECT_SHEET,
+    ghost: GHOST_EFFECT_SHEET,
+    flying: FLYING_EFFECT_SHEET,
+    bug: BUG_EFFECT_SHEET,
+    rock: ROCK_EFFECT_SHEET
+};
 
 function DamageEffect({ pop, className = "" }) {
     if (!pop?.effectType) return null;
@@ -20,7 +37,7 @@ function DamageEffect({ pop, className = "" }) {
     const variant = Math.max(0, Math.min(8, pop.effectVariant ?? 0));
     const x = variant % WATER_EFFECT_COLS;
     const y = Math.floor(variant / WATER_EFFECT_COLS);
-    const sheet = pop.effectType === 'water' ? WATER_EFFECT_SHEET : GENERIC_HIT_EFFECT_SHEET;
+    const sheet = TYPE_EFFECT_SHEETS[pop.effectType] || GENERIC_HIT_EFFECT_SHEET;
 
     return (
         <div

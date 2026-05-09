@@ -191,6 +191,7 @@ export const usePvpConnection = (deps) => {
                             stepQueue: [],
                             activeMsg: "",
                             lastStep: null,
+                            activeStepPending: false,
                             flashTarget: null,
                             player: {
                                 ...(playerStateAfter || prev.player),
@@ -227,6 +228,7 @@ export const usePvpConnection = (deps) => {
                         stepQueue: stepQueue.slice(1),
                         activeMsg: first.text || "",
                         lastStep: first,
+                        activeStepPending: true,
                         flashTarget: null,
                         player: {
                             ...(playerStateAfter || prev.player),

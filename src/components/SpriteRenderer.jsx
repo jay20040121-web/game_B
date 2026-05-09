@@ -247,11 +247,11 @@ const COLOR_MAP = {
 // --- CSS Animations for Battle ---
 const BATTLE_STYLES = `
 @keyframes damage-flash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.1; }
+    0%, 100% { opacity: 1; filter: none; }
+    50% { opacity: 0.12; filter: contrast(1.8) saturate(0.35); }
 }
 .damage-flash {
-    animation: damage-flash 0.1s linear infinite;
+    animation: damage-flash 0.12s steps(2, end) 4;
 }
 `;
 

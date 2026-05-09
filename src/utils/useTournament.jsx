@@ -181,6 +181,10 @@ export function useTournament({
             setBracket(initial);
             setCurrentRound(1);
             setRogueBuffs([]);
+            setRerollCount(0);
+            setRewardOptions([]);
+            setSelectedRewardMoveIdx(0);
+            setSelectedRewardEffectIdx(0);
         } catch (err) {
             const msg = `大賽引擎發生錯誤：${err.message}`;
             updateDialogue(msg);
@@ -193,6 +197,10 @@ export function useTournament({
     const closeTournament = () => {
         setIsTournamentOpen(false);
         setTPhase('idle');
+        setRerollCount(0);
+        setRewardOptions([]);
+        setSelectedRewardMoveIdx(0);
+        setSelectedRewardEffectIdx(0);
         setBattleState(prev => ({ ...prev, active: false, mode: 'wild', logs: [] }));
     };
 
@@ -398,7 +406,12 @@ export function useTournament({
     };
 
     // --- 冠軍附魔邏輯 ---
-    const generateChampionRewards = (moveIdx = selectedRewardMoveIdx) => {
+    const generateChampionRewards = (moveIdx = selectedRewardMoveIdx, { force = false } = {}) => {
+        if (!force && rewardOptions.length > 0) {
+            setSelectedRewardEffectIdx(0);
+            return;
+        }
+
         // 🔹 計算機率加成
         let weightAcc = 1;
         let weightSpd = 1;
@@ -440,7 +453,7 @@ export function useTournament({
     const rerollChampionRewards = () => {
         if (rerollCount <= 0) return;
         setRerollCount(prev => prev - 1);
-        generateChampionRewards();
+        generateChampionRewards(selectedRewardMoveIdx, { force: true });
         playBloop('confirm');
     };
 

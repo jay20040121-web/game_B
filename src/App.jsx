@@ -1328,7 +1328,7 @@ export default function App() {
         if (!battleState.active || battleState.phase !== 'action_streaming') return;
 
         // 判斷當前動作類型決定停留時間
-        const currentStep = battleState.stepQueue.length > 0 ? battleState.stepQueue[0] : null;
+        const currentStep = battleState.activeStepPending ? battleState.lastStep : (battleState.stepQueue.length > 0 ? battleState.stepQueue[0] : null);
         const delay = currentStep && currentStep.type === 'damage' ? 600 : 1300; // 訊息 1.3s，傷害閃爍 0.6s
 
         const timer = setTimeout(() => {
@@ -1338,10 +1338,18 @@ export default function App() {
                     if (prev.stepQueue.length > 30) return prev; // Safety net
 
                     // 執行與 handleB 邏輯相同的狀態更新
-                    if (prev.stepQueue.length > 0) {
-                        const nextStep = prev.stepQueue[0];
+                    if (prev.activeStepPending || prev.stepQueue.length > 0) {
+                        const nextStep = prev.activeStepPending ? prev.lastStep : prev.stepQueue[0];
+                        if (!nextStep) {
+                            return { ...prev, activeStepPending: false };
+                        }
                         console.log("[Battle Animation] Step:", nextStep);
-                        const updated = { ...prev, stepQueue: prev.stepQueue.slice(1), activeMsg: nextStep.text || "" };
+                        const updated = {
+                            ...prev,
+                            stepQueue: prev.activeStepPending ? prev.stepQueue : prev.stepQueue.slice(1),
+                            activeStepPending: false,
+                            activeMsg: nextStep.text || ""
+                        };
 
                         if (nextStep.type === 'damage') {
                             const applyDamageStep = (target) => {
@@ -1388,14 +1396,30 @@ export default function App() {
                                 };
                                 updated.activeMsg = `${targetTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
                             }
+                            const finalHpAfter = targetKey === 'player' ? updated.playerHpAfter : updated.enemyHpAfter;
+                            const finalShieldAfter = targetKey === 'player' ? updated.playerShieldAfter : updated.enemyShieldAfter;
+                            if (updated[targetKey]?.hp <= 0 && finalHpAfter > 0) {
+                                updated[targetKey] = {
+                                    ...updated[targetKey],
+                                    hp: finalHpAfter,
+                                    shield: finalShieldAfter !== undefined ? finalShieldAfter : (updated[targetKey].shield || 0)
+                                };
+                            }
                             updated.flashTarget = nextStep.target;
+                            const damagePopId = `${Date.now()}-${nextStep.target}-${nextStep.value}`;
                             updated.damagePop = {
-                                id: `${Date.now()}-${nextStep.target}-${nextStep.value}`,
+                                id: damagePopId,
                                 target: nextStep.target,
                                 value: nextStep.value,
                                 effectType: nextStep.effectType,
                                 effectVariant: nextStep.effectVariant
                             };
+                            setTimeout(() => {
+                                setBattleState(current => {
+                                    if (!current || current.damagePop?.id !== damagePopId) return current;
+                                    return { ...current, flashTarget: null };
+                                });
+                            }, 520);
                             playBloop('attack');
                         } else if (nextStep.type === 'heal') {
                             if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, hp: Math.min(updated.enemy.maxHp, updated.enemy.hp + nextStep.value) };
@@ -1414,7 +1438,10 @@ export default function App() {
                             updated.flashTarget = null;
                         }
 
-                        if (updated.player.hp <= 0 || updated.enemy.hp <= 0) updated.stepQueue = [];
+                        if (updated.player.hp <= 0 || updated.enemy.hp <= 0) {
+                            updated.stepQueue = [];
+                            updated.activeStepPending = false;
+                        }
                         return updated;
                     } else {
                         console.log("[Battle Animation] End");
@@ -1441,6 +1468,7 @@ export default function App() {
                                 phase: 'end',
                                 activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...",
                                 flashTarget: null,
+                                activeStepPending: false,
                                 player: {
                                     ...(prev.playerFinalState || prev.player),
                                     hp: finalPlayerHp,
@@ -1488,6 +1516,7 @@ export default function App() {
                             activeMsg: "",
                             turn: prev.turn + 1,
                             flashTarget: null,
+                            activeStepPending: false,
                             player: finalPlayer,
                             enemy: finalEnemy,
                             playerFinalState: null,
@@ -1496,13 +1525,13 @@ export default function App() {
                     }
                 } catch (err) {
                     console.error("[Battle Animation] Fatal Error:", err);
-                    return { ...prev, phase: 'player_action', stepQueue: [] };
+                    return { ...prev, phase: 'player_action', stepQueue: [], activeStepPending: false };
                 }
             });
         }, delay);
 
         return () => clearTimeout(timer);
-    }, [battleState.active, battleState.phase, battleState.stepQueue.length, evolutionStage, monsterTraits]);
+    }, [battleState.active, battleState.phase, battleState.stepQueue.length, battleState.activeStepPending, evolutionStage, monsterTraits]);
 
 
     const resolveBattleWin = (finalGain, enemy) => {
@@ -3607,6 +3636,7 @@ export default function App() {
                                 <SoulExpeditionOverlay
                                     monsterId={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()}
                                     initialEnergy={hunger}
+                                    lockedAffinity={lockedAffinity}
                                     soulTagCounts={soulTagCounts}
                                     onClose={() => setIsExpeditionOpen(false)}
                                     onComplete={({ finalEnergy, collectedStats }) => {
