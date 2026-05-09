@@ -12,7 +12,7 @@ import EvolutionPerformance from './components/EvolutionPerformance';
 import MemoryCapsulePerformance from './components/MemoryCapsulePerformance';
 import SettingsOverlay from './components/SettingsOverlay';
 import TutorialAI from './components/TutorialAI';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './styles.css';
 import {
     MONSTER_NAMES,
@@ -44,16 +44,22 @@ import {
     getPetDailyMessage, DIARY_STORAGE_KEY, loadDiaryData, saveDiaryData, getSmartMove
 } from './data/gameConfig';
 
-import { auth, db, googleProvider } from './utils/firebase';
 import { playBloop, playBGM } from './utils/audioSystem';
-import { SAVE_VERSION, isInAppBrowser, loadSaveData } from './utils/storageSystem';
-import { isLocalhost, FIRESTORE_COLLECTION, PEER_PREFIX } from './utils/envConfig';
+import { SAVE_VERSION, loadSaveData } from './utils/storageSystem';
+import { isLocalhost, PEER_PREFIX } from './utils/envConfig';
 import { processBattleTurn, splitShieldDamage } from './utils/battleTurnSystem';
 import { usePvpConnection } from './utils/usePvpConnection';
 import { getMonsterId } from './utils/monsterIdMapper';
 import { useLeaderboard } from './utils/useLeaderboard';
 import { useTournament } from './utils/useTournament';
 import { generateNpcMoveUpgrades } from './utils/npcEnchantSystem';
+import { getTodayStr } from './utils/dateUtils';
+import { useDisplayScale } from './utils/useDisplayScale';
+import { createMenuItems } from './data/menuConfig';
+import { buildPlayerBattleProfile, getNatureMods } from './utils/battleStats';
+import { useCloudSync } from './utils/useCloudSync';
+import { useSingleActiveTab } from './utils/useSingleActiveTab';
+import { useSkillLearning } from './utils/useSkillLearning';
 import { TournamentOverlay } from './components/TournamentOverlay';
 
 
@@ -76,14 +82,6 @@ export default function App() {
             }
             return currentP;
         });
-    };
-
-    // --- ✨ BUG FIX: 獲取在地日期字串 (YYYY-MM-DD) 避免 UTC 時差問題 ---
-    const getTodayStr = (date = new Date()) => {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
     };
 
     const [hunger, setHunger] = useState(getInit('hunger', 60));
@@ -117,37 +115,7 @@ export default function App() {
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
     const [finalWords, setFinalWords] = useState(getInit('finalWords', ""));
 
-    // --- 自動縮放系統 (Auto-Scaling) ---
-    const [manualScale, setManualScale] = useState(() => {
-        const saved = localStorage.getItem('pixel_monster_scale');
-        return saved ? parseFloat(saved) : null;
-    });
-
-    useEffect(() => {
-        if (manualScale !== null) {
-            localStorage.setItem('pixel_monster_scale', manualScale);
-        } else {
-            localStorage.removeItem('pixel_monster_scale');
-        }
-    }, [manualScale]);
-
-    const [displayScale, setDisplayScale] = useState(1);
-    useEffect(() => {
-        const handleResize = () => {
-            if (manualScale !== null) {
-                setDisplayScale(manualScale);
-                return;
-            }
-            // 基準尺寸 320x620 (完全同步 Git 原始縮放邏輯)
-            const scaleW = window.innerWidth / 320;
-            const scaleH = (window.innerHeight - 20) / 620;
-            const scale = Math.min(scaleW, scaleH, 1.5); // 原始設定：上限 1.5 倍以避免模糊
-            setDisplayScale(scale);
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [manualScale]);
+    const { displayScale, manualScale, setManualScale } = useDisplayScale();
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
@@ -198,6 +166,7 @@ export default function App() {
     const spriteRef = useRef(null);
     const requestRef = useRef();
     const lastSaveTimeRef = useRef(0);
+    const idleTimeoutRef = useRef(null);
 
     const [isSpinning, setIsSpinning] = useState(false);
     const [isEvolving, setIsEvolving] = useState(false);
@@ -208,6 +177,17 @@ export default function App() {
     const [loadedImages, setLoadedImages] = useState({}); // 追蹤哪些自定義圖標已成功載入
 
     const [isConfirmingFarewell, setIsConfirmingFarewell] = useState(false); // 二次確認開關
+
+    const updateDialogue = useCallback((text) => {
+        setDialogue(text);
+        setMarqueeKey(prev => prev + 1);
+        if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
+    }, []);
+
+    const logEvent = (msg) => {
+        setInteractionCount(c => c + 1);
+        setInteractionLogs(prev => [...prev.slice(-10), { t: new Date().toLocaleTimeString(), m: msg }]);
+    };
 
     // --- 冒險系統專屬狀態 (Adventure State) ---
     // 升級為官方 4 維架構：Base Stats (Species) + IVs (Genetic) + EVs (Effort)
@@ -256,75 +236,31 @@ export default function App() {
     });
 
     const derivedLevel = getLevelByPower(advStats?.basePower);
-    const previousLevelRef = useRef(derivedLevel);
-    const [pendingSkillLearn, setPendingSkillLearn] = useState(null);
-    const [skillSelectIdx, setSkillSelectIdx] = useState(0);
-    const [isConfirmingReplace, setIsConfirmingReplace] = useState(false);
-    const [tempReplaceIdx, setTempReplaceIdx] = useState(-1);
-    const [isSkillRearrangeOpen, setIsSkillRearrangeOpen] = useState(false);
-    const [usingItemIdx, setUsingItemIdx] = useState(-1);
-
-    // 換招式系統
-    useEffect(() => {
-        // 等級提升時執行
-        if (derivedLevel > previousLevelRef.current) {
-            if (typeof SPECIES_BASE_STATS === "object" && typeof SKILL_DATABASE === "object") {
-                const myId = getMonsterIdWrapped();
-                const speciesData = SPECIES_BASE_STATS[String(myId)];
-                const myType = speciesData?.types || ['normal'];
-                let targetType = 'normal';
-
-                // 學習規則：
-                // 5級：一般系
-                // 10級：其它屬性 (Coverage)
-                // 其它(1~4, 6~9)：本系 (STAB)
-                if (derivedLevel === 5) {
-                    targetType = 'normal';
-                } else if (derivedLevel === 10) {
-                    const allTypes = typeof TYPE_CHART === "object" ? Object.keys(TYPE_CHART) : ['fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'steel', 'fairy'];
-                    const foreignTypes = allTypes.filter(t => !myType.includes(t));
-                    targetType = foreignTypes.length > 0 ? foreignTypes[Math.floor(Math.random() * foreignTypes.length)] : 'normal';
-                } else {
-                    // 70% 機率抽本系，30% 機率抽全屬性隨機招式
-                    const isStab = Math.random() < 0.7;
-                    if (isStab) {
-                        targetType = myType[Math.floor(Math.random() * myType.length)];
-                    } else {
-                        const allTypes = Object.keys(TYPE_MAP || {
-                            'normal': '普', 'fire': '火', 'water': '水', 'grass': '草', 'electric': '電', 'ice': '冰', 'fighting': '鬥', 'poison': '毒', 'ground': '地', 'flying': '飛', 'psychic': '超', 'bug': '蟲', 'rock': '岩', 'ghost': '鬼', 'dragon': '龍', 'steel': '鋼', 'dark': '惡', 'fairy': '妖'
-                        });
-                        targetType = allTypes[Math.floor(Math.random() * allTypes.length)];
-                    }
-                }
-
-                const candidateIds = Object.keys(SKILL_DATABASE).filter(k => SKILL_DATABASE[k].type === targetType);
-                if (candidateIds.length > 0) {
-                    const newSkillId = candidateIds[Math.floor(Math.random() * candidateIds.length)];
-                    const newSkill = SKILL_DATABASE[newSkillId];
-
-                    const currentMoveIds = advStats.moves || [];
-                    if (!currentMoveIds.includes(newSkillId)) {
-                        setPendingSkillLearn({ level: derivedLevel, skill: newSkill });
-                    }
-                }
-            }
-        }
-        previousLevelRef.current = derivedLevel;
-    }, [derivedLevel, advStats.moves]);
+    const {
+        pendingSkillLearn,
+        setPendingSkillLearn,
+        skillSelectIdx,
+        setSkillSelectIdx,
+        isConfirmingReplace,
+        setIsConfirmingReplace,
+        tempReplaceIdx,
+        setTempReplaceIdx,
+        isSkillRearrangeOpen,
+        setIsSkillRearrangeOpen,
+        usingItemIdx,
+        setUsingItemIdx,
+        resetLevelTracker,
+    } = useSkillLearning({
+        advStats,
+        derivedLevel,
+        getMonsterId: () => getMonsterIdWrapped(),
+        skillDatabase: SKILL_DATABASE,
+        speciesBaseStats: SPECIES_BASE_STATS,
+        typeMap: TYPE_MAP,
+    });
 
     // --- PvP 系統專屬狀態 (WebRTC/PeerJS) ---
     // --- PvP State Extracted ---
-
-    // --- Firebase 帳號與雲端同步狀態 ---
-    const [user, setUser] = useState(null);
-    const [isCloudSyncing, setIsCloudSyncing] = useState(false);
-    const [isCloudLoading, setIsCloudLoading] = useState(false);
-    const [hasCheckedCloud, setHasCheckedCloud] = useState(false);
-    const [lastCloudSyncTime, setLastCloudSyncTime] = useState(0);
-
-    // Removed duplicate state variables
-
-    // Cleanups removed
 
     // --- PVP 排行榜邏輯 (已模組化至 useLeaderboard) ---
     // (updatePvpStats, fetchLeaderboard 與排行榜 state 由 hook 提供，於下方解構使用)
@@ -335,257 +271,32 @@ export default function App() {
 
     // 取得自身的戰鬥數值用於 INIT 傳送
     function generateMyBattleStats() {
-        const level = getLevelByPower(advStats.basePower);
         const speciesId = getMonsterIdWrapped();
+        const profile = buildPlayerBattleProfile({
+            advStats,
+            calcFinalStat,
+            getLevelByPower,
+            monsterTraits,
+            natureConfig: NATURE_CONFIG,
+            skillDatabase: SKILL_DATABASE,
+            soulTagCounts,
+            speciesBaseStats: SPECIES_BASE_STATS,
+            speciesId,
+        });
 
-        // --- 性格修正系統 (Nature Modifiers) ---
-        const getNatureMods = (tag) => {
-            const mods = { hp: 1.0, atk: 1.0, def: 1.0, spd: 1.0 };
-            const conf = NATURE_CONFIG[tag];
-            if (conf) {
-                if (conf.buff) mods[conf.buff] = 1.1;
-                if (conf.nerf) mods[conf.nerf] = 0.9;
-            }
-            return mods;
+        return {
+            pMaxHP: profile.hp,
+            pATK: profile.atk,
+            pDEF: profile.def,
+            pSPD: profile.spd,
+            pType: profile.type,
+            pMoves: profile.moves,
+            myId: speciesId,
+            pLevel: profile.level
         };
-
-        const tagEntries = Object.entries(soulTagCounts);
-        const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
-        // 必須至少有過一次對談且分數 > 0 才有性格
-        const dominantTag = best[1] > 0 ? best[0] : 'none';
-        const pNatureMods = getNatureMods(dominantTag);
-
-        const traitMods = monsterTraits?.trait?.modifiers || {};
-        const levelTraitMod = level >= (traitMods.thresholdLevel || Infinity)
-            ? (traitMods.highLevelStat || 1)
-            : (traitMods.lowLevelStat || 1);
-        const getTraitStatMod = (key) => (traitMods[key] || 1) * levelTraitMod;
-
-        const pMaxHP = Math.max(1, Math.floor(calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp) * getTraitStatMod('hp')));
-        const pATK = Math.max(1, Math.floor(calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk) * getTraitStatMod('atk')));
-        const pDEF = Math.max(1, Math.floor(calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def) * getTraitStatMod('def')));
-        const pSPD = Math.max(1, Math.floor(calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd) * getTraitStatMod('spd')));
-        const playerTrait = monsterTraits?.trait || null;
-
-        const statsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
-        const pType = statsRef.types;
-
-        // --- 新：使用存檔中的永久招式陣列 ---
-        const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
-        // 防呆：如果完全沒招式 (應不發生)，給個基本招
-        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle);
-
-        return { pMaxHP, pATK, pDEF, pSPD, pType, pMoves, myId: speciesId, pLevel: level };
     };
 
     // Remote peer connect removed
-
-    // 手動觸發雲端同步
-    const saveToCloud = async (saveData) => {
-        // 防止重複觸發正在進行中的同步，或沒有使用者/DB，或尚未完成初始檢查
-        if (isCloudSyncing || !user || !db || !hasCheckedCloud) return;
-
-        // 【核心安全性校驗】：如果本地進度比雲端上次同步的還舊，絕對不准上傳
-        if (saveData.lastSaveTime < lastCloudSyncTime) {
-            console.warn(`☁️ 擋下過期的存檔！本地 ${saveData.lastSaveTime} < 雲端最新 ${lastCloudSyncTime}`);
-            return;
-        }
-
-        // --- 🔒 防誤蓋保護：檢查雲端版本是否比本地新 ---
-        try {
-            const doc = await db.collection(FIRESTORE_COLLECTION).doc(user.uid).get();
-            if (doc.exists) {
-                const cloudData = doc.data();
-                if ((cloudData.saveVersion || 0) > (saveData.saveVersion || 0)) {
-                    console.error(`☁️ 擋下覆蓋請求！雲端版本 (${cloudData.saveVersion}) 較新，本地版本 (${saveData.saveVersion}) 較舊。請重新整理網頁以取得最新版本。`);
-                    return;
-                }
-            }
-        } catch (e) {
-            console.warn("☁️ 無法預檢雲端版本，將嘗試直接存檔...", e);
-        }
-
-        setIsCloudSyncing(true);
-        console.log("☁️ Attempting Cloud Save (Project ID: " + db.app.options.projectId + ")...");
-
-        try {
-            // 加入 20 秒自動逾時機制，避免燈號卡死
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("連線逾時 (請檢查網路或 Firebase Firestore 是否已建立)")), 20000)
-            );
-
-            // 【重要】對資料進行深度克隆並移除 undefined (Firestore 不支援 undefined)
-            const cleanData = JSON.parse(JSON.stringify(saveData));
-
-            // 使用環境隔離的集合名稱 (正式: users / 開發: dev_users)
-            const savePromise = db.collection(FIRESTORE_COLLECTION).doc(user.uid).set(cleanData);
-
-            await Promise.race([savePromise, timeoutPromise]);
-
-            setLastCloudSyncTime(saveData.lastSaveTime);
-            console.log("☁️ Cloud Save SUCCESS! (UID: " + user.uid + ")");
-        } catch (e) {
-            console.error("☁️ Cloud Save FAILED:", e);
-            // 根據錯誤類型提供更具體的建議
-            let specificMsg = e.message;
-            if (e.code === 'permission-denied') {
-                specificMsg = "存取被拒 (請檢查 Firestore Rules 設定)";
-            } else if (e.code === 'not-found') {
-                specificMsg = "找不到目標 (請確認 Firestore 已建立資料庫)";
-            }
-
-            setAlertMsg(`❌ 雲端同步失敗: ${specificMsg}`);
-            updateDialogue(`❌ 備份失敗：${specificMsg}。可檢查控制台 (F12) 的 UID 並確認 Firestore 已建立。`, true);
-        } finally {
-            setIsCloudSyncing(false);
-        }
-    };
-
-    // 從雲端載入進度
-    const loadFromCloud = async (currentUser) => {
-        if (!currentUser || !db) return;
-        updateDialogue("☁️ 正在檢查雲端同步狀態...", true);
-        setIsCloudLoading(true);
-        try {
-            // 使用環境隔離的集合名稱 (正式: users / 開發: dev_users)
-            const doc = await db.collection(FIRESTORE_COLLECTION).doc(currentUser.uid).get();
-            const localStr = localStorage.getItem('pixel_monster_save');
-            let localData = localStr ? JSON.parse(localStr) : null;
-
-            // --- 🔹 跨帳號保護邏輯 (UID 所有權檢查) 🔹 ---
-            if (localData && localData.ownerUid && localData.ownerUid !== currentUser.uid) {
-                console.warn(`☁️ 發現跨帳號衝突！本地存檔屬於 ${localData.ownerUid}，但您目前登入的是 ${currentUser.uid}。將強行以雲端資料為準。`);
-                localData = null; // 抹除本地不屬於該使用者的暫存，以該帳號的雲端或新遊戲為準
-            }
-
-            if (doc.exists) {
-                const cloudData = doc.data();
-                const cloudTime = cloudData.lastSaveTime || 0;
-                const localTime = (localData && localData.lastSaveTime) || 0;
-
-                console.log(`☁️ Sync Check - Cloud: ${new Date(cloudTime).toLocaleString()}, Local: ${new Date(localTime).toLocaleString()}`);
-
-                // 比對時間戳記，取最新者
-                if (!localData || (cloudTime > localTime + 2000)) {
-                    // ✨ 增加版本檢查：如果雲端資料比當前程式碼還新，提示使用者更新
-                    if (cloudData.saveVersion > SAVE_VERSION) {
-                        updateDialogue("☁️ 偵測到更新版本的雲端存檔，請重新整理或清除瀏覽器快取以更新遊戲版本。", true);
-                        setHasCheckedCloud(true);
-                        setIsCloudLoading(false);
-                        return;
-                    }
-
-                    // 如果雲端版號 <= 當前程式碼版號，允許載入
-                    updateDialogue("☁️ 發現雲端進度，同步中...", true);
-                    localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
-                    setTimeout(() => window.location.reload(), 1500);
-                    // 不關閉 isCloudLoading，直到網頁刷新
-                } else {
-                    updateDialogue(`☁️ 帳號連線成功，本地進度已是最新`, false);
-                    setHasCheckedCloud(true);
-                    setIsCloudLoading(false);
-
-                    // 重要：初始化同步基準時間，防止後續 autosave 因為 T1 == T1 被擋下
-                    setLastCloudSyncTime(cloudTime);
-                    saveToCloud(localData);   // 確保同步
-                }
-            } else {
-                updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
-                setHasCheckedCloud(true);
-                setIsCloudLoading(false);
-                // 只有當本地資料為「訪客 (無 ownerUid)」或是「本人」時，才建立初始備份
-                if (localData) saveToCloud(localData);
-            }
-        } catch (e) {
-            console.error("☁️ Cloud Load Error:", e);
-            updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
-            setHasCheckedCloud(true);
-            setIsCloudLoading(false);
-        }
-    };
-
-    // 監聽登入狀態
-    useEffect(() => {
-        if (!auth) return;
-        const unsubscribe = auth.onAuthStateChanged((u) => {
-            setUser(u);
-            if (u) {
-                loadFromCloud(u);
-            }
-        });
-        return () => unsubscribe();
-    }, []);
-
-    const loginWithGoogle = async () => {
-        if (!auth || !googleProvider) {
-            console.error("Firebase not initialized", { auth, googleProvider });
-            setAlertMsg("系統尚未啟動: Firebase 初始化失敗。");
-            return;
-        }
-
-        // --- 🚩 偵測到 In-App Browser 時主動提醒 ---
-        if (isInAppBrowser) {
-            updateDialogue("⚠️ 偵測到 LINE/FB 內部瀏覽器。\nGoogle 不支援在此登入。", true);
-            setAlertMsg("請點擊右上角 [...] 並選擇「使用瀏覽器開啟」再登入。");
-            playBloop('fail');
-            return;
-        }
-
-        updateDialogue("⚡ 正在連結 Google 伺服器...", true);
-        try {
-            // 首先嘗試彈出視窗 (Popup)
-            const result = await auth.signInWithPopup(googleProvider);
-            if (result.user) {
-                updateDialogue(`🎉 登入成功: ${result.user.displayName}`, false);
-                setAlertMsg(`成功連動帳號: ${result.user.displayName}`);
-                playBloop('confirm');
-                setTimeout(() => loadFromCloud(result.user), 1000);
-            }
-        } catch (e) {
-            console.error("☁️ Login Error:", e);
-
-            // --- 🚨 核心修正：處理 disallowed_useragent (Google 政策阻擋) ---
-            if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request') {
-                // 嘗試轉為 Redirect 模式，這在某些行動瀏覽器較穩定
-                updateDialogue("正在切換至重新導向登入模式...", true);
-                try {
-                    await auth.signInWithRedirect(googleProvider);
-                    return; // 程序會跳轉網頁
-                } catch (reErr) {
-                    console.error("Redirect Error:", reErr);
-                }
-            }
-
-            let errMsg = e.message;
-            if (e.code === 'auth/popup-closed-by-user') errMsg = "登入視窗被關閉了。";
-            if (e.code === 'auth/unauthorized-domain') errMsg = "網域尚未授權，請至 Firebase 設定。";
-
-            // 針對政策阻擋的特別說明
-            if (e.message.includes('disallowed_useragent') || e.code?.includes('disallowed-user-agent')) {
-                updateDialogue("❌ Google 政策限制：請點擊右上角「...」並選「使用瀏覽器開啟」。", true);
-                setAlertMsg("此瀏覽器環境不符合 Google 安全政策。");
-            } else {
-                updateDialogue(`❌ 登入失敗: ${errMsg}`, true);
-                setAlertMsg(`登入失敗: ${errMsg}`);
-            }
-        }
-    };
-
-    const logoutGoogle = async () => {
-        if (!auth) return;
-        try {
-            await auth.signOut();
-            // 登出時執行本地存檔清理，防止跨帳號衝突
-            try {
-                localStorage.removeItem('pixel_monster_save');
-                sessionStorage.removeItem('pixel_monster_save');
-            } catch (e) { }
-            playBloop('confirm');
-            updateDialogue("已退出登入並清除本地快取。");
-            setTimeout(() => window.location.reload(), 1000);
-        } catch (e) { console.error(e); }
-    };
-
 
     const [inventory, setInventory] = useState(initialData?.inventory || []);
     const [lastAdvTime, setLastAdvTime] = useState(initialData?.lastAdvTime || 0);
@@ -597,6 +308,16 @@ export default function App() {
     const [statusPage, setStatusPage] = useState('stats');
     const [alertMsg, setAlertMsg] = useState("");
     const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+
+    const {
+        user,
+        isCloudSyncing,
+        isCloudLoading,
+        hasCheckedCloud,
+        loginWithGoogle,
+        logoutGoogle,
+        saveToCloud,
+    } = useCloudSync({ setAlertMsg, updateDialogue });
 
     // --- 數據同步副作用 (Data Sync) ---
     // 當寵物進化或更換時，確保 baseStats 被正確計算 (透過 render 層動態計算 FinalStats)
@@ -657,40 +378,7 @@ export default function App() {
 
     const [pendingAdvLogs, setPendingAdvLogs] = useState([]); // 儲存待顯示的冒險日誌隊列
 
-    const tabIdRef = useRef(Math.random().toString(36).substr(2, 9));
-    const [isDuplicateTab, setIsDuplicateTab] = useState(false);
-
-    // 多分頁競爭檢查 (Heartbeat Lock)
-    useEffect(() => {
-        const checkTab = () => {
-            const now = Date.now();
-            const activeTabId = localStorage.getItem('pixel_monster_active_tab_id');
-            const activeTabTime = parseInt(localStorage.getItem('pixel_monster_active_tab_time') || '0');
-
-            // 如果已有其他分頁在運行 (時間差小於 3 秒)
-            if (activeTabId && activeTabId !== tabIdRef.current && (now - activeTabTime < 3000)) {
-                setIsDuplicateTab(true);
-            } else {
-                setIsDuplicateTab(false);
-                localStorage.setItem('pixel_monster_active_tab_id', tabIdRef.current);
-                localStorage.setItem('pixel_monster_active_tab_time', now.toString());
-            }
-        };
-
-        checkTab();
-        const timer = setInterval(() => {
-            if (document.hidden) return;
-            checkTab();
-        }, 1500);
-        return () => {
-            clearInterval(timer);
-            // 離開時清除鎖定，讓其他分頁能快速接手
-            if (localStorage.getItem('pixel_monster_active_tab_id') === tabIdRef.current) {
-                localStorage.removeItem('pixel_monster_active_tab_id');
-                localStorage.removeItem('pixel_monster_active_tab_time');
-            }
-        };
-    }, []);
+    const isDuplicateTab = useSingleActiveTab();
 
     // 冒險日誌自動捲動到最下方
     useEffect(() => {
@@ -701,7 +389,6 @@ export default function App() {
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [btnPressed, setBtnPressed] = useState(null);
-    const idleTimeoutRef = useRef(null);
     const lastAliveMonsterIdRef = useRef(1000);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
@@ -903,16 +590,7 @@ export default function App() {
 
 
     const base = import.meta.env.BASE_URL;
-    const menuItems = [
-        { id: 'status', sprite: ICONS.status, label: '狀態(可觀看寵物成長資訊)', img: `${base}assets/BG/M1.png` },
-        { id: 'interact', sprite: ICONS.feed, label: '互動(餵食或撫摸寵物)', img: `${base}assets/BG/M2.png` },
-        { id: 'talk', sprite: ICONS.heart, label: '談心(根據喜好改變寵物特性)', img: `${base}assets/BG/M3.png` },
-        { id: 'tournament', sprite: ICONS.train, label: '聯盟大會(參加錦標賽)', img: `${base}assets/BG/M4.png` },
-        { id: 'adventure', sprite: ICONS.focus, label: '冒險(帶寵物野外探險與捕捉)', img: `${base}assets/BG/M5.png` },
-        { id: 'connect', sprite: ICONS.mail, label: '連線(與陌生寵物對抗、交流)', img: `${base}assets/BG/M6.png` },
-        { id: 'pedia', sprite: ICONS.footprint, label: '圖鑑(查看已收集的像素怪獸)', img: `${base}assets/BG/M7.png` },
-        { id: 'info', sprite: ICONS.info, label: '背包(裝著戰利品與寵物的回憶)', img: `${base}assets/BG/M8.png` },
-    ];
+    const menuItems = createMenuItems(base, ICONS);
 
     useEffect(() => {
         if (isDead || isEvolving || (miniGame && miniGame.type !== 'status' && miniGame.status !== 'result') || isDuplicateTab) {
@@ -1004,17 +682,6 @@ export default function App() {
 
         return () => clearInterval(decayTimer);
     }, [isBooting, isDead, isEvolving, evolutionStage, isRunaway, debugOverrides]);
-
-    const updateDialogue = (text) => {
-        setDialogue(text);
-        setMarqueeKey(prev => prev + 1);
-        if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
-    };
-
-    const logEvent = (msg) => {
-        setInteractionCount(c => c + 1);
-        setInteractionLogs(prev => [...prev.slice(-10), { t: new Date().toLocaleTimeString(), m: msg }]);
-    };
 
     const handleTalkChoice = (idx) => {
         if (!miniGame || miniGame.status !== 'question') return;
@@ -1159,7 +826,7 @@ export default function App() {
             });
 
             // 🔥 強制重置等級偵測，確保新夥伴即刻生效且不觸發舊等級剩餘的學習
-            previousLevelRef.current = capturedLevel;
+            resetLevelTracker(capturedLevel);
 
             // --- 🔹 重置個性與狀態 (新夥伴新開始) 🔹 ---
             setBondValue(0);
@@ -2660,40 +2327,23 @@ export default function App() {
         const level = getLevelByPower(advStats.basePower);
         const speciesId = getMonsterIdWrapped();
 
-        // --- 性格修正系統 (Nature Modifiers) ---
-        const getNatureMods = (tag) => {
-            const mods = { hp: 1.0, atk: 1.0, def: 1.0, spd: 1.0 };
-            const conf = NATURE_CONFIG[tag];
-            if (conf) {
-                if (conf.buff) mods[conf.buff] = 1.1;
-                if (conf.nerf) mods[conf.nerf] = 0.9;
-            }
-            return mods;
-        };
-
-        const tagEntries = Object.entries(soulTagCounts);
-        const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
-        const pTag = best[1] > 0 ? best[0] : 'none';
-        const pNatureMods = getNatureMods(pTag);
-
-        const traitMods = monsterTraits?.trait?.modifiers || {};
-        const levelTraitMod = level >= (traitMods.thresholdLevel || Infinity)
-            ? (traitMods.highLevelStat || 1)
-            : (traitMods.lowLevelStat || 1);
-        const getTraitStatMod = (key) => (traitMods[key] || 1) * levelTraitMod;
-
-        const pMaxHP = Math.max(1, Math.floor(calcFinalStat('hp', speciesId, advStats.ivs.hp, advStats.evs.hp, level, pNatureMods.hp) * getTraitStatMod('hp')));
-        const pATK = Math.max(1, Math.floor(calcFinalStat('atk', speciesId, advStats.ivs.atk, advStats.evs.atk, level, pNatureMods.atk) * getTraitStatMod('atk')));
-        const pDEF = Math.max(1, Math.floor(calcFinalStat('def', speciesId, advStats.ivs.def, advStats.evs.def, level, pNatureMods.def) * getTraitStatMod('def')));
-        const pSPD = Math.max(1, Math.floor(calcFinalStat('spd', speciesId, advStats.ivs.spd, advStats.evs.spd, level, pNatureMods.spd) * getTraitStatMod('spd')));
-
-        // --- 玩家戰鬥屬性 (Type) 與招式表 ---
-        const pStatsRef = SPECIES_BASE_STATS[String(speciesId)] || { types: ['normal'] };
-        const pType = pStatsRef.types;
-
-        // --- 新：使用存檔中的永久招式陣列 ---
-        const pMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
-        if (pMoves.length === 0) pMoves.push(SKILL_DATABASE.tackle || { name: '撞擊', power: 40, type: 'normal' });
+        const playerProfile = buildPlayerBattleProfile({
+            advStats,
+            calcFinalStat,
+            getLevelByPower,
+            monsterTraits,
+            natureConfig: NATURE_CONFIG,
+            skillDatabase: SKILL_DATABASE,
+            soulTagCounts,
+            speciesBaseStats: SPECIES_BASE_STATS,
+            speciesId,
+        });
+        const pMaxHP = playerProfile.hp;
+        const pATK = playerProfile.atk;
+        const pDEF = playerProfile.def;
+        const pSPD = playerProfile.spd;
+        const pType = playerProfile.type;
+        const pMoves = playerProfile.moves;
 
         let enemyData;
         let eMaxHP, eATK, eDEF, eSPD, eType, eLevel;
@@ -2710,7 +2360,7 @@ export default function App() {
 
             // 野生怪隨機分配 IV 與 性格修正
             const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
-            const eNatureMods = getNatureMods(eNature);
+            const eNatureMods = getNatureMods(eNature, NATURE_CONFIG);
             const eIVs = { hp: Math.floor(Math.random() * 32), atk: Math.floor(Math.random() * 32), def: Math.floor(Math.random() * 32), spd: Math.floor(Math.random() * 32) };
             const eEVs = { hp: eLevel * 2, atk: eLevel * 2, def: eLevel * 2, spd: eLevel * 2 };
 
@@ -2790,7 +2440,7 @@ export default function App() {
             enemyData = generateTrainerOpponent(evolutionStage);
             eLevel = Math.max(1, Math.min(100, level - 10)); // 訓練家等級必定低於玩家 10 級
             const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
-            const eNatureMods = getNatureMods(eNature);
+            const eNatureMods = getNatureMods(eNature, NATURE_CONFIG);
             const eIVs = { hp: 20, atk: 20, def: 20, spd: 20 };
             const eEVs = { hp: eLevel * 4, atk: eLevel * 4, def: eLevel * 4, spd: eLevel * 4 };
 
@@ -3070,7 +2720,7 @@ export default function App() {
 
                         // 復活後強制刷新等級 Ref，防止學習邏輯錯誤
                         const newLevel = getLevelByPower(sn.advStats.basePower);
-                        previousLevelRef.current = newLevel;
+                        resetLevelTracker(newLevel);
                     }
                     break;
                 default:

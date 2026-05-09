@@ -1,5 +1,6 @@
 import React from 'react';
 import { SPECIES_BASE_STATS, NATURE_CONFIG, SKILL_DATABASE, TYPE_MAP, calcFinalStat, getLevelByPower } from '../monsterData';
+import AutoFitText from './AutoFitText';
 
 const TYPE_LABELS = {
     normal: '普',

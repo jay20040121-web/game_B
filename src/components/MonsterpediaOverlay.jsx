@@ -1,5 +1,6 @@
 import React from 'react';
 import { DitheredSprite } from './SpriteRenderer';
+import AutoFitText from './AutoFitText';
 
 import { EVOLUTION_CHAINS, WILD_EVOLUTION_MAP } from '../data/evolutionConfig';
 import { MONSTER_NAMES } from '../monsterData';
@@ -127,13 +128,13 @@ export const MonsterpediaOverlay = ({
 
             {/* Footer / Selection Info */}
             <div className="w-full mt-2 p-1.5 flex items-center justify-between">
-                <div className="flex flex-col text-white">
+                <div className="flex flex-col text-white min-w-0 flex-1">
                     <span className="text-[10px] font-black opacity-60">
                         NO.{String(selectedId).padStart(3, '0')}
                     </span>
-                    <span className="text-[11px] font-black">
+                    <AutoFitText as="span" className="text-[11px] font-black min-w-0 w-full" minFontSize={8} maxFontSize={11}>
                         {isOwned ? monsterNames[selectedId] : '??????'}
-                    </span>
+                    </AutoFitText>
                 </div>
                 <div className="text-[9px] font-black text-white flex flex-col items-end opacity-80">
                     <span>[A] 切換 [B] 詳細</span>
@@ -163,9 +164,9 @@ export const MonsterpediaOverlay = ({
                                 </div>
                             </div>
                         )}
-                        <div className="mt-4 mb-2 text-[14px] font-black text-[#1a1a1a] border-b-2 border-[#383a37] pb-1 w-full text-center">
+                        <AutoFitText as="div" className="mt-4 mb-2 text-[14px] font-black text-[#1a1a1a] border-b-2 border-[#383a37] pb-1 w-full text-center" minFontSize={9} maxFontSize={14}>
                             {monsterNames[selectedId]}
-                        </div>
+                        </AutoFitText>
                         <div className="bg-[#ccd6be] p-4 border-2 border-[#383a37] rounded-md mb-3 shadow-inner relative">
                             <div className="relative z-[40]">
                                 <DitheredSprite id={selectedId} scale={2.8} animated={true} />

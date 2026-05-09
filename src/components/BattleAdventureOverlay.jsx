@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 import { getTypeMultiplier, getLevelByPower } from '../monsterData';
 

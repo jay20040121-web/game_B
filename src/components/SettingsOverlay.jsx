@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { playBloop, getSfxEnabled, setSfxEnabled, getBgmEnabled, setBgmEnabled, getSfxVolume, setSfxVolume, getBgmVolume, setBgmVolume } from '../utils/audioSystem';
 
 export default function SettingsOverlay({
@@ -71,6 +71,9 @@ export default function SettingsOverlay({
         playBloop('confirm');
         setIsBooting(true);
         onClose();
+        setTimeout(() => {
+            window.location.reload();
+        }, 120);
     };
 
     const handleExitGame = () => {
@@ -88,7 +91,7 @@ export default function SettingsOverlay({
     };
 
     return (
-        <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2" style={{
+        <div className="absolute inset-0 z-[1001] flex flex-col items-center justify-start p-2" style={{
             backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/共用底圖.png")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'

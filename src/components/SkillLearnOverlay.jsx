@@ -1,4 +1,5 @@
 import React from 'react';
+import AutoFitText from './AutoFitText';
 
 export default function SkillLearnOverlay({
     pendingSkillLearn,
@@ -59,7 +60,9 @@ export default function SkillLearnOverlay({
 
             <div className="flex-1 w-full flex flex-col items-center justify-center gap-2">
                 <div className="text-[11px] font-bold text-[#1a1a1a] text-center mb-1 flex items-center gap-1 justify-center">
-                    想學會 <span className="underline decoration-2">{pendingSkillLearn.skill.name}</span>
+                    想學會 <AutoFitText as="span" className="underline decoration-2 min-w-0 flex-1" minFontSize={8} maxFontSize={12}>
+                        {pendingSkillLearn.skill.name}
+                    </AutoFitText>
                     {(pendingSkillLearn.skill.ailment && pendingSkillLearn.skill.ailment !== 'none') && (
                         <span className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${
                             pendingSkillLearn.skill.ailment === 'burn' ? 'bg-[#ff5252] text-white' :
@@ -116,9 +119,9 @@ export default function SkillLearnOverlay({
                                 <div key={idx} className={`w-full flex flex-col p-1.5 border-2 transition-all duration-200 ${isSelected ? 'bg-[#383a37] text-white border-[#1a1a1a] scale-105 z-10 shadow-[2px_2px_0_#1a1a1a]' : 'bg-[#9dae8a] text-[#1a1a1a] border-[#383a37]/50'}`}>
                                     <div className="w-full flex justify-between items-center">
                                         <div className="flex items-center gap-1">
-                                            <span className="text-[10px] font-black">
-                                                {isSelected ? '▶ ' : ''}{moveDef?.name || '---'} 
-                                            </span>
+                                            <AutoFitText as="span" className="text-[10px] font-black min-w-0 flex-1" minFontSize={7} maxFontSize={10}>
+                                                {isSelected ? '▶ ' : ''}{moveDef?.name || '---'}
+                                            </AutoFitText>
                                             {(() => {
                                                 if (!moveDef) return null;
                                                 const ailmentsToShow = [];
@@ -168,7 +171,9 @@ export default function SkillLearnOverlay({
                                             {moveDef && <span className="opacity-60 text-[8px]">[{TYPE_MAP?.[moveDef.type] || '屬'}]</span>}
                                         </div>
                                         {moveDef && (
-                                            <span className="text-[8px] opacity-70">威力:{moveDef.power} / 命中:{moveDef.accuracy || '--'}</span>
+                                            <AutoFitText as="span" className="text-[8px] opacity-70 shrink-0 text-right" minFontSize={7} maxFontSize={8}>
+                                                威力:{moveDef.power} / 命中:{moveDef.accuracy || '--'}
+                                            </AutoFitText>
                                         )}
                                     </div>
                                     {((moveDef?.ailment && moveDef.ailment !== 'none') || (moveDef?.stat_changes && moveDef.stat_changes.some(s => s.change > 0))) && (

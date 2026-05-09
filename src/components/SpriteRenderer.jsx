@@ -4,7 +4,7 @@ import { MONSTER_ASSET_IDS } from '../monsterData';
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
-const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true }) => {
+const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true, forceStatic = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     
@@ -19,7 +19,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
         return () => window.removeEventListener('pixel_monster_settings_update', handleUpdate);
     }, []);
 
-    const effectiveAnimated = animated && globalAnimated;
+    const effectiveAnimated = animated && globalAnimated && !forceStatic;
 
     // --- Progressive Loading Logic ---
     const staticSrc = `${base}assets/exclusive/sprites/${assetId}.png`;
@@ -113,7 +113,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
 // ==========================================
 // 背面 4-Color 網點運算引擎
 // ==========================================
-const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true }) => {
+const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true, forceStatic = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
 
@@ -128,7 +128,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
         return () => window.removeEventListener('pixel_monster_settings_update', handleUpdate);
     }, []);
 
-    const effectiveAnimated = animated && globalAnimated;
+    const effectiveAnimated = animated && globalAnimated && !forceStatic;
 
     // --- Progressive Loading Logic ---
     const staticSrc = `${base}assets/exclusive/back/${assetId}.png`;
@@ -247,11 +247,11 @@ const COLOR_MAP = {
 // --- CSS Animations for Battle ---
 const BATTLE_STYLES = `
 @keyframes damage-flash {
-    0%, 100% { opacity: 1; filter: none; }
-    50% { opacity: 0.12; filter: contrast(1.8) saturate(0.35); }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.12; }
 }
 .damage-flash {
-    animation: damage-flash 0.12s steps(2, end) 4;
+    animation: damage-flash 0.12s ease-in-out 4;
 }
 `;
 

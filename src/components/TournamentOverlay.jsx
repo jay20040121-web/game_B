@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 import { SKILL_DATABASE } from '../monsterData';
+import AutoFitText from './AutoFitText';
 
 export function TournamentOverlay({
     isTournamentOpen,
@@ -93,15 +94,21 @@ export function TournamentOverlay({
                         </div>
                         <div className="flex flex-col text-white">
 
-                            <span className="text-[12px] font-black text-[#ff5252]">{opponents[1].playerName}</span>
-                            <span className="text-[9px]">{opponents[1].monster?.name} - Lv.{opponents[1].monster?.level}</span>
+                            <AutoFitText as="span" className="text-[12px] font-black text-[#ff5252] w-full" minFontSize={8} maxFontSize={12}>
+                                {opponents[1].playerName}
+                            </AutoFitText>
+                            <AutoFitText as="span" className="text-[9px] w-full" minFontSize={7} maxFontSize={9}>
+                                {opponents[1].monster?.name} - Lv.{opponents[1].monster?.level}
+                            </AutoFitText>
                         </div>
                     </div>
 
                     <div className="flex items-center justify-end w-full bg-white/10 p-2 rounded-l-full shadow-lg transform translate-x-[20%] animate-[slideLeft_0.5s_forwards_0.5s]">
                         <div className="flex flex-col text-white items-end text-right">
 
-                            <span className="text-[12px] font-black text-[#ffca28]">{playerName || '玩家'}</span>
+                            <AutoFitText as="span" className="text-[12px] font-black text-[#ffca28] w-full text-right" minFontSize={8} maxFontSize={12}>
+                                {playerName || '玩家'}
+                            </AutoFitText>
                         </div>
                         <div className="scale-125 ml-4">
                             <DitheredBackSprite id={myMonsterId} scale={2} />
@@ -133,9 +140,9 @@ export function TournamentOverlay({
                                 `}
                             >
                                 <div className="flex justify-between w-full items-center mb-1">
-                                    <span className={`text-[10px] font-black ${card.rarity >= 3 ? 'text-[#ffca28]' : 'text-white'}`}>
+                                    <AutoFitText as="span" className={`text-[10px] font-black ${card.rarity >= 3 ? 'text-[#ffca28]' : 'text-white'} w-[78%]`} minFontSize={7} maxFontSize={10}>
                                         {card.name}
-                                    </span>
+                                    </AutoFitText>
                                     <span className="text-[7px] bg-black/50 px-1 rounded text-gray-400">
                                         {'★'.repeat(card.rarity)}
                                     </span>

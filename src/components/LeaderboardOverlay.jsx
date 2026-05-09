@@ -1,5 +1,6 @@
 import React from 'react';
 import { DitheredSprite } from './SpriteRenderer';
+import AutoFitText from './AutoFitText';
 
 export default function LeaderboardOverlay({
     isLeaderboardOpen,
@@ -10,24 +11,27 @@ export default function LeaderboardOverlay({
     if (!isLeaderboardOpen) return null;
 
     return (
-        <div className="absolute inset-0 z-[500] flex flex-col items-center p-2 font-bold select-none animate-fade-in text-white" style={{ 
-            backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/共用底圖.png")`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-        }}>
+        <div
+            className="absolute inset-0 z-[500] flex flex-col items-center p-2 font-bold select-none animate-fade-in text-white"
+            style={{
+                backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/?梁摨?.png")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+            }}
+        >
             <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
 
             <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] px-2 py-1 flex justify-between items-center mb-1 relative z-10 shadow-sm">
-                <span className="text-[10px] tracking-tighter font-black flex items-center gap-1">
-                    🏆 全球英雄榜 [P{leaderboardPage + 1}/10]
-                </span>
+                <AutoFitText as="span" className="text-[10px] tracking-tighter font-black flex items-center gap-1 min-w-0 w-full" minFontSize={8} maxFontSize={10}>
+                    ?? ?函??梢?璁?[P{leaderboardPage + 1}/10]
+                </AutoFitText>
             </div>
 
             <div className="flex-1 w-full space-y-1 mt-1 relative z-10">
                 {isLeaderboardLoading ? (
                     <div className="flex flex-col items-center justify-center h-full gap-2 opacity-60">
-                        <div className="animate-spin text-xl">⏳</div>
-                        <div className="text-[10px]">資料同步中...</div>
+                        <div className="animate-spin text-xl">??</div>
+                        <div className="text-[10px]">鞈??郊銝?..</div>
                     </div>
                 ) : (
                     leaderboard.slice(leaderboardPage * 5, (leaderboardPage * 5) + 5).map((item, idx) => (
@@ -39,7 +43,9 @@ export default function LeaderboardOverlay({
                                 <DitheredSprite id={item.monsterId || 132} scale={0.85} animated={false} />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <div className="text-[10px] truncate leading-none mb-0.5">{item.displayName}</div>
+                                <AutoFitText as="div" className="text-[10px] leading-none mb-0.5 w-full" minFontSize={7} maxFontSize={10}>
+                                    {item.displayName}
+                                </AutoFitText>
                                 <div className="flex gap-2 text-[8px] opacity-70">
                                     <span>W:{item.wins}</span>
                                     <span>L:{item.losses}</span>
@@ -51,14 +57,14 @@ export default function LeaderboardOverlay({
                 )}
                 {!isLeaderboardLoading && leaderboard.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-[10px] opacity-40">
-                        尚無紀錄...
+                        撠蝝??..
                     </div>
                 )}
             </div>
 
             <div className="w-full border-t border-white/20 pt-1 mt-1 flex justify-between items-center text-[8px] font-black opacity-80 relative z-10">
-                <span className="animate-pulse">▶ A: 下一頁</span>
-                <span>● C: 退出</span>
+                <span className="animate-pulse">??A: 銝???</span>
+                <span>??C: ???</span>
             </div>
         </div>
     );

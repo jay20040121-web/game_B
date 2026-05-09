@@ -1,4 +1,4 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 給之後協助這個專案的 coding agent 使用。
 
@@ -8,6 +8,17 @@
 
 本機資料夾名稱是 `game_B`，Git 遠端也指向 GitHub 上的 `game_B` repository。任何 push、PR、部署前仍要先用 `git remote -v` 確認遠端位置。
 
+## 目前工作狀態
+
+- 目前正式工作目錄是 C:\Users\jay20\Desktop\game_B。
+- game_A 已不再作為有效工作區使用；若之後又看到 game_A，預設視為舊備份或無效路徑，不能從那裡繼續開發或 push。
+- 目前使用者偏好是「先不要寄 Gmail 專案更新通知」，避免信件過多。除非使用者之後明確重新啟用，否則只在對話內更新進度，不主動寄信。
+
+## 協作偏好
+
+- 每次回報時，優先提供目前進度、已完成項目、下一步，讓使用者能快速接手或決策。
+- 若修改牽涉風險較高的區域（例如存檔、PvP 同步、Firebase、main 同步），要先明確說明風險點再動手。
+- 若需求有多種做法，優先選擇最小變更、最低風險、最容易驗證的一種。
 ## 常用指令
 
 - `npm run dev`：啟動 Vite 開發伺服器。
@@ -19,14 +30,16 @@
 ## 架構地圖
 
 - `src/main.jsx`：React app 的掛載入口。
-- `src/App.jsx`：主要遊戲控制器，集中管理大多數遊戲狀態與流程，包含養成、冒險、戰鬥、PvP、雲端同步、選單、覆蓋視窗與存檔。
+- `src/App.jsx`：主要遊戲控制器，集中管理多數遊戲狀態與流程，包含養成、冒險、戰鬥、PvP 串接、覆蓋視窗與本機存檔串接。部分原本在 App 內的系統已拆到 `src/utils/` 和 `src/data/`，修改前先看下方「已拆出模組」。
 - `src/styles.css`：全域樣式與 Tailwind 相關樣式。
 - `src/monsterData.js`：匯出怪獸名稱、基礎能力、招式、屬性邏輯、招式生成、能力計算，以及戰鬥資料。
 - `src/data/monsterRegistry.js`：怪獸登錄資料，是怪獸 ID、名稱、基礎能力等資料的主要來源。
 - `src/data/evolutionConfig.js`：進化等級、進化鏈、野外怪獸進化對應、最終壽命等設定。
 - `src/data/gameConfig.js`：遊戲常數，例如物理移動、冒險道具、日記資料、靈魂問題、戰鬥規則、AI 選招邏輯。
+- `src/data/menuConfig.js`：主選單項目設定，包含選單 id、label、icon sprite 與背景圖路徑組合。
 - `src/data/tutorialKnowledge.js`：新手教學 AI 使用的知識資料。
 - `src/components/`：UI 覆蓋視窗與專用渲染元件。
+- `src/components/AutoFitText.jsx`：共用自動縮字元件，優先用在固定寬高的標題、名牌、按鈕與卡片名稱。
 - `src/utils/`：共用系統，包含戰鬥、存檔、Firebase、PvP、排行榜、淘汰賽、音效、環境設定。
 - `public/assets/`：遊戲美術、背景、BGM、音效、文字圖片、說明圖片。
 
@@ -39,14 +52,26 @@
 常見位置：
 
 - 初始寵物狀態與本機存檔載入在檔案前段。
-- Firebase 雲端同步包含 `saveToCloud`、`loadFromCloud`、`loginWithGoogle`。
-- 主選單設定從 `menuItems` 開始。
+- Firebase 雲端同步已移到 `src/utils/useCloudSync.js`，App 只接 `user`、`isCloudLoading`、`isCloudSyncing`、`saveToCloud`、`loginWithGoogle`、`logoutGoogle`。
+- 主選單設定已移到 `src/data/menuConfig.js` 的 `createMenuItems`。
 - 主選單行為集中在 `executeAction`。
 - 戰鬥回合執行在 `executeBattleTurn`。
 - 戰鬥狀態建立在 `generateBattleState`。
 - 排行榜、PvP、淘汰賽 hooks 在 render 前附近接入。
 
 如果新增可重用邏輯，優先放到 `src/utils/`、`src/data/` 或獨立 component，避免讓 `App.jsx` 繼續膨脹。
+
+### 已拆出模組
+
+下列系統以前可能在 `src/App.jsx` 內，之後不要只在 App 裡找：
+
+- `src/utils/useCloudSync.js`：Firebase auth listener、Google 登入/登出、雲端存檔 `saveToCloud`、雲端載入、版本檢查、防誤蓋與跨帳號本地存檔保護。
+- `src/utils/useSingleActiveTab.js`：多分頁 heartbeat lock，避免同一個存檔在多個分頁同時運行。
+- `src/utils/useDisplayScale.js`：裝置畫面自動縮放、手動縮放與 `pixel_monster_scale` localStorage。
+- `src/utils/useSkillLearning.js`：升級後自動學招、學招 pending state、替換確認 state、技能順序調整開關與等級追蹤重置。捕捉新怪或回憶膠囊復活後要呼叫 `resetLevelTracker(level)`，避免沿用前一隻怪的等級觸發學招。
+- `src/utils/dateUtils.js`：本地日期字串 `getTodayStr`，避免 UTC 跨日誤差。
+- `src/utils/battleStats.js`：玩家戰鬥能力 profile、性格修正 `getNatureMods`、trait 對能力的倍率套用。修改能力計算時要確認 `generateMyBattleStats`、`generateBattleState` 和 PvP INIT 資料仍一致。
+- `src/data/menuConfig.js`：主選單項目資料。新增或調整主選單入口時先改這裡，再檢查 `executeAction` 是否有對應行為。
 
 ### 戰鬥系統
 
@@ -60,6 +85,8 @@
 - 守住、護盾、反射、能力階段、招式升級、狀態異常、傷害佇列與 `RESULT` 封包。
 
 狀態輔助邏輯在 `src/utils/battleEngine.js`，包含回合前狀態檢查、招式效果、回合後狀態傷害/回血、能力階段倍率。
+
+玩家戰鬥能力 profile 計算已拆到 `src/utils/battleStats.js`。這會被 App 內的 `generateMyBattleStats` 與 `generateBattleState` 串接使用，修改時要避免單機戰鬥與 PvP INIT 使用不同算法。
 
 修改戰鬥邏輯時，要同時考慮單機冒險戰鬥和 PvP。PvP 由主機計算結果，再把 `RESULT` 傳給客機。如果讓客機也自行計算結果，很容易造成雙方不同步。
 
@@ -90,7 +117,7 @@ PvP 使用 PeerJS，主要在 `src/utils/usePvpConnection.js`。
 
 Firebase compat SDK 設定在 `src/utils/firebase.js`。
 
-雲端存檔與 Google 登入邏輯目前主要在 `src/App.jsx`。Firestore collection 名稱由 `src/utils/envConfig.js` 的 `FIRESTORE_COLLECTION` 匯出。
+雲端存檔與 Google 登入邏輯主要在 `src/utils/useCloudSync.js`。Firestore collection 名稱由 `src/utils/envConfig.js` 的 `FIRESTORE_COLLECTION` 匯出。
 
 不要隨意改存檔欄位名稱。雲端存檔和本機存檔共用大量資料結構，欄位變動可能影響舊玩家資料。
 
@@ -124,6 +151,7 @@ Firebase compat SDK 設定在 `src/utils/firebase.js`。
 - `TutorialAI.jsx`
 
 UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大型 landing page、商業網站式 hero 區塊，或和現有視覺語言不一致的設計系統。
+長字串如果會爆框，優先考慮 `src/components/AutoFitText.jsx`，再搭配 `truncate`、`line-clamp` 或斷行。
 
 ## 素材
 
@@ -199,3 +227,6 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - 禁止 force push。
 - 要求 PR 或至少避免直接改寫歷史。
 - 要求 GitHub Actions build/deploy 成功後才視為可發布版本。
+
+
+

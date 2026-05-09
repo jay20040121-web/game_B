@@ -1,5 +1,6 @@
 import React from 'react';
 import { MONSTER_NAMES } from '../monsterData';
+import AutoFitText from './AutoFitText';
 
 export default function InventoryOverlay({
     isInventoryOpen,
@@ -50,9 +51,9 @@ export default function InventoryOverlay({
                                                 transform: isPrev ? 'translateY(-5px)' : isNext ? 'translateY(5px)' : 'none'
                                             }}
                                         >
-                                            <div className="text-[12px] font-black">
+                                            <AutoFitText as="div" className="w-full h-[16px] px-1 text-[12px] font-black text-inherit" minFontSize={8} maxFontSize={12}>
                                                 {item.name} {item.count > 1 ? `x${item.count}` : ''}
-                                            </div>
+                                            </AutoFitText>
                                             {isSelected && (
                                                 <>
                                                     <div className="text-[9px] leading-tight mt-1 px-1">{item.desc}</div>
