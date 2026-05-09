@@ -594,6 +594,7 @@ export default function App() {
     const [advCD, setAdvCD] = useState(0);
     const [isAdvStreaming, setIsAdvStreaming] = useState(false);
     const [isStatusUIOpen, setIsStatusUIOpen] = useState(false);
+    const [statusPage, setStatusPage] = useState('stats');
     const [alertMsg, setAlertMsg] = useState("");
     const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
@@ -1992,7 +1993,11 @@ export default function App() {
             return;
         }
 
-        if (isStatusUIOpen) return;
+        if (isStatusUIOpen) {
+            setStatusPage(prev => prev === 'stats' ? 'moves' : 'stats');
+            playBloop('select');
+            return;
+        }
         if (isInventoryOpen) {
             if (isUsingItem) return; // 使用中禁止重複觸發
             if (inventory.length > 0) {
@@ -2231,6 +2236,7 @@ export default function App() {
                     playBloop('fail');
                     return;
                 }
+                setStatusPage('stats');
                 setIsStatusUIOpen(true);
                 updateDialogue("查看狀態中...", true);
                 playBloop('confirm');
@@ -3609,6 +3615,16 @@ export default function App() {
                             {/* 狀態查詢 Overlay */}
                             <StatusOverlay
                                 isStatusUIOpen={isStatusUIOpen}
+                                statusPage={statusPage}
+                                onToggleStatusPage={() => {
+                                    setStatusPage(prev => prev === 'stats' ? 'moves' : 'stats');
+                                    playBloop('select');
+                                }}
+                                onClose={() => {
+                                    setIsStatusUIOpen(false);
+                                    updateDialogue("吼吼吼～");
+                                    playBloop('back');
+                                }}
                                 getMonsterId={getMonsterIdWrapped}
                                 soulTagCounts={soulTagCounts}
                                 hunger={hunger}
