@@ -92,14 +92,19 @@ export function TournamentOverlay({
                         <div className="scale-125 mr-4">
                             {opponents[1].monster && <DitheredSprite id={opponents[1].monster.id} scale={2} />}
                         </div>
-                        <div className="flex flex-col text-white">
+                        <div className="flex flex-col text-white min-w-0">
 
-                            <AutoFitText as="span" className="text-[12px] font-black text-[#ff5252] w-full" minFontSize={8} maxFontSize={12}>
+                            <AutoFitText as="span" className="text-[12px] font-black text-[#ff5252] w-full min-w-0" minFontSize={8} maxFontSize={12}>
                                 {opponents[1].playerName}
                             </AutoFitText>
-                            <AutoFitText as="span" className="text-[9px] w-full" minFontSize={7} maxFontSize={9}>
-                                {opponents[1].monster?.name} - Lv.{opponents[1].monster?.level}
-                            </AutoFitText>
+                            <div className="flex flex-col gap-0.5 w-full min-w-0">
+                                <AutoFitText as="span" className="text-[9px] w-full min-w-0" minFontSize={7} maxFontSize={9}>
+                                    {opponents[1].monster?.name}
+                                </AutoFitText>
+                                <AutoFitText as="span" className="text-[8px] w-full min-w-0 text-white/90" minFontSize={6} maxFontSize={8}>
+                                    Lv.{opponents[1].monster?.level}
+                                </AutoFitText>
+                            </div>
                         </div>
                     </div>
 
