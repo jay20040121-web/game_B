@@ -195,6 +195,8 @@ export const usePvpConnection = (deps) => {
                             flashTarget: null,
                             player: {
                                 ...(playerStateAfter || prev.player),
+                                status: (playerStateAfter?.status !== undefined) ? playerStateAfter.status : prev.player.status,
+                                statusTurns: (playerStateAfter?.statusTurns !== undefined) ? playerStateAfter.statusTurns : prev.player.statusTurns,
                                 hp: playerHpAfter !== undefined ? playerHpAfter : prev.player.hp,
                                 shield: playerShieldAfter !== undefined ? playerShieldAfter : (prev.player.shield || 0),
                                 moves: (playerStateAfter?.moves?.length > 0) ? playerStateAfter.moves : prev.player.moves,
@@ -203,6 +205,8 @@ export const usePvpConnection = (deps) => {
                             },
                             enemy: {
                                 ...(enemyStateAfter || prev.enemy),
+                                status: (enemyStateAfter?.status !== undefined) ? enemyStateAfter.status : prev.enemy.status,
+                                statusTurns: (enemyStateAfter?.statusTurns !== undefined) ? enemyStateAfter.statusTurns : prev.enemy.statusTurns,
                                 hp: enemyHpAfter !== undefined ? enemyHpAfter : prev.enemy.hp,
                                 shield: enemyShieldAfter !== undefined ? enemyShieldAfter : (prev.enemy.shield || 0),
                                 moves: (enemyStateAfter?.moves?.length > 0) ? enemyStateAfter.moves : prev.enemy.moves,
@@ -230,21 +234,25 @@ export const usePvpConnection = (deps) => {
                         lastStep: first,
                         activeStepPending: true,
                         flashTarget: null,
-                        player: {
-                            ...(playerStateAfter || prev.player),
-                            hp: playerHpBefore !== undefined ? playerHpBefore : prev.player.hp,
-                            shield: playerShieldBefore !== undefined ? playerShieldBefore : (prev.player.shield || 0),
-                            moves: (playerStateAfter?.moves?.length > 0) ? playerStateAfter.moves : prev.player.moves,
-                            protectLeft: playerStateAfter?.protectLeft !== undefined ? playerStateAfter.protectLeft : (prev.player.protectLeft || 0),
-                            isProtected: false
-                        },
-                        enemy: {
-                            ...(enemyStateAfter || prev.enemy),
-                            hp: enemyHpBefore !== undefined ? enemyHpBefore : prev.enemy.hp,
-                            shield: enemyShieldBefore !== undefined ? enemyShieldBefore : (prev.enemy.shield || 0),
-                            moves: (enemyStateAfter?.moves?.length > 0) ? enemyStateAfter.moves : prev.enemy.moves,
-                            protectLeft: enemyStateAfter?.protectLeft !== undefined ? enemyStateAfter.protectLeft : (prev.enemy.protectLeft || 0),
-                            isProtected: false
+                            player: {
+                                ...(playerStateAfter || prev.player),
+                                status: (playerStateAfter?.status !== undefined) ? playerStateAfter.status : prev.player.status,
+                                statusTurns: (playerStateAfter?.statusTurns !== undefined) ? playerStateAfter.statusTurns : prev.player.statusTurns,
+                                hp: playerHpBefore !== undefined ? playerHpBefore : prev.player.hp,
+                                shield: playerShieldBefore !== undefined ? playerShieldBefore : (prev.player.shield || 0),
+                                moves: (playerStateAfter?.moves?.length > 0) ? playerStateAfter.moves : prev.player.moves,
+                                protectLeft: playerStateAfter?.protectLeft !== undefined ? playerStateAfter.protectLeft : (prev.player.protectLeft || 0),
+                                isProtected: false
+                            },
+                            enemy: {
+                                ...(enemyStateAfter || prev.enemy),
+                                status: (enemyStateAfter?.status !== undefined) ? enemyStateAfter.status : prev.enemy.status,
+                                statusTurns: (enemyStateAfter?.statusTurns !== undefined) ? enemyStateAfter.statusTurns : prev.enemy.statusTurns,
+                                hp: enemyHpBefore !== undefined ? enemyHpBefore : prev.enemy.hp,
+                                shield: enemyShieldBefore !== undefined ? enemyShieldBefore : (prev.enemy.shield || 0),
+                                moves: (enemyStateAfter?.moves?.length > 0) ? enemyStateAfter.moves : prev.enemy.moves,
+                                protectLeft: enemyStateAfter?.protectLeft !== undefined ? enemyStateAfter.protectLeft : (prev.enemy.protectLeft || 0),
+                                isProtected: false
                         },
                         playerHpAfter: playerHpAfter !== undefined ? playerHpAfter : prev.player.hp,
                         enemyHpAfter: enemyHpAfter !== undefined ? enemyHpAfter : prev.enemy.hp,

@@ -214,12 +214,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     const updatedPlayer = {
         ...prev.player,
         statStages: { ...prev.player.statStages },
-        rogueEffects: { ...(prev.player.rogueEffects || {}) }
+        rogueEffects: { ...(prev.player.rogueEffects || {}) },
+        statusRecoveryPending: null
     };
     const updatedEnemy = {
         ...prev.enemy,
         statStages: { ...prev.enemy.statStages },
-        rogueEffects: { ...(prev.enemy.rogueEffects || {}) }
+        rogueEffects: { ...(prev.enemy.rogueEffects || {}) },
+        statusRecoveryPending: null
     };
 
     const applyDamageToState = (target, amount) => {
@@ -320,8 +322,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             : (isPlayer ? defender.name : '你');
 
         const preCheck = checkPreTurnStatus(attacker, rFunc);
-        attacker.status = preCheck.nextStatus;
-        attacker.statusTurns = preCheck.nextTurns;
+        if (preCheck.clearStatus) {
+            attacker.statusRecoveryPending = preCheck.clearStatus;
+            attacker.statusTurns = preCheck.nextTurns;
+        } else {
+            attacker.statusRecoveryPending = null;
+            attacker.status = preCheck.nextStatus;
+            attacker.statusTurns = preCheck.nextTurns;
+        }
 
         if (!preCheck.canAct) {
             if (preCheck.message) {
@@ -774,6 +782,21 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         enemyTraitUsage.eightGatesEnded = true;
     }
 
+    const finalizeBattleEntity = (entity) => {
+        if (!entity) return entity;
+        if (!entity.statusRecoveryPending) return entity;
+        const next = {
+            ...entity,
+            status: null,
+            statusTurns: 0
+        };
+        delete next.statusRecoveryPending;
+        return next;
+    };
+
+    const finalPlayerState = finalizeBattleEntity(updatedPlayer);
+    const finalEnemyState = finalizeBattleEntity(updatedEnemy);
+
     const finalBattleState = {
         ...prev,
         // 修正：播報期間不應提前增加 turn，統一由 App.js 播報結束後累加，防止跳號
@@ -786,14 +809,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         // 核心修正：確保 player/enemy 完整繼承所有更新後的屬性 (包含 statStages/protect), 但 HP 保持在起始點供動畫播放
         player: { ...updatedPlayer, hp: prev.player.hp, shield: prev.player.shield || 0, isProtected: false },
         enemy: { ...updatedEnemy, hp: prev.enemy.hp, shield: prev.enemy.shield || 0, isProtected: false },
-        playerHpAfter: updatedPlayer.hp,
-        enemyHpAfter: updatedEnemy.hp,
-        playerShieldAfter: updatedPlayer.shield || 0,
-        enemyShieldAfter: updatedEnemy.shield || 0,
-        playerStateAfter: updatedPlayer,
-        enemyStateAfter: updatedEnemy,
-        playerFinalState: updatedPlayer,
-        enemyFinalState: updatedEnemy,
+        playerHpAfter: finalPlayerState.hp,
+        enemyHpAfter: finalEnemyState.hp,
+        playerShieldAfter: finalPlayerState.shield || 0,
+        enemyShieldAfter: finalEnemyState.shield || 0,
+        playerStateAfter: finalPlayerState,
+        enemyStateAfter: finalEnemyState,
+        playerFinalState: finalPlayerState,
+        enemyFinalState: finalEnemyState,
         traitUsage
     };
 
@@ -836,11 +859,11 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         enemyShieldBefore: prev.player.shield || 0,
                         playerHpAfter: updatedEnemy.hp,
                         enemyHpAfter: updatedPlayer.hp,
-                        playerShieldAfter: updatedEnemy.shield || 0,
-                        enemyShieldAfter: updatedPlayer.shield || 0,
+                        playerShieldAfter: finalEnemyState.shield || 0,
+                        enemyShieldAfter: finalPlayerState.shield || 0,
                         // 🔹 傳送完整的物件快照，確保所有狀態（狀態異常、Rogue效果、能力階級）同步
-                        playerStateAfter: updatedEnemy,
-                        enemyStateAfter: updatedPlayer,
+                        playerStateAfter: finalEnemyState,
+                        enemyStateAfter: finalPlayerState,
                         traitUsage: flippedTraitUsage,
                         turnId: prev.turn
                     }

@@ -1029,12 +1029,16 @@ export default function App() {
                     activeStepPending: false,
                     player: {
                         ...(prev.playerFinalState || prev.player),
+                        status: (prev.playerFinalState?.status !== undefined) ? prev.playerFinalState.status : prev.player.status,
+                        statusTurns: (prev.playerFinalState?.statusTurns !== undefined) ? prev.playerFinalState.statusTurns : prev.player.statusTurns,
                         hp: finalPlayerHp,
                         shield: finalPlayerShield,
                         moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
                     },
                     enemy: {
                         ...(prev.enemyFinalState || prev.enemy),
+                        status: (prev.enemyFinalState?.status !== undefined) ? prev.enemyFinalState.status : prev.enemy.status,
+                        statusTurns: (prev.enemyFinalState?.statusTurns !== undefined) ? prev.enemyFinalState.statusTurns : prev.enemy.statusTurns,
                         hp: finalEnemyHp,
                         shield: finalEnemyShield,
                         moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves
@@ -1053,12 +1057,16 @@ export default function App() {
             const nextPhase = prev.encounterType === 'wild' ? 'combat' : 'player_action';
             const finalPlayer = {
                 ...(prev.playerFinalState || prev.player),
+                status: (prev.playerFinalState?.status !== undefined) ? prev.playerFinalState.status : prev.player.status,
+                statusTurns: (prev.playerFinalState?.statusTurns !== undefined) ? prev.playerFinalState.statusTurns : prev.player.statusTurns,
                 hp: finalPlayerHp,
                 shield: finalPlayerShield,
                 moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
             };
             const finalEnemy = {
                 ...(prev.enemyFinalState || prev.enemy),
+                status: (prev.enemyFinalState?.status !== undefined) ? prev.enemyFinalState.status : prev.enemy.status,
+                statusTurns: (prev.enemyFinalState?.statusTurns !== undefined) ? prev.enemyFinalState.statusTurns : prev.enemy.statusTurns,
                 hp: finalEnemyHp,
                 shield: finalEnemyShield,
                 moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves

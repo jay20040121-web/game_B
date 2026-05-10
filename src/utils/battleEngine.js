@@ -19,9 +19,9 @@ export const checkPreTurnStatus = (state, rng = Math.random) => {
         return {
             canAct: false,
             message: "還在睡夢中...",
-            nextStatus: nextT <= 0 ? null : 'sleep',
+            nextStatus: null,
             nextTurns: Math.max(0, nextT),
-            clearStatus: nextT <= 0 ? 'sleep' : null
+            clearStatus: 'sleep'
         };
     }
 
@@ -50,9 +50,9 @@ export const checkPreTurnStatus = (state, rng = Math.random) => {
         return {
             canAct: false,
             message: "被冰塊凍住了，無法行動！",
-            nextStatus: nextT <= 0 ? null : 'freeze',
+            nextStatus: null,
             nextTurns: Math.max(0, nextT),
-            clearStatus: nextT <= 0 ? 'freeze' : null
+            clearStatus: 'freeze'
         };
     }
 
