@@ -56,6 +56,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     }
 
     const nextQueue = [];
+    let stepSeq = 0;
+    const createBattleStep = (type, payload = {}) => ({
+        id: `${prev.turn}-${stepSeq++}-${type}`,
+        turnId: prev.turn,
+        type,
+        ...payload
+    });
     const playerTrait = prev.player?.trait || monsterTraits?.trait || null;
     const enemyTrait = prev.enemy?.trait || null;
     const traitUsage = {
@@ -171,7 +178,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         return { dmg: finalDmg, msg: effectMsg };
     };
 
-    const applyEnchantAilment = (attacker, move, defender, defenderName) => {
+    const applyEnchantAilment = (attacker, move, defender, defenderName, attackerSide, attackerName) => {
         const enchantData = attacker.moveUpgrades?.[move.id]?.ailments || {};
         if (Object.keys(enchantData).length === 0 || defender.status) return;
 
@@ -191,7 +198,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 else if (ailment === 'confusion') defender.statusTurns = Math.floor(rFunc() * 3) + 2;
                 else if (ailment === 'leech-seed' || ailment === 'trap') defender.statusTurns = 5;
                 else if (ailment === 'freeze') defender.statusTurns = Math.floor(rFunc() * 2) + 1;
-                nextQueue.push({ type: 'msg', text: `${defenderName} ${ailmentNameMap[ailment] || ailment}了！(附魔效果)` });
+                pushMsg(`${defenderName} ${ailmentNameMap[ailment] || ailment}了！(附魔效果)`, {
+                    kind: 'status',
+                    actorSide: attackerSide,
+                    targetSide: attackerSide === 'player' ? 'enemy' : 'player',
+                    actorName: attackerName,
+                    targetName: defenderName,
+                    cue: 'ailment'
+                });
                 break;
             }
         }
@@ -215,14 +229,68 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         return result;
     };
 
-    const pushDamageStep = ({ target, value, text, effectType, effectVariant, shieldValue, hpValue }) => {
-        const step = { type: 'damage', target, value, text };
+    const pushDamageStep = ({ target, value, text, effectType, effectVariant, shieldValue, hpValue, kind = 'damage', actorSide, targetSide, actorName, targetName, moveId, moveName, cue }) => {
+        const step = createBattleStep('damage', {
+            kind,
+            target,
+            value,
+            text,
+            actorSide,
+            targetSide,
+            actorName,
+            targetName,
+            moveId,
+            moveName,
+            cue
+        });
         if (effectType) step.effectType = effectType;
         if (effectVariant !== undefined) step.effectVariant = effectVariant;
         if (shieldValue !== undefined) step.shieldValue = shieldValue;
         if (hpValue !== undefined) step.hpValue = hpValue;
         nextQueue.push(step);
         return step;
+    };
+
+    const pushHealStep = ({ target, value, text, actorSide, targetSide, actorName, targetName, cue }) => {
+        nextQueue.push(createBattleStep('heal', {
+            kind: 'support',
+            target,
+            value,
+            text,
+            actorSide,
+            targetSide,
+            actorName,
+            targetName,
+            cue
+        }));
+    };
+
+    const pushShieldStep = ({ target, value, text, actorSide, targetSide, actorName, targetName, cue }) => {
+        nextQueue.push(createBattleStep('shield', {
+            kind: 'support',
+            target,
+            value,
+            text,
+            actorSide,
+            targetSide,
+            actorName,
+            targetName,
+            cue
+        }));
+    };
+
+    const pushMsg = (text, payload = {}) => {
+        nextQueue.push(createBattleStep('msg', {
+            kind: payload.kind || 'speech',
+            text,
+            actorSide: payload.actorSide,
+            targetSide: payload.targetSide,
+            actorName: payload.actorName,
+            targetName: payload.targetName,
+            moveId: payload.moveId,
+            moveName: payload.moveName,
+            cue: payload.cue
+        }));
     };
 
     const tryFeignDeath = (side) => {
@@ -234,7 +302,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         if (traitUsage[side].revives[trait.id]) return false;
         traitUsage[side].revives[trait.id] = true;
         target.hp = 1;
-        nextQueue.push({ type: 'msg', text: `${trait.name}觸發！HP 回到 1，戰鬥繼續。` });
+        pushMsg(`${trait.name}觸發！HP 回到 1，戰鬥繼續。`, { kind: 'system', cue: 'revive' });
         return true;
     };
 
@@ -257,7 +325,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         if (!preCheck.canAct) {
             if (preCheck.message) {
-                nextQueue.push({ type: 'msg', text: `${attackerName}${preCheck.message}` });
+                pushMsg(`${attackerName}${preCheck.message}`, {
+                    kind: 'status',
+                    actorSide: isPlayer ? 'player' : 'enemy',
+                    targetSide: isPlayer ? 'enemy' : 'player',
+                    actorName: attackerName,
+                    targetName: defenderName,
+                    cue: 'status'
+                });
             }
             if (preCheck.selfDamage) {
                 const selfDmg = Math.max(1, Math.floor(attacker.maxHp * 0.08));
@@ -266,8 +341,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     target: isPlayer ? 'player' : 'enemy',
                     value: actualDmg,
                     text: `${attackerName} 受到了混亂的回擊！`,
+                    actorSide: isPlayer ? 'player' : 'enemy',
+                    targetSide: isPlayer ? 'player' : 'enemy',
+                    actorName: attackerName,
+                    targetName: attackerName,
                     shieldValue: shieldDmg,
-                    hpValue: hpDmg
+                    hpValue: hpDmg,
+                    cue: 'self-hit'
                 });
                 if (attacker.hp <= 0) tryFeignDeath(isPlayer ? 'player' : 'enemy');
             }
@@ -278,15 +358,30 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             console.warn(`[Battle] ${attackerName} 嘗試使用不存在的招式`, move);
             move = SKILL_DATABASE.tackle;
         }
-        nextQueue.push({ type: 'msg', text: `${attackerName} 使出了 [${move.name || '未知招式'}]！` });
+        pushMsg(`${attackerName} 使出了 [${move.name || '未知招式'}]！`, {
+            kind: 'speech',
+            actorSide: isPlayer ? 'player' : 'enemy',
+            targetSide: isPlayer ? 'enemy' : 'player',
+            actorName: attackerName,
+            targetName: defenderName,
+            moveId: move.id,
+            moveName: move.name,
+            cue: 'move'
+        });
 
         if (move.isProtect) {
             if ((attacker.protectLeft || 0) > 0) {
                 attacker.isProtected = true;
                 attacker.protectLeft = (attacker.protectLeft || 0) - 1;
-                nextQueue.push({ type: 'msg', text: `${attackerName} 進入了防護狀態！(剩餘次數: ${attacker.protectLeft})` });
+                pushMsg(`${attackerName} 進入了防護狀態！(剩餘次數: ${attacker.protectLeft})`, {
+                    kind: 'system',
+                    actorSide: isPlayer ? 'player' : 'enemy',
+                    actorName: attackerName,
+                    targetSide: isPlayer ? 'player' : 'enemy',
+                    cue: 'protect'
+                });
             } else {
-                nextQueue.push({ type: 'msg', text: `但是防禦次數已用盡，失敗了！` });
+                pushMsg(`但是防禦次數已用盡，失敗了！`, { kind: 'system', cue: 'fail' });
             }
             return;
         } else {
@@ -296,37 +391,62 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         if (move.addReflect) {
             attacker.rogueEffects = { ...(attacker.rogueEffects || {}) };
             attacker.rogueEffects.reflect = (attacker.rogueEffects.reflect || 0) + move.addReflect;
-            nextQueue.push({ type: 'msg', text: `${attackerName} 周圍展開了反射盾！` });
+            pushMsg(`${attackerName} 周圍展開了反射盾！`, {
+                kind: 'system',
+                actorSide: isPlayer ? 'player' : 'enemy',
+                actorName: attackerName,
+                cue: 'reflect'
+            });
             return;
         }
 
         if (move.addShield) {
             const shieldAmt = Math.floor(attacker.maxHp * move.addShield);
             attacker.shield = (attacker.shield || 0) + shieldAmt;
-            nextQueue.push({ type: 'msg', text: `${attackerName} 獲得了 ${shieldAmt} 點生命護盾！` });
-            nextQueue.push({ type: 'shield', target: isPlayer ? 'player' : 'enemy', value: shieldAmt, text: `${attackerName} 獲得了 ${shieldAmt} 點生命護盾！` });
+            pushMsg(`${attackerName} 獲得了 ${shieldAmt} 點生命護盾！`, {
+                kind: 'support',
+                actorSide: isPlayer ? 'player' : 'enemy',
+                actorName: attackerName,
+                cue: 'shield'
+            });
+            pushShieldStep({
+                target: isPlayer ? 'player' : 'enemy',
+                value: shieldAmt,
+                text: `${attackerName} 獲得了 ${shieldAmt} 點生命護盾！`,
+                actorSide: isPlayer ? 'player' : 'enemy',
+                targetSide: isPlayer ? 'player' : 'enemy',
+                actorName: attackerName,
+                cue: 'shield'
+            });
             return;
         }
 
         const result = calcDamage(attacker, move, defender);
 
         if (result.msg === 'BLOCKED') {
-            nextQueue.push({ type: 'msg', text: `但是被 ${defenderName} 完美地擋下來了！` });
+            pushMsg(`但是被 ${defenderName} 完美地擋下來了！`, { kind: 'system', targetSide: isPlayer ? 'enemy' : 'player', targetName: defenderName, cue: 'blocked' });
             return;
         } else if (result.msg === 'MISS_SPEED') {
-            nextQueue.push({ type: 'msg', text: `${defenderName} 靈巧地閃開了！` });
+            pushMsg(`${defenderName} 靈巧地閃開了！`, { kind: 'system', targetSide: isPlayer ? 'enemy' : 'player', targetName: defenderName, cue: 'miss' });
             return;
         } else if (result.msg === 'MISS_LUCK') {
-            nextQueue.push({ type: 'msg', text: `${attackerName} 的招式偏離了目標！` });
+            pushMsg(`${attackerName} 的招式偏離了目標！`, { kind: 'system', actorSide: isPlayer ? 'player' : 'enemy', actorName: attackerName, cue: 'miss' });
             return;
         }
 
-        applyEnchantAilment(attacker, move, defender, defenderName);
+        applyEnchantAilment(attacker, move, defender, defenderName, isPlayer ? 'player' : 'enemy', attackerName);
 
         const effects = applyMoveEffects(move, defender, attacker, rFunc);
         effects.messages.forEach(m => {
             const targetName = m.targetType === 'source' ? attackerName : defenderName;
-            nextQueue.push({ type: 'msg', text: `${targetName} ${m.text}` });
+            pushMsg(`${targetName} ${m.text}`, {
+                kind: 'status',
+                actorSide: m.targetType === 'source' ? (isPlayer ? 'player' : 'enemy') : (isPlayer ? 'enemy' : 'player'),
+                targetSide: m.targetType === 'source' ? (isPlayer ? 'enemy' : 'player') : (isPlayer ? 'player' : 'enemy'),
+                actorName: targetName,
+                targetName,
+                cue: 'effect'
+            });
         });
 
         // --- 附魔系統：追加異常狀態機率 ---
@@ -346,7 +466,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     else if (ailment === 'confusion') defender.statusTurns = Math.floor(rFunc() * 3) + 2;
                     else if (ailment === 'leech-seed' || ailment === 'trap') defender.statusTurns = 5;
                     else if (ailment === 'freeze') defender.statusTurns = Math.floor(rFunc() * 2) + 1;
-                    nextQueue.push({ type: 'msg', text: `${defenderName} ${ailmentNameMap[ailment] || ailment}了！(附魔效果)` });
+                    pushMsg(`${defenderName} ${ailmentNameMap[ailment] || ailment}了！(附魔效果)`, {
+                        kind: 'status',
+                        actorSide: isPlayer ? 'player' : 'enemy',
+                        targetSide: isPlayer ? 'enemy' : 'player',
+                        actorName: attackerName,
+                        targetName: defenderName,
+                        cue: 'ailment'
+                    });
                     break; // 只觸發一個
                 }
             }
@@ -366,10 +493,17 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             pushDamageStep({
                 target: isPlayer ? 'enemy' : 'player',
                 value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`,
+                actorSide: isPlayer ? 'player' : 'enemy',
+                targetSide: isPlayer ? 'enemy' : 'player',
+                actorName: attackerName,
+                targetName: defenderName,
+                moveId: move.id,
+                moveName: move.name,
                 effectType: move.type,
                 effectVariant: Math.floor(rFunc() * 9),
                 shieldValue: shieldDmg,
-                hpValue: hpDmg
+                hpValue: hpDmg,
+                cue: 'damage'
             });
             if (defender.hp <= 0) tryFeignDeath(isPlayer ? 'enemy' : 'player');
 
@@ -381,8 +515,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         target: isPlayer ? 'player' : 'enemy',
                         value: actualRecoil,
                         text: `${attackerName} 受到了反作用力傷害！`,
+                        actorSide: isPlayer ? 'enemy' : 'player',
+                        targetSide: isPlayer ? 'player' : 'enemy',
+                        actorName: defenderName,
+                        targetName: attackerName,
+                        moveName: move.name,
                         shieldValue: recoilShieldDmg,
-                        hpValue: recoilHpDmg
+                        hpValue: recoilHpDmg,
+                        cue: 'recoil'
                     });
                     if (attacker.hp <= 0) tryFeignDeath(isPlayer ? 'player' : 'enemy');
                 }
@@ -396,9 +536,16 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             if (totalDrainPct > 0) {
                 const drainHeal = Math.floor(actualDmg * totalDrainPct);
                 if (drainHeal > 0) {
-                    nextQueue.push({
-                        type: 'heal', target: isPlayer ? 'player' : 'enemy',
-                        value: drainHeal, text: `${attackerName} 吸收了生命值！`
+                    pushHealStep({
+                        target: isPlayer ? 'player' : 'enemy',
+                        value: drainHeal,
+                        text: `${attackerName} 吸收了生命值！`,
+                        actorSide: isPlayer ? 'player' : 'enemy',
+                        targetSide: isPlayer ? 'player' : 'enemy',
+                        actorName: attackerName,
+                        moveId: move.id,
+                        moveName: move.name,
+                        cue: 'drain'
                     });
                     attacker.hp = Math.min(attacker.maxHp, attacker.hp + drainHeal);
                 }
@@ -414,8 +561,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                         target: isPlayer ? 'player' : 'enemy',
                         value: actualReflect,
                         text: `${defenderName} 的棘刺反射了傷害！`,
+                        actorSide: isPlayer ? 'enemy' : 'player',
+                        targetSide: isPlayer ? 'player' : 'enemy',
+                        actorName: defenderName,
+                        targetName: attackerName,
+                        moveName: move.name,
                         shieldValue: reflectShieldDmg,
-                        hpValue: reflectHpDmg
+                        hpValue: reflectHpDmg,
+                        cue: 'reflect'
                     });
                     if (attacker.hp <= 0) tryFeignDeath(isPlayer ? 'player' : 'enemy');
                 }
@@ -424,10 +577,21 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     };
 
     if (playerAction === 'run') {
-        nextQueue.push({ type: 'run', text: `你選擇撤退... 逃跑成功！` });
+        nextQueue.push(createBattleStep('run', {
+            kind: 'system',
+            text: `你選擇撤退... 逃跑成功！`,
+            cue: 'run'
+        }));
     } else if (playerAction === 'potion') {
         const heal = Math.floor(updatedPlayer.maxHp * 0.3);
-        nextQueue.push({ type: 'heal', target: 'player', value: heal, text: `使用了傷藥，恢復了 ${heal} 點 HP！` });
+        pushHealStep({
+            target: 'player',
+            value: heal,
+            text: `使用了傷藥，恢復了 ${heal} 點 HP！`,
+            actorSide: 'player',
+            targetSide: 'player',
+            cue: 'potion'
+        });
         updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + heal);
         addMoveExecution('enemy', enemyMove);
     } else if (isPlayerFirst) {
@@ -454,17 +618,35 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 target: 'player',
                 value: actualDmg,
                 text: `${pName}${pPost.message}`,
+                actorSide: 'player',
+                targetSide: 'player',
+                actorName: pName,
                 shieldValue: shieldDmg,
-                hpValue: hpDmg
+                hpValue: hpDmg,
+                cue: 'post-status'
             });
             if (updatedPlayer.hp <= 0) tryFeignDeath('player');
             if (pPost.heal > 0 && updatedEnemy.hp > 0) {
                 const actualHeal = actualDmg;
-                nextQueue.push({ type: 'heal', target: 'enemy', value: actualHeal, text: `${eName} 從${pName}那裡吸收了生命精華！` });
+                pushHealStep({
+                    target: 'enemy',
+                    value: actualHeal,
+                    text: `${eName} 從${pName}那裡吸收了生命精華！`,
+                    actorSide: 'enemy',
+                    targetSide: 'enemy',
+                    actorName: eName,
+                    cue: 'absorb'
+                });
                 updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + actualHeal);
             }
         } else {
-            nextQueue.push({ type: 'msg', text: `${pName}${pPost.message}` });
+            pushMsg(`${pName}${pPost.message}`, {
+                kind: 'status',
+                actorSide: 'player',
+                targetSide: 'player',
+                actorName: pName,
+                cue: 'post-status'
+            });
         }
     }
 
@@ -478,17 +660,35 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 target: 'enemy',
                 value: actualDmg,
                 text: `${eName}${ePost.message}`,
+                actorSide: 'enemy',
+                targetSide: 'enemy',
+                actorName: eName,
                 shieldValue: shieldDmg,
-                hpValue: hpDmg
+                hpValue: hpDmg,
+                cue: 'post-status'
             });
             if (updatedEnemy.hp <= 0) tryFeignDeath('enemy');
             if (ePost.heal > 0 && updatedPlayer.hp > 0) {
                 const actualHeal = actualDmg;
-                nextQueue.push({ type: 'heal', target: 'player', value: actualHeal, text: `${pName} 從${eName}那裡恢復了生命！` });
+                pushHealStep({
+                    target: 'player',
+                    value: actualHeal,
+                    text: `${pName} 從${eName}那裡恢復了生命！`,
+                    actorSide: 'player',
+                    targetSide: 'player',
+                    actorName: pName,
+                    cue: 'absorb'
+                });
                 updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + actualHeal);
             }
         } else {
-            nextQueue.push({ type: 'msg', text: `${eName}${ePost.message}` });
+            pushMsg(`${eName}${ePost.message}`, {
+                kind: 'status',
+                actorSide: 'enemy',
+                targetSide: 'enemy',
+                actorName: eName,
+                cue: 'post-status'
+            });
         }
     }
 
@@ -498,7 +698,15 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             Math.max(1, Math.floor(updatedPlayer.maxHp * traitMods.battleRegenMaxHp))
         );
         if (heal > 0) {
-            nextQueue.push({ type: 'heal', target: 'player', value: heal, text: `${activeTrait.name}回復 ${heal} HP。` });
+            pushHealStep({
+                target: 'player',
+                value: heal,
+                text: `${activeTrait.name}回復 ${heal} HP。`,
+                actorSide: 'player',
+                targetSide: 'player',
+                actorName: activeTrait.name,
+                cue: 'regen'
+            });
             updatedPlayer.hp = Math.min(updatedPlayer.maxHp, updatedPlayer.hp + heal);
         }
     }
@@ -507,13 +715,17 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         const nextHp = Math.max(1, Math.floor(updatedPlayer.hp * (1 - (traitMods.rampEndHpLoss || 0))));
         const hpLoss = Math.max(0, updatedPlayer.hp - nextHp);
         if (hpLoss > 0) {
-            nextQueue.push({ type: 'msg', text: `${activeTrait.name}結束，傷害倍率回到 100%。` });
+            pushMsg(`${activeTrait.name}結束，傷害倍率回到 100%。`, { kind: 'system', actorSide: 'player', actorName: activeTrait.name, cue: 'trait-end' });
             pushDamageStep({
                 target: 'player',
                 value: hpLoss,
                 text: `${activeTrait.name}反噬，HP 失去 80%。`,
+                actorSide: 'player',
+                targetSide: 'player',
+                actorName: activeTrait.name,
                 shieldValue: 0,
-                hpValue: hpLoss
+                hpValue: hpLoss,
+                cue: 'trait-recoil'
             });
             updatedPlayer.hp = nextHp;
         }
@@ -528,7 +740,15 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             Math.max(1, Math.floor(updatedEnemy.maxHp * enemyTraitMods.battleRegenMaxHp))
         );
         if (heal > 0) {
-            nextQueue.push({ type: 'heal', target: 'enemy', value: heal, text: `${enemyTrait?.name || '天賦'}回復 ${heal} HP。` });
+            pushHealStep({
+                target: 'enemy',
+                value: heal,
+                text: `${enemyTrait?.name || '天賦'}回復 ${heal} HP。`,
+                actorSide: 'enemy',
+                targetSide: 'enemy',
+                actorName: enemyTrait?.name || '天賦',
+                cue: 'regen'
+            });
             updatedEnemy.hp = Math.min(updatedEnemy.maxHp, updatedEnemy.hp + heal);
         }
     }
@@ -537,13 +757,17 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         const nextHp = Math.max(1, Math.floor(updatedEnemy.hp * (1 - (enemyTraitMods.rampEndHpLoss || 0))));
         const hpLoss = Math.max(0, updatedEnemy.hp - nextHp);
         if (hpLoss > 0) {
-            nextQueue.push({ type: 'msg', text: `${enemyTrait?.name || '天賦'}結束，傷害倍率回到 100%。` });
+            pushMsg(`${enemyTrait?.name || '天賦'}結束，傷害倍率回到 100%。`, { kind: 'system', actorSide: 'enemy', actorName: enemyTrait?.name || '天賦', cue: 'trait-end' });
             pushDamageStep({
                 target: 'enemy',
                 value: hpLoss,
                 text: `${enemyTrait?.name || '天賦'}反噬，HP 失去 80%。`,
+                actorSide: 'enemy',
+                targetSide: 'enemy',
+                actorName: enemyTrait?.name || '天賦',
                 shieldValue: 0,
-                hpValue: hpLoss
+                hpValue: hpLoss,
+                cue: 'trait-recoil'
             });
             updatedEnemy.hp = nextHp;
         }
@@ -576,10 +800,20 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     if (prev.mode === 'pvp' && isHost.current && connInstance.current) {
         const flippedQueue = nextQueue.map(step => {
             if (step.type === 'damage' || step.type === 'heal' || step.type === 'shield') {
-                return { ...step, target: step.target === 'player' ? 'enemy' : 'player' };
+                const flippedTarget = step.target === 'player' ? 'enemy' : 'player';
+                return {
+                    ...step,
+                    target: flippedTarget,
+                    actorSide: step.actorSide === 'player' ? 'enemy' : (step.actorSide === 'enemy' ? 'player' : step.actorSide),
+                    targetSide: step.targetSide === 'player' ? 'enemy' : (step.targetSide === 'enemy' ? 'player' : step.targetSide)
+                };
             }
             if (step.type === 'msg' && step.text) {
-                return step;
+                return {
+                    ...step,
+                    actorSide: step.actorSide === 'player' ? 'enemy' : (step.actorSide === 'enemy' ? 'player' : step.actorSide),
+                    targetSide: step.targetSide === 'player' ? 'enemy' : (step.targetSide === 'enemy' ? 'player' : step.targetSide)
+                };
             }
             return step;
         });

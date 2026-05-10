@@ -32,6 +32,19 @@ const TYPE_EFFECT_SHEETS = {
     rock: ROCK_EFFECT_SHEET
 };
 
+const STATUS_BADGE_META = {
+    burn: { label: '燒', className: 'bg-[#ff5252] text-white' },
+    paralysis: { label: '麻', className: 'bg-[#ffca28] text-black' },
+    poison: { label: '毒', className: 'bg-[#9c27b0] text-white' },
+    sleep: { label: '眠', className: 'bg-[#90a4ae] text-white' },
+    freeze: { label: '凍', className: 'bg-[#80deea] text-black' },
+    confusion: { label: '混', className: 'bg-[#7e57c2] text-white' },
+    'leech-seed': { label: '吸', className: 'bg-[#66bb6a] text-white' },
+    trap: { label: '縛', className: 'bg-[#ff9800] text-white' }
+};
+
+const getVisibleStatus = (entity, fallbackState) => entity?.status || fallbackState?.status || null;
+
 function DamageEffect({ pop, className = "" }) {
     if (!pop?.effectType) return null;
 
@@ -134,6 +147,9 @@ export default function BattleAdventureOverlay({
         if (battleState.mode !== 'tournament' || !isTournamentOpen) return null;
     }
 
+    const enemyStatus = getVisibleStatus(battleState?.enemy, battleState?.enemyFinalState);
+    const playerStatus = getVisibleStatus(battleState?.player, battleState?.playerFinalState);
+
     return (
         <div className="absolute inset-0 z-[110] flex flex-col items-center justify-start p-1" style={{
             backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/${battleState.active ? '對戰底圖.png' : '共用底圖.png'}")`,
@@ -173,14 +189,9 @@ export default function BattleAdventureOverlay({
                     <div className="absolute top-2 left-2 flex flex-col items-start min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pl-2 shadow-sm backdrop-blur-[2px]">
                         <div className="flex items-center gap-1">
                             <div className="text-[10px] font-bold text-white truncate w-[60px] leading-tight">{battleState?.enemy?.name}</div>
-                            {battleState?.enemy?.status && (
-                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.enemy.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                    battleState.enemy.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                        battleState.enemy.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                            battleState.enemy.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                battleState.enemy.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
-                                    }`}>
-                                    {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.enemy.status] || '狀'}
+                            {enemyStatus && (
+                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${STATUS_BADGE_META[enemyStatus]?.className || 'bg-gray-400 text-white'}`}>
+                                    {STATUS_BADGE_META[enemyStatus]?.label || '狀'}
                                 </span>
                             )}
                         </div>
@@ -253,14 +264,9 @@ export default function BattleAdventureOverlay({
                     </div>
                     <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pr-2 shadow-sm backdrop-blur-[2px]">
                         <div className="flex items-center gap-1">
-                            {battleState?.player?.status && (
-                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${battleState.player.status === 'burn' ? 'bg-[#ff5252] text-white' :
-                                    battleState.player.status === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                        battleState.player.status === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                            battleState.player.status === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                battleState.player.status === 'freeze' ? 'bg-[#80deea] text-black' : 'bg-gray-400'
-                                    }`}>
-                                    {{ burn: '燒', paralysis: '麻', poison: '毒', sleep: '眠', freeze: '凍', confusion: '混' }[battleState.player.status] || '狀'}
+                            {playerStatus && (
+                                <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${STATUS_BADGE_META[playerStatus]?.className || 'bg-gray-400 text-white'}`}>
+                                    {STATUS_BADGE_META[playerStatus]?.label || '狀'}
                                 </span>
                             )}
                             <div className="text-[10px] font-bold text-white text-right truncate">Lv.{getLevelByPower(advStats.basePower)}</div>
@@ -282,6 +288,14 @@ export default function BattleAdventureOverlay({
                             </div>
                         )}
                     </div>
+
+                    {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && (
+                        <div className="absolute left-1/2 top-[33%] -translate-x-1/2 z-[145] bg-[#383a37]/90 border border-white/20 px-3 py-1 text-[8px] font-black text-[#ffca28] shadow-[2px_2px_0_rgba(0,0,0,0.35)]">
+                            {battleState?.phase === 'waiting_opponent' && battleState?.mode === 'pvp'
+                                ? '等待對手判斷中，請稍候...'
+                                : '上一回合判斷中，請稍候...'}
+                        </div>
+                    )}
 
                     {/* 戰鬥播報對話框 (Transient Overlay) */}
                     {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && battleState?.activeMsg && (

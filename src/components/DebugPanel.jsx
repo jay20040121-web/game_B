@@ -1,6 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { ADV_ITEMS, DIARY_ITEM } from '../data/gameConfig';
 import { getLevelByPower } from '../monsterData';
+import { SKILL_DATABASE } from '../monsterData';
 import { MONSTER_TRAITS } from '../data/monsterTraits';
 
 /**
@@ -29,6 +30,32 @@ const DebugPanel = ({
     });
     const [itemId, setItemId] = React.useState('001');
     const [itemCount, setItemCount] = React.useState(1);
+    const [enchantMoveId, setEnchantMoveId] = React.useState(advStats.moves?.[0] || '');
+    const [enchantCount, setEnchantCount] = React.useState(0);
+    const [enchantJson, setEnchantJson] = React.useState('{}');
+    const enchantableMoveIds = React.useMemo(
+        () => (advStats.moves || []).filter(moveId => (SKILL_DATABASE[moveId]?.power || 0) > 0),
+        [advStats.moves]
+    );
+
+    React.useEffect(() => {
+        const fallbackMoveId = enchantableMoveIds[0] || '';
+        setEnchantMoveId(prev => {
+            if (prev && enchantableMoveIds.includes(prev)) return prev;
+            return fallbackMoveId;
+        });
+    }, [enchantableMoveIds]);
+
+    React.useEffect(() => {
+        if (!enchantMoveId) {
+            setEnchantCount(0);
+            setEnchantJson('{}');
+            return;
+        }
+        const moveData = advStats.moveUpgrades?.[enchantMoveId] || {};
+        setEnchantCount(moveData.count || 0);
+        setEnchantJson(JSON.stringify(moveData.ailments || {}, null, 2));
+    }, [enchantMoveId, advStats.moveUpgrades]);
 
     const totalEvs = Object.values(evInput).reduce((a, b) => a + b, 0);
 
@@ -61,6 +88,42 @@ const DebugPanel = ({
             return [...prev, { ...itemDef, count: itemCount }];
         });
         updateDialogue(`已新增 ${itemCount} 個 ${itemDef.name}`);
+    };
+
+    const applyMoveEnchant = () => {
+        const moveId = (enchantMoveId || '').trim();
+        if (!moveId) {
+            alert('請先選擇一個可附魔技能');
+            return;
+        }
+
+        let parsedAilments = {};
+        try {
+            const raw = enchantJson.trim();
+            parsedAilments = raw ? JSON.parse(raw) : {};
+            if (!parsedAilments || typeof parsedAilments !== 'object' || Array.isArray(parsedAilments)) {
+                throw new Error('異常效果必須是物件格式');
+            }
+        } catch (err) {
+            alert(`附魔內容格式錯誤：${err.message}`);
+            return;
+        }
+
+        const nextCount = Number.isFinite(Number(enchantCount)) ? Math.max(0, Math.floor(Number(enchantCount))) : 0;
+        setAdvStats(prev => {
+            const nextMoveUpgrades = { ...(prev.moveUpgrades || {}) };
+            const prevMoveData = nextMoveUpgrades[moveId] || {};
+            nextMoveUpgrades[moveId] = {
+                ...prevMoveData,
+                count: nextCount,
+                ailments: parsedAilments
+            };
+            return {
+                ...prev,
+                moveUpgrades: nextMoveUpgrades
+            };
+        });
+        updateDialogue(`Debug：已套用技能附魔「${SKILL_DATABASE[moveId]?.name || moveId}」`);
     };
 
     return (
@@ -255,6 +318,99 @@ const DebugPanel = ({
                                 </button>
                             </div>
                             <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 設定為 100 級後配合「進化時間」設為 10s 可測試正規死亡流程。</p>
+                        </div>
+
+                                                <div style={{ padding: '15px', border: '1px solid #16a085', backgroundColor: '#222', borderRadius: '8px' }}>
+                            <div style={{ color: '#5fe3c0', fontWeight: 'bold', marginBottom: '10px' }}>技能附魔調整</div>
+                            <div style={{ color: '#bbb', fontSize: '12px', marginBottom: '10px' }}>
+                                只會列出可附魔的攻擊招式。像「守護者之盾」這類功能招式不會出現在這裡。
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <div>
+                                    <div style={{ marginBottom: '6px', color: '#bbb' }}>選擇技能</div>
+                                    <select
+                                        value={enchantMoveId}
+                                        onChange={e => setEnchantMoveId(e.target.value)}
+                                        style={{ width: '100%', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }}
+                                    >
+                                        <option value="">請選擇技能</option>
+                                        {enchantableMoveIds.map(moveId => (
+                                            <option key={moveId} value={moveId}>
+                                                {SKILL_DATABASE[moveId]?.name || moveId} ({moveId})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div style={{ color: '#aaa', fontSize: '12px' }}>
+                                    目前選擇：{SKILL_DATABASE[enchantMoveId]?.name || '未選擇'}
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <span style={{ width: '56px' }}>次數</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={enchantCount}
+                                        onChange={e => setEnchantCount(parseInt(e.target.value) || 0)}
+                                        style={{ width: '120px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const moveData = advStats.moveUpgrades?.[enchantMoveId] || {};
+                                            setEnchantCount(moveData.count || 0);
+                                            setEnchantJson(JSON.stringify(moveData.ailments || {}, null, 2));
+                                        }}
+                                        style={{ padding: '8px 12px', cursor: 'pointer' }}
+                                    >
+                                        讀取目前
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setEnchantCount(0);
+                                            setEnchantJson('{}');
+                                        }}
+                                        style={{ padding: '8px 12px', cursor: 'pointer' }}
+                                    >
+                                        清空
+                                    </button>
+                                </div>
+                                <div>
+                                    <div style={{ marginBottom: '6px', color: '#bbb' }}>異常效果 JSON</div>
+                                    <textarea
+                                        value={enchantJson}
+                                        onChange={e => setEnchantJson(e.target.value)}
+                                        spellCheck={false}
+                                        rows={5}
+                                        style={{ width: '100%', padding: '10px', background: '#111', color: '#dff', border: '1px solid #555', fontFamily: 'monospace', resize: 'vertical' }}
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep'].map(key => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setEnchantJson(JSON.stringify({ [key]: 100 }, null, 2))}
+                                            style={{ padding: '6px 10px', cursor: 'pointer' }}
+                                        >
+                                            {({
+                                                burn: '燒傷 100',
+                                                paralysis: '麻痺 100',
+                                                poison: '中毒 100',
+                                                confusion: '混亂 100',
+                                                'leech-seed': '寄生種子 100',
+                                                trap: '束縛 100',
+                                                freeze: '冰凍 100',
+                                                sleep: '睡眠 100'
+                                            })[key]}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={applyMoveEnchant}
+                                    style={{ padding: '10px 16px', background: '#16a085', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                    套用附魔
+                                </button>
+                            </div>
                         </div>
 
                         <div style={{ marginBottom: '10px', borderBottom: '1px solid #444', paddingBottom: '5px' }}>

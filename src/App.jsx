@@ -871,6 +871,217 @@ export default function App() {
         });
     };
 
+    const getBattleStepDelay = (step) => {
+        if (!step) return 1000;
+        if (step.kind === 'damage') return 620;
+        if (step.kind === 'support') return 760;
+        if (step.kind === 'status') return 940;
+        if (step.kind === 'system') return 880;
+        if (step.type === 'damage') return 620;
+        if (step.type === 'heal' || step.type === 'shield') return 760;
+        return 1000;
+    };
+
+    const advanceBattleStreaming = (prev) => {
+        try {
+            if (prev.stepQueue.length > 30) return prev; // Safety net
+
+            if (prev.activeStepPending || prev.stepQueue.length > 0) {
+                const nextStep = prev.activeStepPending ? prev.lastStep : prev.stepQueue[0];
+                if (!nextStep) {
+                    return { ...prev, activeStepPending: false };
+                }
+                console.log("[Battle Animation] Step:", nextStep);
+                const updated = {
+                    ...prev,
+                    stepQueue: prev.activeStepPending ? prev.stepQueue : prev.stepQueue.slice(1),
+                    activeStepPending: false,
+                    activeMsg: nextStep.text || ""
+                };
+
+                if (nextStep.type === 'damage') {
+                    const applyDamageStep = (target) => {
+                        const split = nextStep.shieldValue !== undefined && nextStep.hpValue !== undefined
+                            ? {
+                                nextShield: Math.max(0, (target.shield || 0) - nextStep.shieldValue),
+                                nextHp: Math.max(0, target.hp - nextStep.hpValue)
+                            }
+                            : splitShieldDamage(target, nextStep.value);
+                        return {
+                            ...target,
+                            shield: split.nextShield,
+                            hp: split.nextHp
+                        };
+                    };
+                    if (nextStep.target === 'enemy') updated.enemy = applyDamageStep(updated.enemy);
+                    else updated.player = applyDamageStep(updated.player);
+
+                    const targetKey = nextStep.target === 'enemy' ? 'enemy' : 'player';
+                    const target = updated[targetKey];
+                    const other = targetKey === 'player' ? updated.enemy : updated.player;
+                    const targetTrait = target?.trait || null;
+                    updated.traitUsage = updated.traitUsage || { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } };
+                    updated.traitUsage[targetKey] = updated.traitUsage[targetKey] || { revives: {}, eightGatesEnded: false };
+                    const canFeignDeathRevive =
+                        target?.hp <= 0 &&
+                        other?.hp > 0 &&
+                        (targetTrait?.modifiers?.battleRevive || 0) > 0 &&
+                        !updated.traitUsage[targetKey].revives?.[targetTrait.id];
+
+                    if (canFeignDeathRevive) {
+                        updated[targetKey] = { ...target, hp: 1 };
+                        if (targetKey === 'player') updated.playerHpAfter = 1;
+                        else updated.enemyHpAfter = 1;
+                        if (targetKey === 'player' && updated.playerFinalState) {
+                            updated.playerFinalState = { ...updated.playerFinalState, hp: 1 };
+                        }
+                        if (targetKey === 'enemy' && updated.enemyFinalState) {
+                            updated.enemyFinalState = { ...updated.enemyFinalState, hp: 1 };
+                        }
+                        updated.traitUsage[targetKey].revives = {
+                            ...(updated.traitUsage[targetKey].revives || {}),
+                            [targetTrait.id]: true
+                        };
+                        updated.activeMsg = `${targetTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
+                    }
+                    const finalHpAfter = targetKey === 'player' ? updated.playerHpAfter : updated.enemyHpAfter;
+                    const finalShieldAfter = targetKey === 'player' ? updated.playerShieldAfter : updated.enemyShieldAfter;
+                    if (updated[targetKey]?.hp <= 0 && finalHpAfter > 0) {
+                        updated[targetKey] = {
+                            ...updated[targetKey],
+                            hp: finalHpAfter,
+                            shield: finalShieldAfter !== undefined ? finalShieldAfter : (updated[targetKey].shield || 0)
+                        };
+                    }
+                    updated.flashTarget = nextStep.target;
+                    const damagePopId = nextStep.id || `${prev.turn}-${nextStep.target}-${nextStep.value}`;
+                    updated.damagePop = {
+                        id: damagePopId,
+                        target: nextStep.target,
+                        value: nextStep.value,
+                        effectType: nextStep.effectType,
+                        effectVariant: nextStep.effectVariant
+                    };
+                    setTimeout(() => {
+                        setBattleState(current => {
+                            if (!current || current.damagePop?.id !== damagePopId) return current;
+                            return { ...current, flashTarget: null };
+                        });
+                    }, 520);
+                    playBloop('attack');
+                } else if (nextStep.type === 'heal') {
+                    const targetKey = nextStep.target === 'enemy' ? 'enemy' : 'player';
+                    const target = updated[targetKey];
+                    const nextHp = Math.min(target.maxHp, target.hp + nextStep.value);
+                    const actualHeal = Math.max(0, nextHp - target.hp);
+                    updated[targetKey] = { ...target, hp: nextHp };
+                    if (actualHeal > 0) {
+                        updated.healPop = {
+                            id: nextStep.id || `${prev.turn}-${nextStep.target}-heal-${actualHeal}`,
+                            target: nextStep.target,
+                            value: actualHeal
+                        };
+                    }
+                    updated.flashTarget = null;
+                    playBloop('success');
+                } else if (nextStep.type === 'shield') {
+                    if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, shield: (updated.enemy.shield || 0) + nextStep.value };
+                    else updated.player = { ...updated.player, shield: (updated.player.shield || 0) + nextStep.value };
+                    updated.flashTarget = null;
+                    playBloop('success');
+                } else if (nextStep.type === 'run') {
+                    updated.phase = 'end';
+                    setTimeout(() => resolveBattleLoss(true), 1200);
+                } else {
+                    updated.flashTarget = null;
+                }
+
+                if (updated.player.hp <= 0 || updated.enemy.hp <= 0) {
+                    updated.stepQueue = [];
+                    updated.activeStepPending = false;
+                }
+                return updated;
+            }
+
+            console.log("[Battle Animation] End");
+            const reviveIfNeeded = (side, currentHp, state, otherHp) => {
+                const trait = state?.trait || (side === 'player' ? monsterTraits?.trait : null);
+                const usage = prev.traitUsage?.[side];
+                if (currentHp > 0 || otherHp <= 0) return currentHp;
+                if (!trait?.modifiers?.battleRevive) return currentHp;
+                if (usage?.revives?.[trait.id]) return currentHp;
+                return 1;
+            };
+            const rawPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
+            const rawEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
+            const finalPlayerHp = reviveIfNeeded('player', rawPlayerHp, prev.playerFinalState || prev.player, rawEnemyHp);
+            const finalEnemyHp = reviveIfNeeded('enemy', rawEnemyHp, prev.enemyFinalState || prev.enemy, rawPlayerHp);
+            const finalPlayerShield = prev.playerShieldAfter !== undefined ? prev.playerShieldAfter : (prev.player.shield || 0);
+            const finalEnemyShield = prev.enemyShieldAfter !== undefined ? prev.enemyShieldAfter : (prev.enemy.shield || 0);
+
+            if (finalPlayerHp <= 0 || finalEnemyHp <= 0) {
+                const isWin = finalEnemyHp <= 0;
+                const next = {
+                    ...prev,
+                    phase: 'end',
+                    activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...",
+                    flashTarget: null,
+                    activeStepPending: false,
+                    player: {
+                        ...(prev.playerFinalState || prev.player),
+                        hp: finalPlayerHp,
+                        shield: finalPlayerShield,
+                        moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
+                    },
+                    enemy: {
+                        ...(prev.enemyFinalState || prev.enemy),
+                        hp: finalEnemyHp,
+                        shield: finalEnemyShield,
+                        moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves
+                    },
+                    playerFinalState: null,
+                    enemyFinalState: null
+                };
+
+                const scaling = 1 + evolutionStage * 0.2;
+                const gain = Math.floor((prev.mode === 'trainer' ? 5 : 2) + scaling);
+
+                setTimeout(() => isWin ? resolveBattleWin(gain, prev.enemy) : resolveBattleLoss(), 1500);
+                return next;
+            }
+
+            const nextPhase = prev.encounterType === 'wild' ? 'combat' : 'player_action';
+            const finalPlayer = {
+                ...(prev.playerFinalState || prev.player),
+                hp: finalPlayerHp,
+                shield: finalPlayerShield,
+                moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
+            };
+            const finalEnemy = {
+                ...(prev.enemyFinalState || prev.enemy),
+                hp: finalEnemyHp,
+                shield: finalEnemyShield,
+                moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves
+            };
+
+            return {
+                ...prev,
+                phase: nextPhase,
+                activeMsg: "",
+                turn: prev.turn + 1,
+                flashTarget: null,
+                activeStepPending: false,
+                player: finalPlayer,
+                enemy: finalEnemy,
+                playerFinalState: null,
+                enemyFinalState: null
+            };
+        } catch (err) {
+            console.error("[Battle Animation] Fatal Error:", err);
+            return { ...prev, phase: 'player_action', stepQueue: [], activeStepPending: false };
+        }
+    };
+
     const startAdventure = () => {
         const now = Date.now();
         const cdMs = debugOverrides.adventureCD !== null ? debugOverrides.adventureCD : ADV_BATTLE_RULES.CD_MS;
@@ -995,217 +1206,11 @@ export default function App() {
     useEffect(() => {
         if (!battleState.active || battleState.phase !== 'action_streaming') return;
 
-        // 判斷當前動作類型決定停留時間
         const currentStep = battleState.activeStepPending ? battleState.lastStep : (battleState.stepQueue.length > 0 ? battleState.stepQueue[0] : null);
-        const delay = currentStep && currentStep.type === 'damage' ? 600 : 1300; // 訊息 1.3s，傷害閃爍 0.6s
+        const delay = getBattleStepDelay(currentStep);
 
         const timer = setTimeout(() => {
-            // 模擬按下 B 鍵觸發更新
-            setBattleState(prev => {
-                try {
-                    if (prev.stepQueue.length > 30) return prev; // Safety net
-
-                    // 執行與 handleB 邏輯相同的狀態更新
-                    if (prev.activeStepPending || prev.stepQueue.length > 0) {
-                        const nextStep = prev.activeStepPending ? prev.lastStep : prev.stepQueue[0];
-                        if (!nextStep) {
-                            return { ...prev, activeStepPending: false };
-                        }
-                        console.log("[Battle Animation] Step:", nextStep);
-                        const updated = {
-                            ...prev,
-                            stepQueue: prev.activeStepPending ? prev.stepQueue : prev.stepQueue.slice(1),
-                            activeStepPending: false,
-                            activeMsg: nextStep.text || ""
-                        };
-
-                        if (nextStep.type === 'damage') {
-                            const applyDamageStep = (target) => {
-                                const split = nextStep.shieldValue !== undefined && nextStep.hpValue !== undefined
-                                    ? {
-                                        nextShield: Math.max(0, (target.shield || 0) - nextStep.shieldValue),
-                                        nextHp: Math.max(0, target.hp - nextStep.hpValue)
-                                    }
-                                    : splitShieldDamage(target, nextStep.value);
-                                return {
-                                    ...target,
-                                    shield: split.nextShield,
-                                    hp: split.nextHp
-                                };
-                            };
-                            if (nextStep.target === 'enemy') updated.enemy = applyDamageStep(updated.enemy);
-                            else updated.player = applyDamageStep(updated.player);
-
-                            const targetKey = nextStep.target === 'enemy' ? 'enemy' : 'player';
-                            const target = updated[targetKey];
-                            const other = targetKey === 'player' ? updated.enemy : updated.player;
-                            const targetTrait = target?.trait || null;
-                            updated.traitUsage = updated.traitUsage || { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } };
-                            updated.traitUsage[targetKey] = updated.traitUsage[targetKey] || { revives: {}, eightGatesEnded: false };
-                            const canFeignDeathRevive =
-                                target?.hp <= 0 &&
-                                other?.hp > 0 &&
-                                (targetTrait?.modifiers?.battleRevive || 0) > 0 &&
-                                !updated.traitUsage[targetKey].revives?.[targetTrait.id];
-
-                            if (canFeignDeathRevive) {
-                                updated[targetKey] = { ...target, hp: 1 };
-                                if (targetKey === 'player') updated.playerHpAfter = 1;
-                                else updated.enemyHpAfter = 1;
-                                if (targetKey === 'player' && updated.playerFinalState) {
-                                    updated.playerFinalState = { ...updated.playerFinalState, hp: 1 };
-                                }
-                                if (targetKey === 'enemy' && updated.enemyFinalState) {
-                                    updated.enemyFinalState = { ...updated.enemyFinalState, hp: 1 };
-                                }
-                                updated.traitUsage[targetKey].revives = {
-                                    ...(updated.traitUsage[targetKey].revives || {}),
-                                    [targetTrait.id]: true
-                                };
-                                updated.activeMsg = `${targetTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
-                            }
-                            const finalHpAfter = targetKey === 'player' ? updated.playerHpAfter : updated.enemyHpAfter;
-                            const finalShieldAfter = targetKey === 'player' ? updated.playerShieldAfter : updated.enemyShieldAfter;
-                            if (updated[targetKey]?.hp <= 0 && finalHpAfter > 0) {
-                                updated[targetKey] = {
-                                    ...updated[targetKey],
-                                    hp: finalHpAfter,
-                                    shield: finalShieldAfter !== undefined ? finalShieldAfter : (updated[targetKey].shield || 0)
-                                };
-                            }
-                            updated.flashTarget = nextStep.target;
-                            const damagePopId = `${Date.now()}-${nextStep.target}-${nextStep.value}`;
-                            updated.damagePop = {
-                                id: damagePopId,
-                                target: nextStep.target,
-                                value: nextStep.value,
-                                effectType: nextStep.effectType,
-                                effectVariant: nextStep.effectVariant
-                            };
-                            setTimeout(() => {
-                                setBattleState(current => {
-                                    if (!current || current.damagePop?.id !== damagePopId) return current;
-                                    return { ...current, flashTarget: null };
-                                });
-                            }, 520);
-                            playBloop('attack');
-                        } else if (nextStep.type === 'heal') {
-                            const targetKey = nextStep.target === 'enemy' ? 'enemy' : 'player';
-                            const target = updated[targetKey];
-                            const nextHp = Math.min(target.maxHp, target.hp + nextStep.value);
-                            const actualHeal = Math.max(0, nextHp - target.hp);
-                            updated[targetKey] = { ...target, hp: nextHp };
-                            if (actualHeal > 0) {
-                                updated.healPop = {
-                                    id: `${Date.now()}-${nextStep.target}-heal-${actualHeal}`,
-                                    target: nextStep.target,
-                                    value: actualHeal
-                                };
-                            }
-                            updated.flashTarget = null;
-                            playBloop('success');
-                        } else if (nextStep.type === 'shield') {
-                            if (nextStep.target === 'enemy') updated.enemy = { ...updated.enemy, shield: (updated.enemy.shield || 0) + nextStep.value };
-                            else updated.player = { ...updated.player, shield: (updated.player.shield || 0) + nextStep.value };
-                            updated.flashTarget = null;
-                            playBloop('success');
-                        } else if (nextStep.type === 'run') {
-                            updated.phase = 'end';
-                            setTimeout(() => resolveBattleLoss(true), 1200);
-                        } else {
-                            updated.flashTarget = null;
-                        }
-
-                        if (updated.player.hp <= 0 || updated.enemy.hp <= 0) {
-                            updated.stepQueue = [];
-                            updated.activeStepPending = false;
-                        }
-                        return updated;
-                    } else {
-                        console.log("[Battle Animation] End");
-                        // 隊列結束，進行最後的數值校準
-                        const reviveIfNeeded = (side, currentHp, state, otherHp) => {
-                            const trait = state?.trait || (side === 'player' ? monsterTraits?.trait : null);
-                            const usage = prev.traitUsage?.[side];
-                            if (currentHp > 0 || otherHp <= 0) return currentHp;
-                            if (!trait?.modifiers?.battleRevive) return currentHp;
-                            if (usage?.revives?.[trait.id]) return currentHp;
-                            return 1;
-                        };
-                        const rawPlayerHp = prev.playerHpAfter !== undefined ? prev.playerHpAfter : prev.player.hp;
-                        const rawEnemyHp = prev.enemyHpAfter !== undefined ? prev.enemyHpAfter : prev.enemy.hp;
-                        const finalPlayerHp = reviveIfNeeded('player', rawPlayerHp, prev.playerFinalState || prev.player, rawEnemyHp);
-                        const finalEnemyHp = reviveIfNeeded('enemy', rawEnemyHp, prev.enemyFinalState || prev.enemy, rawPlayerHp);
-                        const finalPlayerShield = prev.playerShieldAfter !== undefined ? prev.playerShieldAfter : (prev.player.shield || 0);
-                        const finalEnemyShield = prev.enemyShieldAfter !== undefined ? prev.enemyShieldAfter : (prev.enemy.shield || 0);
-
-                        if (finalPlayerHp <= 0 || finalEnemyHp <= 0) {
-                            const isWin = finalEnemyHp <= 0;
-                            const next = {
-                                ...prev,
-                                phase: 'end',
-                                activeMsg: isWin ? "🏆 戰鬥勝利！" : "💀 戰體力耗盡...",
-                                flashTarget: null,
-                                activeStepPending: false,
-                                player: {
-                                    ...(prev.playerFinalState || prev.player),
-                                    hp: finalPlayerHp,
-                                    shield: finalPlayerShield,
-                                    moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
-                                },
-                                enemy: {
-                                    ...(prev.enemyFinalState || prev.enemy),
-                                    hp: finalEnemyHp,
-                                    shield: finalEnemyShield,
-                                    moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves
-                                },
-                                playerFinalState: null,
-                                enemyFinalState: null
-                            };
-
-                            // 動態計算經驗值 (與 handleB 邏輯同步)
-                            const scaling = 1 + evolutionStage * 0.2;
-                            const gain = Math.floor((prev.mode === 'trainer' ? 5 : 2) + scaling);
-
-                            setTimeout(() => isWin ? resolveBattleWin(gain, prev.enemy) : resolveBattleLoss(), 1500);
-                            return next;
-                        }
-
-                        // 關鍵修正：野外戰鬥需回到 'combat' 觸發自動循環，訓練家戰鬥則回到 'player_action' 等待指令
-                        const nextPhase = prev.encounterType === 'wild' ? 'combat' : 'player_action';
-
-                        // 利用計算結果進行最終 HP 校準，同時百分之百保留本地所有其他屬性 (如 moves)
-                        const finalPlayer = {
-                            ...(prev.playerFinalState || prev.player),
-                            hp: finalPlayerHp,
-                            shield: finalPlayerShield,
-                            moves: (prev.playerFinalState?.moves?.length > 0) ? prev.playerFinalState.moves : prev.player.moves
-                        };
-                        const finalEnemy = {
-                            ...(prev.enemyFinalState || prev.enemy),
-                            hp: finalEnemyHp,
-                            shield: finalEnemyShield,
-                            moves: (prev.enemyFinalState?.moves?.length > 0) ? prev.enemyFinalState.moves : prev.enemy.moves
-                        };
-
-                        return {
-                            ...prev,
-                            phase: nextPhase,
-                            activeMsg: "",
-                            turn: prev.turn + 1,
-                            flashTarget: null,
-                            activeStepPending: false,
-                            player: finalPlayer,
-                            enemy: finalEnemy,
-                            playerFinalState: null,
-                            enemyFinalState: null
-                        };
-                    }
-                } catch (err) {
-                    console.error("[Battle Animation] Fatal Error:", err);
-                    return { ...prev, phase: 'player_action', stepQueue: [], activeStepPending: false };
-                }
-            });
+            setBattleState(advanceBattleStreaming);
         }, delay);
 
         return () => clearTimeout(timer);
@@ -1482,14 +1487,7 @@ export default function App() {
                 const currentIdx = battleState.menuIdx || 0;
                 const move = battleState.player?.moves?.[currentIdx];
                 if (move) {
-                    // ⏱️ 沉默緩衝 5 秒：若對手已經出招 (pvpRemoteMoveRef 有值)，延後 5 秒結算以確保對齊
-                    if (isPvpMode && pvpRemoteMoveRef.current) {
-                        // 先將狀態設為等待，視覺上維持「等待中」避免玩家以為當機
-                        setBattleState(prev => ({ ...prev, phase: 'waiting_opponent' }));
-                        setTimeout(() => executeBattleTurn('attack', move), 5000);
-                    } else {
-                        executeBattleTurn('attack', move);
-                    }
+                    executeBattleTurn('attack', move);
                 } else {
                     const errorMsg = battleState.mode === 'pvp' ? "尚未裝備技能！" : "該格子尚未裝備技能！";
                     const tempLogs = [...battleState.logs, errorMsg];
@@ -1567,12 +1565,6 @@ export default function App() {
 
         if (isEvolving || isAdvMode) {
             // --- 戰鬥播報模式 (Step-by-Step) --- 
-            // ❌ 已將手動 B 鍵推進移除，由 useEffect 自動播放引擎接手
-            if (battleState && battleState.active && battleState.phase === 'action_streaming') {
-                return;
-            }
-
-            // ❌ 移除手動按 B 推進播報 (由自動 Timer 接手)
             if (battleState?.active) {
                 return; // 戰鬥期間（包含 intro, player_action, streaming, end）B 鍵都不應觸發冒險結束
             }
