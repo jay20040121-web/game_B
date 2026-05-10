@@ -245,15 +245,7 @@ const COLOR_MAP = {
 };
 
 // --- CSS Animations for Battle ---
-const BATTLE_STYLES = `
-@keyframes damage-flash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.12; }
-}
-.damage-flash {
-    animation: damage-flash 0.12s ease-in-out 4;
-}
-`;
+const BATTLE_STYLES = ``;
 
 const PixelArt = ({ sprite, className = "", scale = 2 }) => {
     if (!sprite) return null;

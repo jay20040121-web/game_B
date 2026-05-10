@@ -245,55 +245,63 @@ export default function BattleAdventureOverlay({
                         )}
                     </div>
                     <StatusRecoveryCue status={enemyStatus} className="left-3 top-[58px]" />
-                    <div className={`absolute -top-16 right-0 z-10 transform scale-[1.1] ${battleState.flashTarget === 'enemy' ? 'damage-flash' : ''}`}>
-                        {battleState.damagePop?.target === 'enemy' && (
-                            <>
-                                <DamageEffect
-                                    key={`${battleState.damagePop.id}-effect`}
-                                    pop={battleState.damagePop}
-                                    className="left-[20%] top-[40%] -translate-x-1/2 -translate-y-1/2"
+                    <div className="absolute -top-16 right-0 z-10">
+                        <div className="relative transform scale-[1.1]">
+                            <DitheredSprite id={battleState?.enemy?.id} scale={2} />
+                        </div>
+                        <div className="pointer-events-none absolute inset-0 z-[140]">
+                            {battleState.damagePop?.target === 'enemy' && (
+                                <>
+                                    <DamageEffect
+                                        key={`${battleState.damagePop.id}-effect`}
+                                        pop={battleState.damagePop}
+                                        className="left-[20%] top-[40%] -translate-x-1/2 -translate-y-1/2"
+                                    />
+                                    <DamageDigits
+                                        key={battleState.damagePop.id}
+                                        pop={battleState.damagePop}
+                                        className="left-1/2 top-[68%] -translate-x-1/2 -translate-y-1/2"
+                                    />
+                                </>
+                            )}
+                            {battleState.healPop?.target === 'enemy' && (
+                                <HealDigits
+                                    key={battleState.healPop.id}
+                                    pop={battleState.healPop}
+                                    className="left-1/2 top-[64%] -translate-x-1/2 -translate-y-1/2"
                                 />
-                                <DamageDigits
-                                    key={battleState.damagePop.id}
-                                    pop={battleState.damagePop}
-                                    className="left-1/2 top-[68%] -translate-x-1/2 -translate-y-1/2"
-                                />
-                            </>
-                        )}
-                        {battleState.healPop?.target === 'enemy' && (
-                            <HealDigits
-                                key={battleState.healPop.id}
-                                pop={battleState.healPop}
-                                className="left-1/2 top-[64%] -translate-x-1/2 -translate-y-1/2"
-                            />
-                        )}
-                        <DitheredSprite id={battleState?.enemy?.id} scale={2} />
+                            )}
+                        </div>
                     </div>
 
                     {/* Player Area */}
-                    <div className={`absolute bottom-6 -left-2 z-10 transform scale-[1.4] origin-bottom px-2 ${battleState.flashTarget === 'player' ? 'damage-flash' : ''}`}>
-                        {battleState.damagePop?.target === 'player' && (
-                            <>
-                                <DamageEffect
-                                    key={`${battleState.damagePop.id}-effect`}
-                                    pop={battleState.damagePop}
-                                    className="left-[20%] top-[40%] -translate-x-1/2 -translate-y-1/2"
+                    <div className="absolute bottom-6 -left-2 z-10 px-2">
+                        <div className="relative transform scale-[1.4] origin-bottom">
+                            <DitheredBackSprite id={battleState?.player?.id} scale={2} />
+                        </div>
+                        <div className="pointer-events-none absolute inset-0 z-[140]">
+                            {battleState.damagePop?.target === 'player' && (
+                                <>
+                                    <DamageEffect
+                                        key={`${battleState.damagePop.id}-effect`}
+                                        pop={battleState.damagePop}
+                                        className="left-[20%] top-[40%] -translate-x-1/2 -translate-y-1/2"
+                                    />
+                                    <DamageDigits
+                                        key={battleState.damagePop.id}
+                                        pop={battleState.damagePop}
+                                        className="left-1/2 top-[72%] -translate-x-1/2 -translate-y-1/2"
+                                    />
+                                </>
+                            )}
+                            {battleState.healPop?.target === 'player' && (
+                                <HealDigits
+                                    key={battleState.healPop.id}
+                                    pop={battleState.healPop}
+                                    className="left-1/2 top-[68%] -translate-x-1/2 -translate-y-1/2"
                                 />
-                                <DamageDigits
-                                    key={battleState.damagePop.id}
-                                    pop={battleState.damagePop}
-                                    className="left-1/2 top-[72%] -translate-x-1/2 -translate-y-1/2"
-                                />
-                            </>
-                        )}
-                        {battleState.healPop?.target === 'player' && (
-                            <HealDigits
-                                key={battleState.healPop.id}
-                                pop={battleState.healPop}
-                                className="left-1/2 top-[68%] -translate-x-1/2 -translate-y-1/2"
-                            />
-                        )}
-                        <DitheredBackSprite id={battleState?.player?.id} scale={2} />
+                            )}
+                        </div>
                     </div>
                     <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pr-2 shadow-sm backdrop-blur-[2px]">
                         <div className="flex items-center gap-1">
