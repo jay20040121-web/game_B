@@ -153,12 +153,6 @@ Firebase compat SDK 設定在 `src/utils/firebase.js`。
 UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大型 landing page、商業網站式 hero 區塊，或和現有視覺語言不一致的設計系統。
 長字串如果會爆框，優先考慮 `src/components/AutoFitText.jsx`，再搭配 `truncate`、`line-clamp` 或斷行。
 
-### 戰鬥 GIF 受擊渲染備註
-
-- 戰鬥怪獸的 GIF 在受擊時曾因 `damage-flash` 使用 `opacity` 動畫而卡成模糊 / 馬賽克狀態。
-- 目前較穩定的做法是讓受擊閃爍改用 `brightness / contrast` 之類的 `filter`，不要再直接動 sprite 本體的 `opacity`。
-- 若之後又看到戰鬥 GIF 受擊後沒有恢復正常，先查 `src/components/SpriteRenderer.jsx` 的 `damage-flash` 與 `imageRendering`，再查 `BattleAdventureOverlay.jsx` 的受擊包裝層。
-
 ## 素材
 
 素材透過 Vite public path 從 `public/assets/` 讀取。`App.jsx` 很多地方會用 `import.meta.env.BASE_URL` 組出素材路徑。

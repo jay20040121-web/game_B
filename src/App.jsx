@@ -375,7 +375,6 @@ export default function App() {
         activeMsg: "",  // 新增：目前正在播報的文字
         flashTarget: null // 'player' | 'enemy' | null
     });
-    const damageFlashTimerRef = useRef(null);
 
     const [pendingAdvLogs, setPendingAdvLogs] = useState([]); // 儲存待顯示的冒險日誌隊列
 
@@ -963,8 +962,7 @@ export default function App() {
                         effectType: nextStep.effectType,
                         effectVariant: nextStep.effectVariant
                     };
-                    if (damageFlashTimerRef.current) clearTimeout(damageFlashTimerRef.current);
-                    damageFlashTimerRef.current = setTimeout(() => {
+                    setTimeout(() => {
                         setBattleState(current => {
                             if (!current || current.damagePop?.id !== damagePopId) return current;
                             return { ...current, flashTarget: null };
