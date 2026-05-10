@@ -3007,9 +3007,10 @@ export default function App() {
     // --- PVP 排行榜 (已模組化至 useLeaderboard) ---
     const {
         leaderboard, leaderboardPage, setLeaderboardPage,
+        allLeaderboard,
         isLeaderboardOpen, setIsLeaderboardOpen,
         isLeaderboardLoading,
-        fetchLeaderboard, updatePvpStats
+        fetchLeaderboard, fetchAllLeaderboard, updatePvpStats
     } = useLeaderboard({ user, getMonsterId: getMonsterIdWrapped, updateDialogue });
 
     const pvp = usePvpConnection({
@@ -3044,6 +3045,12 @@ export default function App() {
     useEffect(() => {
         if (user && leaderboard.length === 0 && !isLeaderboardLoading) {
             fetchLeaderboard({ silent: true });
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (user && allLeaderboard.length === 0 && !isLeaderboardLoading) {
+            fetchAllLeaderboard({ silent: true });
         }
     }, [user]);
 
@@ -3533,7 +3540,7 @@ export default function App() {
                                                     }}
                                                 >
                                                     <div style={{ animation: 'egg-pulse 2s infinite ease-in-out' }}>
-                                                        <DitheredSprite id={bootMonsterId} scale={1} pure={true} />
+                                                        <DitheredSprite id={bootMonsterId} scale={0.85} pure={true} smoothAnimated={true} />
                                                     </div>
                                                 </div>
                                             );

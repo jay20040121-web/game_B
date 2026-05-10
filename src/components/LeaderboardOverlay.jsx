@@ -19,8 +19,9 @@ export default function LeaderboardOverlay({
                 backgroundPosition: 'center'
             }}
         >
-            <div className="absolute inset-0 bg-blue-900/78 z-0"></div>
-            <div className="absolute inset-0 bg-black/22 z-0"></div>
+            <div className="absolute inset-0 bg-blue-950/88 z-0"></div>
+            <div className="absolute inset-0 bg-black/34 z-0"></div>
+            <div className="absolute inset-0 z-[1] bg-[url('/assets/BG/共用底圖.png')] bg-cover bg-center opacity-35 blur-sm pointer-events-none"></div>
 
             <div className="relative z-10 w-full h-full max-w-[320px] flex flex-col border-4 border-[#1a1a1a] bg-[#9dae8a]/96 text-[#1a1a1a] shadow-[6px_6px_0_rgba(0,0,0,0.45)] overflow-hidden">
                 <div className="w-full bg-[#383a37] text-white px-2 py-1 flex justify-between items-center border-b-2 border-[#1a1a1a]">
@@ -37,7 +38,7 @@ export default function LeaderboardOverlay({
                         </div>
                     ) : (
                         leaderboard.slice(leaderboardPage * 5, (leaderboardPage * 5) + 5).map((item, idx) => (
-                            <div key={item.id} className="bg-[#383a37]/85 border-2 border-[#1a1a1a] p-1 flex items-center gap-2 h-[42px] relative overflow-hidden">
+                            <div key={item.id} className="bg-[#383a37] border-2 border-[#1a1a1a] p-1 flex items-center gap-2 h-[42px] relative overflow-hidden">
                                 <div className="w-6 text-[12px] font-black italic text-white/50">
                                     #{(leaderboardPage * 5) + idx + 1}
                                 </div>
