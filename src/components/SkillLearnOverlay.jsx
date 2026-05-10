@@ -88,7 +88,7 @@ export default function SkillLearnOverlay({
                                 onClick={() => handleB(0)}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                             >
-                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 0 ? '#ff5252' : '#7a8a6a', color: skillSelectIdx === 0 ? '#fff' : '#1a1a1a', fontSize: '10px', boxShadow: skillSelectIdx === 0 ? '0 0 8px #ff5252' : 'none' }}>
+                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 0 ? '#ff5252' : '#7a8a6a', color: skillSelectIdx === 0 ? '#fff' : '#1a1a1a', fontSize: '10px', boxShadow: 'none' }}>
                                     {skillSelectIdx === 0 ? '選中' : '是'}
                                 </div>
                             </div>
@@ -96,7 +96,7 @@ export default function SkillLearnOverlay({
                                 onClick={() => handleB(1)}
                                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
                             >
-                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 1 ? '#ffca28' : '#7a8a6a', color: '#1a1a1a', fontSize: '10px', boxShadow: skillSelectIdx === 1 ? '0 0 8px #ffca28' : 'none' }}>
+                                <div style={{ padding: '4px 12px', border: '2px solid #111', backgroundColor: skillSelectIdx === 1 ? '#ffca28' : '#7a8a6a', color: '#1a1a1a', fontSize: '10px', boxShadow: 'none' }}>
                                     {skillSelectIdx === 1 ? '選中' : '否'}
                                 </div>
                             </div>

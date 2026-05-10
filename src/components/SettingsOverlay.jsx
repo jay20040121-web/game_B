@@ -98,7 +98,7 @@ export default function SettingsOverlay({
         }}>
             <div className="absolute inset-0 bg-black/60 z-0 backdrop-blur-[2px]"></div>
 
-            <div className="w-full bg-[#383a37]/80 text-white [text-shadow:0_0_4px_#fff] text-[12px] px-3 py-2 flex justify-center items-center mb-2 font-black relative z-10 shadow-sm border-b-2 border-[#1a1a1a]">
+            <div className="w-full bg-[#383a37]/80 text-white text-[12px] px-3 py-2 flex justify-center items-center mb-2 font-black relative z-10 shadow-sm border-b-2 border-[#1a1a1a]">
                 <span>系統設定</span>
             </div>
 

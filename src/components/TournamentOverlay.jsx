@@ -116,7 +116,7 @@ export function TournamentOverlay({
                     </div>
 
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="text-[#fff] text-4xl font-black italic opacity-0 animate-[popVs_0.5s_forwards_1s] drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
+                        <div className="text-[#fff] text-4xl font-black italic opacity-0 animate-[popVs_0.5s_forwards_1s]">
                             VS
                         </div>
                     </div>
@@ -125,7 +125,7 @@ export function TournamentOverlay({
 
             {tPhase === 'card_selection' && (
                 <div className="flex flex-col items-center w-full animate-fade-in">
-                    <h2 className="text-[#ffca28] text-sm font-black mb-1 drop-shadow-md">挑選獎勵卡片</h2>
+                    <h2 className="text-[#ffca28] text-sm font-black mb-1">挑選獎勵卡片</h2>
                     <div className="text-[7px] text-red-400 font-bold mb-3 animate-pulse">※ 請直接點擊螢幕內的卡片進行選擇</div>
                     
                     <div className="flex flex-col gap-3 w-full px-2">
@@ -277,7 +277,7 @@ export function TournamentOverlay({
                         className="absolute inset-0 w-full h-full object-cover z-0"
                     />
                     <div className="relative z-10 flex flex-col items-center w-full h-full pt-3 pb-6 animate-[sparkle_2s_infinite]">
-                        <div className="scale-[2.0] drop-shadow-[0_0_30px_#fff]">
+                        <div className="scale-[2.0]">
                             <DitheredSprite id={myMonsterId} scale={3} />
                         </div>
                         
@@ -310,7 +310,7 @@ export function TournamentOverlay({
             {/* 手動前進提示 */}
             {['intro', 'bracket', 'battle_intro'].includes(tPhase) && (
                 <div className="absolute top-2 z-[130] animate-bounce flex flex-col items-center">
-                    <div className="text-[#ffca28] text-[9px] font-bold tracking-[0.1em] mb-1 bg-black/60 px-2 py-0.5 rounded shadow-[0_0_5px_rgba(0,0,0,0.5)]">
+                    <div className="text-[#ffca28] text-[9px] font-bold tracking-[0.1em] mb-1 bg-black/60 px-2 py-0.5 rounded">
                         按 B 鍵確認下一步
                     </div>
                     <div className="w-10 h-1 bg-white/20 rounded-full overflow-hidden border border-black/30">

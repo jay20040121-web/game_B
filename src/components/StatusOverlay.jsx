@@ -101,7 +101,7 @@ export default function StatusOverlay({
         }}>
             <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
 
-            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black relative z-10 shadow-sm">
+            <div className="w-full bg-[#383a37]/50 text-white text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black relative z-10 shadow-sm">
                 <span>{isMovesPage ? '技能欄位' : '狀態資訊'}</span>
                 <button type="button" onClick={onToggleStatusPage} className="text-[9px] text-[#ffca28] underline decoration-dotted">
                     [B] {isMovesPage ? '狀態' : '技能'}

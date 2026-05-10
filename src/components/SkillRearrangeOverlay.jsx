@@ -72,7 +72,7 @@ export default function SkillRearrangeOverlay({
             }}>
             <div className="absolute inset-0 bg-purple-900/40 z-0"></div>
 
-            <div className="w-full bg-[#383a37]/80 text-white [text-shadow:0_0_4px_#fff] text-[10px] px-2 py-1 flex justify-center items-center mb-1 font-black relative z-10 shadow-lg border-b-2 border-white/20">
+            <div className="w-full bg-[#383a37]/80 text-white text-[10px] px-2 py-1 flex justify-center items-center mb-1 font-black relative z-10 shadow-lg border-b-2 border-white/20">
                 <span>技能順序調整</span>
             </div>
 

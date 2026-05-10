@@ -3363,7 +3363,7 @@ export default function App() {
                                     }}>
                                     <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
 
-                                    <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
+                                    <div className="w-full bg-[#383a37]/50 text-white text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
                                         <span>互動系統</span>
                                     </div>
 
@@ -3387,7 +3387,7 @@ export default function App() {
                                                         key={idx}
                                                         className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center backdrop-blur-[2px]
                                                     ${isSelected
-                                                                ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-white/40 scale-100 opacity-100 z-10'
+                                                                ? 'bg-[#383a37]/50 text-[#ffca28] border-white/40 scale-100 opacity-100 z-10'
                                                                 : 'bg-white/10 text-white/50 border-white/10 scale-90 opacity-40 blur-[0.5px]'
                                                             }`}
                                                         style={{

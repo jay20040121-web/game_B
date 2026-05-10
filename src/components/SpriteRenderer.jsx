@@ -4,7 +4,7 @@ import { MONSTER_ASSET_IDS } from '../monsterData';
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
-const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true, forceStatic = false }) => {
+const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true, forceStatic = false, smoothAnimated = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     
@@ -57,7 +57,8 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
 
     const baseSize = 68;
     const targetSize = baseSize * scale;
-    const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
+    const useSmoothAnimated = effectiveAnimated && smoothAnimated;
+    const innerScale = useSmoothAnimated ? 1 : (naturalWidth >= 120 ? 0.7 : 0.55);
 
     // --- Sprite Offsets ---
     // 可以在這裡針對各別怪獸 ID 設定垂直位移 (向下為正，向上為負)
@@ -97,7 +98,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
                     minWidth: '100%',
                     minHeight: '100%',
                     objectFit: 'contain',
-                    imageRendering: 'pixelated',
+                    imageRendering: useSmoothAnimated ? 'auto' : 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
                     transform: `scale(${innerScale}) translateY(${offsetY})`,
@@ -113,7 +114,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
 // ==========================================
 // 背面 4-Color 網點運算引擎
 // ==========================================
-const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true, forceStatic = false }) => {
+const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true, forceStatic = false, smoothAnimated = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
 
@@ -164,7 +165,8 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
 
     const baseSize = 68;
     const targetSize = baseSize * scale;
-    const innerScale = naturalWidth >= 120 ? 0.7 : 0.55;
+    const useSmoothAnimated = effectiveAnimated && smoothAnimated;
+    const innerScale = useSmoothAnimated ? 1 : (naturalWidth >= 120 ? 0.7 : 0.55);
 
     // --- Sprite Offsets ---
     // 可以在這裡針對各別怪獸 ID 設定垂直位移 (向下為正，向上為負)
@@ -202,7 +204,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
                     minWidth: '100%',
                     minHeight: '100%',
                     objectFit: 'contain',
-                    imageRendering: 'pixelated',
+                    imageRendering: useSmoothAnimated ? 'auto' : 'pixelated',
                     opacity: 1.0,
                     pointerEvents: 'none',
                     transform: `scale(${innerScale}) translateY(${offsetY})`,

@@ -117,7 +117,7 @@ export default function TutorialAI({ isOpen, onClose }) {
     return (
         <div className="absolute inset-0 z-[1000] flex items-center justify-center p-4">
             {/* 背景遮罩 */}
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+            <div className="absolute inset-0 bg-black/80" onClick={onClose}></div>
 
             {/* 主視窗 */}
             <div className="relative w-full h-full bg-[#8fa07e] border-[4px] border-[#1a1a1a] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
