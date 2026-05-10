@@ -1,4 +1,14 @@
 export const checkPreTurnStatus = (state, rng = Math.random) => {
+    if (state.flinch) {
+        return {
+            canAct: false,
+            message: "畏縮了，無法行動！",
+            nextStatus: state.status,
+            nextTurns: state.statusTurns || 0,
+            clearFlinch: true
+        };
+    }
+
     if (!state.status) return { canAct: true, message: null };
 
     let nextStatus = state.status;
@@ -19,9 +29,8 @@ export const checkPreTurnStatus = (state, rng = Math.random) => {
         return {
             canAct: false,
             message: "還在睡夢中...",
-            nextStatus: null,
-            nextTurns: Math.max(0, nextT),
-            clearStatus: 'sleep'
+            nextStatus: 'sleep',
+            nextTurns: Math.max(0, nextT)
         };
     }
 
@@ -50,9 +59,8 @@ export const checkPreTurnStatus = (state, rng = Math.random) => {
         return {
             canAct: false,
             message: "被冰塊凍住了，無法行動！",
-            nextStatus: null,
-            nextTurns: Math.max(0, nextT),
-            clearStatus: 'freeze'
+            nextStatus: 'freeze',
+            nextTurns: Math.max(0, nextT)
         };
     }
 

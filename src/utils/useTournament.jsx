@@ -42,7 +42,7 @@ const TOURNAMENT_DIFFICULTY_BY_ROUND = [
 ];
 
 const TOURNAMENT_TOTAL_ROUNDS = TOURNAMENT_DIFFICULTY_BY_ROUND.length;
-const PVP_CHAMPION_CHALLENGE_CHANCE = 1;
+const PVP_CHAMPION_CHALLENGE_CHANCE = 0.5;
 
 const MONSTER_STAGE_BY_ID = {
     1000: 1, 1019: 1,
@@ -94,7 +94,7 @@ const getLeaderboardBattleProfile = (entry) => {
         type: profile?.type || species.types || ['normal'],
         moves: resolvedMoves,
         moveUpgrades: profile?.moveUpgrades || entry?.moveUpgrades || {},
-        trait: profile?.trait || entry?.trait || null
+        trait: profile?.trait || profile?.monsterTraits?.trait || entry?.trait || entry?.monsterTraits?.trait || null
     };
 };
 

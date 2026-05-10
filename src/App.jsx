@@ -2357,7 +2357,7 @@ export default function App() {
             eType = eStatsRef.types;
             const isBaby = evolutionStage < 2;
             const isElite = Math.random() < 0.12 && !isBaby;
-            eLevel = Math.min(100, Math.min(level, isElite ? level : Math.floor(level * (0.8 + Math.random() * 0.4))));
+            eLevel = Math.min(100, Math.min(level, isElite ? level : Math.floor(level * (0.7 + Math.random() * 0.2))));
 
             // 野生怪隨機分配 IV 與 性格修正
             const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
@@ -2372,7 +2372,7 @@ export default function App() {
 
             const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
             const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
-            const eMoveUpgrades = generateNpcMoveUpgrades(eMoves, level);
+            const eMoveUpgrades = {};
             resultState = {
                 active: true, mode: 'trainer', encounterType: 'wild', phase: 'intro', turn: 1,
                 player: {

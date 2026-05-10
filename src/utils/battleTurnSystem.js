@@ -330,6 +330,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             attacker.status = preCheck.nextStatus;
             attacker.statusTurns = preCheck.nextTurns;
         }
+        if (preCheck.clearFlinch) {
+            attacker.flinch = false;
+        }
 
         if (!preCheck.canAct) {
             if (preCheck.message) {
