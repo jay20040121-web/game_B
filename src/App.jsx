@@ -67,6 +67,7 @@ import { TournamentOverlay } from './components/TournamentOverlay';
 
 
 export default function App() {
+    const isDesktopBuild = import.meta.env.VITE_DESKTOP === '1';
     const [initialData] = useState(() => loadSaveData());
 
     const getInit = (key, defaultVal) => {
@@ -3089,7 +3090,7 @@ export default function App() {
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
             <style dangerouslySetInnerHTML={{ __html: BATTLE_STYLES }} />
 
-            {isLocalhost && (
+            {isLocalhost && !isDesktopBuild && (
                 <button
                     onClick={() => {
                         console.log("🛠️ Debug Button Clicked!");
@@ -3142,8 +3143,12 @@ export default function App() {
                 <div
                     className="relative flex flex-col items-center justify-center pointer-events-auto transition-transform duration-100 ease-out"
                     style={{
-                        transform: `scale(${displayScale})`,
-                        transformOrigin: 'center center',
+                        ...(isDesktopBuild
+                            ? { zoom: displayScale }
+                            : {
+                                transform: `scale(${displayScale})`,
+                                transformOrigin: 'center center'
+                            }),
                         imageRendering: 'pixelated',
                         width: '320px',
                         height: '620px'
@@ -3363,7 +3368,7 @@ export default function App() {
                                     }}>
                                     <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
 
-                                    <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
+                                    <div className="w-full bg-[#383a37]/50 text-white text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
                                         <span>互動系統</span>
                                     </div>
 
@@ -3387,7 +3392,7 @@ export default function App() {
                                                         key={idx}
                                                         className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center backdrop-blur-[2px]
                                                     ${isSelected
-                                                                ? 'bg-[#383a37]/50 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] border-white/40 scale-100 opacity-100 z-10'
+                                                                ? 'bg-[#383a37]/50 text-[#ffca28] border-white/40 scale-100 opacity-100 z-10'
                                                                 : 'bg-white/10 text-white/50 border-white/10 scale-90 opacity-40 blur-[0.5px]'
                                                             }`}
                                                         style={{

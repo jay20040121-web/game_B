@@ -85,7 +85,7 @@ function DamageDigits({ pop, className = "", sheet = DAMAGE_DIGIT_SHEET }) {
                         return (
                             <span
                                 key={`${pop.id}-${idx}`}
-                                className="text-[18px] leading-none font-black text-[#ffca28] [text-shadow:2px_2px_0_#5b2500]"
+                                className="text-[18px] leading-none font-black text-[#ffca28]"
                             >
                                 {digit}
                             </span>
@@ -192,7 +192,7 @@ export default function BattleAdventureOverlay({
         }}>
             <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
 
-            <div className="w-full bg-[#383a37]/50 text-white [text-shadow:0_0_4px_#fff] text-[10px] px-2 py-1 flex justify-between items-center mb-1 relative z-10 shadow-sm">
+            <div className="w-full bg-[#383a37]/55 backdrop-blur-sm text-white text-[10px] px-2 py-1 flex justify-between items-center mb-1 relative z-10 shadow-sm">
                 <span>{battleState.mode === 'tournament' ? '聯盟大賽' : (isPvpMode ? '宇宙連線對戰' : '冒險模式')} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
                 <span>{isPvpMode || battleState.mode === 'tournament' ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
             </div>
@@ -220,7 +220,7 @@ export default function BattleAdventureOverlay({
                         }
                     `}</style>
                     {/* Enemy Area */}
-                    <div className="absolute top-2 left-2 flex flex-col items-start min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pl-2 shadow-sm backdrop-blur-[2px]">
+                    <div className="absolute top-2 left-2 flex flex-col items-start min-w-[100px] z-20 bg-white/12 backdrop-blur-sm border-2 border-white/20 rounded-md p-1 pl-2 shadow-sm">
                         <div className="flex items-center gap-1">
                             <div className="text-[10px] font-bold text-white truncate w-[60px] leading-tight">{battleState?.enemy?.name}</div>
                             {enemyStatus && (
@@ -241,7 +241,7 @@ export default function BattleAdventureOverlay({
                             </div>
                         )}
                         {(battleState?.enemy?.shield || 0) > 0 && (
-                            <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-left w-full drop-shadow-md">
+                            <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-left w-full">
                                 🛡️ {battleState.enemy.shield}
                             </div>
                         )}
@@ -287,12 +287,12 @@ export default function BattleAdventureOverlay({
                                     <DamageEffect
                                         key={`${battleState.damagePop.id}-effect`}
                                         pop={battleState.damagePop}
-                                        className="left-[20%] top-[40%] -translate-x-1/2 -translate-y-1/2"
+                                        className="left-[20%] top-[32%] -translate-x-1/2 -translate-y-1/2"
                                     />
                                     <DamageDigits
                                         key={battleState.damagePop.id}
                                         pop={battleState.damagePop}
-                                        className="left-1/2 top-[72%] -translate-x-1/2 -translate-y-1/2"
+                                        className="left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2"
                                     />
                                 </>
                             )}
@@ -300,12 +300,12 @@ export default function BattleAdventureOverlay({
                                 <HealDigits
                                     key={battleState.healPop.id}
                                     pop={battleState.healPop}
-                                    className="left-1/2 top-[68%] -translate-x-1/2 -translate-y-1/2"
+                                    className="left-1/2 top-[56%] -translate-x-1/2 -translate-y-1/2"
                                 />
                             )}
                         </div>
                     </div>
-                    <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-white/10 border-2 border-white/20 rounded-md p-1 pr-2 shadow-sm backdrop-blur-[2px]">
+                    <div className="absolute bottom-16 right-2 flex flex-col items-end min-w-[100px] z-20 bg-white/12 backdrop-blur-sm border-2 border-white/20 rounded-md p-1 pr-2 shadow-sm">
                         <div className="flex items-center gap-1">
                             {playerStatus && (
                                 <span className={`text-[8px] px-1 rounded-sm border border-black/20 font-black ${STATUS_BADGE_META[playerStatus]?.className || 'bg-gray-400 text-white'}`}>
@@ -326,14 +326,14 @@ export default function BattleAdventureOverlay({
                             </div>
                         )}
                         {(battleState?.player?.shield || 0) > 0 && (
-                            <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-right w-full drop-shadow-md">
+                            <div className="text-[8px] font-black text-[#80deea] mt-0.5 text-right w-full">
                                 🛡️ {battleState.player.shield}
                             </div>
                         )}
                     </div>
                     <StatusRecoveryCue status={playerStatus} className="right-3 bottom-[82px]" />
                     {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && (
-                        <div className="absolute left-1/2 top-[33%] -translate-x-1/2 z-[145] bg-[#383a37]/90 border border-white/20 px-3 py-1 text-[8px] font-black text-[#ffca28] shadow-[2px_2px_0_rgba(0,0,0,0.35)]">
+                        <div className="absolute left-1/2 top-[33%] -translate-x-1/2 z-[145] bg-[#383a37]/75 backdrop-blur-md border border-white/20 px-3 py-1 text-[8px] font-black text-[#ffca28] shadow-[2px_2px_0_rgba(0,0,0,0.35)]">
                             {battleState?.phase === 'waiting_opponent' && battleState?.mode === 'pvp'
                                 ? '等待對手判斷中，請稍候...'
                                 : '上一回合判斷中，請稍候...'}
@@ -342,7 +342,7 @@ export default function BattleAdventureOverlay({
 
                     {/* 戰鬥播報對話框 (Transient Overlay) */}
                     {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && battleState?.activeMsg && (
-                        <div className="absolute w-[68%] left-[16%] top-[40%] bg-white/20 border-[3px] border-white/30 p-1.5 z-[150] shadow-[4px_4px_0_rgba(0,0,0,0.3)] backdrop-blur-md">
+                        <div className="absolute w-[68%] left-[16%] top-[40%] bg-white/20 backdrop-blur-md border-[3px] border-white/30 p-1.5 z-[150] shadow-[4px_4px_0_rgba(0,0,0,0.3)]">
                             <div className="text-[9px] font-black text-white leading-tight break-words text-center">
                                 {battleState?.activeMsg}
                             </div>
@@ -350,7 +350,7 @@ export default function BattleAdventureOverlay({
                     )}
 
                     {/* Dialogue Box & Menu Area */}
-                    <div className="absolute bottom-1 left-1 right-1 h-[55px] bg-white/10 border-[3px] border-white/20 rounded-sm p-1 flex flex-col shadow-inner z-30 backdrop-blur-[1px]">
+                    <div className="absolute bottom-1 left-1 right-1 h-[55px] bg-white/12 backdrop-blur-md border-[3px] border-white/20 rounded-sm p-1 flex flex-col shadow-inner z-30">
                         {(battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') && battleState.phase === 'player_action' ? (
                             <div className="grid grid-cols-2 gap-1 h-full font-bold text-[10px] text-white">
                                 {[0, 1, 2, 3].map((idx) => {
@@ -424,7 +424,7 @@ export default function BattleAdventureOverlay({
                         isLeaderboardOpen ? null : (
                         (matchStatus === 'searching' || matchStatus === 'idle') ? (
                             <div className="flex-1 flex flex-col items-center justify-start p-2 w-full relative z-10">
-                                <div className="text-[11px] font-black text-white mb-1 border-b-2 border-white/30 w-full text-center pb-0.5 uppercase tracking-widest [text-shadow:0_0_4px_#fff]">宇宙大廳</div>
+                                <div className="text-[11px] font-black text-white mb-1 border-b-2 border-white/30 w-full text-center pb-0.5 uppercase tracking-widest">宇宙大廳</div>
 
                                 <div className="w-full flex flex-col gap-1 mb-2 mt-1">
                                     <div className="flex justify-between items-center px-1">
@@ -526,7 +526,7 @@ export default function BattleAdventureOverlay({
 
             {/* 捕獲確認對話框 (A/B選單模式) */}
             {pendingWildCapture && !isAdvStreaming && (
-                <div className="absolute inset-0 z-[130] flex flex-col items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]">
+                <div className="absolute inset-0 z-[130] flex flex-col items-center justify-center p-4 bg-black/60">
                     <div className="w-[180px] bg-white/20 border-4 border-white/30 p-3 shadow-[8px_8px_0_rgba(0,0,0,0.3)] flex flex-col items-center gap-3">
                         <div className="scale-[1.2] -mb-1">
                             <DitheredSprite id={pendingWildCapture.id} scale={2} />

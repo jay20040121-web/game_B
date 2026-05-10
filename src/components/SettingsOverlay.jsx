@@ -14,6 +14,21 @@ export default function SettingsOverlay({
     const [bgmVol, setBgmVol] = useState(getBgmVolume());
     const [spriteFormat, setSpriteFormat] = useState(() => localStorage.getItem('pixel_monster_sprite_format') || 'gif');
     const [showConfirmClear, setShowConfirmClear] = useState(false);
+    const isDesktopBuild = import.meta.env.VITE_DESKTOP === '1';
+    const scalePresets = [
+        ...(isDesktopBuild ? [
+            { value: null, label: '自動', size: '小 / 中 / 大' },
+            { value: 1.0, label: '小', size: '320×620' },
+            { value: 1.5, label: '中', size: '480×930' },
+            { value: 2.0, label: '大', size: '640×1240' },
+            { value: 2.5, label: '特大', size: '800×1550' },
+        ] : [
+            { value: null, label: '自動', size: '320×620 起' },
+            { value: 1.0, label: '標準', size: '320×620' },
+            { value: 1.25, label: '中尺寸', size: '400×775' },
+            { value: 1.5, label: '大尺寸', size: '480×930' },
+        ]),
+    ];
 
     // 同步狀態
     useEffect(() => {
@@ -98,7 +113,7 @@ export default function SettingsOverlay({
         }}>
             <div className="absolute inset-0 bg-black/60 z-0 backdrop-blur-[2px]"></div>
 
-            <div className="w-full bg-[#383a37]/80 text-white [text-shadow:0_0_4px_#fff] text-[12px] px-3 py-2 flex justify-center items-center mb-2 font-black relative z-10 shadow-sm border-b-2 border-[#1a1a1a]">
+            <div className="w-full bg-[#383a37]/80 text-white text-[12px] px-3 py-2 flex justify-center items-center mb-2 font-black relative z-10 shadow-sm border-b-2 border-[#1a1a1a]">
                 <span>系統設定</span>
             </div>
 
@@ -108,30 +123,16 @@ export default function SettingsOverlay({
                 <div className="flex flex-col gap-1 bg-[#1a1a1a]/40 p-2 rounded border border-[#ccd6be]/30">
                     <div className="text-[10px] text-[#ccd6be] font-bold mb-1">畫面尺寸</div>
                     <div className="flex justify-between gap-1">
-                        <button
-                            onClick={() => handleScaleChange(null)}
-                            className={`flex-1 py-1 text-[9px] font-bold rounded ${manualScale === null ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
-                        >
-                            自動
-                        </button>
-                        <button
-                            onClick={() => handleScaleChange(1.0)}
-                            className={`flex-1 py-1 text-[9px] font-bold rounded ${manualScale === 1.0 ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
-                        >
-                            1.0x
-                        </button>
-                        <button
-                            onClick={() => handleScaleChange(1.2)}
-                            className={`flex-1 py-1 text-[9px] font-bold rounded ${manualScale === 1.2 ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
-                        >
-                            1.2x
-                        </button>
-                        <button
-                            onClick={() => handleScaleChange(1.5)}
-                            className={`flex-1 py-1 text-[9px] font-bold rounded ${manualScale === 1.5 ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
-                        >
-                            1.5x
-                        </button>
+                        {scalePresets.map((preset) => (
+                            <button
+                                key={preset.label}
+                                onClick={() => handleScaleChange(preset.value)}
+                                className={`flex-1 py-1 text-[8px] font-bold rounded ${manualScale === preset.value ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all leading-tight`}
+                            >
+                                <div>{preset.label}</div>
+                                <div className="text-[7px] opacity-80">{preset.size}</div>
+                            </button>
+                        ))}
                     </div>
                 </div>
 

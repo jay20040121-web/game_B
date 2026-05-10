@@ -23,7 +23,7 @@ export default function LeaderboardOverlay({
             <div className="absolute inset-0 bg-black/22 z-0"></div>
 
             <div className="relative z-10 w-full h-full max-w-[320px] flex flex-col border-4 border-[#1a1a1a] bg-[#9dae8a]/96 text-[#1a1a1a] shadow-[6px_6px_0_rgba(0,0,0,0.45)] overflow-hidden">
-                <div className="w-full bg-[#383a37] text-white [text-shadow:0_0_4px_#fff] px-2 py-1 flex justify-between items-center border-b-2 border-[#1a1a1a]">
+                <div className="w-full bg-[#383a37] text-white px-2 py-1 flex justify-between items-center border-b-2 border-[#1a1a1a]">
                     <AutoFitText as="span" className="text-[10px] tracking-tighter font-black flex items-center gap-1 min-w-0 w-full" minFontSize={8} maxFontSize={10}>
                         PvP 排行榜 [第{leaderboardPage + 1}頁/10]
                     </AutoFitText>

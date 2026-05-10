@@ -144,12 +144,12 @@ export const MonsterpediaOverlay = ({
 
             {/* Detail Modal Overlay */}
             {isDetailOpen && isOwned && (
-                <div className="absolute inset-0 z-[130] bg-[#1a1a1a]/60 flex items-center justify-center animate-fade-in p-4 backdrop-blur-[1px]">
+                <div className="absolute inset-0 z-[130] bg-[#1a1a1a]/60 flex items-center justify-center p-4 backdrop-blur-[1px] animate-fade-in">
                     <div className="bg-[#9dae8a] border-4 border-[#383a37] p-3 flex flex-col items-center shadow-2xl rounded-lg animate-fade-in relative max-w-[200px]">
                         {/* 浮動進化條件標籤 - 不影響間距 */}
                         {evoReq && (
-                            <div className="absolute top-[90px] inset-x-0 z-20 pointer-events-none animate-fade-in flex justify-center">
-                                <div className="bg-[#ff5252]/95 text-white text-[7px] p-2 px-4 rounded-sm shadow-lg border border-[#383a37] flex flex-col items-center w-[240px] h-[90px] overflow-y-auto custom-scrollbar">
+                            <div className="absolute top-[90px] inset-x-0 z-20 pointer-events-none flex justify-center">
+                                <div className="bg-[#ff5252] text-white text-[7px] p-2 px-4 rounded-sm border border-[#383a37] flex flex-col items-center w-[240px] h-[90px] overflow-y-auto custom-scrollbar">
                                     <div className="flex items-center gap-1 mb-1 border-b border-white/30 w-full justify-center pb-0.5">
                                         <div className="w-1 h-1 bg-white rounded-full animate-pulse" />
                                         <span className="font-black">進化條件</span>
@@ -167,7 +167,7 @@ export const MonsterpediaOverlay = ({
                         <AutoFitText as="div" className="mt-4 mb-2 text-[14px] font-black text-[#1a1a1a] border-b-2 border-[#383a37] pb-1 w-full text-center" minFontSize={9} maxFontSize={14}>
                             {monsterNames[selectedId]}
                         </AutoFitText>
-                        <div className="bg-[#ccd6be] p-4 border-2 border-[#383a37] rounded-md mb-3 shadow-inner relative">
+                        <div className="bg-[#ccd6be] p-4 border-2 border-[#383a37] rounded-md mb-3 relative">
                             <div className="relative z-[40]">
                                 <DitheredSprite id={selectedId} scale={2.8} animated={true} />
                             </div>

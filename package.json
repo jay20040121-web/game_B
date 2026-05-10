@@ -2,11 +2,15 @@
   "name": "pixel-monster-game",
   "private": true,
   "version": "1.0.0",
+  "description": "Pixel Monster Game desktop and web builds",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:desktop": "node scripts/dev-desktop.mjs",
+    "build:desktop": "node scripts/build-desktop.mjs"
   },
   "dependencies": {
     "firebase": "^10.7.1",
@@ -19,6 +23,8 @@
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.16",
+    "electron": "^31.7.7",
+    "electron-packager": "^17.1.2",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "vite": "^5.0.0"

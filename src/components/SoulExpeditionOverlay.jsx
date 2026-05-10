@@ -212,7 +212,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
     const triggerRandomEvent = () => {
         const r = Math.random() * 100;
         const forceTalkOnly = activeBuffsRef.current.includes('fate_wild');
-        if (forceTalkOnly || r < 72) {
+        if (forceTalkOnly || r < 95) {
             // 靈魂談心 (60/85)
             let qi;
             if (lockedAffinity) {
@@ -511,7 +511,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 backgroundPositionX: `${progress * 3.2}px`,
                 backgroundPositionY: 'center'
             }}>
-                <div className={`absolute inset-0 transition-all duration-500 ${currentEvent ? 'bg-black/40 backdrop-blur-[2px]' : 'bg-blue-900/10'}`}></div>
+                <div className={`absolute inset-0 transition-all duration-500 ${currentEvent ? 'bg-black/40' : 'bg-blue-900/10'}`}></div>
             </div>
 
             {/* 由自定義背景圖提供地面，故移除舊有地面層 */}
@@ -521,7 +521,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 <div className="absolute top-[30%] left-1/2 -translate-x-1/2 z-[200] whitespace-nowrap pointer-events-none"
                     style={{
                         color: resultText.color, fontSize: '12px', fontWeight: '900',
-                        textShadow: '2px 2px 0 #000, -1px -1px 0 #000',
+                        textShadow: 'none',
                         animation: 'resultFloat 1.2s ease-out forwards'
                     }}>
                     {resultText.text}
@@ -530,7 +530,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
 
             {/* === 頂部 HUD (Premium Style) === */}
             <div className="relative z-[110] p-2 flex justify-between items-start">
-                <div className="bg-[#383a37]/60 backdrop-blur-[4px] rounded-lg p-2 border border-white/20 shadow-lg">
+                <div className="bg-[#383a37]/60 rounded-lg p-2 border border-white/20 shadow-lg">
                     <div className="flex flex-col gap-1.5">
                         {/* Progress Bar */}
                         <div>
@@ -572,7 +572,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                                     const card = SOUL_CARDS.find(c => c.effect === effect) || FATE_CARDS.find(c => c.effect === effect);
                                     if (!card) return null;
                                     return (
-                                        <div key={effect} className="flex items-center bg-white/10 backdrop-blur-sm rounded border border-white/10 px-1 gap-0.5" title={`${card.name} Lv.${count}`}>
+                                        <div key={effect} className="flex items-center bg-white/10 rounded border border-white/10 px-1 gap-0.5" title={`${card.name} Lv.${count}`}>
                                             <span className="text-[10px]">{card.icon}</span>
                                             {count > 1 && <span className="text-[8px] font-black text-[#ffca28]">{count}</span>}
                                         </div>
@@ -585,7 +585,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
 
                 <button
                     onClick={finishExpedition}
-                    className="bg-[#ff5252]/80 backdrop-blur-sm text-white text-[9px] font-black px-3 py-1.5 rounded-full border border-white/30 active:scale-95 transition-transform"
+                    className="bg-[#ff5252]/80 text-white text-[9px] font-black px-3 py-1.5 rounded-full border border-white/30 active:scale-95 transition-transform"
                     style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.5)' }}
                 >
                     結束談心
@@ -598,9 +598,10 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 <div className={currentEvent === null ? 'expedition-walk' : ''}>
                     <DitheredSprite
                         id={monsterId}
-                        scale={4}
+                        scale={3.2}
                         pure={true}
                         animated={true}
+                        smoothAnimated={true}
                     />
                 </div>
             </div>
@@ -612,8 +613,8 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             {/* --- 靈魂談心 (Soul Talk) --- */}
             {currentEvent === 'talk' && (
                 <div className="absolute inset-x-4 bottom-4 z-[120] animate-slide-up">
-                    <div className="bg-[#383a37]/80 backdrop-blur-[6px] border-2 border-white/20 shadow-xl p-3 flex flex-col rounded-xl">
-                        <div className="text-[13px] font-black text-white mb-3 leading-tight [text-shadow:0_0_4px_rgba(255,255,255,0.5)] flex items-center gap-2">
+                    <div className="bg-[#383a37]/80 border-2 border-white/20 shadow-xl p-3 flex flex-col rounded-xl">
+                        <div className="text-[13px] font-black text-white mb-3 leading-tight flex items-center gap-2">
                             <span className="text-[16px]">💬</span>
                             {SOUL_QUESTIONS[qIdx]?.q}
                         </div>
@@ -624,7 +625,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                                     onClick={() => handleTalkChoice(i)}
                                     className={`text-[11px] leading-[1.3] font-bold px-3 py-2 rounded-lg border-2 transition-all cursor-pointer
                                         ${talkSelectIdx === i
-                                            ? 'bg-white/20 border-white/40 text-[#ffca28] [text-shadow:0_0_4px_#ffca28] scale-[1.02]'
+                                            ? 'bg-white/20 border-white/40 text-[#ffca28] scale-[1.02]'
                                             : 'bg-black/20 border-white/5 text-white/70'
                                         }`}
                                 >
@@ -644,9 +645,9 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
 
             {/* --- 能力覺醒 (Card Selection) --- */}
             {currentEvent === 'fateCards' && (
-                <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-[5px] p-4">
+                <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
                     <div className="bg-[#2b2538]/95 border-2 border-[#ffca28]/50 shadow-2xl p-3 w-full max-w-[230px] flex flex-col items-center rounded-2xl animate-slide-up">
-                        <div className="text-[13px] font-black text-[#ffca28] mb-1 [text-shadow:0_0_8px_rgba(255,202,40,0.5)]">
+                        <div className="text-[13px] font-black text-[#ffca28] mb-1">
                             🔮 命運卡事件 🔮
                         </div>
                         <div className="text-[11px] text-white/60 mb-3 font-bold tracking-tight text-center">唯一一次三選一，命運卡會改變後續談心規則</div>
@@ -657,7 +658,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                                     onClick={() => handleFateCardChoice(card)}
                                     className={`px-2 py-1.5 rounded-lg border transition-all flex items-center gap-2
                                         ${talkSelectIdx === i
-                                            ? 'bg-[#ffca28]/20 border-[#ffca28] text-[#ffca28] scale-[1.02] shadow-[0_0_10px_rgba(255,202,40,0.18)]'
+                                            ? 'bg-[#ffca28]/20 border-[#ffca28] text-[#ffca28] scale-[1.02]'
                                             : 'bg-black/25 border-white/10 text-white/65 hover:bg-white/5'
                                         }`}
                                 >
@@ -679,9 +680,9 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             )}
 
             {currentEvent === 'cards' && (
-                <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-[4px] p-4">
+                <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/60 p-4">
                     <div className="bg-[#383a37]/90 border-2 border-white/20 shadow-2xl p-3 w-full max-w-[210px] flex flex-col items-center rounded-2xl animate-slide-up">
-                        <div className="text-[13px] font-black text-[#ffca28] mb-1 [text-shadow:0_0_8px_rgba(255,202,40,0.5)]">
+                        <div className="text-[13px] font-black text-[#ffca28] mb-1">
                             ✦ 能力覺醒 ✦
                         </div>
                         <div className="text-[12px] text-white/50 mb-4 font-bold tracking-tight text-center">三選一，加護將持續整趟談心</div>
@@ -692,7 +693,7 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                                     onClick={() => handleCardChoice(card)}
                                     className={`px-2 py-1.5 rounded-lg border transition-all flex items-center gap-2
                                         ${talkSelectIdx === i
-                                            ? 'bg-white/20 border-[#ffca28] text-[#ffca28] scale-[1.02] shadow-[0_0_10px_rgba(255,202,40,0.15)]'
+                                            ? 'bg-white/20 border-[#ffca28] text-[#ffca28] scale-[1.02]'
                                             : 'bg-black/20 border-white/5 text-white/60 hover:bg-white/5'
                                         }`}
                                 >
@@ -715,9 +716,9 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
 
             {/* --- 結算畫面 (Ending) --- */}
             {currentEvent === 'ending' && (
-                <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-[6px] p-3">
+                <div className="absolute inset-0 z-[120] flex items-center justify-center bg-black/80 p-3">
                     <div className="bg-[#383a37]/90 border-2 border-white/20 shadow-2xl p-3 w-full max-w-[200px] flex flex-col items-center rounded-2xl animate-pop-in">
-                        <div className="text-[12px] font-black text-white mb-2 [text-shadow:0_0_10px_rgba(255,255,255,0.5)]">
+                        <div className="text-[12px] font-black text-white mb-2">
                             {progressRef.current >= 100 ? '🎊 談心完成！' : '談心結束'}
                         </div>
 

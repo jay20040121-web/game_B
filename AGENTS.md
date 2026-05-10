@@ -13,6 +13,9 @@
 - 目前正式工作目錄是 C:\Users\jay20\Desktop\game_B。
 - game_A 已不再作為有效工作區使用；若之後又看到 game_A，預設視為舊備份或無效路徑，不能從那裡繼續開發或 push。
 - 目前使用者偏好是「先不要寄 Gmail 專案更新通知」，避免信件過多。除非使用者之後明確重新啟用，否則只在對話內更新進度，不主動寄信。
+- 專案已加入 Windows PC 版 portable 打包流程：`npm run build:desktop` 會先跑 Vite desktop build，再用 `electron-packager` 輸出可執行資料夾到 `release/`。
+- Desktop build 走 `VITE_DESKTOP=1` 時會讓 Vite 的 `base` 改成 `./`，不要再把 `/game_B/` 當成桌面版唯一基底。
+- 目前不要再回頭用 `electron-builder` 做 Windows installer，這台環境在 Windows code signing / symlink 上有卡點；若要發佈 PC 版，先以 portable folder 為準。
 
 ## 協作偏好
 

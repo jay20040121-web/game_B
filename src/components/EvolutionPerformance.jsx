@@ -52,7 +52,7 @@ export default function EvolutionPerformance({ fromId, toId, onFinish }) {
                     font-weight: 900;
                     color: #1a1a1a;
                     margin-bottom: 20px;
-                    text-shadow: 2px 2px 0 rgba(255,255,255,0.5);
+                    text-shadow: none;
                     letter-spacing: 4px;
                     animation: slide-down 0.5s ease-out forwards;
                 }
@@ -75,7 +75,7 @@ export default function EvolutionPerformance({ fromId, toId, onFinish }) {
                 .transition .sprite-from,
                 .revealed .sprite-from,
                 .outro .sprite-from {
-                    filter: brightness(10) blur(2px);
+                    filter: brightness(10);
                     transform: scale(1.5);
                     opacity: 0;
                 }

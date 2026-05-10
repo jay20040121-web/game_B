@@ -63,6 +63,7 @@ node_modules/
 
 # vue-cli build scripts
 dist
+release
 
 # Serverless directories
 .serverless
