@@ -157,6 +157,7 @@ export default function BattleAdventureOverlay({
     isTournamentOpen,
     battleState,
     pvp,
+    isLeaderboardOpen = false,
     advCD,
     advStats,
     fetchLeaderboard,
@@ -420,6 +421,7 @@ export default function BattleAdventureOverlay({
             ) : (
                 <>
                     {isPvpMode ? (
+                        isLeaderboardOpen ? null : (
                         (matchStatus === 'searching' || matchStatus === 'idle') ? (
                             <div className="flex-1 flex flex-col items-center justify-start p-2 w-full relative z-10">
                                 <div className="text-[11px] font-black text-white mb-1 border-b-2 border-white/30 w-full text-center pb-0.5 uppercase tracking-widest [text-shadow:0_0_4px_#fff]">宇宙大廳</div>
@@ -472,7 +474,7 @@ export default function BattleAdventureOverlay({
                             <div className="flex-1 flex flex-col items-center justify-center p-2 w-full">
                                 <div className="text-[12px] font-bold animate-pulse">連線建立中...</div>
                             </div>
-                        )
+                        ))
                     ) : (
                         <>
                             <div
@@ -534,10 +536,10 @@ export default function BattleAdventureOverlay({
                         </div>
                         <div className="flex w-full gap-3 justify-center">
                             <div className="flex flex-col items-center gap-1">
-                                <div className="px-2 py-0.5 bg-[#ffca28] text-[#111] border-2 border-[#1a1a1a] font-black text-[9px]">A: NO</div>
+                                <div className="px-2 py-0.5 bg-[#ffca28] text-[#111] border-2 border-[#1a1a1a] font-black text-[9px]">A：否</div>
                             </div>
                             <div className="flex flex-col items-center gap-1">
-                                <div className="px-2 py-0.5 bg-[#ff5252] text-white border-2 border-[#1a1a1a] font-black text-[9px]">B: YES</div>
+                                <div className="px-2 py-0.5 bg-[#ff5252] text-white border-2 border-[#1a1a1a] font-black text-[9px]">B：是</div>
                             </div>
                         </div>
                     </div>

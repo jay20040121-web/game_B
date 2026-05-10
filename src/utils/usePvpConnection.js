@@ -283,7 +283,7 @@ export const usePvpConnection = (deps) => {
     const connectToRemotePeer = (targetId) => {
         if (!peerInstance.current) return;
         syncMatchStatus('matching');
-        updateDialogue("Connecting to peer...", true);
+        updateDialogue("正在連線中...", true);
         const conn = peerInstance.current.connect(targetId);
         connInstance.current = conn;
         isHost.current = false; // Challenger (B) is NOT the host
@@ -302,7 +302,7 @@ export const usePvpConnection = (deps) => {
         // ???(B) ?????渡???頞?璈
         const connectionTimeout = setTimeout(() => {
             if (matchStatusRef.current === 'searching' || matchStatusRef.current === 'matching') {
-                cleanupPvp("Peer connection timed out");
+                cleanupPvp("連線逾時");
             }
         }, 15000);
 
@@ -313,7 +313,7 @@ export const usePvpConnection = (deps) => {
             // 憒???蹂蜓 (??犖嚗ole 銝 B)嚗歇?????靽∟?隡箸??剁??臭誑?⊿???敺??啗?
             if (role !== 'B') {
                 clearTimeout(connectionTimeout);
-                updateDialogue(`Room created. Waiting for opponent password ${pvpRoomPassword} ...`, true);
+                updateDialogue(`房間已建立，等待對手輸入房號 ${pvpRoomPassword} ...`, true);
             }
 
             // 憒?????(B)嚗???蝡??? A
@@ -334,14 +334,14 @@ export const usePvpConnection = (deps) => {
                 return;
             }
 
-            console.error("PeerJS Error:", err);
+            console.error("PeerJS 錯誤：", err);
 
-            let errMsg = "PeerJS error";
+            let errMsg = "PeerJS 發生錯誤";
             if (err.type === 'unavailable-id') {
-                errMsg = (customId && customId.endsWith('_B')) ? "Peer B join timed out" : "Unable to create peer room";
+                errMsg = (customId && customId.endsWith('_B')) ? "對手加入逾時" : "無法建立對戰房間";
             }
-            if (err.type === 'network') errMsg = "Network error";
-            if (err.type === 'peer-unavailable') errMsg = "Peer unavailable";
+            if (err.type === 'network') errMsg = "網路連線錯誤";
+            if (err.type === 'peer-unavailable') errMsg = "對手不可用";
 
             cleanupPvp(errMsg);
             peerInstance.current = null;
@@ -364,14 +364,14 @@ export const usePvpConnection = (deps) => {
     // ?/撱箇? 撖Ⅳ?輸?
     const joinPvpRoom = (pwd) => {
         if (!pwd || pwd.trim() === "") {
-            setAlertMsg("Please enter a room password");
+            setAlertMsg("請先輸入房號");
             playBloop('fail');
             return;
         }
         const safePwd = pwd.trim().replace(/[^a-zA-Z0-9]/g, '');
         const hostId = PEER_PREFIX + safePwd + "_A";
         syncMatchStatus('searching');
-            updateDialogue("Connecting to peer...", true);
+        updateDialogue("正在連線中...", true);
         initPeer(hostId);
     };
 

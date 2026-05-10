@@ -3258,6 +3258,7 @@ export default function App() {
                                 isTournamentOpen={tournament.isTournamentOpen}
                                 battleState={battleState}
                                 pvp={pvp}
+                                isLeaderboardOpen={isLeaderboardOpen}
                                 advCD={advCD}
                                 advStats={advStats}
                                 fetchLeaderboard={fetchLeaderboard}
