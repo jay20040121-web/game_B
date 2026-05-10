@@ -7,8 +7,8 @@ const ENCHANT_EFFECTS = [
     { id: 'confusion', type: 'ailment', value: 10 },
     { id: 'leech-seed', type: 'ailment', value: 10 },
     { id: 'trap', type: 'ailment', value: 10 },
-    { id: 'freeze', type: 'ailment', value: 10 },
-    { id: 'sleep', type: 'ailment', value: 10 },
+    { id: 'freeze', type: 'ailment', value: 5 },
+    { id: 'sleep', type: 'ailment', value: 5 },
     { id: 'lifesteal', type: 'stat', value: 5 },
     { id: 'accuracy', type: 'stat', value: 10 },
     { id: 'priority', type: 'stat', value: 0.5 }

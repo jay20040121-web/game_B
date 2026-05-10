@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 import { getTypeMultiplier, getLevelByPower } from '../monsterData';
+import { buildAilmentBadges } from '../utils/ailmentBadgeUtils';
 
 const DAMAGE_DIGIT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/傷害數字.png`;
 const HEAL_DIGIT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/回復數字.png`;
@@ -376,43 +377,23 @@ export default function BattleAdventureOverlay({
                                                 <div className="flex flex-wrap items-center gap-0.5 justify-center">
                                                     <span>{move.name}</span>
                                                     {(() => {
-                                                        const ailmentsToShow = [];
-                                                        // 1. 原生技能附帶的異常
-                                                        if (move.ailment && move.ailment !== 'none') {
-                                                            ailmentsToShow.push(move.ailment);
-                                                        }
-                                                        // 2. 附魔追加的異常與數值
                                                         const enchantData = battleState?.player?.moveUpgrades?.[move.id]?.ailments
                                                             || advStats?.moveUpgrades?.[move.id]?.ailments
                                                             || {};
-                                                        Object.keys(enchantData).forEach(k => {
-                                                            if (enchantData[k] > 0 && !ailmentsToShow.includes(k)) {
-                                                                ailmentsToShow.push(k);
-                                                            }
+                                                        const badges = buildAilmentBadges({
+                                                            primaryAilment: move.ailment,
+                                                            enchantData,
+                                                            baseClassName: 'text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black'
                                                         });
 
-                                                        return ailmentsToShow.map((ailment, idx) => (
-                                                            <span key={idx} className={`text-[7px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black ${ailment === 'burn' ? 'bg-[#ff5252] text-white' :
-                                                                ailment === 'paralysis' ? 'bg-[#ffca28] text-black' :
-                                                                    ailment === 'poison' ? 'bg-[#9c27b0] text-white' :
-                                                                        ailment === 'accuracy' ? 'bg-[#2196f3] text-white' :
-                                                                            ailment === 'priority' ? 'bg-[#ff9800] text-white' :
-                                                                                ailment === 'freeze' ? 'bg-[#80deea] text-black' :
-                                                                                    ailment === 'sleep' ? 'bg-[#90a4ae] text-white' :
-                                                                                        ailment === 'lifesteal' ? 'bg-[#e91e63] text-white' :
-                                                                                            'bg-[#4db6ac] text-white'
-                                                                }`}>
-                                                                {ailment === 'burn' ? '燒' :
-                                                                    ailment === 'paralysis' ? '麻' :
-                                                                        ailment === 'poison' ? '毒' :
-                                                                            ailment === 'confusion' ? '混' :
-                                                                                ailment === 'leech-seed' ? '吸' :
-                                                                                    ailment === 'trap' ? '縛' :
-                                                                                        ailment === 'accuracy' ? '準' :
-                                                                                            ailment === 'priority' ? '先' :
-                                                                                                ailment === 'freeze' ? '凍' :
-                                                                                                    ailment === 'sleep' ? '眠' :
-                                                                                                        ailment === 'lifesteal' ? '血' : '狀'}
+                                                        return badges.map((badge) => (
+                                                            <span
+                                                                key={badge.key}
+                                                                title={badge.title}
+                                                                className={badge.className}
+                                                                style={badge.style}
+                                                            >
+                                                                {badge.label}
                                                             </span>
                                                         ));
                                                     })()}

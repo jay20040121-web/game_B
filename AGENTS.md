@@ -153,6 +153,18 @@ Firebase compat SDK 設定在 `src/utils/firebase.js`。
 UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大型 landing page、商業網站式 hero 區塊，或和現有視覺語言不一致的設計系統。
 長字串如果會爆框，優先考慮 `src/components/AutoFitText.jsx`，再搭配 `truncate`、`line-clamp` 或斷行。
 
+### 戰鬥 GIF / 特效渲染注意
+
+戰鬥畫面的 GIF sprite 很容易因為同層疊加效果而進入瀏覽器的合成路徑，造成受擊後模糊、馬賽克或渲染卡住。
+
+之後若再碰到類似問題，優先遵守：
+
+- 受擊閃爍不要直接動 sprite 本體的 `opacity`
+- 特效、傷害跳字、回血跳字盡量不要和 GIF 放在同一個 transformed 容器內
+- 需要的位置對齊可以共用錨點，但渲染層要分開
+- 若 GIF 出現模糊，先查 `SpriteRenderer.jsx`、`BattleAdventureOverlay.jsx` 的疊層結構，再查 `damage-flash` / `mixBlendMode` / `imageRendering`
+- 不要把「修圖層」和「修戰鬥判定」混在一起，先分開驗證
+
 ## 素材
 
 素材透過 Vite public path 從 `public/assets/` 讀取。`App.jsx` 很多地方會用 `import.meta.env.BASE_URL` 組出素材路徑。

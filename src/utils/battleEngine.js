@@ -120,8 +120,8 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
                 trap: "被束縛住了！"
             };
 
-            if (move.ailment === 'sleep') targetState.statusTurns = Math.floor(rng() * 2) + 1;
-            else if (move.ailment === 'freeze') targetState.statusTurns = Math.floor(rng() * 2) + 1;
+            if (move.ailment === 'sleep') targetState.statusTurns = Math.floor(rng() * 3) + 1;
+            else if (move.ailment === 'freeze') targetState.statusTurns = Math.floor(rng() * 3) + 1;
             else if (move.ailment === 'confusion') targetState.statusTurns = Math.floor(rng() * 3) + 2;
             else if (move.ailment === 'leech-seed' || move.ailment === 'trap') targetState.statusTurns = 5;
 

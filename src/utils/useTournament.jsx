@@ -20,8 +20,8 @@ const ENCHANT_EFFECTS = [
     { id: 'confusion', name: '迷幻附魔', type: 'ailment', value: 10, desc: '混亂機率 +10%' },
     { id: 'leech-seed', name: '寄生附魔', type: 'ailment', value: 10, desc: '寄生機率 +10% (每回合吸血)' },
     { id: 'trap', name: '束縛附魔', type: 'ailment', value: 10, desc: '束縛機率 +10% (無法撤退且受損)' },
-    { id: 'freeze', name: '極寒附魔', type: 'ailment', value: 10, desc: '冰凍機率 +10%' },
-    { id: 'sleep', name: '催眠附魔', type: 'ailment', value: 10, desc: '睡眠機率 +10%' },
+    { id: 'freeze', name: '極寒附魔', type: 'ailment', value: 5, desc: '冰凍機率 +5%' },
+    { id: 'sleep', name: '催眠附魔', type: 'ailment', value: 5, desc: '睡眠機率 +5%' },
     { id: 'lifesteal', name: '吸血附魔', type: 'stat', value: 5, desc: '傷害吸血比例 +5%' },
     { id: 'accuracy', name: '鷹眼附魔', type: 'stat', value: 10, desc: '技能命中率 +10%' },
     { id: 'priority', name: '迅捷附魔', type: 'stat', value: 0.5, desc: '技能優先度 +0.5 (疊加至 1.0 必定先制)' }
