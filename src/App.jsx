@@ -3011,7 +3011,29 @@ export default function App() {
         isLeaderboardOpen, setIsLeaderboardOpen,
         isLeaderboardLoading,
         fetchLeaderboard, fetchAllLeaderboard, updatePvpStats
-    } = useLeaderboard({ user, getMonsterId: getMonsterIdWrapped, updateDialogue });
+    } = useLeaderboard({
+        user,
+        getMonsterId: getMonsterIdWrapped,
+        getBattleSnapshot: () => {
+            const stats = generateMyBattleStats();
+            return {
+                id: String(stats.myId),
+                name: MONSTER_NAMES?.[String(stats.myId)] || `怪獸#${stats.myId}`,
+                stats: {
+                    hp: stats.pMaxHP,
+                    atk: stats.pATK,
+                    def: stats.pDEF,
+                    spd: stats.pSPD,
+                    level: stats.pLevel
+                },
+                type: stats.pType,
+                moves: (advStats.moves || []).filter(moveId => SKILL_DATABASE[moveId]),
+                moveUpgrades: advStats.moveUpgrades || {},
+                trait: monsterTraits?.trait || null
+            };
+        },
+        updateDialogue
+    });
 
     const pvp = usePvpConnection({
         updateDialogue,

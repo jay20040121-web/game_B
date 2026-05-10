@@ -51,12 +51,12 @@ export function TournamentOverlay({
                 <div className="flex flex-col items-center w-full animate-fade-in">
                     <h2 className="text-[#ffca28] text-sm font-black mb-4 border-b-2 border-[#ffca28]">
                         對戰名單確認 
-                        {currentRound === 1 ? ' (16強)' : currentRound === 2 ? ' (8強)' : currentRound === 3 ? ' (4強)' : ' (決賽)'}
+                        {currentRound === 1 ? ' (32強)' : currentRound === 2 ? ' (16強)' : currentRound === 3 ? ' (8強)' : currentRound === 4 ? ' (4強)' : ' (決賽)'}
                     </h2>
-                    <div className="w-full h-[155px] overflow-hidden border border-[#1a1a1a] bg-[#383a37] p-2 flex flex-col items-center">
+                    <div className="w-full h-[155px] overflow-y-auto border border-[#1a1a1a] bg-[#383a37] p-2 flex flex-col items-center">
                         <div className="flex flex-col gap-1.5 w-full">
                             {(() => {
-                                const numMatches = Math.pow(2, 4 - currentRound);
+                                const numMatches = Math.pow(2, 5 - currentRound);
                                 const matches = [];
                                 
                                 for (let i = 0; i < numMatches; i++) {

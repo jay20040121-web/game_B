@@ -26,8 +26,10 @@ export const getNpcEnchantCountByPlayerLevel = (playerLevel) => {
     return base + (Math.random() < fractional ? 1 : 0);
 };
 
-export const generateNpcMoveUpgrades = (moves, playerLevel) => {
-    const enchantCount = getNpcEnchantCountByPlayerLevel(playerLevel);
+export const generateNpcMoveUpgrades = (moves, playerLevel, options = {}) => {
+    const enchantCount = Number.isFinite(options.enchantCount)
+        ? Math.max(0, Math.floor(options.enchantCount))
+        : getNpcEnchantCountByPlayerLevel(playerLevel);
     if (enchantCount <= 0) return {};
 
     return (moves || []).reduce((upgrades, moveRef) => {

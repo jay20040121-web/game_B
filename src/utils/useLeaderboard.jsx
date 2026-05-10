@@ -34,7 +34,7 @@ const isSameLeaderboardPeriod = (value, periodKey) => {
  * useLeaderboard
  * PvP 排行榜資料 hook
  */
-export function useLeaderboard({ user, getMonsterId, updateDialogue }) {
+export function useLeaderboard({ user, getMonsterId, getBattleSnapshot, updateDialogue }) {
     const [leaderboard, setLeaderboard] = useState([]);
     const [allLeaderboard, setAllLeaderboard] = useState([]);
     const [leaderboardPage, setLeaderboardPage] = useState(0);
@@ -71,6 +71,10 @@ export function useLeaderboard({ user, getMonsterId, updateDialogue }) {
 
                 data.monsterId = myId;
                 data.displayName = user.displayName || '未命名怪獸';
+                const battleSnapshot = getBattleSnapshot?.();
+                if (battleSnapshot) {
+                    data.battleProfile = battleSnapshot;
+                }
 
                 const total = data.wins + data.losses;
                 const winRate = data.wins / (total || 1);

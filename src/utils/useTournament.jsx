@@ -33,6 +33,71 @@ const isEnchantableMove = (moveId, moveUpgrades = {}) => {
     return (moveUpgrades?.[moveId]?.count || 0) < 10;
 };
 
+const TOURNAMENT_DIFFICULTY_BY_ROUND = [
+    { levelOffset: -5, enchantCount: 0 },
+    { levelOffset: -3, enchantCount: 0 },
+    { levelOffset: 0, enchantCount: 3 },
+    { levelOffset: 0, enchantCount: 7 },
+    { levelOffset: 5, enchantCount: 10 }
+];
+
+const TOURNAMENT_TOTAL_ROUNDS = TOURNAMENT_DIFFICULTY_BY_ROUND.length;
+const PVP_CHAMPION_CHALLENGE_CHANCE = 1;
+
+const MONSTER_STAGE_BY_ID = {
+    1000: 1, 1019: 1,
+    1001: 2, 1004: 2, 1007: 2, 1010: 2, 1013: 2, 1016: 2, 1020: 2, 1022: 2, 1025: 2,
+    1002: 3, 1005: 3, 1008: 3, 1011: 3, 1014: 3, 1017: 3, 1021: 3, 1023: 3, 1026: 3, 1028: 3, 1030: 3,
+    1003: 4, 1006: 4, 1009: 4, 1012: 4, 1015: 4, 1018: 4, 1024: 4, 1027: 4, 1029: 4, 1031: 4
+};
+
+const getTournamentDifficulty = (round) => {
+    const index = Math.max(0, Math.min(TOURNAMENT_DIFFICULTY_BY_ROUND.length - 1, (round || 1) - 1));
+    return TOURNAMENT_DIFFICULTY_BY_ROUND[index];
+};
+
+const getMonsterStage = (id) => MONSTER_STAGE_BY_ID[String(id)] || 1;
+
+const getTournamentNpcPoolForRound = (round, playerStage) => {
+    const stage = Math.max(1, Math.min(4, Number(playerStage) || 1));
+    const pool = OBTAINABLE_MONSTER_IDS.filter(id => {
+        const monsterStage = getMonsterStage(id);
+        return round <= 3 ? monsterStage <= stage : monsterStage >= stage;
+    });
+
+    return pool.length > 0 ? pool : OBTAINABLE_MONSTER_IDS;
+};
+
+const normalizeMoveIds = (moves = []) => moves
+    .map(moveRef => typeof moveRef === 'string' ? moveRef : moveRef?.id)
+    .filter(moveId => moveId && SKILL_DATABASE[moveId]);
+
+const getLeaderboardBattleProfile = (entry) => {
+    const profile = entry?.battleProfile || entry?.stats;
+    const stats = profile?.stats || profile;
+    const id = String(profile?.id || entry?.monsterId || '');
+    const species = SPECIES_BASE_STATS[id] || SPECIES_BASE_STATS['1'];
+    const fallbackLevel = Math.max(1, Math.min(100, Number(entry?.level || entry?.monsterLevel || 50) || 50));
+    const moves = normalizeMoveIds(profile?.moves || entry?.moves || []);
+    const resolvedMoves = moves.length > 0 ? moves : generateMoves(4, species.types);
+
+    if (!id) return null;
+
+    return {
+        id,
+        name: profile?.name || MONSTER_NAMES?.[id] || `怪獸#${id}`,
+        level: Math.max(1, Math.min(100, Number(stats?.level) || fallbackLevel)),
+        hp: Math.max(1, Math.floor(Number(stats?.hp) || calcFinalStat('hp', id, 15, 0, fallbackLevel))),
+        atk: Math.max(1, Math.floor(Number(stats?.atk) || calcFinalStat('atk', id, 15, 0, fallbackLevel))),
+        def: Math.max(1, Math.floor(Number(stats?.def) || calcFinalStat('def', id, 15, 0, fallbackLevel))),
+        spd: Math.max(1, Math.floor(Number(stats?.spd) || calcFinalStat('spd', id, 15, 0, fallbackLevel))),
+        type: profile?.type || species.types || ['normal'],
+        moves: resolvedMoves,
+        moveUpgrades: profile?.moveUpgrades || entry?.moveUpgrades || {},
+        trait: profile?.trait || entry?.trait || null
+    };
+};
+
 export function useTournament({
     user,
     derivedLevel,
@@ -58,16 +123,126 @@ export function useTournament({
     const [rogueBuffs, setRogueBuffs] = useState([]);
     const [cardOptions, setCardOptions] = useState([]);
     const [rerollCount, setRerollCount] = useState(0);
+    const [isExtraChampionChallenge, setIsExtraChampionChallenge] = useState(false);
+    const [championRewardChoicesRemaining, setChampionRewardChoicesRemaining] = useState(1);
+    const [rewardReturnPhase, setRewardReturnPhase] = useState('champion');
+    const [lastTournamentEnemyId, setLastTournamentEnemyId] = useState(null);
+    const [lastPvpChallengePlayerId, setLastPvpChallengePlayerId] = useState(null);
 
     // 冠軍附魔選擇狀態
     const [rewardOptions, setRewardOptions] = useState([]); // 隨機抽出的 3 個附魔效果
     const [selectedRewardMoveIdx, setSelectedRewardMoveIdx] = useState(0); // 玩家選擇的技能索引
     const [selectedRewardEffectIdx, setSelectedRewardEffectIdx] = useState(0); // 玩家選擇的附魔效果索引
 
+    const applyCurrentRoundDifficulty = (opponent, round = currentRound) => {
+        if (opponent?.isPvpChampionChallenge) return opponent;
+        if (!opponent?.monster) return opponent;
+
+        const difficulty = getTournamentDifficulty(round);
+        const playerStage = Math.max(1, Math.min(4, Number(evolutionStage) || 1));
+        const currentMonsterStage = getMonsterStage(opponent.monster.id);
+        const isStageAllowed = round <= 3
+            ? currentMonsterStage <= playerStage
+            : currentMonsterStage >= playerStage;
+        const repeatsPreviousRound = lastTournamentEnemyId && String(opponent.monster.id) === String(lastTournamentEnemyId);
+        if (opponent.monster.difficultyRound === round && isStageAllowed && !repeatsPreviousRound) return opponent;
+
+        const roundPool = getTournamentNpcPoolForRound(round, playerStage);
+        const filteredPool = roundPool.length > 1
+            ? roundPool.filter(id => String(id) !== String(lastTournamentEnemyId))
+            : roundPool;
+        const id = String(isStageAllowed && !repeatsPreviousRound
+            ? opponent.monster.id
+            : filteredPool[Math.floor(Math.random() * filteredPool.length)]);
+        const level = Math.max(1, Math.min(100, derivedLevel + difficulty.levelOffset));
+        const species = SPECIES_BASE_STATS[id] || SPECIES_BASE_STATS['1'];
+        const ivs = { hp: 15, atk: 15, def: 15, spd: 15 };
+        const evs = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const moves = isStageAllowed && opponent.monster.difficultyRound === round
+            ? opponent.monster.moves
+            : generateMoves(4, species.types);
+        const maxHp = calcFinalStat('hp', id, ivs.hp, evs.hp, level);
+
+        return {
+            ...opponent,
+            monster: {
+                ...opponent.monster,
+                id,
+                name: MONSTER_NAMES?.[id] || `怪獸#${id}`,
+                type: species.types?.[0] || 'normal',
+                level,
+                hp: maxHp,
+                maxHp,
+                atk: calcFinalStat('atk', id, ivs.atk, evs.atk, level),
+                def: calcFinalStat('def', id, ivs.def, evs.def, level),
+                spd: calcFinalStat('spd', id, ivs.spd, evs.spd, level),
+                moves,
+                moveUpgrades: generateNpcMoveUpgrades(moves, derivedLevel, { enchantCount: difficulty.enchantCount }),
+                difficultyRound: round
+            }
+        };
+    };
+
+    const getExtraChallengePool = () => {
+        if (!Array.isArray(leaderboard)) return [];
+        return leaderboard
+            .filter(entry => entry?.id !== user?.uid)
+            .map(entry => ({ entry, profile: getLeaderboardBattleProfile(entry) }))
+            .filter(item => item.profile);
+    };
+
+    const createExtraChallengeOpponent = () => {
+        let pool = getExtraChallengePool();
+        if (pool.length === 0 || Math.random() >= PVP_CHAMPION_CHALLENGE_CHANCE) return null;
+        if (pool.length > 1 && lastPvpChallengePlayerId) {
+            pool = pool.filter(item => item.entry.id !== lastPvpChallengePlayerId);
+        }
+        if (pool.length > 1 && lastTournamentEnemyId) {
+            const differentMonsterPool = pool.filter(item => String(item.profile.id) !== String(lastTournamentEnemyId));
+            if (differentMonsterPool.length > 0) {
+                pool = differentMonsterPool;
+            }
+        }
+
+        const picked = pool[Math.floor(Math.random() * pool.length)];
+        setLastPvpChallengePlayerId(picked.entry.id);
+        return {
+            isPlayer: false,
+            isPvpChampionChallenge: true,
+            playerName: picked.entry.displayName || '排行榜訓練家',
+            monster: {
+                ...picked.profile,
+                maxHp: picked.profile.hp,
+                status: null,
+                statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 }
+            }
+        };
+    };
+
+    const startChampionRewards = (rewardCount = 1, returnPhase = 'champion') => {
+        setChampionRewardChoicesRemaining(Math.max(1, rewardCount));
+        setRewardReturnPhase(returnPhase);
+        setIsExtraChampionChallenge(false);
+        setRerollCount(rogueBuffs.filter(cardId => cardId === 'reroll_dice').length);
+
+        if ((advStats.moves || []).some(moveId => isEnchantableMove(moveId, advStats.moveUpgrades))) {
+            setSelectedRewardMoveIdx(0);
+            setRewardOptions([]);
+            setTPhase('champion_reward_move');
+        } else if (returnPhase === 'card_selection') {
+            setRewardReturnPhase('champion');
+            const shuffled = [...ROGUE_CARDS].sort(() => Math.random() - 0.5);
+            setCardOptions(shuffled.slice(0, 3));
+            setTPhase('card_selection');
+        } else {
+            setTPhase('champion');
+        }
+    };
+
     // Listen for battle conclusion
     useEffect(() => {
         if (tPhase === 'fighting' && !battleState?.active && !pendingSkillLearn) {
-            if (battleState?.player?.hp > 0 && battleState?.enemy?.hp <= 0) {
+            if (battleState?.enemy?.hp <= 0) {
                 handleTournamentWin();
             } else if (battleState?.enemy?.hp > 0 && battleState?.player?.hp <= 0) {
                 handleTournamentLoss();
@@ -75,7 +250,7 @@ export function useTournament({
         }
     }, [battleState?.active, tPhase, battleState?.player?.hp, battleState?.enemy?.hp, pendingSkillLearn]);
 
-    // 生成這輪賽事的初始 16 強名單 (玩家 + 15 名電腦)
+    // 生成這輪賽事的初始 32 強名單 (玩家 + 31 名電腦)
     const generateInitialBracket = () => {
         const generated = [];
         // 🔹 玩家本人永遠位於索引 0
@@ -85,12 +260,12 @@ export function useTournament({
             monster: null // 戰鬥時動態抓取最新 state
         });
 
-        const lbArray = Array.isArray(leaderboard) ? leaderboard.filter(p => p.id !== user?.uid) : [];
-
+        const lbArray = [];
         let aiNames = [...TRAINER_NAMES_POOL].sort(() => Math.random() - 0.5);
         let aiNameIdx = 0;
 
-        for (let i = 0; i < 15; i++) {
+        const npcCount = Math.pow(2, TOURNAMENT_TOTAL_ROUNDS) - 1;
+        for (let i = 0; i < npcCount; i++) {
             const lbData = lbArray[i];
             let id, level, type, maxHp, atk, def, spd, moves, name, playerName;
 
@@ -117,7 +292,7 @@ export function useTournament({
             def = calcFinalStat('def', id, ivs.def, evs.def, level);
             spd = calcFinalStat('spd', id, ivs.spd, evs.spd, level);
             moves = generateMoves(4, species.types);
-            const moveUpgrades = generateNpcMoveUpgrades(moves, derivedLevel);
+            const moveUpgrades = {};
 
             generated.push({
                 isPlayer: false,
@@ -140,7 +315,7 @@ export function useTournament({
                 }
             });
         }
-        console.log(`[Tournament] Initial bracket generated with ${lbArray.length} leaderboard players.`);
+        console.log(`[Tournament] Initial bracket generated with ${npcCount} NPC opponents.`);
         return generated;
     };
 
@@ -182,6 +357,11 @@ export function useTournament({
             setCurrentRound(1);
             setRogueBuffs([]);
             setRerollCount(0);
+            setIsExtraChampionChallenge(false);
+            setChampionRewardChoicesRemaining(1);
+            setRewardReturnPhase('champion');
+            setLastTournamentEnemyId(null);
+            setLastPvpChallengePlayerId(null);
             setRewardOptions([]);
             setSelectedRewardMoveIdx(0);
             setSelectedRewardEffectIdx(0);
@@ -198,6 +378,11 @@ export function useTournament({
         setIsTournamentOpen(false);
         setTPhase('idle');
         setRerollCount(0);
+        setIsExtraChampionChallenge(false);
+        setChampionRewardChoicesRemaining(1);
+        setRewardReturnPhase('champion');
+        setLastTournamentEnemyId(null);
+        setLastPvpChallengePlayerId(null);
         setRewardOptions([]);
         setSelectedRewardMoveIdx(0);
         setSelectedRewardEffectIdx(0);
@@ -211,6 +396,12 @@ export function useTournament({
         if (tPhase === 'intro') {
             setTPhase('bracket');
         } else if (tPhase === 'bracket') {
+            setBracket(prev => {
+                if (!prev[1]) return prev;
+                const next = [...prev];
+                next[1] = applyCurrentRoundDifficulty(next[1], currentRound);
+                return next;
+            });
             setTPhase('battle_intro');
         } else if (tPhase === 'battle_intro') {
             setTPhase('fighting');
@@ -254,7 +445,7 @@ export function useTournament({
     };
 
     const startTournamentBattle = () => {
-        const enemy = bracket[1];
+        const enemy = applyCurrentRoundDifficulty(bracket[1], currentRound);
         if (!enemy) {
             console.error("[Tournament] No enemy found at bracket[1].");
             handleTournamentWin();
@@ -347,7 +538,9 @@ export function useTournament({
             },
             enemy: {
                 ...enemy.monster,
-                moves: enemy.monster.moves.map(id => SKILL_DATABASE[id]).filter(Boolean),
+                moves: enemy.monster.moves
+                    .map(moveRef => typeof moveRef === 'string' ? SKILL_DATABASE[moveRef] : moveRef)
+                    .filter(Boolean),
                 moveUpgrades: enemy.monster.moveUpgrades || {}
             },
             logs: [`【大會廣播】：當前戰鬥開始！`],
@@ -362,13 +555,44 @@ export function useTournament({
     };
 
     const handleTournamentWin = () => {
+        setLastTournamentEnemyId(battleState?.tournamentEnemyInfo?.monster?.id || battleState?.enemy?.id || null);
+
         // 發放每場勝利的一般獎勵： +10 base power (戰力)
         setAdvStats(prev => ({
             ...prev,
             basePower: Math.min(9999, prev.basePower + 10)
         }));
 
-        if (currentRound >= 4) {
+        if (isExtraChampionChallenge) {
+            startChampionRewards(2);
+            playBloop('confirm');
+            return;
+        }
+
+        if (currentRound >= TOURNAMENT_TOTAL_ROUNDS) {
+            const extraOpponent = createExtraChallengeOpponent();
+            if (extraOpponent) {
+                setIsExtraChampionChallenge(true);
+                setBracket([bracket[0], extraOpponent]);
+                setCurrentRound(TOURNAMENT_TOTAL_ROUNDS + 1);
+                setTPhase('battle_intro');
+                updateDialogue(`冠軍挑戰：排行榜訓練家 ${extraOpponent.playerName} 現身！`);
+                playBloop('confirm');
+                return;
+            }
+
+            startChampionRewards(1);
+            playBloop('confirm');
+            return;
+        }
+
+        if (currentRound === 3 && (advStats.moves || []).some(moveId => isEnchantableMove(moveId, advStats.moveUpgrades))) {
+            startChampionRewards(1, 'card_selection');
+            playBloop('confirm');
+            return;
+        }
+
+        if (false) {
             // 決賽勝利 → 進入冠軍附魔選擇
             // 🔹 計算重來骰子次數
             let rc = 0;
@@ -493,7 +717,24 @@ export function useTournament({
         }
 
         // 🔹 立刻切換階段，防止重複呼叫
-        setTPhase('champion');
+        const remainingRewards = Math.max(0, championRewardChoicesRemaining - 1);
+        setChampionRewardChoicesRemaining(remainingRewards);
+        if (remainingRewards > 0) {
+            setRewardOptions([]);
+            setSelectedRewardMoveIdx(0);
+            setSelectedRewardEffectIdx(0);
+            setTPhase('champion_reward_move');
+        } else if (rewardReturnPhase === 'card_selection') {
+            setRewardOptions([]);
+            setSelectedRewardMoveIdx(0);
+            setSelectedRewardEffectIdx(0);
+            setRewardReturnPhase('champion');
+            const shuffled = [...ROGUE_CARDS].sort(() => Math.random() - 0.5);
+            setCardOptions(shuffled.slice(0, 3));
+            setTPhase('card_selection');
+        } else {
+            setTPhase('champion');
+        }
 
         setAdvStats(prev => {
             const nextUpgrades = { ...(prev.moveUpgrades || {}) };
@@ -529,6 +770,14 @@ export function useTournament({
     };
 
     const handleTournamentLoss = () => {
+        setLastTournamentEnemyId(battleState?.tournamentEnemyInfo?.monster?.id || battleState?.enemy?.id || null);
+
+        if (isExtraChampionChallenge) {
+            startChampionRewards(1);
+            playBloop('fail');
+            return;
+        }
+
         setTPhase('lost');
         playBloop('fail');
     };
