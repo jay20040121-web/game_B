@@ -119,6 +119,38 @@ function HealDigits({ pop, className = "" }) {
     return <DamageDigits pop={pop} className={className} sheet={HEAL_DIGIT_SHEET} />;
 }
 
+function StatusRecoveryCue({ status, className = '' }) {
+    const [visible, setVisible] = React.useState(false);
+    const prevStatusRef = React.useRef(status);
+    const timerRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const prev = prevStatusRef.current;
+        if (prev && !status) {
+            setVisible(true);
+            if (timerRef.current) clearTimeout(timerRef.current);
+            timerRef.current = setTimeout(() => {
+                setVisible(false);
+                timerRef.current = null;
+            }, 1200);
+        }
+        prevStatusRef.current = status;
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, [status]);
+
+    if (!visible) return null;
+
+    return (
+        <div className={`pointer-events-none absolute z-[165] ${className}`}>
+            <div className="bg-[#383a37]/95 border border-white/20 px-2 py-1 text-[8px] font-black text-[#ffca28] shadow-[2px_2px_0_rgba(0,0,0,0.35)] rounded-sm whitespace-nowrap">
+                異常狀態即將解除
+            </div>
+        </div>
+    );
+}
+
 export default function BattleAdventureOverlay({
     isAdvMode,
     isTournamentOpen,
@@ -212,6 +244,7 @@ export default function BattleAdventureOverlay({
                             </div>
                         )}
                     </div>
+                    <StatusRecoveryCue status={enemyStatus} className="left-3 top-[58px]" />
                     <div className={`absolute -top-16 right-0 z-10 transform scale-[1.1] ${battleState.flashTarget === 'enemy' ? 'damage-flash' : ''}`}>
                         {battleState.damagePop?.target === 'enemy' && (
                             <>
@@ -288,7 +321,7 @@ export default function BattleAdventureOverlay({
                             </div>
                         )}
                     </div>
-
+                    <StatusRecoveryCue status={playerStatus} className="right-3 bottom-[82px]" />
                     {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && (
                         <div className="absolute left-1/2 top-[33%] -translate-x-1/2 z-[145] bg-[#383a37]/90 border border-white/20 px-3 py-1 text-[8px] font-black text-[#ffca28] shadow-[2px_2px_0_rgba(0,0,0,0.35)]">
                             {battleState?.phase === 'waiting_opponent' && battleState?.mode === 'pvp'
