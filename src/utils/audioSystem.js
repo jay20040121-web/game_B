@@ -118,15 +118,17 @@ export const stopBGM = () => {
     removeBgmUnlockListeners();
 };
 
+const soundAsset = (name) => `${import.meta.env.BASE_URL}assets/sound/${encodeURIComponent(name)}`;
+
 const SOUND_MAP = {
-    select: './assets/sound/選擇按鈕.wav',
-    confirm: './assets/sound/確認按鈕.wav',
-    back: './assets/sound/取消按鈕.wav',
-    success: './assets/sound/獲勝.wav',
-    fail: './assets/sound/失敗.wav',
-    attack: './assets/sound/攻擊音效.wav',
-    pop: './assets/sound/選擇按鈕.wav',
-    heartbeat: './assets/sound/確認按鈕.wav',
+    select: soundAsset('選擇按鈕.wav'),   // A
+    confirm: soundAsset('確認按鈕.wav'),  // B
+    back: soundAsset('取消按鈕.wav'),     // C
+    success: soundAsset('獲勝.wav'),
+    fail: soundAsset('失敗.wav'),
+    attack: soundAsset('攻擊音效.wav'),
+    pop: soundAsset('選擇按鈕.wav'),
+    heartbeat: soundAsset('確認按鈕.wav'),
 };
 
 // 將原本的 Web Audio 邏輯獨立出來作為備援
