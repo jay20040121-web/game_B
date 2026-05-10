@@ -1,6 +1,8 @@
 import React from 'react';
 import { SPECIES_BASE_STATS, NATURE_CONFIG, SKILL_DATABASE, TYPE_MAP, calcFinalStat, getLevelByPower } from '../monsterData';
 import AutoFitText from './AutoFitText';
+import { buildAilmentBadges } from '../utils/ailmentBadgeUtils';
+import { useState } from 'react';
 
 const TYPE_LABELS = {
     normal: '普',
@@ -56,6 +58,8 @@ export default function StatusOverlay({
 }) {
     if (!isStatusUIOpen) return null;
 
+    const [selectedSkillDetail, setSelectedSkillDetail] = useState(null);
+
     const isMovesPage = statusPage === 'moves';
     const sid = getMonsterId();
     const level = getLevelByPower(advStats.basePower);
@@ -80,6 +84,14 @@ export default function StatusOverlay({
     const fDEF = Math.floor(calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def) * (traitMods.def || 1) * levelTraitMod);
     const fSPD = Math.floor(calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd) * (traitMods.spd || 1) * levelTraitMod);
     const moveSlots = Array.from({ length: 4 }, (_, idx) => advStats?.moves?.[idx] || null);
+    const selectedMoveId = selectedSkillDetail?.moveId;
+    const selectedMoveSkill = selectedMoveId ? SKILL_DATABASE[selectedMoveId] : null;
+    const selectedMoveEnchantData = selectedMoveId ? (advStats?.moveUpgrades?.[selectedMoveId]?.ailments || {}) : {};
+    const selectedMoveBadges = selectedMoveSkill ? buildAilmentBadges({
+        primaryAilment: selectedMoveSkill.ailment,
+        enchantData: selectedMoveEnchantData,
+        baseClassName: 'text-[7px] px-1 rounded-sm border border-black/10 leading-none py-0.5 font-black'
+    }) : [];
 
     return (
         <div className="absolute inset-0 z-[115] flex flex-col items-center justify-start p-2" style={{
@@ -155,12 +167,17 @@ export default function StatusOverlay({
                             const skill = moveId ? SKILL_DATABASE[moveId] : null;
                             const enchantData = moveId ? (advStats?.moveUpgrades?.[moveId]?.ailments || {}) : {};
                             const count = moveId ? (advStats?.moveUpgrades?.[moveId]?.count || 0) : 0;
-                            const enchantTags = Object.keys(enchantData).filter(key => (enchantData[key] || 0) > 0);
+                            const badges = skill ? buildAilmentBadges({
+                                primaryAilment: skill.ailment,
+                                enchantData,
+                                baseClassName: 'text-[7px] px-1 rounded-sm border border-black/10 leading-none py-0.5 font-black'
+                            }) : [];
 
                             return (
                                 <div
                                     key={idx}
-                                    className={`min-h-[46px] border-2 rounded-sm px-2 py-1.5 flex flex-col justify-center ${skill ? 'bg-black/25 border-white/20' : 'bg-black/10 border-white/10 opacity-50'}`}
+                                    className={`min-h-[46px] border-2 rounded-sm px-2 py-1.5 flex flex-col justify-center ${skill ? 'bg-black/25 border-white/20 cursor-pointer' : 'bg-black/10 border-white/10 opacity-50'}`}
+                                    onClick={() => skill && setSelectedSkillDetail({ moveId, idx })}
                                 >
                                     <div className="flex justify-between items-start gap-2">
                                         <div className="flex flex-col min-w-0">
@@ -182,14 +199,14 @@ export default function StatusOverlay({
 
                                     {skill && (
                                         <div className="flex flex-wrap gap-1 mt-1">
-                                            {skill.ailment && skill.ailment !== 'none' && (
-                                                <span className={`text-[7px] px-1 rounded-sm border border-black/10 leading-none py-0.5 font-black ${ailmentClass(skill.ailment)}`}>
-                                                    {AILMENT_LABELS[skill.ailment] || '狀'}
-                                                </span>
-                                            )}
-                                            {enchantTags.map(key => (
-                                                <span key={key} className={`text-[7px] px-1 rounded-sm border border-black/10 leading-none py-0.5 font-black ${ailmentClass(key)}`}>
-                                                    {AILMENT_LABELS[key] || key} +{enchantData[key]}{['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep'].includes(key) ? '%' : ''}
+                                            {badges.map((badge) => (
+                                                <span
+                                                    key={badge.key}
+                                                    title={badge.title}
+                                                    className={badge.className}
+                                                    style={badge.style}
+                                                >
+                                                    {badge.label}
                                                 </span>
                                             ))}
                                             {skill.stat_changes && skill.stat_changes.some(s => s.change > 0) && (
@@ -209,6 +226,83 @@ export default function StatusOverlay({
                     </div>
                 )}
             </div>
+
+            {selectedSkillDetail && selectedMoveSkill && (
+                <div
+                    className="absolute inset-0 z-[120] flex items-center justify-center px-3 py-4 bg-black/45"
+                    onClick={() => setSelectedSkillDetail(null)}
+                >
+                    <div
+                        className="w-full max-w-[300px] border-4 border-[#1a1a1a] bg-[#9dae8a] text-[#1a1a1a] shadow-[6px_6px_0_rgba(0,0,0,0.35)] p-3"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                                <AutoFitText as="div" className="text-[13px] font-black text-[#1a1a1a] w-full" minFontSize={9} maxFontSize={13}>
+                                    {selectedMoveSkill.name}
+                                </AutoFitText>
+                                <div className="text-[9px] font-black text-[#383a37] mt-0.5">
+                                    {TYPE_MAP[selectedMoveSkill.type] || selectedMoveSkill.type} / 威力:{selectedMoveSkill.power || '-'} / 命中:{selectedMoveSkill.accuracy || '-'}
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className="text-[9px] font-black px-2 py-1 border-2 border-[#1a1a1a] bg-[#383a37] text-white"
+                                onClick={() => setSelectedSkillDetail(null)}
+                            >
+                                關閉
+                            </button>
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-1">
+                            {selectedMoveBadges.map((badge) => (
+                                <span
+                                    key={badge.key}
+                                    title={badge.title}
+                                    className={`text-[7px] px-1 rounded-sm border border-black/10 leading-none py-0.5 font-black ${badge.className}`}
+                                    style={badge.style}
+                                >
+                                    {badge.label}
+                                </span>
+                            ))}
+                            {selectedMoveSkill.stat_changes && selectedMoveSkill.stat_changes.some(s => s.change > 0) && (
+                                <span className="text-[7px] px-1 rounded-sm border border-black/10 leading-none py-0.5 font-black bg-[#66bb6a] text-white">
+                                    變化
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mt-2 text-[9px] font-black text-[#1a1a1a]">
+                            原生異常：
+                            <span className="ml-1 text-[#d32f2f]">
+                                {selectedMoveSkill.ailment && selectedMoveSkill.ailment !== 'none'
+                                    ? `${AILMENT_LABELS[selectedMoveSkill.ailment] || selectedMoveSkill.ailment}`
+                                    : '無'}
+                            </span>
+                        </div>
+
+                        <div className="mt-1 text-[8px] font-black text-[#383a37]">
+                            附魔：
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                            {Object.keys(selectedMoveEnchantData).filter((key) => (selectedMoveEnchantData[key] || 0) > 0).length > 0 ? (
+                                Object.entries(selectedMoveEnchantData)
+                                    .filter(([, value]) => value > 0)
+                                    .map(([key, value]) => (
+                                        <span
+                                            key={key}
+                                            className={`text-[7px] px-1 rounded-sm border border-black/10 leading-none py-0.5 font-black ${ailmentClass(key)}`}
+                                        >
+                                            {AILMENT_LABELS[key] || key} +{value}{['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep'].includes(key) ? '%' : ''}
+                                        </span>
+                                    ))
+                            ) : (
+                                <span className="text-[8px] text-[#383a37] font-bold">無附魔</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

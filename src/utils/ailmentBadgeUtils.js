@@ -18,7 +18,9 @@ const COMPOSITE_BADGE_STYLE = {
     boxShadow: '0 0 0 1px rgba(0,0,0,0.18), 1px 1px 0 rgba(17,17,17,0.35)'
 };
 
-const getAilmentLabel = (ailment) => AILMENT_BADGE_META[ailment]?.label || '狀';
+export const getAilmentLabel = (ailment) => AILMENT_BADGE_META[ailment]?.label || '狀';
+
+export const getAilmentClassName = (ailment) => AILMENT_BADGE_META[ailment]?.className || 'bg-[#4db6ac] text-white';
 
 export const buildAilmentBadges = ({
     primaryAilment,
