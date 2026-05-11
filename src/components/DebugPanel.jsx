@@ -385,7 +385,7 @@ const DebugPanel = ({
                                     />
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                    {['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep'].map(key => (
+                                    {['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep', 'accuracy'].map(key => (
                                         <button
                                             key={key}
                                             onClick={() => setEnchantJson(JSON.stringify({ [key]: 100 }, null, 2))}
@@ -399,7 +399,8 @@ const DebugPanel = ({
                                                 'leech-seed': '寄生種子 100',
                                                 trap: '束縛 100',
                                                 freeze: '冰凍 100',
-                                                sleep: '睡眠 100'
+                                                sleep: '睡眠 100',
+                                                accuracy: '命中 100'
                                             })[key]}
                                         </button>
                                     ))}

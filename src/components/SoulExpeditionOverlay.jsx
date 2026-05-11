@@ -35,6 +35,12 @@ const FATE_CARDS = [
 
 const FATE_CARD_TRIGGER_PROGRESS = 5;
 const BLESSING_CARD_TRIGGER_PROGRESS = [20, 40, 60];
+const SOUL_MONSTER_STAGE = {
+    bottom: -20,
+    height: 146,
+    frameSize: 148,
+    spriteScale: 2.1
+};
 
 const createEmptySoulStats = () => ({
     bond: 0,
@@ -592,17 +598,31 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
                 </button>
             </div>
 
-            {/* === 怪獸角色 (縮小比例，減少顆粒感) === */}
-            <div className="absolute z-[105] flex flex-col items-center"
-                style={{ bottom: '-10%', left: '50%', transform: 'translateX(-50%)' }}>
-                <div className={currentEvent === null ? 'expedition-walk' : ''}>
-                    <DitheredSprite
-                        id={monsterId}
-                        scale={3.2}
-                        pure={true}
-                        animated={true}
-                        smoothAnimated={true}
-                    />
+            {/* === 怪獸舞台：固定尺寸入口，之後調整談心 GIF 大小只改 SOUL_MONSTER_STAGE === */}
+            <div
+                className="absolute inset-x-0 z-[105] pointer-events-none flex items-end justify-center overflow-visible"
+                style={{
+                    bottom: `${SOUL_MONSTER_STAGE.bottom}px`,
+                    height: `${SOUL_MONSTER_STAGE.height}px`
+                }}
+            >
+                <div
+                    className="relative flex items-end justify-center overflow-visible"
+                    style={{
+                        width: `${SOUL_MONSTER_STAGE.frameSize}px`,
+                        height: `${SOUL_MONSTER_STAGE.frameSize}px`
+                    }}
+                >
+                    <div className={currentEvent === null ? 'expedition-walk' : ''}>
+                        <DitheredSprite
+                            id={monsterId}
+                            scale={SOUL_MONSTER_STAGE.spriteScale}
+                            pure={true}
+                            animated={true}
+                            smoothAnimated={true}
+                            smallSmoothImageRendering="pixelated"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -790,10 +810,12 @@ export const SoulExpeditionOverlay = ({ monsterId, initialEnergy, lockedAffinity
             {/* === 內部動畫樣式 === */}
             <style>{`
                 @keyframes walkBounce {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-8px); }
+                    0%, 100% { top: 0; }
+                    50% { top: -7px; }
                 }
                 .expedition-walk {
+                    position: relative;
+                    top: 0;
                     animation: walkBounce 0.35s infinite ease-in-out;
                 }
                 @keyframes resultFloat {

@@ -188,6 +188,10 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - 受擊閃爍不要直接動 sprite 本體的 `opacity`
 - 特效、傷害跳字、回血跳字盡量不要和 GIF 放在同一個 transformed 容器內
 - 需要的位置對齊可以共用錨點，但渲染層要分開
+- 受擊回饋若需要抖動，不要用 `scale()` 做放大縮小；即使動畫結束會回原尺寸，GIF 仍可能因 transform 重新取樣而短暫或殘留模糊
+- 目前確認較穩的做法是在 `BattleAdventureOverlay.jsx` 用短暫的整數像素 `translate()` 做位移抖動，不用小數像素、不用 `will-change`
+- 位移動畫結束後要強制校正：用短暫 hit wrapper key 播動畫，`animationend` 或保險 timer 後切回 idle wrapper 並 bump key，讓瀏覽器丟掉 transform/composite 狀態
+- 不要讓 `damagePop` 長時間直接決定 sprite wrapper 維持在 hit key；`damagePop` 可能留在 battle state，受擊動畫應由 overlay 自己用短 timer 管理
 - 若 GIF 出現模糊，先查 `SpriteRenderer.jsx`、`BattleAdventureOverlay.jsx` 的疊層結構，再查 `damage-flash` / `mixBlendMode` / `imageRendering`
 - 不要把「修圖層」和「修戰鬥判定」混在一起，先分開驗證
 

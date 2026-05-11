@@ -19,6 +19,7 @@ const FLYING_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/
 const BUG_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/蟲.png`;
 const ROCK_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/岩.png`;
 const GENERIC_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/受擊特效.png`;
+const FINISHER_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/必殺技.png`;
 const WATER_EFFECT_SIZE = 72;
 const WATER_EFFECT_COLS = 3;
 const WATER_EFFECT_ROWS = 3;
@@ -48,6 +49,22 @@ const getVisibleStatus = (entity, fallbackState) => entity?.status || fallbackSt
 
 function DamageEffect({ pop, className = "" }) {
     if (!pop?.effectType) return null;
+
+    if (pop.effectStyle === 'finisher') {
+        return (
+            <div
+                key={`${pop.id}-effect`}
+                className={`pointer-events-none absolute z-[150] w-[96px] h-[96px] finisher-effect-pop ${className}`}
+                style={{
+                    backgroundImage: `url("${FINISHER_HIT_EFFECT_SHEET}")`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    imageRendering: 'pixelated'
+                }}
+            />
+        );
+    }
 
     const variant = Math.max(0, Math.min(8, pop.effectVariant ?? 0));
     const x = variant % WATER_EFFECT_COLS;
@@ -152,6 +169,45 @@ function StatusRecoveryCue({ status, className = '' }) {
     );
 }
 
+function BattleMonsterSprite({ side, hitPop, children }) {
+    const [hitId, setHitId] = React.useState(null);
+    const [resetTick, setResetTick] = React.useState(0);
+    const timerRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (!hitPop?.id) return undefined;
+        setHitId(hitPop.id);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
+            setHitId(null);
+            setResetTick(tick => tick + 1);
+            timerRef.current = null;
+        }, 340);
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+                timerRef.current = null;
+            }
+        };
+    }, [hitPop?.id]);
+
+    const isHit = !!hitId;
+    const renderKey = isHit ? `${side}-hit-${hitId}` : `${side}-idle-${resetTick}`;
+
+    return (
+        <div
+            key={renderKey}
+            className={isHit ? 'monster-hit-shake' : ''}
+            onAnimationEnd={() => {
+                setHitId(null);
+                setResetTick(tick => tick + 1);
+            }}
+        >
+            {children}
+        </div>
+    );
+}
+
 export default function BattleAdventureOverlay({
     isAdvMode,
     isTournamentOpen,
@@ -218,6 +274,28 @@ export default function BattleAdventureOverlay({
                         .water-effect-pop {
                             animation: water-effect-pop 820ms ease-out both;
                         }
+                        @keyframes finisher-effect-pop {
+                            0% { opacity: 0; transform: translateY(6px) scale(0.72) rotate(-4deg); }
+                            16% { opacity: 1; transform: translateY(0) scale(1.08) rotate(2deg); }
+                            62% { opacity: 0.95; transform: translateY(-4px) scale(1.16) rotate(-1deg); }
+                            100% { opacity: 0; transform: translateY(-12px) scale(1.28) rotate(0deg); }
+                        }
+                        .finisher-effect-pop {
+                            animation: finisher-effect-pop 900ms ease-out both;
+                        }
+                        @keyframes monster-hit-shake {
+                            0% { transform: translate(0, 0); }
+                            14% { transform: translate(-4px, 0); }
+                            28% { transform: translate(4px, -1px); }
+                            42% { transform: translate(-3px, 1px); }
+                            58% { transform: translate(3px, 0); }
+                            74% { transform: translate(-1px, 0); }
+                            100% { transform: translate(0, 0); }
+                        }
+                        .monster-hit-shake {
+                            animation: monster-hit-shake 320ms steps(1, end) both;
+                            transform-origin: center bottom;
+                        }
                     `}</style>
                     {/* Enemy Area */}
                     <div className="absolute top-2 left-2 flex flex-col items-start min-w-[100px] z-20 bg-white/12 backdrop-blur-sm border-2 border-white/20 rounded-md p-1 pl-2 shadow-sm">
@@ -249,7 +327,12 @@ export default function BattleAdventureOverlay({
                     <StatusRecoveryCue status={enemyStatus} className="left-3 top-[58px]" />
                     <div className="absolute -top-16 right-0 z-10">
                         <div className="relative transform scale-[1.1]">
-                            <DitheredSprite id={battleState?.enemy?.id} scale={2} />
+                            <BattleMonsterSprite
+                                side="enemy"
+                                hitPop={battleState.damagePop?.target === 'enemy' ? battleState.damagePop : null}
+                            >
+                                <DitheredSprite id={battleState?.enemy?.id} scale={2} />
+                            </BattleMonsterSprite>
                         </div>
                         <div className="pointer-events-none absolute inset-0 z-[140]">
                             {battleState.damagePop?.target === 'enemy' && (
@@ -279,7 +362,12 @@ export default function BattleAdventureOverlay({
                     {/* Player Area */}
                     <div className="absolute bottom-6 -left-2 z-10 px-2">
                         <div className="relative transform scale-[1.4] origin-bottom">
-                            <DitheredBackSprite id={battleState?.player?.id} scale={2} />
+                            <BattleMonsterSprite
+                                side="player"
+                                hitPop={battleState.damagePop?.target === 'player' ? battleState.damagePop : null}
+                            >
+                                <DitheredBackSprite id={battleState?.player?.id} scale={2} />
+                            </BattleMonsterSprite>
                         </div>
                         <div className="pointer-events-none absolute inset-0 z-[140]">
                             {battleState.damagePop?.target === 'player' && (
@@ -335,8 +423,8 @@ export default function BattleAdventureOverlay({
                     {(battleState?.phase === 'action_streaming' || battleState?.phase === 'waiting_opponent') && (
                         <div className="absolute left-1/2 top-[33%] -translate-x-1/2 z-[145] bg-[#383a37]/75 backdrop-blur-md border border-white/20 px-3 py-1 text-[8px] font-black text-[#ffca28] shadow-[2px_2px_0_rgba(0,0,0,0.35)]">
                             {battleState?.phase === 'waiting_opponent' && battleState?.mode === 'pvp'
-                                ? '等待對手判斷中，請稍候...'
-                                : '上一回合判斷中，請稍候...'}
+                                ? '等待對手判斷中'
+                                : '上一回合判斷中'}
                         </div>
                     )}
 

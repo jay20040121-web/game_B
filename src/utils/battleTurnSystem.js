@@ -231,7 +231,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         return result;
     };
 
-    const pushDamageStep = ({ target, value, text, effectType, effectVariant, shieldValue, hpValue, kind = 'damage', actorSide, targetSide, actorName, targetName, moveId, moveName, cue }) => {
+    const pushDamageStep = ({ target, value, text, effectType, effectVariant, effectStyle, shieldValue, hpValue, kind = 'damage', actorSide, targetSide, actorName, targetName, moveId, moveName, cue }) => {
         const step = createBattleStep('damage', {
             kind,
             target,
@@ -247,6 +247,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         });
         if (effectType) step.effectType = effectType;
         if (effectVariant !== undefined) step.effectVariant = effectVariant;
+        if (effectStyle) step.effectStyle = effectStyle;
         if (shieldValue !== undefined) step.shieldValue = shieldValue;
         if (hpValue !== undefined) step.hpValue = hpValue;
         nextQueue.push(step);
@@ -512,6 +513,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 moveName: move.name,
                 effectType: move.type,
                 effectVariant: Math.floor(rFunc() * 9),
+                effectStyle: (move.power || 0) >= 130 ? 'finisher' : undefined,
                 shieldValue: shieldDmg,
                 hpValue: hpDmg,
                 cue: 'damage'

@@ -977,7 +977,8 @@ export default function App() {
                         target: nextStep.target,
                         value: nextStep.value,
                         effectType: nextStep.effectType,
-                        effectVariant: nextStep.effectVariant
+                        effectVariant: nextStep.effectVariant,
+                        effectStyle: nextStep.effectStyle
                     };
                     setTimeout(() => {
                         setBattleState(current => {
