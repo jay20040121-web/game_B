@@ -42,6 +42,10 @@ export const usePvpConnection = (deps) => {
     const [pvpCurrentHP, setPvpCurrentHP] = useState(1);
     const [pvpOpponentHP, setPvpOpponentHP] = useState(1);
     const [pendingPlayerMove, setPendingPlayerMove] = useState(null);
+    const pendingPlayerMoveRef = useRef(null);
+    const localMovesByTurnRef = useRef({});
+    const remoteMovesByTurnRef = useRef({});
+    const resolvingTurnsRef = useRef({});
 
     // ? ?郊????甇?(Battle Sync & Turn Control)
     const battleStateRef = useRef(null);
@@ -49,6 +53,79 @@ export const usePvpConnection = (deps) => {
         battleStateRef.current = battleState;
     }, [battleState]);
     const pvpRemoteMoveRef = useRef(null);
+
+    useEffect(() => {
+        pendingPlayerMoveRef.current = pendingPlayerMove;
+    }, [pendingPlayerMove]);
+
+    const syncPendingPlayerMove = (move) => {
+        pendingPlayerMoveRef.current = move;
+        setPendingPlayerMove(move);
+    };
+
+    const clearPendingRemoteActions = () => {
+        localMovesByTurnRef.current = {};
+        remoteMovesByTurnRef.current = {};
+        resolvingTurnsRef.current = {};
+    };
+
+    const resolveHostTurnIfReady = (turnId) => {
+        const state = battleStateRef.current;
+        if (!isHost.current || !state?.active || state.mode !== 'pvp') return false;
+        if (state.turn !== turnId) return false;
+        if (state.phase === 'action_streaming' || state.phase === 'end') return false;
+
+        const localMove = localMovesByTurnRef.current[turnId];
+        const remoteMove = remoteMovesByTurnRef.current[turnId];
+        if (!localMove || !remoteMove || resolvingTurnsRef.current[turnId]) return false;
+
+        resolvingTurnsRef.current[turnId] = true;
+        delete localMovesByTurnRef.current[turnId];
+        delete remoteMovesByTurnRef.current[turnId];
+        syncPendingPlayerMove(null);
+        pvpRemoteMoveRef.current = remoteMove;
+        executeBattleTurn('attack', localMove, remoteMove);
+        pvpRemoteMoveRef.current = null;
+        return true;
+    };
+
+    useEffect(() => {
+        if (!battleState?.active || battleState.mode !== 'pvp') return;
+        if (!['player_action', 'waiting_opponent'].includes(battleState.phase)) return;
+        resolveHostTurnIfReady(battleState.turn);
+    }, [battleState?.active, battleState?.mode, battleState?.phase, battleState?.turn]);
+
+    const submitPvpMove = (move) => {
+        const state = battleStateRef.current;
+        if (!move || !state?.active || state.mode !== 'pvp' || state.phase !== 'player_action') {
+            if (playBloop) playBloop('fail');
+            return false;
+        }
+
+        const turnId = state.turn || 1;
+        if (localMovesByTurnRef.current[turnId]) return false;
+
+        localMovesByTurnRef.current[turnId] = move;
+        syncPendingPlayerMove(move);
+
+        if (!isHost.current && connInstance.current) {
+            connInstance.current.send({ type: 'ACTION', data: { move, turnId } });
+        }
+
+        setBattleState(prev => {
+            if (!prev || prev.mode !== 'pvp' || prev.turn !== turnId || prev.phase !== 'player_action') return prev;
+            return {
+                ...prev,
+                phase: 'waiting_opponent',
+                logs: [...(prev.logs || []), isHost.current ? '等待對手出招...' : '招式已送出，等待判定...']
+            };
+        });
+
+        if (isHost.current) {
+            setTimeout(() => resolveHostTurnIfReady(turnId), 0);
+        }
+        return true;
+    };
 
     // =========================================
     // PeerJS ?詨?????摩 & 蝛拙??批撥??
@@ -72,7 +149,8 @@ export const usePvpConnection = (deps) => {
             connInstance.current = null;
         }
         pvpRemoteMoveRef.current = null;
-        setPendingPlayerMove(null);
+        clearPendingRemoteActions();
+        syncPendingPlayerMove(null);
 
         setIsPvpMode(false);
         syncMatchStatus('idle');
@@ -110,8 +188,9 @@ export const usePvpConnection = (deps) => {
         setIsPvpMode(false);
         syncMatchStatus('idle');
         setBattleState(prev => (prev.mode === 'pvp' && prev.active) ? { ...prev, active: false, phase: 'end' } : { ...prev, active: false });
-        setPendingPlayerMove(null);
+        syncPendingPlayerMove(null);
         pvpRemoteMoveRef.current = null;
+        clearPendingRemoteActions();
 
         // 撠?鞈?皜征
         setPvpOpponent(null);
@@ -143,25 +222,24 @@ export const usePvpConnection = (deps) => {
                 syncMatchStatus('matched');
                 playBloop('success');
             } else if (payload.type === 'ACTION') {
+                if (!isHost.current) return;
                 const currentTurn = battleStateRef.current?.turn || 1;
-                if (payload.data.turnId !== undefined && payload.data.turnId !== currentTurn) {
-                    console.log(`[PVP] 忽略不同步回合 ${payload.data.turnId}, 目前 ${currentTurn}`);
+                const remoteTurn = payload.data.turnId;
+                if (remoteTurn !== undefined && remoteTurn < currentTurn) {
+                    console.log(`[PVP] 忽略過期回合 ${remoteTurn}, 目前 ${currentTurn}`);
+                    return;
+                }
+                if (remoteTurn !== undefined && remoteTurn > currentTurn) {
+                    remoteMovesByTurnRef.current[remoteTurn] = payload.data.move;
+                    console.log(`[PVP] 暫存未來回合 ${remoteTurn} 招式，目前 ${currentTurn}`);
                     return;
                 }
 
                 pvpRemoteMoveRef.current = payload.data.move;
-
-                if (isHost.current) {
-                    setPendingPlayerMove(prevMove => {
-                        if (prevMove) {
-                            executeBattleTurn('attack', prevMove, pvpRemoteMoveRef.current);
-                            return null;
-                        }
-                        return prevMove;
-                    });
-                }
+                remoteMovesByTurnRef.current[remoteTurn || currentTurn] = payload.data.move;
+                resolveHostTurnIfReady(remoteTurn || currentTurn);
             } else if (payload.type === 'RESULT') {
-                setPendingPlayerMove(null);
+                syncPendingPlayerMove(null);
                 pvpRemoteMoveRef.current = null;
                 setBattleState(prev => {
                     if (!prev || !prev.active) return prev;
@@ -419,10 +497,11 @@ export const usePvpConnection = (deps) => {
         setIsMyTurn,
         setPvpCurrentHP,
         setPvpOpponentHP,
-        setPendingPlayerMove,
+        setPendingPlayerMove: syncPendingPlayerMove,
         cleanupPvp,
         initPeer,
         joinPvpRoom,
+        submitPvpMove,
         handleBattleEnd,
 
         // --- Raw Refs ---

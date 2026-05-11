@@ -116,6 +116,17 @@ PvP 使用 PeerJS，主要在 `src/utils/usePvpConnection.js`。
 - 封包類型是 `INIT`、`ACTION`、`RESULT`。
 - 主機負責結算回合，並把 `RESULT` 傳給客機。
 
+目前 PvP 回合同步層已重整，之後維護要遵守：
+
+- `App.jsx` 的 PvP 選招不要直接呼叫 `executeBattleTurn`；必須走 `usePvpConnection.js` 匯出的 `submitPvpMove(move)`。
+- `submitPvpMove` 只負責提交本地招式、切到 `waiting_opponent`，並由同步層決定何時結算。
+- 客機只送 `ACTION { turnId, move }` 給主機，客機永遠不自行結算回合。
+- 主機用 `localMovesByTurnRef` 與 `remoteMovesByTurnRef` 依 `turnId` 收集雙方招式；同一回合雙方招式都齊了，才呼叫既有 `executeBattleTurn('attack', localMove, remoteMove)`。
+- 主機仍沿用既有 `battleTurnSystem.js` 做實際戰鬥計算與 `RESULT` 封包產生，避免重寫或分叉單人戰鬥規則。
+- 收到未來回合的 `ACTION` 要先暫存，不能丟掉；過期回合才忽略。這是為了避免一方動畫播比較快、先進下一回合出招，另一方還在上一回合時把封包丟掉造成 25 秒 timeout。
+- `waiting_opponent` 只代表本地已提交招式、正在等同步層收齊或等主機 `RESULT`；不要用它讓客機進入任何本地戰鬥結算。
+- 若再遇到「後選招者卡住」或「一方等待到 timeout」，優先查 `submitPvpMove`、`resolveHostTurnIfReady`、`ACTION` 的 `turnId` 暫存與清除，不要先改傷害公式或 UI。
+
 修改 PvP 時，不要讓 client 端獨立決定戰鬥結果，否則會 desync。
 
 ### 冒險系統
@@ -203,6 +214,24 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - `DitheredSprite` 的 `smallSmoothImageRendering` 只會在 `smoothAnimated` 且實際 GIF 尺寸小於等於 64x64 時生效；128x128 GIF 應維持原本的平滑渲染。
 - 登入畫面的 64x64 GIF 目前使用 `pixelated` 來強化像素質感，避免低解析素材被平滑放大後顯得糊。
 - 登入畫面隨機怪獸一輪內不能重複；抽完一輪後才重置抽取池，且重置後也要避免立即抽到上一隻。
+
+### 談心畫面 GIF 注意
+
+談心畫面的怪獸 GIF 在 `src/components/SoulExpeditionOverlay.jsx`，目前已整理成固定舞台規則，之後不要再用零散的 `bottom: '-10%'`、`left: '50%'`、`transform: translateX(-50%)` 直接調怪獸位置。
+
+目前統一調整入口是 `SOUL_MONSTER_STAGE`：
+
+- `bottom`：怪獸舞台距離 LCD 底部的位置；可以是負值，用來把腳藏到可見範圍外。目前是 `-20`。
+- `height`：舞台高度。
+- `frameSize`：怪獸控制框大小。
+- `spriteScale`：傳給 `DitheredSprite` 的顯示比例；談心 GIF 大小優先改這裡。目前是 `2.1`。
+
+談心的 `DitheredSprite` 目前使用：
+
+- `smoothAnimated={true}`：讓 128x128 等較大 GIF 維持平滑。
+- `smallSmoothImageRendering="pixelated"`：讓 64x64 或更小的 GIF 放大時維持像素感，和登入畫面同樣規則。
+
+談心走路浮動目前用 `.expedition-walk` 的 `top` 位移，不用 `transform: translateY()`，避免 GIF 進入瀏覽器合成路徑後出現模糊或大小難控。
 
 ## 素材
 

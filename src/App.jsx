@@ -1513,7 +1513,11 @@ export default function App() {
                 const currentIdx = battleState.menuIdx || 0;
                 const move = battleState.player?.moves?.[currentIdx];
                 if (move) {
-                    executeBattleTurn('attack', move);
+                    if (battleState.mode === 'pvp') {
+                        submitPvpMove(move);
+                    } else {
+                        executeBattleTurn('attack', move);
+                    }
                 } else {
                     const errorMsg = battleState.mode === 'pvp' ? "尚未裝備技能！" : "該格子尚未裝備技能！";
                     const tempLogs = [...battleState.logs, errorMsg];
@@ -3077,7 +3081,7 @@ export default function App() {
         pvpCurrentHP, setPvpCurrentHP, pvpOpponentHP, setPvpOpponentHP,
         pendingPlayerMove, setPendingPlayerMove,
         peerInstance, connInstance, isHost, pvpRemoteMoveRef,
-        cleanupPvp, initPeer, joinPvpRoom, handleBattleEnd
+        cleanupPvp, initPeer, joinPvpRoom, handleBattleEnd, submitPvpMove
     } = pvp;
 
     // 🔹 當使用者登入成功且排行榜尚未讀取時，自動預載資料以供大賽系統使用
