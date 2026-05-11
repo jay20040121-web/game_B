@@ -118,7 +118,6 @@ export default function SettingsOverlay({
             </div>
 
             <div className="flex-1 w-full flex flex-col gap-3 px-2 py-2 relative z-10 overflow-y-auto" style={{ fontFamily: "'Press Start 2P', monospace, sans-serif" }}>
-
                 {/* 畫面尺寸設定 */}
                 <div className="flex flex-col gap-1 bg-[#1a1a1a]/40 p-2 rounded border border-[#ccd6be]/30">
                     <div className="text-[10px] text-[#ccd6be] font-bold mb-1">畫面尺寸</div>

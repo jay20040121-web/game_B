@@ -66,6 +66,22 @@ import { TournamentOverlay } from './components/TournamentOverlay';
 
 
 
+const BOOT_MONSTER_IDS = Array.from({ length: 30 }, (_, index) => 1000 + index);
+
+const drawBootMonsterId = (poolRef, currentId = null) => {
+    let pool = poolRef.current.filter(id => id !== currentId);
+
+    if (pool.length === 0) {
+        pool = BOOT_MONSTER_IDS.filter(id => id !== currentId);
+    }
+
+    const nextIndex = Math.floor(Math.random() * pool.length);
+    const nextId = pool[nextIndex];
+    poolRef.current = pool.filter(id => id !== nextId);
+
+    return nextId;
+};
+
 export default function App() {
     const isDesktopBuild = import.meta.env.VITE_DESKTOP === '1';
     const [initialData] = useState(() => loadSaveData());
@@ -393,7 +409,8 @@ export default function App() {
     const lastAliveMonsterIdRef = useRef(1000);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
-    const [bootMonsterId, setBootMonsterId] = useState(() => Math.floor(Math.random() * 30) + 1000);
+    const bootMonsterPoolRef = useRef([...BOOT_MONSTER_IDS]);
+    const [bootMonsterId, setBootMonsterId] = useState(() => drawBootMonsterId(bootMonsterPoolRef));
     const [bootMonsterPosIdx, setBootMonsterPosIdx] = useState(0); // 0:左上, 1:右上, 2:左下, 3:右下
     const [isBootMonsterVisible, setIsBootMonsterVisible] = useState(true);
 
@@ -408,8 +425,7 @@ export default function App() {
 
                 setTimeout(() => {
                     setBootMonsterPosIdx(prev => (prev + 1) % 2); // 只在兩個位置循環
-                    const nextId = Math.floor(Math.random() * 30) + 1000;
-                    setBootMonsterId(nextId); // 每次跳轉都更換怪獸 ID (1000-1027)
+                    setBootMonsterId(prev => drawBootMonsterId(bootMonsterPoolRef, prev)); // 一輪內不重複抽怪
                     setIsBootMonsterVisible(true); // 觸發淡入
                 }, 1000); // 1秒的淡出過渡
             }, 10000); // 10秒一個週期
@@ -2859,7 +2875,7 @@ export default function App() {
         const savedDeathBranch = latestStats.current.deathBranch;
 
         setIsBooting(true); // 觸發啟動彩蛋畫面
-        setBootMonsterId(Math.floor(Math.random() * 30) + 1000); // 重新開機隨機抽一個 ID (1000-1029)
+        setBootMonsterId(prev => drawBootMonsterId(bootMonsterPoolRef, prev)); // 重新開機隨機抽一個未重複 ID
 
         setHunger(60);
         setMood(50);
@@ -3558,11 +3574,11 @@ export default function App() {
                                                         // 同時處理上下反轉(isTop)與左右鏡射(isLeft)
                                                         transform: `scale(${isLeft ? -2.5 : 2.5}, ${isTop ? -2.5 : 2.5})`,
                                                         transformOrigin: 'center',
-                                                        imageRendering: 'pixelated' // 強制點陣化渲染
+                                                        imageRendering: 'auto'
                                                     }}
                                                 >
                                                     <div style={{ animation: 'egg-pulse 2s infinite ease-in-out' }}>
-                                                        <DitheredSprite id={bootMonsterId} scale={0.85} pure={true} smoothAnimated={true} />
+                                                        <DitheredSprite id={bootMonsterId} scale={0.85} pure={true} smoothAnimated={true} smallSmoothImageRendering="pixelated" />
                                                     </div>
                                                 </div>
                                             );

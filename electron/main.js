@@ -22,7 +22,7 @@ function createWindow() {
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
-      preload: path.resolve(__dirname, 'preload.js'),
+      preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false
@@ -55,7 +55,11 @@ ipcMain.handle('desktop:set-content-size', (event, { width, height }) => {
   if (!win) return false
   const safeWidth = Math.max(320, Math.round(width || 320))
   const safeHeight = Math.max(620, Math.round(height || 620))
-  win.setSize(safeWidth, safeHeight)
+  const bounds = win.getBounds()
+  const contentBounds = win.getContentBounds()
+  const frameWidth = Math.max(0, bounds.width - contentBounds.width)
+  const frameHeight = Math.max(0, bounds.height - contentBounds.height)
+  win.setSize(safeWidth + frameWidth, safeHeight + frameHeight)
   return true
 })
 
@@ -65,7 +69,11 @@ ipcMain.handle('desktop:apply-scale-preset', (event, { scale }) => {
   const safeScale = Number.isFinite(scale) ? Math.max(1, scale) : 1
   const safeWidth = Math.max(320, Math.round(safeScale * 320))
   const safeHeight = Math.max(620, Math.round(safeScale * 620))
-  win.setSize(safeWidth, safeHeight)
+  const bounds = win.getBounds()
+  const contentBounds = win.getContentBounds()
+  const frameWidth = Math.max(0, bounds.width - contentBounds.width)
+  const frameHeight = Math.max(0, bounds.height - contentBounds.height)
+  win.setSize(safeWidth + frameWidth, safeHeight + frameHeight)
   win.center()
   return { width: safeWidth, height: safeHeight }
 })

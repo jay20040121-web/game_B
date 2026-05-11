@@ -4,7 +4,7 @@ import { MONSTER_ASSET_IDS } from '../monsterData';
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
-const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true, forceStatic = false, smoothAnimated = false }) => {
+const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true, forceStatic = false, smoothAnimated = false, smoothSmallAnimatedScale = 1, smallSmoothImageRendering = 'auto' }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     
@@ -28,6 +28,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const [imgSrc, setImgSrc] = useState(staticSrc); // Default to static PNG for instant load
     const [isGifLoaded, setIsGifLoaded] = useState(false);
     const [naturalWidth, setNaturalWidth] = useState(0);
+    const [naturalHeight, setNaturalHeight] = useState(0);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
@@ -37,6 +38,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
         setImgSrc(newStatic);
         setIsGifLoaded(false);
         setNaturalWidth(0); // Reset width when ID changes
+        setNaturalHeight(0);
 
         if (effectiveAnimated) {
             // Background load the GIF
@@ -58,7 +60,9 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const baseSize = 68;
     const targetSize = baseSize * scale;
     const useSmoothAnimated = effectiveAnimated && smoothAnimated;
-    const innerScale = useSmoothAnimated ? 1 : (naturalWidth >= 120 ? 0.7 : 0.55);
+    const isSmallSmoothGif = useSmoothAnimated && isGifLoaded && naturalWidth <= 64 && naturalHeight <= 64;
+    const innerScale = useSmoothAnimated ? (isSmallSmoothGif ? smoothSmallAnimatedScale : 1) : (naturalWidth >= 120 ? 0.7 : 0.55);
+    const imageRendering = useSmoothAnimated ? (isSmallSmoothGif ? smallSmoothImageRendering : 'auto') : 'pixelated';
 
     // --- Sprite Offsets ---
     // 可以在這裡針對各別怪獸 ID 設定垂直位移 (向下為正，向上為負)
@@ -88,7 +92,10 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
                 src={imgSrc}
                 loading="lazy"
                 className={`pixel-rendering ${!isGifLoaded && effectiveAnimated ? 'opacity-70 grayscale-[0.3]' : ''}`}
-                onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
+                onLoad={(e) => {
+                    setNaturalWidth(e.target.naturalWidth);
+                    setNaturalHeight(e.target.naturalHeight);
+                }}
                 style={{ 
                     filter: silhouette 
                         ? 'brightness(0) contrast(100)' 
@@ -98,7 +105,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
                     minWidth: '100%',
                     minHeight: '100%',
                     objectFit: 'contain',
-                    imageRendering: useSmoothAnimated ? 'auto' : 'pixelated',
+                    imageRendering,
                     opacity: 1.0,
                     pointerEvents: 'none',
                     transform: `scale(${innerScale}) translateY(${offsetY})`,

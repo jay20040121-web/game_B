@@ -15,6 +15,11 @@
 - 目前使用者偏好是「先不要寄 Gmail 專案更新通知」，避免信件過多。除非使用者之後明確重新啟用，否則只在對話內更新進度，不主動寄信。
 - 專案已加入 Windows PC 版 portable 打包流程：`npm run build:desktop` 會先跑 Vite desktop build，再用 `electron-packager` 輸出可執行資料夾到 `release/`。
 - Desktop build 走 `VITE_DESKTOP=1` 時會讓 Vite 的 `base` 改成 `./`，不要再把 `/game_B/` 當成桌面版唯一基底。
+- PC 版尺寸縮放目前已確認能正常運作。關鍵修正是主視窗 preload 使用 `electron/preload.cjs` 暴露 `window.desktopWindow`；不要改回 ESM `preload.js`，否則 packaged Electron 可能不會成功暴露 IPC，React 的尺寸切換就完全打不到 main process。
+- PC 版尺寸系統仍以 `src/utils/useDisplayScale.js`、`SettingsOverlay.jsx` 和 `electron/main.js` 串接。不要一次大改 CSS `zoom`、`transform`、Electron `setSize` / `setContentSize` / bounds，多層同時改很容易造成內容縮放和視窗大小不同步。
+- 若之後要修 PC 視窗黑底或尺寸對齊，可以臨時做可觀測診斷：在切換尺寸時記錄 preset、`displayScale`、`window.innerWidth/innerHeight`、Electron `getBounds()`、`getContentBounds()` 與實際遊戲外框 DOM 尺寸，再根據數據只改一層。
+- 目前診斷顯示 Windows 標題列/邊框會讓 `setSize(width,height)` 設成整體視窗尺寸而非內容區。PC 版套用尺寸時應先用 `getBounds()` / `getContentBounds()` 算 frame 差值，將目標內容區尺寸加上 frame 差值後再 `setSize()`。
+- PC 尺寸診斷工具、always-on-top 診斷視窗、txt log、console log、DOM 量測標記都只能臨時使用；交付或打包給使用者前必須移除，避免影響遊戲畫面與效能。
 - 目前不要再回頭用 `electron-builder` 做 Windows installer，這台環境在 Windows code signing / symlink 上有卡點；若要發佈 PC 版，先以 portable folder 為準。
 
 ## 協作偏好
@@ -186,6 +191,15 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - 若 GIF 出現模糊，先查 `SpriteRenderer.jsx`、`BattleAdventureOverlay.jsx` 的疊層結構，再查 `damage-flash` / `mixBlendMode` / `imageRendering`
 - 不要把「修圖層」和「修戰鬥判定」混在一起，先分開驗證
 
+### 登入畫面 GIF 注意
+
+登入畫面的隨機怪獸使用 `src/App.jsx` 的 boot monster 邏輯與 `DitheredSprite`。目前規則：
+
+- 只在登入畫面針對小尺寸 GIF 做特殊處理，不要影響主畫面、戰鬥、圖鑑或談心畫面。
+- `DitheredSprite` 的 `smallSmoothImageRendering` 只會在 `smoothAnimated` 且實際 GIF 尺寸小於等於 64x64 時生效；128x128 GIF 應維持原本的平滑渲染。
+- 登入畫面的 64x64 GIF 目前使用 `pixelated` 來強化像素質感，避免低解析素材被平滑放大後顯得糊。
+- 登入畫面隨機怪獸一輪內不能重複；抽完一輪後才重置抽取池，且重置後也要避免立即抽到上一隻。
+
 ## 素材
 
 素材透過 Vite public path 從 `public/assets/` 讀取。`App.jsx` 很多地方會用 `import.meta.env.BASE_URL` 組出素材路徑。
@@ -210,6 +224,8 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 
 - 不要只是為了清註解就大範圍重寫檔案。
 - 保持 UTF-8。
+- 讀取、顯示、寫入包含中文的文件時，一律明確使用 UTF-8，不要依賴 PowerShell 或終端預設編碼。
+- 用 PowerShell 讀中文文件時，使用 `Get-Content -Encoding UTF8`；需要寫入中文文件時，也要明確指定 UTF-8 或使用能保持 UTF-8 的精準修改工具。
 - 修改中文文字時，盡量做精準小範圍修改。
 - 若看到 mojibake，先確認原始檔案實際內容，不要直接把亂碼當成正確文字覆蓋。
 
