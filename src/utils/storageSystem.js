@@ -14,9 +14,37 @@ export const isInAppBrowser = typeof navigator !== "undefined" && (
     /micromessenger/i.test(navigator.userAgent)
 );
 
+const readDesktopSaveText = () => {
+    try {
+        if (typeof window === "undefined" || !window.desktopStorage?.loadSaveSync) return null;
+        return window.desktopStorage.loadSaveSync();
+    } catch (e) {
+        console.warn("[Storage] Failed to read desktop save.", e);
+        return null;
+    }
+};
+
+export const persistSaveData = (saveText) => {
+    localStorage.setItem('pixel_monster_save', saveText);
+    try {
+        window.desktopStorage?.setSave?.(saveText);
+    } catch (e) { }
+};
+
+export const clearPersistedSaveData = () => {
+    localStorage.removeItem('pixel_monster_save');
+    try {
+        window.desktopStorage?.clearSave?.();
+    } catch (e) { }
+};
+
 export const loadSaveData = () => {
     try {
-        const str = localStorage.getItem('pixel_monster_save');
+        const desktopStr = readDesktopSaveText();
+        if (desktopStr && !localStorage.getItem('pixel_monster_save')) {
+            localStorage.setItem('pixel_monster_save', desktopStr);
+        }
+        const str = localStorage.getItem('pixel_monster_save') || desktopStr;
         if (str) {
             const data = JSON.parse(str);
 

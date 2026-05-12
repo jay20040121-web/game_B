@@ -46,7 +46,7 @@ import {
 } from './data/gameConfig';
 
 import { playBloop, playBGM } from './utils/audioSystem';
-import { SAVE_VERSION, loadSaveData } from './utils/storageSystem';
+import { SAVE_VERSION, loadSaveData, persistSaveData, clearPersistedSaveData } from './utils/storageSystem';
 import { isLocalhost, PEER_PREFIX } from './utils/envConfig';
 import { processBattleTurn, splitShieldDamage } from './utils/battleTurnSystem';
 import { usePvpConnection } from './utils/usePvpConnection';
@@ -411,7 +411,14 @@ export default function App() {
     const [btnPressed, setBtnPressed] = useState(null);
     const lastAliveMonsterIdRef = useRef(1000);
     const [showRestartHint, setShowRestartHint] = useState(false);
-    const [isBooting, setIsBooting] = useState(true); // 每次重新整理都先停留在登入畫面
+    const [isBooting, setIsBooting] = useState(() => {
+        const shouldSkipBoot = sessionStorage.getItem('pixel_monster_skip_boot_once') === '1';
+        if (shouldSkipBoot) {
+            sessionStorage.removeItem('pixel_monster_skip_boot_once');
+            return false;
+        }
+        return true;
+    }); // 每次重新整理都先停留在登入畫面，雲端匯入後例外直接進遊戲
     const bootMonsterPoolRef = useRef([...BOOT_MONSTER_IDS]);
     const [bootMonsterId, setBootMonsterId] = useState(() => drawBootMonsterId(bootMonsterPoolRef));
     const [bootMonsterPosIdx, setBootMonsterPosIdx] = useState(0); // 0:左上, 1:右上, 2:左下, 3:右下
@@ -536,7 +543,7 @@ export default function App() {
             const currentDataStr = JSON.stringify(currentData);
             if (currentDataStr === lastSavedDataRef.current) return;
 
-            localStorage.setItem('pixel_monster_save', currentDataStr);
+            persistSaveData(currentDataStr);
             lastSavedDataRef.current = currentDataStr;
             lastSaveTimeRef.current = now;
         } catch (e) { }
@@ -3024,7 +3031,7 @@ export default function App() {
         }
 
         // 🔥 VERY IMPORTANT: Remove localStorage data immediately!
-        try { localStorage.removeItem('pixel_monster_save'); } catch (e) { }
+        try { clearPersistedSaveData(); } catch (e) { }
         try { sessionStorage.removeItem('pixel_monster_save'); } catch (e) { }
 
         recordGameAction(); // 紀錄重啟行為

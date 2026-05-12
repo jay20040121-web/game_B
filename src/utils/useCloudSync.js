@@ -3,7 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { playBloop } from './audioSystem';
 import { FIRESTORE_COLLECTION } from './envConfig';
 import { auth, db, googleProvider } from './firebase';
-import { SAVE_VERSION, isInAppBrowser } from './storageSystem';
+import { SAVE_VERSION, clearPersistedSaveData, isInAppBrowser, persistSaveData } from './storageSystem';
+
+const IS_DESKTOP_BUILD = import.meta.env.VITE_DESKTOP === '1';
 
 export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
     const [user, setUser] = useState(null);
@@ -15,6 +17,30 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
     const isCloudSyncingRef = useRef(false);
     const hasCheckedCloudRef = useRef(false);
     const lastCloudSyncTimeRef = useRef(0);
+    const cloudLoadInFlightRef = useRef(false);
+
+    const markCloudLoaded = useCallback((uid, cloudTime) => {
+        try {
+            sessionStorage.setItem('pixel_monster_cloud_loaded_uid', uid);
+            sessionStorage.setItem('pixel_monster_cloud_loaded_time', String(cloudTime || 0));
+        } catch (e) { }
+    }, []);
+
+    const hasLoadedCloudThisSession = useCallback((uid) => {
+        try {
+            return sessionStorage.getItem('pixel_monster_cloud_loaded_uid') === uid;
+        } catch (e) {
+            return false;
+        }
+    }, []);
+
+    const getSessionCloudTime = useCallback(() => {
+        try {
+            return Number(sessionStorage.getItem('pixel_monster_cloud_loaded_time') || 0);
+        } catch (e) {
+            return 0;
+        }
+    }, []);
 
     useEffect(() => {
         userRef.current = user;
@@ -53,7 +79,11 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
             const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error("連線逾時 (請檢查網路或 Firebase Firestore 是否已建立)")), 20000)
             );
-            const cleanData = JSON.parse(JSON.stringify(saveData));
+            const cleanData = JSON.parse(JSON.stringify({
+                ...saveData,
+                saveVersion: SAVE_VERSION,
+                ownerUid: currentUser.uid
+            }));
             const savePromise = db.collection(FIRESTORE_COLLECTION).doc(currentUser.uid).set(cleanData);
 
             await Promise.race([savePromise, timeoutPromise]);
@@ -77,11 +107,31 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
     }, [setAlertMsg, updateDialogue]);
 
     const loadFromCloud = useCallback(async (currentUser) => {
-        if (!currentUser || !db) return;
+        if (!currentUser || !db || cloudLoadInFlightRef.current) return;
+        if (hasLoadedCloudThisSession(currentUser.uid)) {
+            try {
+                const localStr = localStorage.getItem('pixel_monster_save');
+                if (localStr) {
+                    const localData = JSON.parse(localStr);
+                    setHasCheckedCloud(true);
+                    setIsCloudLoading(false);
+                    setLastCloudSyncTime(localData.lastSaveTime || getSessionCloudTime());
+                    updateDialogue("☁️ 帳號連線成功，本地進度已是最新", false);
+                    return;
+                }
+            } catch (e) { }
+        }
+        cloudLoadInFlightRef.current = true;
         updateDialogue("☁️ 正在檢查雲端同步狀態...", true);
         setIsCloudLoading(true);
         try {
-            const doc = await db.collection(FIRESTORE_COLLECTION).doc(currentUser.uid).get();
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("雲端讀取逾時，請確認網路連線後再試一次")), 20000)
+            );
+            const doc = await Promise.race([
+                db.collection(FIRESTORE_COLLECTION).doc(currentUser.uid).get(),
+                timeoutPromise
+            ]);
             const localStr = localStorage.getItem('pixel_monster_save');
             let localData = localStr ? JSON.parse(localStr) : null;
 
@@ -91,32 +141,59 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
             }
 
             if (doc.exists) {
-                const cloudData = doc.data();
+                const rawCloudData = doc.data();
+                const cloudSaveVersion = rawCloudData.saveVersion || 0;
+                if (cloudSaveVersion > SAVE_VERSION) {
+                    updateDialogue("☁️ 偵測到更新版本的雲端存檔，請重新整理或清除瀏覽器快取以更新遊戲版本。", true);
+                    setHasCheckedCloud(true);
+                    setIsCloudLoading(false);
+                    return;
+                }
+
+                const cloudData = {
+                    ...rawCloudData,
+                    saveVersion: SAVE_VERSION,
+                    ownerUid: currentUser.uid
+                };
                 const cloudTime = cloudData.lastSaveTime || 0;
                 const localTime = (localData && localData.lastSaveTime) || 0;
+                const localHasOwner = !!localData?.ownerUid;
+                const localBelongsToCurrentUser = localData?.ownerUid === currentUser.uid || (!IS_DESKTOP_BUILD && localData && !localHasOwner);
 
                 console.log(`☁️ Sync Check - Cloud: ${new Date(cloudTime).toLocaleString()}, Local: ${new Date(localTime).toLocaleString()}`);
 
-                if (!localData || (cloudTime > localTime + 2000)) {
-                    if (cloudData.saveVersion > SAVE_VERSION) {
-                        updateDialogue("☁️ 偵測到更新版本的雲端存檔，請重新整理或清除瀏覽器快取以更新遊戲版本。", true);
-                        setHasCheckedCloud(true);
-                        setIsCloudLoading(false);
-                        return;
+                if (!localData || !localBelongsToCurrentUser || (cloudTime > localTime + 2000)) {
+                    if (localData && !localBelongsToCurrentUser) {
+                        console.warn("☁️ 本地存檔不是目前登入帳號，優先套用雲端資料，避免覆蓋網頁版進度。", {
+                            currentUid: currentUser.uid,
+                            localOwnerUid: localData.ownerUid || null
+                        });
                     }
-
                     updateDialogue("☁️ 發現雲端進度，同步中...", true);
-                    localStorage.setItem('pixel_monster_save', JSON.stringify(cloudData));
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    updateDialogue(`☁️ 帳號連線成功，本地進度已是最新`, false);
+                    persistSaveData(JSON.stringify(cloudData));
+                    markCloudLoaded(currentUser.uid, cloudTime);
+                    try {
+                        sessionStorage.setItem('pixel_monster_skip_boot_once', '1');
+                    } catch (e) { }
                     setHasCheckedCloud(true);
                     setIsCloudLoading(false);
                     setLastCloudSyncTime(cloudTime);
-                    saveToCloud(localData, { allowBeforeChecked: true });
+                    setTimeout(() => window.location.reload(), 800);
+                } else {
+                    updateDialogue(`☁️ 帳號連線成功，本地進度已是最新`, false);
+                    markCloudLoaded(currentUser.uid, cloudTime);
+                    setHasCheckedCloud(true);
+                    setIsCloudLoading(false);
+                    setLastCloudSyncTime(cloudTime);
+                    saveToCloud({
+                        ...localData,
+                        saveVersion: SAVE_VERSION,
+                        ownerUid: currentUser.uid
+                    }, { allowBeforeChecked: true });
                 }
             } else {
                 updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
+                markCloudLoaded(currentUser.uid, localData?.lastSaveTime || 0);
                 setHasCheckedCloud(true);
                 setIsCloudLoading(false);
                 if (localData) saveToCloud(localData, { allowBeforeChecked: true });
@@ -126,15 +203,17 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
             updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
             setHasCheckedCloud(true);
             setIsCloudLoading(false);
+        } finally {
+            cloudLoadInFlightRef.current = false;
         }
-    }, [saveToCloud, updateDialogue]);
+    }, [getSessionCloudTime, hasLoadedCloudThisSession, markCloudLoaded, saveToCloud, updateDialogue]);
 
     useEffect(() => {
         if (!auth) return;
         const unsubscribe = auth.onAuthStateChanged((u) => {
             userRef.current = u;
             setUser(u);
-            if (u) {
+            if (u && !hasCheckedCloudRef.current) {
                 loadFromCloud(u);
             }
         });
@@ -157,12 +236,18 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
 
         updateDialogue("⚡ 正在連結 Google 伺服器...", true);
         try {
-            const result = await auth.signInWithPopup(googleProvider);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Google 登入逾時，請關閉登入視窗後再試一次")), 60000)
+            );
+            const result = await Promise.race([
+                auth.signInWithPopup(googleProvider),
+                timeoutPromise
+            ]);
             if (result.user) {
                 updateDialogue(`🎉 登入成功: ${result.user.displayName}`, false);
                 setAlertMsg(`成功連動帳號: ${result.user.displayName}`);
                 playBloop('confirm');
-                setTimeout(() => loadFromCloud(result.user), 1000);
+                await loadFromCloud(result.user);
             }
         } catch (e) {
             console.error("☁️ Login Error:", e);
@@ -196,7 +281,7 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
         try {
             await auth.signOut();
             try {
-                localStorage.removeItem('pixel_monster_save');
+                clearPersistedSaveData();
                 sessionStorage.removeItem('pixel_monster_save');
             } catch (e) { }
             playBloop('confirm');

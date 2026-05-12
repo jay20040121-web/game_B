@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { playBloop, getSfxEnabled, setSfxEnabled, getBgmEnabled, setBgmEnabled, getSfxVolume, setSfxVolume, getBgmVolume, setBgmVolume } from '../utils/audioSystem';
+import { clearPersistedSaveData } from '../utils/storageSystem';
 
 export default function SettingsOverlay({
     isSettingsOpen,
@@ -72,7 +73,7 @@ export default function SettingsOverlay({
 
     const handleClearData = () => {
         if (showConfirmClear) {
-            localStorage.removeItem('pixel_monster_save');
+            clearPersistedSaveData();
             // 可以選擇一併清除其他的，但目前主要清存檔
             playBloop('confirm');
             window.location.reload();

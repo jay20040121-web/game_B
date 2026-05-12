@@ -16,6 +16,14 @@
 - 專案已加入 Windows PC 版 portable 打包流程：`npm run build:desktop` 會先跑 Vite desktop build，再用 `electron-packager` 輸出可執行資料夾到 `release/`。
 - Desktop build 走 `VITE_DESKTOP=1` 時會讓 Vite 的 `base` 改成 `./`，不要再把 `/game_B/` 當成桌面版唯一基底。
 - PC 版尺寸縮放目前已確認能正常運作。關鍵修正是主視窗 preload 使用 `electron/preload.cjs` 暴露 `window.desktopWindow`；不要改回 ESM `preload.js`，否則 packaged Electron 可能不會成功暴露 IPC，React 的尺寸切換就完全打不到 main process。
+- PC 版 Google 登入依賴 Firebase `signInWithPopup`，Electron 的 `setWindowOpenHandler` 必須白名單放行 `accounts.google.com` 與 Firebase auth domain 的 popup，讓登入視窗保留在同一個 Electron session；不要把所有 `window.open` 一律 `shell.openExternal()`，否則外部瀏覽器登入結果回不來主視窗。
+- PC packaged 版不要用 `win.loadFile()` 直接跑 `file://`，Firebase Auth 會報 `auth/operation-not-supported-in-this-environment`；目前 `electron/main.js` 會啟本機靜態 server 並用 `http://localhost:<port>` 載入 `dist/`，以符合 Google/Firebase 登入環境要求。
+- PC packaged 版不要再在固定 port 和隨機 port 之間來回切。固定 `localhost:17321` 曾造成 Firebase/Google 登入卡住；隨機 port 登入較穩，但 browser `localStorage` 會因 origin 改變而像新存檔。現在採第三方案：Electron 靜態 server 維持隨機 port，主存檔另透過 preload IPC 同步到 Electron `app.getPath('userData')/pixel_monster_save.json`，啟動時先從該檔還原到當前 origin。
+- PC 版雲端同步不要只依賴 Firebase Auth persistence 或 `onAuthStateChanged`。`signInWithPopup` 成功後要直接用該次 `result.user` 呼叫 `loadFromCloud`，Firestore 讀取要有 timeout，並避免登入回呼和 auth listener 同時重複讀雲端。
+- PC 版雲端匯入若需要 reload 讓 React 初始 state 吃到雲端存檔，reload 前要寫入 `sessionStorage.pixel_monster_skip_boot_once`，讓重載後直接進遊戲；同一 session 已讀過雲端的 uid 也要跳過重複 `loadFromCloud`，避免畫面反覆顯示雲端同步中。
+- PC 雲端問題的判斷經驗：若使用者說「一直卡在雲端登入/雲端同步」，不一定是沒讀到 Firestore；這次實際狀況是「已讀到雲端並寫入本機，但 reload 後 boot/auth listener 又觸發第二次讀取」，畫面看起來像卡住或被踢回登入。優先檢查 `src/utils/useCloudSync.js` 的 `cloudLoadInFlightRef`、`hasCheckedCloudRef`、`sessionStorage.pixel_monster_cloud_loaded_uid`、`pixel_monster_skip_boot_once`，不要先回去改 port。
+- PC 主存檔目前有兩層：瀏覽器當前 origin 的 `localStorage.pixel_monster_save`，以及 Electron preload IPC 寫入的 userData `pixel_monster_save.json`。相關入口在 `src/utils/storageSystem.js` 的 `loadSaveData`、`persistSaveData`、`clearPersistedSaveData`，以及 `electron/preload.cjs` 暴露的 `window.desktopStorage`。新增清存檔、登出、雲端匯入或重置生命流程時，不能只操作 `localStorage`，也要走這些 helper。
+- PC 版若之後又要修 Google 登入或雲端存檔，禁止把問題簡化成「固定 port」或「隨機 port」二選一。固定 port 已驗證會讓這台環境的登入卡住；隨機 port 需要 Electron userData 存檔橋接才不會重置。要改之前先保留這個架構，再用小範圍診斷確認是登入 popup、Firestore 讀取、存檔匯入、reload、或 boot 畫面狀態哪一段出問題。
 - PC 版尺寸系統仍以 `src/utils/useDisplayScale.js`、`SettingsOverlay.jsx` 和 `electron/main.js` 串接。不要一次大改 CSS `zoom`、`transform`、Electron `setSize` / `setContentSize` / bounds，多層同時改很容易造成內容縮放和視窗大小不同步。
 - 若之後要修 PC 視窗黑底或尺寸對齊，可以臨時做可觀測診斷：在切換尺寸時記錄 preset、`displayScale`、`window.innerWidth/innerHeight`、Electron `getBounds()`、`getContentBounds()` 與實際遊戲外框 DOM 尺寸，再根據數據只改一層。
 - 目前診斷顯示 Windows 標題列/邊框會讓 `setSize(width,height)` 設成整體視窗尺寸而非內容區。PC 版套用尺寸時應先用 `getBounds()` / `getContentBounds()` 算 frame 差值，將目標內容區尺寸加上 frame 差值後再 `setSize()`。
@@ -150,6 +158,7 @@ PvP 使用 PeerJS，主要在 `src/utils/usePvpConnection.js`。
 - 目前存檔版本：`SAVE_VERSION`
 
 如果變更存檔資料結構，要思考是否需要調整 `SAVE_VERSION` 或撰寫舊資料轉換。現在的 loader 遇到版本不一致會回傳 `null`，所以單純升版可能導致本機資料重新初始化。
+雲端讀取在 `src/utils/useCloudSync.js` 會拒絕未來版本存檔，但對舊版雲端存檔會先把 `saveVersion` 提升到目前 `SAVE_VERSION` 再寫入本機，避免 reload 後被 `storageSystem` 當成版本不符而忽略。
 
 ### Firebase
 
