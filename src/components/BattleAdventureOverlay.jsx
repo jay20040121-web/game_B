@@ -10,6 +10,7 @@ const DAMAGE_DIGIT_HEIGHT = 29;
 const DAMAGE_DIGIT_COLS = 5;
 const DAMAGE_DIGIT_ROWS = 2;
 const DAMAGE_DIGIT_LOWER_ROW_SHIFT = 20;
+const NORMAL_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/普.png`;
 const WATER_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/水.png`;
 const FIRE_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/火.png`;
 const POISON_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/毒.png`;
@@ -18,12 +19,11 @@ const GHOST_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/�
 const FLYING_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/飛.png`;
 const BUG_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/蟲.png`;
 const ROCK_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/岩.png`;
-const GENERIC_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/受擊特效.png`;
 const FINISHER_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/必殺技.png`;
-const WATER_EFFECT_SIZE = 72;
-const WATER_EFFECT_COLS = 3;
-const WATER_EFFECT_ROWS = 3;
+const TYPE_EFFECT_DISPLAY_SIZE = 52;
+const TYPE_EFFECT_POSITION_OFFSET = 17;
 const TYPE_EFFECT_SHEETS = {
+    normal: NORMAL_EFFECT_SHEET,
     fire: FIRE_EFFECT_SHEET,
     water: WATER_EFFECT_SHEET,
     poison: POISON_EFFECT_SHEET,
@@ -47,6 +47,63 @@ const STATUS_BADGE_META = {
 
 const getVisibleStatus = (entity, fallbackState) => entity?.status || fallbackState?.status || null;
 
+function TypeDamageEffect({ pop, className = "" }) {
+    const canvasRef = React.useRef(null);
+    const sheet = TYPE_EFFECT_SHEETS[pop.effectType] || NORMAL_EFFECT_SHEET;
+
+    React.useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return undefined;
+
+        let cancelled = false;
+        const image = new Image();
+        image.onload = () => {
+            if (cancelled || !canvasRef.current) return;
+
+            const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+            if (!ctx) return;
+
+            canvasRef.current.width = image.naturalWidth || image.width;
+            canvasRef.current.height = image.naturalHeight || image.height;
+            ctx.imageSmoothingEnabled = false;
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            ctx.drawImage(image, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                if (g > 170 && r < 90 && b < 90) {
+                    data[i + 3] = 0;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        };
+        image.src = sheet;
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pop?.id, sheet]);
+
+    return (
+        <canvas
+            ref={canvasRef}
+            key={`${pop.id}-type-effect`}
+            className={`pointer-events-none absolute z-[150] type-effect-pop ${className}`}
+            style={{
+                width: TYPE_EFFECT_DISPLAY_SIZE,
+                height: TYPE_EFFECT_DISPLAY_SIZE,
+                imageRendering: 'pixelated',
+                marginLeft: TYPE_EFFECT_POSITION_OFFSET,
+                marginTop: TYPE_EFFECT_POSITION_OFFSET
+            }}
+        />
+    );
+}
+
 function DamageEffect({ pop, className = "" }) {
     if (!pop?.effectType) return null;
 
@@ -66,24 +123,7 @@ function DamageEffect({ pop, className = "" }) {
         );
     }
 
-    const variant = Math.max(0, Math.min(8, pop.effectVariant ?? 0));
-    const x = variant % WATER_EFFECT_COLS;
-    const y = Math.floor(variant / WATER_EFFECT_COLS);
-    const sheet = TYPE_EFFECT_SHEETS[pop.effectType] || GENERIC_HIT_EFFECT_SHEET;
-
-    return (
-        <div
-            key={`${pop.id}-effect`}
-            className={`pointer-events-none absolute z-[150] w-[72px] h-[72px] water-effect-pop ${className}`}
-            style={{
-                backgroundImage: `url("${sheet}")`,
-                backgroundSize: `${WATER_EFFECT_SIZE * WATER_EFFECT_COLS}px ${WATER_EFFECT_SIZE * WATER_EFFECT_ROWS}px`,
-                backgroundPosition: `${-x * WATER_EFFECT_SIZE}px ${-y * WATER_EFFECT_SIZE}px`,
-                imageRendering: 'pixelated',
-                mixBlendMode: 'multiply'
-            }}
-        />
-    );
+    return <TypeDamageEffect pop={pop} className={className} />;
 }
 
 function DamageDigits({ pop, className = "", sheet = DAMAGE_DIGIT_SHEET }) {
@@ -273,6 +313,17 @@ export default function BattleAdventureOverlay({
                         }
                         .water-effect-pop {
                             animation: water-effect-pop 820ms ease-out both;
+                        }
+                        @keyframes type-effect-pop {
+                            0% { opacity: 0; transform: translateY(8px) scale(0.58) rotate(-8deg); }
+                            12% { opacity: 1; transform: translateY(0) scale(1.04) rotate(3deg); }
+                            38% { opacity: 0.96; transform: translateY(-3px) scale(1.12) rotate(-2deg); }
+                            72% { opacity: 0.72; transform: translateY(-6px) scale(1.2) rotate(1deg); }
+                            100% { opacity: 0; transform: translateY(-12px) scale(1.32) rotate(0deg); }
+                        }
+                        .type-effect-pop {
+                            animation: type-effect-pop 900ms steps(2, end) both;
+                            transform-origin: center center;
                         }
                         @keyframes finisher-effect-pop {
                             0% { opacity: 0; transform: translateY(6px) scale(0.72) rotate(-4deg); }

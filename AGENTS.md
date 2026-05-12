@@ -27,6 +27,7 @@
 - 每次回報時，優先提供目前進度、已完成項目、下一步，讓使用者能快速接手或決策。
 - 若修改牽涉風險較高的區域（例如存檔、PvP 同步、Firebase、main 同步），要先明確說明風險點再動手。
 - 若需求有多種做法，優先選擇最小變更、最低風險、最容易驗證的一種。
+- 若做了會影響之後維護的重要改法、素材規格、分支流程或踩雷經驗，完成時要主動更新本檔對應段落，不必等使用者另外提醒。
 ## 常用指令
 
 - `npm run dev`：啟動 Vite 開發伺服器。
@@ -203,6 +204,10 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - 目前確認較穩的做法是在 `BattleAdventureOverlay.jsx` 用短暫的整數像素 `translate()` 做位移抖動，不用小數像素、不用 `will-change`
 - 位移動畫結束後要強制校正：用短暫 hit wrapper key 播動畫，`animationend` 或保險 timer 後切回 idle wrapper 並 bump key，讓瀏覽器丟掉 transform/composite 狀態
 - 不要讓 `damagePop` 長時間直接決定 sprite wrapper 維持在 hit key；`damagePop` 可能留在 battle state，受擊動畫應由 overlay 自己用短 timer 管理
+- 屬性技能受擊特效在 `src/components/BattleAdventureOverlay.jsx` 的 `TypeDamageEffect`。目前 9 種屬性都使用 `public/assets/exclusive/effect/` 內的單張 `100x100` PNG：`普.png`、`火.png`、`水.png`、`草.png`、`毒.png`、`飛.png`、`蟲.png`、`岩.png`、`鬼.png`。舊的 `受擊特效.png` 已移除；若技能屬性沒有對應特效圖，統一 fallback 使用 `普.png`。
+- 屬性受擊特效不再走舊的 3x3 sprite sheet 裁切。`TypeDamageEffect` 會用 canvas 載入單張圖，將亮綠底色轉透明，再以 `52px` 顯示。
+- 因受擊特效掛在怪獸 GIF 上方的 absolute overlay，定位 class 仍沿用原本 `left/top/-translate` 錨點；單張特效縮小後要用 `TYPE_EFFECT_POSITION_OFFSET = 17` 補回原本中心點，不要改成外層 wrapper 拆定位，否則容易整體偏移。
+- 屬性受擊特效動畫使用 `.type-effect-pop`，只作用在 canvas 本體；若要調大小優先改 `TYPE_EFFECT_DISPLAY_SIZE`，並同步依 `(原定位尺寸 - 新顯示尺寸) / 2` 調整 `TYPE_EFFECT_POSITION_OFFSET`。
 - 若 GIF 出現模糊，先查 `SpriteRenderer.jsx`、`BattleAdventureOverlay.jsx` 的疊層結構，再查 `damage-flash` / `mixBlendMode` / `imageRendering`
 - 不要把「修圖層」和「修戰鬥判定」混在一起，先分開驗證
 
