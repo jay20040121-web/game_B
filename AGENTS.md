@@ -208,6 +208,7 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - 屬性受擊特效不再走舊的 3x3 sprite sheet 裁切。`TypeDamageEffect` 會用 canvas 載入單張圖，將亮綠底色轉透明，再以 `52px` 顯示。
 - 因受擊特效掛在怪獸 GIF 上方的 absolute overlay，定位 class 仍沿用原本 `left/top/-translate` 錨點；單張特效縮小後要用 `TYPE_EFFECT_POSITION_OFFSET = 17` 補回原本中心點，不要改成外層 wrapper 拆定位，否則容易整體偏移。
 - 屬性受擊特效動畫使用 `.type-effect-pop`，只作用在 canvas 本體；若要調大小優先改 `TYPE_EFFECT_DISPLAY_SIZE`，並同步依 `(原定位尺寸 - 新顯示尺寸) / 2` 調整 `TYPE_EFFECT_POSITION_OFFSET`。
+- 戰敗教學提示卡在 `src/components/DefeatTutorialOverlay.jsx`。冒險戰敗由 `App.jsx` 的 `resolveBattleLoss(false)` 設定 `pendingDefeatTutorial = 'adventure'`，等玩家按完冒險日誌、真正回主畫面時才顯示；聯盟大會戰敗由 `useTournament.jsx` 的 `onTournamentLossReturn` 回呼通知 App 顯示 `tournament` 提示。教學圖放在 `public/assets/UI/`，目前每次戰敗會把 `DEFEAT_TUTORIAL_IMAGES` 全部洗牌後自動輪播，每 20 秒換下一張；提示卡是全版純圖片，只保留底部操作提示，A 鍵下一張、B/C 關閉引導。提示卡播放期間必須禁止重製生命/終止生命入口，避免玩家在引導圖上誤重置；之後新增或移除圖時同步更新該陣列。
 - 若 GIF 出現模糊，先查 `SpriteRenderer.jsx`、`BattleAdventureOverlay.jsx` 的疊層結構，再查 `damage-flash` / `mixBlendMode` / `imageRendering`
 - 不要把「修圖層」和「修戰鬥判定」混在一起，先分開驗證
 

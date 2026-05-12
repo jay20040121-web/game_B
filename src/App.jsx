@@ -12,6 +12,7 @@ import EvolutionPerformance from './components/EvolutionPerformance';
 import MemoryCapsulePerformance from './components/MemoryCapsulePerformance';
 import SettingsOverlay from './components/SettingsOverlay';
 import TutorialAI from './components/TutorialAI';
+import DefeatTutorialOverlay from './components/DefeatTutorialOverlay';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './styles.css';
 import {
@@ -321,6 +322,8 @@ export default function App() {
     const [isAdvMode, setIsAdvMode] = useState(false);
     const [advCD, setAdvCD] = useState(0);
     const [isAdvStreaming, setIsAdvStreaming] = useState(false);
+    const [pendingDefeatTutorial, setPendingDefeatTutorial] = useState(null);
+    const [defeatTutorialType, setDefeatTutorialType] = useState(null);
     const [isStatusUIOpen, setIsStatusUIOpen] = useState(false);
     const [statusPage, setStatusPage] = useState('stats');
     const [alertMsg, setAlertMsg] = useState("");
@@ -1330,6 +1333,7 @@ export default function App() {
         const logs = [];
         if (!isRun) {
             setAdvCurrentHP(0);
+            setPendingDefeatTutorial('adventure');
             logs.push({ msg: `💀 戰敗撤退中... 需要多吃點飯糰了`, hpRatio: 0 });
         } else {
             logs.push({ msg: `💨 逃跑成功...`, hpRatio: advCurrentHP });
@@ -1350,6 +1354,11 @@ export default function App() {
     };
 
     const handleA = () => {
+        if (defeatTutorialType) {
+            window.dispatchEvent(new CustomEvent('defeatTutorialNext'));
+            playBloop('select');
+            return;
+        }
         if (isExpeditionOpen) {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z' }));
             return;
@@ -1491,6 +1500,11 @@ export default function App() {
     };
 
     const handleB = (clickIdx = null) => {
+        if (defeatTutorialType) {
+            setDefeatTutorialType(null);
+            playBloop('confirm');
+            return;
+        }
         if (isCloudLoading || isInteractAnimating || isEvolving) return;
         const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
@@ -1636,6 +1650,10 @@ export default function App() {
                     setIsAdvMode(false);
                     setLastAdvTime(Date.now());
                     updateDialogue("冒險結束。");
+                    if (pendingDefeatTutorial) {
+                        setDefeatTutorialType(pendingDefeatTutorial);
+                        setPendingDefeatTutorial(null);
+                    }
                     playBloop('confirm');
                     return;
                 }
@@ -1751,6 +1769,11 @@ export default function App() {
     };
 
     const handleC = () => {
+        if (defeatTutorialType) {
+            setDefeatTutorialType(null);
+            playBloop('back');
+            return;
+        }
         if (isSkillRearrangeOpen) {
             window.dispatchEvent(new CustomEvent('rearrangeC'));
             return;
@@ -2776,7 +2799,7 @@ export default function App() {
 
     const triggerFarewell = () => {
         // 防呆：僅限主畫面使用 (防止在戰鬥、冒險、特訓、談心、選單中產生邏輯衝突)
-        if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+        if (defeatTutorialType || isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
             setAlertMsg("此功能僅限在主畫面使用");
             playBloop('fail');
             return;
@@ -3101,7 +3124,8 @@ export default function App() {
     const tournament = useTournament({
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
         advStats, soulTagCounts, leaderboard, updateDialogue, setAlertMsg, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
-        pendingSkillLearn
+        pendingSkillLearn,
+        onTournamentLossReturn: () => setDefeatTutorialType('tournament')
     });
 
     // --- PVP 殭屍對局檢測 (Zombie Match Detector) ---
@@ -3326,6 +3350,14 @@ export default function App() {
                                 advCurrentHP={advCurrentHP}
                                 isAdvStreaming={isAdvStreaming}
                                 pendingWildCapture={pendingWildCapture}
+                            />
+
+                            <DefeatTutorialOverlay
+                                type={defeatTutorialType}
+                                onClose={() => {
+                                    setDefeatTutorialType(null);
+                                    playBloop('back');
+                                }}
                             />
 
                             {/* 狀態查詢 Overlay */}
@@ -3866,12 +3898,16 @@ export default function App() {
                         <div className="w-full mt-1 px-4 flex justify-between items-center">
                             <button
                                 onClick={() => {
+                                    if (defeatTutorialType) {
+                                        playBloop('fail');
+                                        return;
+                                    }
                                     if (isDead) handleRestart();
                                     else triggerFarewell();
                                     playBloop('confirm');
                                 }}
-                                disabled={!isDead && isGenerating}
-                                className={`w-[110px] h-[40px] border-none brightness-100 active:brightness-90 transition-all ${!isDead && isGenerating ? 'opacity-50' : 'opacity-100'}`}
+                                disabled={!!defeatTutorialType || (!isDead && isGenerating)}
+                                className={`w-[110px] h-[40px] border-none brightness-100 active:brightness-90 transition-all ${defeatTutorialType || (!isDead && isGenerating) ? 'opacity-50' : 'opacity-100'}`}
                                 style={{
                                     backgroundImage: `url('${base}assets/BG/ED.png')`,
                                     backgroundSize: 'contain',

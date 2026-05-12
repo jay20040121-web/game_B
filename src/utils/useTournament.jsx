@@ -114,7 +114,8 @@ export function useTournament({
     setInventory,
     playBloop,
     ADV_ITEMS, // from gameConfig
-    pendingSkillLearn
+    pendingSkillLearn,
+    onTournamentLossReturn
 }) {
     const [isTournamentOpen, setIsTournamentOpen] = useState(false);
     const [tPhase, setTPhase] = useState('idle');
@@ -420,6 +421,7 @@ export function useTournament({
             closeTournament();
         } else if (tPhase === 'lost') {
             closeTournament();
+            onTournamentLossReturn?.();
         }
     };
 
