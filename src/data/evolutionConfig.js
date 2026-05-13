@@ -34,12 +34,13 @@ export const EVOLUTION_CHAINS = {
     "START": {
         stage1: {
             "A": { id: 1000 }, "C": { id: 1000 },
-            "F_SOUL": { id: 1000 }, "W_SOUL": { id: 1000 }, "GR_SOUL": { id: 1000 }, "B_SOUL": { id: 1000 }
+            "F_SOUL": { id: 1000 }, "W_SOUL": { id: 1000 }, "GR_SOUL": { id: 1000 }, "GR_SOUL_ALT": { id: 1000 }, "B_SOUL": { id: 1000 }
         },
         branches: [
             // 靈魂進化優先級最高
             { to: "F_SOUL", condition: "bond >= 40 && affinity == 'fire'", desc: `火系靈魂 (${getMName(1001)}線)` },
             { to: "W_SOUL", condition: "bond >= 40 && affinity == 'water'", desc: `水系靈魂 (${getMName(1004)}線)` },
+            { to: "GR_SOUL_ALT", condition: "bond >= 40 && affinity == 'grass' && topTag in ['passionate', 'stubborn']", desc: `草系靈魂 (${getMName(1032)}線，熱血/執著)` },
             { to: "GR_SOUL", condition: "bond >= 40 && affinity == 'grass'", desc: `草系靈魂 (${getMName(1007)}線)` },
             { to: "B_SOUL", condition: "bond >= 40 && affinity == 'bug'", desc: `蟲系靈魂 (${getMName(1010)}線)` },
 
@@ -75,9 +76,18 @@ export const EVOLUTION_CHAINS = {
     },
 
     "SOUL_GRASS": {
-        stage2: { "GR_SOUL": { id: 1007, desc: `${getMName(1007)}` } },
-        stage3: { "GR_SOUL": { id: 1008, from: "GR_SOUL", desc: `${getMName(1008)} (無條件進化)` } },
-        stage4: { "GR_SOUL": { id: 1009, from: "GR_SOUL", desc: `${getMName(1009)} (無條件進化)` } }
+        stage2: {
+            "GR_SOUL": { id: 1007, desc: `${getMName(1007)}` },
+            "GR_SOUL_ALT": { id: 1032, desc: `${getMName(1032)} (熱血/執著)` }
+        },
+        stage3: {
+            "GR_SOUL": { id: 1008, from: "GR_SOUL", desc: `${getMName(1008)} (無條件進化)` },
+            "GR_SOUL_ALT": { id: 1033, from: "GR_SOUL_ALT", desc: `${getMName(1033)} (無條件進化)` }
+        },
+        stage4: {
+            "GR_SOUL": { id: 1009, from: "GR_SOUL", desc: `${getMName(1009)} (無條件進化)` },
+            "GR_SOUL_ALT": { id: 1034, from: "GR_SOUL_ALT", desc: `${getMName(1034)} (無條件進化)` }
+        }
     },
 
     "SOUL_BUG": {

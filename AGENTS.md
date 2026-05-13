@@ -14,12 +14,16 @@
 - game_A 已不再作為有效工作區使用；若之後又看到 game_A，預設視為舊備份或無效路徑，不能從那裡繼續開發或 push。
 - 目前使用者偏好是「先不要寄 Gmail 專案更新通知」，避免信件過多。除非使用者之後明確重新啟用，否則只在對話內更新進度，不主動寄信。
 - 專案已加入 Windows PC 版 portable 打包流程：`npm run build:desktop` 會先跑 Vite desktop build，再用 `electron-packager` 輸出可執行資料夾到 `release/`。
+- PC 版打包已回歸一般 portable 包：`npm run build:desktop` 會先在 `release/.desktop-build/像素怪獸/` 建立乾淨包，再同步到 `release/像素怪獸/`。若 Windows 暫時鎖住舊的 `release/像素怪獸/resources/app.asar`，腳本會略過同步展開資料夾，但 staging 包仍會完成。
+- 桌面版打包時只應包含 `dist/`、`electron/` 與必要 package metadata；不要把 `src/`、`public/`、`node_modules/`、`local-assets/` 或 repo 文件整包塞進 `app.asar`，避免 PC 包過大且洩漏開發檔。
 - Desktop build 走 `VITE_DESKTOP=1` 時會讓 Vite 的 `base` 改成 `./`，不要再把 `/game_B/` 當成桌面版唯一基底。
 - PC 版尺寸縮放目前已確認能正常運作。關鍵修正是主視窗 preload 使用 `electron/preload.cjs` 暴露 `window.desktopWindow`；不要改回 ESM `preload.js`，否則 packaged Electron 可能不會成功暴露 IPC，React 的尺寸切換就完全打不到 main process。
 - PC 版 Google 登入依賴 Firebase `signInWithPopup`，Electron 的 `setWindowOpenHandler` 必須白名單放行 `accounts.google.com` 與 Firebase auth domain 的 popup，讓登入視窗保留在同一個 Electron session；不要把所有 `window.open` 一律 `shell.openExternal()`，否則外部瀏覽器登入結果回不來主視窗。
 - PC packaged 版不要用 `win.loadFile()` 直接跑 `file://`，Firebase Auth 會報 `auth/operation-not-supported-in-this-environment`；目前 `electron/main.js` 會啟本機靜態 server 並用 `http://localhost:<port>` 載入 `dist/`，以符合 Google/Firebase 登入環境要求。
 - PC packaged 版不要再在固定 port 和隨機 port 之間來回切。固定 `localhost:17321` 曾造成 Firebase/Google 登入卡住；隨機 port 登入較穩，但 browser `localStorage` 會因 origin 改變而像新存檔。現在採第三方案：Electron 靜態 server 維持隨機 port，主存檔另透過 preload IPC 同步到 Electron `app.getPath('userData')/pixel_monster_save.json`，啟動時先從該檔還原到當前 origin。
 - PC 版雲端同步不要只依賴 Firebase Auth persistence 或 `onAuthStateChanged`。`signInWithPopup` 成功後要直接用該次 `result.user` 呼叫 `loadFromCloud`，Firestore 讀取要有 timeout，並避免登入回呼和 auth listener 同時重複讀雲端。
+- PC / Web 版 Google 登入成功後不能自動把本機存檔寫上雲端。`useCloudSync.js` 目前把「已檢查雲端」和「允許寫入雲端」拆成 `hasCheckedCloud` 與 `cloudWriteEnabled`；登入只讀取雲端狀態並顯示雲端存檔選擇，玩家選擇匯入雲端或明確用本機建立/覆蓋雲端後，才允許 `saveToCloud` 寫入。這是為了避免新裝置或新 origin 先產生空白本機檔後壓掉既有雲端進度。
+- 雲端存檔選擇 UI 目前在 `App.jsx` 的 LCD overlay：A 切換選項、B 確認、C 稍後決定。玩家選「稍後決定」時要維持雲端備份暫停，不要在背景自動上傳本機檔。
 - PC 版雲端匯入若需要 reload 讓 React 初始 state 吃到雲端存檔，reload 前要寫入 `sessionStorage.pixel_monster_skip_boot_once`，讓重載後直接進遊戲；同一 session 已讀過雲端的 uid 也要跳過重複 `loadFromCloud`，避免畫面反覆顯示雲端同步中。
 - PC 雲端問題的判斷經驗：若使用者說「一直卡在雲端登入/雲端同步」，不一定是沒讀到 Firestore；這次實際狀況是「已讀到雲端並寫入本機，但 reload 後 boot/auth listener 又觸發第二次讀取」，畫面看起來像卡住或被踢回登入。優先檢查 `src/utils/useCloudSync.js` 的 `cloudLoadInFlightRef`、`hasCheckedCloudRef`、`sessionStorage.pixel_monster_cloud_loaded_uid`、`pixel_monster_skip_boot_once`，不要先回去改 port。
 - PC 主存檔目前有兩層：瀏覽器當前 origin 的 `localStorage.pixel_monster_save`，以及 Electron preload IPC 寫入的 userData `pixel_monster_save.json`。相關入口在 `src/utils/storageSystem.js` 的 `loadSaveData`、`persistSaveData`、`clearPersistedSaveData`，以及 `electron/preload.cjs` 暴露的 `window.desktopStorage`。新增清存檔、登出、雲端匯入或重置生命流程時，不能只操作 `localStorage`，也要走這些 helper。
@@ -180,6 +184,11 @@ Firebase compat SDK 設定在 `src/utils/firebase.js`。
 - `src/data/evolutionConfig.js`
 - `src/monsterData.js` 從 registry 派生出的資料
 - `public/assets/` 裡是否有對應 sprite 或素材
+
+草系靈魂線目前有兩條不互通分支。一般草魂線是 `1007 -> 1008 -> 1009`；若首次進入草魂線時最優勢個性是熱血 `passionate` 或執著/固執 `stubborn`，會進入 `GR_SOUL_ALT` 的 `1032 -> 1033 -> 1034`。進入 `GR_SOUL_ALT` 後後續無條件沿 1032 線進化，不會切回 1007 線；已在 1007 線也不會因後續個性變化切到 1032 線。
+DebugPanel 的「數值調整」頁有靈魂屬性 / 個性快速設定，可以直接改 `lockedAffinity`、`soulAffinityCounts`、`soulTagCounts`。測草系 1032 線時，將羈絆設 40 以上，屬性鎖定草，個性設熱血 `passionate` 或執著/固執 `stubborn`，再把等級推到進化門檻。
+
+死亡重生目前只有 `G1` 幽燭燭線：`1019 -> 1020 -> 1021`。壽命結束或終止生命時的 D 線抽籤都是 20% 機率進入 `G1`，不要再抽未實作的 `G2`，除非已同步補上 `EVOLUTION_CHAINS`、`monsterIdMapper`、registry、圖鑑與素材資料。
 
 ## UI 注意事項
 

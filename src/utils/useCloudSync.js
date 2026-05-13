@@ -5,19 +5,22 @@ import { FIRESTORE_COLLECTION } from './envConfig';
 import { auth, db, googleProvider } from './firebase';
 import { SAVE_VERSION, clearPersistedSaveData, isInAppBrowser, persistSaveData } from './storageSystem';
 
-const IS_DESKTOP_BUILD = import.meta.env.VITE_DESKTOP === '1';
-
 export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
     const [user, setUser] = useState(null);
     const [isCloudSyncing, setIsCloudSyncing] = useState(false);
     const [isCloudLoading, setIsCloudLoading] = useState(false);
     const [hasCheckedCloud, setHasCheckedCloud] = useState(false);
+    const [cloudWriteEnabled, setCloudWriteEnabled] = useState(false);
+    const [cloudChoicePrompt, setCloudChoicePrompt] = useState(null);
     const [lastCloudSyncTime, setLastCloudSyncTime] = useState(0);
     const userRef = useRef(null);
     const isCloudSyncingRef = useRef(false);
     const hasCheckedCloudRef = useRef(false);
+    const cloudWriteEnabledRef = useRef(false);
     const lastCloudSyncTimeRef = useRef(0);
     const cloudLoadInFlightRef = useRef(false);
+    const pendingCloudDataRef = useRef(null);
+    const pendingLocalDataRef = useRef(null);
 
     const markCloudLoaded = useCallback((uid, cloudTime) => {
         try {
@@ -46,17 +49,23 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
         userRef.current = user;
         isCloudSyncingRef.current = isCloudSyncing;
         hasCheckedCloudRef.current = hasCheckedCloud;
+        cloudWriteEnabledRef.current = cloudWriteEnabled;
         lastCloudSyncTimeRef.current = lastCloudSyncTime;
-    }, [hasCheckedCloud, isCloudSyncing, lastCloudSyncTime, user]);
+    }, [cloudWriteEnabled, hasCheckedCloud, isCloudSyncing, lastCloudSyncTime, user]);
 
     const saveToCloud = useCallback(async (saveData, options = {}) => {
         const currentUser = userRef.current;
         const canSaveBeforeChecked = options.allowBeforeChecked === true;
-        if (isCloudSyncingRef.current || !currentUser || !db || (!hasCheckedCloudRef.current && !canSaveBeforeChecked)) return;
+        const forceSave = options.force === true;
+        if (isCloudSyncingRef.current || !currentUser || !db || (!hasCheckedCloudRef.current && !canSaveBeforeChecked)) return false;
+        if (!cloudWriteEnabledRef.current && !forceSave) {
+            console.warn("☁️ 已登入，但尚未選擇雲端存檔處理方式，暫停自動備份。");
+            return false;
+        }
 
         if (saveData.lastSaveTime < lastCloudSyncTimeRef.current) {
             console.warn(`☁️ 擋下過期的存檔！本地 ${saveData.lastSaveTime} < 雲端最新 ${lastCloudSyncTimeRef.current}`);
-            return;
+            return false;
         }
 
         try {
@@ -65,7 +74,7 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
                 const cloudData = doc.data();
                 if ((cloudData.saveVersion || 0) > (saveData.saveVersion || 0)) {
                     console.error(`☁️ 擋下覆蓋請求！雲端版本 (${cloudData.saveVersion}) 較新，本地版本 (${saveData.saveVersion}) 較舊。請重新整理網頁以取得最新版本。`);
-                    return;
+                    return false;
                 }
             }
         } catch (e) {
@@ -90,6 +99,7 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
 
             setLastCloudSyncTime(saveData.lastSaveTime);
             console.log("☁️ Cloud Save SUCCESS! (UID: " + currentUser.uid + ")");
+            return true;
         } catch (e) {
             console.error("☁️ Cloud Save FAILED:", e);
             let specificMsg = e.message;
@@ -101,10 +111,122 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
 
             setAlertMsg(`❌ 雲端同步失敗: ${specificMsg}`);
             updateDialogue(`❌ 備份失敗：${specificMsg}。可檢查控制台 (F12) 的 UID 並確認 Firestore 已建立。`, true);
+            return false;
         } finally {
             setIsCloudSyncing(false);
         }
     }, [setAlertMsg, updateDialogue]);
+
+    const buildCloudPrompt = useCallback((type, cloudData, localData) => {
+        const cloudTime = cloudData?.lastSaveTime || 0;
+        const localTime = localData?.lastSaveTime || 0;
+        const hasLocalData = !!localData;
+
+        if (type === 'cloud_available') {
+            return {
+                type,
+                selectedIndex: 0,
+                cloudTime,
+                localTime,
+                options: [
+                    { id: 'import', label: '匯入雲端進度' },
+                    ...(hasLocalData ? [{ id: 'local', label: '用本機覆蓋雲端' }] : []),
+                    { id: 'later', label: '稍後決定' }
+                ]
+            };
+        }
+
+        return {
+            type,
+            selectedIndex: 0,
+            cloudTime: 0,
+            localTime,
+            options: [
+                ...(hasLocalData ? [{ id: 'local', label: '建立雲端備份' }] : []),
+                { id: 'later', label: '稍後決定' }
+            ]
+        };
+    }, []);
+
+    const setCloudPrompt = useCallback((prompt) => {
+        setCloudChoicePrompt(prompt);
+        if (prompt?.type === 'cloud_available') {
+            updateDialogue("☁️ 發現雲端進度，請選擇是否匯入。", true);
+        } else if (prompt?.type === 'no_cloud') {
+            updateDialogue("☁️ 此帳號尚無雲端備份。", true);
+        }
+    }, [updateDialogue]);
+
+    const selectCloudChoice = useCallback((direction = 1) => {
+        setCloudChoicePrompt(prev => {
+            if (!prev?.options?.length) return prev;
+            return {
+                ...prev,
+                selectedIndex: (prev.selectedIndex + direction + prev.options.length) % prev.options.length
+            };
+        });
+    }, []);
+
+    const dismissCloudChoice = useCallback(() => {
+        setCloudChoicePrompt(null);
+        setCloudWriteEnabled(false);
+        updateDialogue("☁️ 已保留本機進度，暫停雲端自動備份。", false);
+    }, [updateDialogue]);
+
+    const confirmCloudChoice = useCallback(async () => {
+        const prompt = cloudChoicePrompt;
+        const choice = prompt?.options?.[prompt.selectedIndex];
+        const currentUser = userRef.current;
+        if (!prompt || !choice || !currentUser) return;
+
+        if (choice.id === 'later') {
+            dismissCloudChoice();
+            return;
+        }
+
+        if (choice.id === 'import') {
+            const cloudData = pendingCloudDataRef.current;
+            if (!cloudData) {
+                updateDialogue("☁️ 找不到可匯入的雲端進度，請重新登入再試。", true);
+                return;
+            }
+            updateDialogue("☁️ 正在匯入雲端進度...", true);
+            persistSaveData(JSON.stringify(cloudData));
+            markCloudLoaded(currentUser.uid, cloudData.lastSaveTime || 0);
+            setCloudWriteEnabled(true);
+            setCloudChoicePrompt(null);
+            setHasCheckedCloud(true);
+            setLastCloudSyncTime(cloudData.lastSaveTime || 0);
+            try {
+                sessionStorage.setItem('pixel_monster_skip_boot_once', '1');
+            } catch (e) { }
+            setTimeout(() => window.location.reload(), 800);
+            return;
+        }
+
+        if (choice.id === 'local') {
+            const localData = pendingLocalDataRef.current;
+            if (!localData) {
+                updateDialogue("☁️ 找不到本機進度，無法建立雲端備份。", true);
+                return;
+            }
+            setCloudChoicePrompt(null);
+            setHasCheckedCloud(true);
+            updateDialogue("☁️ 正在建立本機進度雲端備份...", true);
+            const saved = await saveToCloud({
+                ...localData,
+                saveVersion: SAVE_VERSION,
+                ownerUid: currentUser.uid
+            }, { allowBeforeChecked: true, force: true });
+            if (saved) {
+                setCloudWriteEnabled(true);
+                markCloudLoaded(currentUser.uid, localData.lastSaveTime || 0);
+                updateDialogue("☁️ 已啟用本機進度雲端備份。", false);
+            } else {
+                setCloudWriteEnabled(false);
+            }
+        }
+    }, [cloudChoicePrompt, dismissCloudChoice, markCloudLoaded, saveToCloud, updateDialogue]);
 
     const loadFromCloud = useCallback(async (currentUser) => {
         if (!currentUser || !db || cloudLoadInFlightRef.current) return;
@@ -115,6 +237,7 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
                     const localData = JSON.parse(localStr);
                     setHasCheckedCloud(true);
                     setIsCloudLoading(false);
+                    setCloudWriteEnabled(true);
                     setLastCloudSyncTime(localData.lastSaveTime || getSessionCloudTime());
                     updateDialogue("☁️ 帳號連線成功，本地進度已是最新", false);
                     return;
@@ -136,9 +259,10 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
             let localData = localStr ? JSON.parse(localStr) : null;
 
             if (localData && localData.ownerUid && localData.ownerUid !== currentUser.uid) {
-                console.warn(`☁️ 發現跨帳號衝突！本地存檔屬於 ${localData.ownerUid}，但您目前登入的是 ${currentUser.uid}。將強行以雲端資料為準。`);
+                console.warn(`☁️ 發現跨帳號衝突！本地存檔屬於 ${localData.ownerUid}，但您目前登入的是 ${currentUser.uid}。登入後不自動覆蓋雲端，等待玩家選擇。`);
                 localData = null;
             }
+            pendingLocalDataRef.current = localData;
 
             if (doc.exists) {
                 const rawCloudData = doc.data();
@@ -157,56 +281,32 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
                 };
                 const cloudTime = cloudData.lastSaveTime || 0;
                 const localTime = (localData && localData.lastSaveTime) || 0;
-                const localHasOwner = !!localData?.ownerUid;
-                const localBelongsToCurrentUser = localData?.ownerUid === currentUser.uid || (!IS_DESKTOP_BUILD && localData && !localHasOwner);
 
                 console.log(`☁️ Sync Check - Cloud: ${new Date(cloudTime).toLocaleString()}, Local: ${new Date(localTime).toLocaleString()}`);
-
-                if (!localData || !localBelongsToCurrentUser || (cloudTime > localTime + 2000)) {
-                    if (localData && !localBelongsToCurrentUser) {
-                        console.warn("☁️ 本地存檔不是目前登入帳號，優先套用雲端資料，避免覆蓋網頁版進度。", {
-                            currentUid: currentUser.uid,
-                            localOwnerUid: localData.ownerUid || null
-                        });
-                    }
-                    updateDialogue("☁️ 發現雲端進度，同步中...", true);
-                    persistSaveData(JSON.stringify(cloudData));
-                    markCloudLoaded(currentUser.uid, cloudTime);
-                    try {
-                        sessionStorage.setItem('pixel_monster_skip_boot_once', '1');
-                    } catch (e) { }
-                    setHasCheckedCloud(true);
-                    setIsCloudLoading(false);
-                    setLastCloudSyncTime(cloudTime);
-                    setTimeout(() => window.location.reload(), 800);
-                } else {
-                    updateDialogue(`☁️ 帳號連線成功，本地進度已是最新`, false);
-                    markCloudLoaded(currentUser.uid, cloudTime);
-                    setHasCheckedCloud(true);
-                    setIsCloudLoading(false);
-                    setLastCloudSyncTime(cloudTime);
-                    saveToCloud({
-                        ...localData,
-                        saveVersion: SAVE_VERSION,
-                        ownerUid: currentUser.uid
-                    }, { allowBeforeChecked: true });
-                }
-            } else {
-                updateDialogue("☁️ 第一次連動，正在建立雲端初始備份...", false);
-                markCloudLoaded(currentUser.uid, localData?.lastSaveTime || 0);
+                pendingCloudDataRef.current = cloudData;
                 setHasCheckedCloud(true);
                 setIsCloudLoading(false);
-                if (localData) saveToCloud(localData, { allowBeforeChecked: true });
+                setLastCloudSyncTime(cloudTime);
+                setCloudWriteEnabled(false);
+                setCloudPrompt(buildCloudPrompt('cloud_available', cloudData, localData));
+            } else {
+                pendingCloudDataRef.current = null;
+                updateDialogue("☁️ 第一次連動，尚未建立雲端備份。", false);
+                setHasCheckedCloud(true);
+                setIsCloudLoading(false);
+                setCloudWriteEnabled(false);
+                setCloudPrompt(buildCloudPrompt('no_cloud', null, localData));
             }
         } catch (e) {
             console.error("☁️ Cloud Load Error:", e);
             updateDialogue(`雲端讀取錯誤: ${e.message}`, true);
             setHasCheckedCloud(true);
             setIsCloudLoading(false);
+            setCloudWriteEnabled(false);
         } finally {
             cloudLoadInFlightRef.current = false;
         }
-    }, [getSessionCloudTime, hasLoadedCloudThisSession, markCloudLoaded, saveToCloud, updateDialogue]);
+    }, [buildCloudPrompt, getSessionCloudTime, hasLoadedCloudThisSession, markCloudLoaded, setCloudPrompt, updateDialogue]);
 
     useEffect(() => {
         if (!auth) return;
@@ -283,7 +383,11 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
             try {
                 clearPersistedSaveData();
                 sessionStorage.removeItem('pixel_monster_save');
+                sessionStorage.removeItem('pixel_monster_cloud_loaded_uid');
+                sessionStorage.removeItem('pixel_monster_cloud_loaded_time');
             } catch (e) { }
+            setCloudWriteEnabled(false);
+            setCloudChoicePrompt(null);
             playBloop('confirm');
             updateDialogue("已退出登入並清除本地快取。");
             setTimeout(() => window.location.reload(), 1000);
@@ -297,6 +401,11 @@ export const useCloudSync = ({ setAlertMsg, updateDialogue }) => {
         isCloudSyncing,
         isCloudLoading,
         hasCheckedCloud,
+        cloudWriteEnabled,
+        cloudChoicePrompt,
+        selectCloudChoice,
+        confirmCloudChoice,
+        dismissCloudChoice,
         loginWithGoogle,
         logoutGoogle,
         saveToCloud,

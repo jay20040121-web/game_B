@@ -17,7 +17,7 @@ export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulT
         return parseInt(cleanBranch.split('_')[1]);
     }
 
-    // 3. 處理靈魂重生特殊分支 (G1/G2)
+    // 3. 處理靈魂重生特殊分支 (G1)
     // 雖然這些現在也在 EVOLUTION_CHAINS 中，但保留特殊階段 1 的快速回傳作為保底
     if (numStage === 1) {
         if (cleanBranch === 'G1') return 1019; // 幽燭燭

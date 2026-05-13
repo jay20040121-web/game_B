@@ -14,7 +14,7 @@ const DebugPanel = ({
     advStats, setAdvStats, inventory, setInventory, updateDialogue,
     // --- ✨ 解構新傳入的狀態 ---
     evolutionStage, evolutionBranch, bondValue, setBondValue, talkCount,
-    lockedAffinity, soulAffinityCounts, soulTagCounts, monsterTraits, setMonsterTraits,
+    lockedAffinity, setLockedAffinity, soulAffinityCounts, setSoulAffinityCounts, soulTagCounts, setSoulTagCounts, monsterTraits, setMonsterTraits,
     interactionLogs, interactionCount, getMonsterIdWrapped,
     getPowerThreshold
 }) => {
@@ -58,6 +58,38 @@ const DebugPanel = ({
     }, [enchantMoveId, advStats.moveUpgrades]);
 
     const totalEvs = Object.values(evInput).reduce((a, b) => a + b, 0);
+    const affinityOptions = [
+        { id: null, label: '未鎖定' },
+        { id: 'fire', label: '火' },
+        { id: 'water', label: '水' },
+        { id: 'grass', label: '草' },
+        { id: 'bug', label: '蟲' }
+    ];
+    const tagOptions = [
+        { id: 'passionate', label: '熱血' },
+        { id: 'stubborn', label: '執著/固執' },
+        { id: 'rational', label: '冷靜' },
+        { id: 'gentle', label: '溫柔' },
+        { id: 'nonsense', label: '搞怪' }
+    ];
+
+    const setDebugAffinity = (affinity) => {
+        setLockedAffinity?.(affinity);
+        setSoulAffinityCounts?.({
+            fire: affinity === 'fire' ? 10 : 0,
+            water: affinity === 'water' ? 10 : 0,
+            grass: affinity === 'grass' ? 10 : 0,
+            bug: affinity === 'bug' ? 10 : 0
+        });
+        updateDialogue(affinity ? `Debug: 靈魂屬性鎖定為 ${affinity}` : 'Debug: 已清除靈魂屬性鎖定');
+    };
+
+    const setDebugDominantTag = (tag) => {
+        const next = { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 };
+        if (tag) next[tag] = 10;
+        setSoulTagCounts?.(next);
+        updateDialogue(tag ? `Debug: 最優勢個性改為 ${tag}` : 'Debug: 已清除個性點數');
+    };
 
     const applyEvs = () => {
         if (totalEvs > 510) {
@@ -292,6 +324,66 @@ const DebugPanel = ({
                                 <span style={{ width: '40px', textAlign: 'right', fontWeight: 'bold' }}>{bondValue}</span>
                             </div>
                             <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 羈絆值會影響進化分支 (例如靈魂進化需要 40 以上)。</p>
+                        </div>
+
+                        <div style={{ padding: '15px', border: '1px solid #27ae60', backgroundColor: '#222', borderRadius: '8px' }}>
+                            <div style={{ color: '#58d68d', fontWeight: 'bold', marginBottom: '10px' }}>靈魂屬性 / 個性快速設定</div>
+                            <div style={{ marginBottom: '8px', color: '#ccc', fontSize: '12px' }}>
+                                目前屬性：{lockedAffinity || '未鎖定'} / 個性點數：{Object.entries(soulTagCounts || {}).map(([k, v]) => `${k}:${v}`).join(' ')}
+                            </div>
+                            <div style={{ marginBottom: '8px', color: '#bbb' }}>鎖定屬性</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                                {affinityOptions.map(option => {
+                                    const active = (lockedAffinity || null) === option.id;
+                                    return (
+                                        <button
+                                            key={option.id || 'none'}
+                                            onClick={() => setDebugAffinity(option.id)}
+                                            style={{
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                background: active ? '#27ae60' : '#333',
+                                                color: 'white',
+                                                border: active ? '1px solid #58d68d' : '1px solid #555',
+                                                borderRadius: '4px',
+                                                fontWeight: active ? 'bold' : 'normal'
+                                            }}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div style={{ marginBottom: '8px', color: '#bbb' }}>最優勢個性</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                {tagOptions.map(option => {
+                                    const active = Object.entries(soulTagCounts || {}).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0] === option.id;
+                                    return (
+                                        <button
+                                            key={option.id}
+                                            onClick={() => setDebugDominantTag(option.id)}
+                                            style={{
+                                                padding: '8px 12px',
+                                                cursor: 'pointer',
+                                                background: active ? '#27ae60' : '#333',
+                                                color: 'white',
+                                                border: active ? '1px solid #58d68d' : '1px solid #555',
+                                                borderRadius: '4px',
+                                                fontWeight: active ? 'bold' : 'normal'
+                                            }}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    );
+                                })}
+                                <button
+                                    onClick={() => setDebugDominantTag(null)}
+                                    style={{ padding: '8px 12px', cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none', borderRadius: '4px' }}
+                                >
+                                    清除個性
+                                </button>
+                            </div>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>※ 測草系 1032 線：羈絆設 40 以上，屬性選草，個性選熱血或執著/固執，再把等級推到進化門檻。</p>
                         </div>
 
                         <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>

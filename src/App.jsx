@@ -334,10 +334,24 @@ export default function App() {
         isCloudSyncing,
         isCloudLoading,
         hasCheckedCloud,
+        cloudWriteEnabled,
+        cloudChoicePrompt,
+        selectCloudChoice,
+        confirmCloudChoice,
+        dismissCloudChoice,
         loginWithGoogle,
         logoutGoogle,
         saveToCloud,
     } = useCloudSync({ setAlertMsg, updateDialogue });
+
+    const formatCloudChoiceTime = (time) => {
+        if (!time) return '無資料';
+        try {
+            return new Date(time).toLocaleString();
+        } catch (e) {
+            return '時間讀取失敗';
+        }
+    };
 
     // --- 數據同步副作用 (Data Sync) ---
     // 當寵物進化或更換時，確保 baseStats 被正確計算 (透過 render 層動態計算 FinalStats)
@@ -551,7 +565,7 @@ export default function App() {
 
     // 2️⃣ 雲端同步：獨立監控重大行為，不受 hunger/mood 跳動影響
     useEffect(() => {
-        if (user && hasCheckedCloud && lastSaveTime > 0) {
+        if (user && hasCheckedCloud && cloudWriteEnabled && lastSaveTime > 0) {
             // 只有當重大動作發生 (lastSaveTime 變更) 時，才排程同步
             // 使用較短的 2 秒延遲，且不會被 hunger 衰減給中斷
             const timer = setTimeout(() => {
@@ -560,7 +574,7 @@ export default function App() {
             }, 2000);
             return () => clearTimeout(timer);
         }
-    }, [user, hasCheckedCloud, lastSaveTime]);
+    }, [user, hasCheckedCloud, cloudWriteEnabled, lastSaveTime]);
 
     // 日記獨立自動存檔（每次 diaryLog 變更時觸發）
     useEffect(() => {
@@ -1371,6 +1385,11 @@ export default function App() {
             return;
         }
         if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
+        if (cloudChoicePrompt) {
+            selectCloudChoice(1);
+            playBloop('select');
+            return;
+        }
         if (alertMsg) {
             setAlertMsg("");
             playBloop('select');
@@ -1513,6 +1532,11 @@ export default function App() {
             return;
         }
         if (isCloudLoading || isInteractAnimating || isEvolving) return;
+        if (cloudChoicePrompt) {
+            confirmCloudChoice();
+            playBloop('confirm');
+            return;
+        }
         const currentSkillIdx = clickIdx !== null ? clickIdx : skillSelectIdx;
 
         // 優先級最高：技能順序調整模式
@@ -1790,6 +1814,11 @@ export default function App() {
             return;
         }
         if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
+        if (cloudChoicePrompt) {
+            dismissCloudChoice();
+            playBloop('back');
+            return;
+        }
         if (alertMsg) return; // 警告視窗顯示時，C 鍵完全鎖定不執行任何動作
         if (isLeaderboardOpen) {
             setIsLeaderboardOpen(false);
@@ -2100,7 +2129,7 @@ export default function App() {
 
                 // D線抽籤：20% 機率靈魂重生
                 const dRoll = Math.random();
-                const dLine = dRoll < 0.20 ? (Math.random() < 0.5 ? 'G1' : 'G2') : null;
+                const dLine = dRoll < 0.20 ? 'G1' : null;
                 setDeathBranch(dLine);
                 setIsGenerating(true);
                 setIsDead(true);
@@ -2133,7 +2162,7 @@ export default function App() {
 
             // 2. 進化檢查 (改用等級判定)
             const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
-            const isFinalState = evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'G2', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch));
+            const isFinalState = evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch));
 
             if (isFinalState) return;
 
@@ -2170,7 +2199,10 @@ export default function App() {
                     if (evolutionStage === 1) {
                         if (stats.lockedAffinity === 'fire') soulNext = 'F_SOUL';
                         if (stats.lockedAffinity === 'water') soulNext = 'W_SOUL';
-                        if (stats.lockedAffinity === 'grass') soulNext = 'GR_SOUL';
+                        if (stats.lockedAffinity === 'grass') {
+                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
+                            soulNext = ['passionate', 'stubborn'].includes(dominantNature) ? 'GR_SOUL_ALT' : 'GR_SOUL';
+                        }
                         if (stats.lockedAffinity === 'bug') soulNext = 'B_SOUL';
                     }
                 }
@@ -3209,8 +3241,11 @@ export default function App() {
                 setBondValue={setBondValue}
                 talkCount={talkCount}
                 lockedAffinity={lockedAffinity}
+                setLockedAffinity={setLockedAffinity}
                 soulAffinityCounts={soulAffinityCounts}
+                setSoulAffinityCounts={setSoulAffinityCounts}
                 soulTagCounts={soulTagCounts}
+                setSoulTagCounts={setSoulTagCounts}
                 monsterTraits={monsterTraits}
                 setMonsterTraits={setMonsterTraits}
                 interactionLogs={interactionLogs}
@@ -3261,6 +3296,50 @@ export default function App() {
                                     <div className="animate-spin text-2xl mb-2">☁️</div>
                                     <div>雲端同步中...</div>
                                     <div style={{ fontSize: '10px', opacity: 0.6, marginTop: '8px' }}>請稍候</div>
+                                </div>
+                            )}
+
+                            {cloudChoicePrompt && (
+                                <div style={{
+                                    position: 'absolute', inset: 0, zIndex: 10000,
+                                    backgroundColor: 'rgba(157, 174, 138, 0.94)',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                                    color: '#111', textAlign: 'center', padding: '14px', fontSize: '10px', lineHeight: '1.5'
+                                }}>
+                                    <div style={{
+                                        width: '210px', padding: '12px', border: '4px solid #111', backgroundColor: '#ccd6be',
+                                        display: 'flex', flexDirection: 'column', gap: '8px',
+                                        boxShadow: '6px 6px 0 rgba(0,0,0,0.22)'
+                                    }}>
+                                        <div style={{ fontSize: '12px', fontWeight: '900' }}>
+                                            雲端存檔選擇
+                                        </div>
+                                        <div style={{ fontSize: '9px', textAlign: 'left' }}>
+                                            <div>雲端：{formatCloudChoiceTime(cloudChoicePrompt.cloudTime)}</div>
+                                            <div>本機：{formatCloudChoiceTime(cloudChoicePrompt.localTime)}</div>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                            {cloudChoicePrompt.options.map((option, index) => (
+                                                <div
+                                                    key={option.id}
+                                                    style={{
+                                                        border: '2px solid #111',
+                                                        backgroundColor: index === cloudChoicePrompt.selectedIndex ? '#ffca28' : '#8fa07e',
+                                                        color: '#111',
+                                                        padding: '4px 5px',
+                                                        fontSize: '9px',
+                                                        fontWeight: '900',
+                                                        textAlign: 'left'
+                                                    }}
+                                                >
+                                                    {index === cloudChoicePrompt.selectedIndex ? '▶ ' : '　'}{option.label}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div style={{ fontSize: '8px', opacity: 0.8 }}>
+                                            A 切換　B 確認　C 稍後
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -3663,9 +3742,9 @@ export default function App() {
                                             {/* 雲端同步狀態顯示 */}
                                             {user && (
                                                 <div className="absolute right-4 top-2 flex items-center gap-1">
-                                                    <div className={`w-[6px] h-[6px] rounded-full ${isCloudSyncing ? 'bg-[#ff5252] animate-pulse' : 'bg-[#4caf50]'}`} />
+                                                    <div className={`w-[6px] h-[6px] rounded-full ${isCloudSyncing ? 'bg-[#ff5252] animate-pulse' : cloudWriteEnabled ? 'bg-[#4caf50]' : 'bg-[#ffca28]'}`} />
                                                     <span className="text-[8px] text-[#383a37] font-bold">
-                                                        {isCloudSyncing ? '同步中...' : '雲端存檔已同步'}
+                                                        {isCloudSyncing ? '同步中...' : cloudWriteEnabled ? '雲端存檔已同步' : '雲端備份暫停'}
                                                     </span>
                                                 </div>
                                             )}

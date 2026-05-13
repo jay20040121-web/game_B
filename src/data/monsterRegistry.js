@@ -36,6 +36,11 @@ export const MONSTER_REGISTRY = [
     { id: 1008, name: "甜點獸", types: ["grass"], baseStats: { hp: 60, atk: 80, def: 80, spd: 60 } },
     { id: 1009, name: "草莓蛋糕獸", types: ["grass"], baseStats: { hp: 80, atk: 100, def: 100, spd: 80 } },
 
+    // === 草系靈魂 (熱血/執著分支) ===
+    { id: 1032, name: "熱血芽獸", types: ["grass"], baseStats: { hp: 45, atk: 70, def: 55, spd: 55 } },
+    { id: 1033, name: "棘藤猴子", types: ["grass"], baseStats: { hp: 60, atk: 95, def: 65, spd: 70 } },
+    { id: 1034, name: "森拳金剛", types: ["grass"], baseStats: { hp: 85, atk: 120, def: 85, spd: 90 } },
+
     // === 蟲系靈魂 ===
     { id: 1010, name: "藍領蜂", types: ["bug"], baseStats: { hp: 45, atk: 50, def: 65, spd: 45 } },
     { id: 1011, name: "社畜蜂兵", types: ["bug"], baseStats: { hp: 80, atk: 50, def: 65, spd: 45 } },
