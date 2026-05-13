@@ -15,6 +15,7 @@
 - 目前使用者偏好是「先不要寄 Gmail 專案更新通知」，避免信件過多。除非使用者之後明確重新啟用，否則只在對話內更新進度，不主動寄信。
 - 專案已加入 Windows PC 版 portable 打包流程：`npm run build:desktop` 會先跑 Vite desktop build，再用 `electron-packager` 輸出可執行資料夾到 `release/`。
 - PC 版打包已回歸一般 portable 包：`npm run build:desktop` 會先在 `release/.desktop-build/像素怪獸/` 建立乾淨包，再同步到 `release/像素怪獸/`。若 Windows 暫時鎖住舊的 `release/像素怪獸/resources/app.asar`，腳本會略過同步展開資料夾，但 staging 包仍會完成。
+- 使用者未特別要求時，包 PC 版只需要保留 portable 資料夾，不要額外產生 zip 壓縮檔；交付前讓 `release/` 保持乾淨，通常只留最新的 `release/像素怪獸/`。
 - 桌面版打包時只應包含 `dist/`、`electron/` 與必要 package metadata；不要把 `src/`、`public/`、`node_modules/`、`local-assets/` 或 repo 文件整包塞進 `app.asar`，避免 PC 包過大且洩漏開發檔。
 - Desktop build 走 `VITE_DESKTOP=1` 時會讓 Vite 的 `base` 改成 `./`，不要再把 `/game_B/` 當成桌面版唯一基底。
 - PC 版尺寸縮放目前已確認能正常運作。關鍵修正是主視窗 preload 使用 `electron/preload.cjs` 暴露 `window.desktopWindow`；不要改回 ESM `preload.js`，否則 packaged Electron 可能不會成功暴露 IPC，React 的尺寸切換就完全打不到 main process。
