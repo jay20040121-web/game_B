@@ -34,6 +34,9 @@
 - 目前診斷顯示 Windows 標題列/邊框會讓 `setSize(width,height)` 設成整體視窗尺寸而非內容區。PC 版套用尺寸時應先用 `getBounds()` / `getContentBounds()` 算 frame 差值，將目標內容區尺寸加上 frame 差值後再 `setSize()`。
 - PC 尺寸診斷工具、always-on-top 診斷視窗、txt log、console log、DOM 量測標記都只能臨時使用；交付或打包給使用者前必須移除，避免影響遊戲畫面與效能。
 - 目前不要再回頭用 `electron-builder` 做 Windows installer，這台環境在 Windows code signing / symlink 上有卡點；若要發佈 PC 版，先以 portable folder 為準。
+- 怪獸來信系統已加入：每天 09:00、12:00、21:00 依本地時間產生最多三封信，主畫面 LCD 若有未讀信會顯示信封圖示，玩家讀完可回一封 120 字內的回信；下一封怪獸來信會參考上一封玩家回信產生回應。狀態與回信存在主存檔的 `petLetters`，修改存檔、雲端同步或清存檔流程時要保留這個欄位。
+- 怪獸來信邏輯在 `src/utils/petLetterSystem.js`，UI 在 `src/components/PetLetterOverlay.jsx`，離線個性台詞庫在 `src/data/petLetterLines.js`。目前每個個性（溫柔、執著、熱血、搞怪、冷靜）至少 40 句，狀態句也有多句輪替；不要把它退回只有少量固定模板。
+- 怪獸來信的 Debug 測試入口在 `DebugPanel.jsx` 的「來信」分頁，可重開已讀信、清空今日來信並重產、清除回信紀錄，也可用 `debugOverrides.petLetterHour` 覆蓋測試時間（08/09/12/21）。這是測試用，不要把時間覆蓋當成正式遊戲邏輯。
 
 ## 協作偏好
 

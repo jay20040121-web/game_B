@@ -16,7 +16,8 @@ const DebugPanel = ({
     evolutionStage, evolutionBranch, bondValue, setBondValue, talkCount,
     lockedAffinity, setLockedAffinity, soulAffinityCounts, setSoulAffinityCounts, soulTagCounts, setSoulTagCounts, monsterTraits, setMonsterTraits,
     interactionLogs, interactionCount, getMonsterIdWrapped,
-    getPowerThreshold
+    getPowerThreshold,
+    petLetters, setPetLetters
 }) => {
     if (!show) return null;
 
@@ -33,6 +34,8 @@ const DebugPanel = ({
     const [enchantMoveId, setEnchantMoveId] = React.useState(advStats.moves?.[0] || '');
     const [enchantCount, setEnchantCount] = React.useState(0);
     const [enchantJson, setEnchantJson] = React.useState('{}');
+    const letterCount = Object.keys(petLetters?.slots || {}).length;
+    const unreadLetterCount = Object.values(petLetters?.slots || {}).filter(letter => letter && !letter.read).length;
     const enchantableMoveIds = React.useMemo(
         () => (advStats.moves || []).filter(moveId => (SKILL_DATABASE[moveId]?.power || 0) > 0),
         [advStats.moves]
@@ -158,6 +161,37 @@ const DebugPanel = ({
         updateDialogue(`Debug：已套用技能附魔「${SKILL_DATABASE[moveId]?.name || moveId}」`);
     };
 
+    const reopenAllPetLetters = () => {
+        setPetLetters?.(prev => {
+            const nextSlots = {};
+            Object.entries(prev?.slots || {}).forEach(([slotId, letter]) => {
+                nextSlots[slotId] = { ...letter, read: false, readAt: null };
+            });
+            return { ...(prev || {}), slots: nextSlots };
+        });
+        updateDialogue('Debug: 今日怪獸來信已全部改為未讀');
+    };
+
+    const clearPetLetterReplies = () => {
+        setPetLetters?.(prev => ({
+            ...(prev || {}),
+            replies: {},
+            lastPlayerReply: null
+        }));
+        updateDialogue('Debug: 已清除怪獸來信回信紀錄');
+    };
+
+    const clearPetLettersForRegen = () => {
+        setPetLetters?.(prev => ({
+            date: prev?.date,
+            slots: {},
+            replies: prev?.replies || {},
+            lastPlayerReply: prev?.lastPlayerReply || null,
+            letterSeed: Date.now()
+        }));
+        updateDialogue('Debug: 已清空今日來信，等待系統重新產生');
+    };
+
     return (
         <div className="debug-overlay" style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -174,6 +208,7 @@ const DebugPanel = ({
                 <button onClick={() => setActiveTab('evo')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'evo' ? '#e67e22' : '#333', color: 'white' }}>進化/冒險</button>
                 <button onClick={() => setActiveTab('items')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'items' ? '#e67e22' : '#333', color: 'white' }}>物品</button>
                 <button onClick={() => setActiveTab('stats')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'stats' ? '#e67e22' : '#333', color: 'white' }}>數值調整</button>
+                <button onClick={() => setActiveTab('letters')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'letters' ? '#e67e22' : '#333', color: 'white' }}>來信</button>
             </div>
 
             <div className="debug-content" style={{ flex: 1 }}>
@@ -274,6 +309,90 @@ const DebugPanel = ({
                                 📸 產出回憶膠囊 (捕捉當前怪獸快照)
                             </button>
                             <p style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>※ 此按鈕會將目前怪獸的所有狀態封裝進膠囊，方便測試復活邏輯。</p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'letters' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
+                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>怪獸來信測試</div>
+                            <div style={{ color: '#ccc', fontSize: '12px', marginBottom: '12px', lineHeight: 1.6 }}>
+                                日期：{petLetters?.date || '尚未建立'} / 已產生：{letterCount} 封 / 未讀：{unreadLetterCount} 封<br />
+                                上一封玩家回信：{petLetters?.lastPlayerReply?.text || '無'}<br />
+                                測試時間：{Number.isFinite(debugOverrides.petLetterHour) ? `${debugOverrides.petLetterHour}:00` : '使用目前時間'}
+                            </div>
+                            <div style={{ marginBottom: '12px' }}>
+                                <div style={{ color: '#bbb', fontSize: '12px', marginBottom: '6px' }}>來信時間覆蓋</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                    {[
+                                        { label: '目前時間', value: null },
+                                        { label: '08:00 無信', value: 8 },
+                                        { label: '09:00 早', value: 9 },
+                                        { label: '12:00 早中', value: 12 },
+                                        { label: '21:00 全部', value: 21 }
+                                    ].map(option => {
+                                        const active = option.value === null
+                                            ? !Number.isFinite(debugOverrides.petLetterHour)
+                                            : debugOverrides.petLetterHour === option.value;
+                                        return (
+                                            <button
+                                                key={option.label}
+                                                onClick={() => setDebugOverrides(prev => ({ ...prev, petLetterHour: option.value }))}
+                                                style={{
+                                                    padding: '7px 10px',
+                                                    cursor: 'pointer',
+                                                    background: active ? '#f39c12' : '#333',
+                                                    color: active ? '#111' : 'white',
+                                                    border: active ? '1px solid #ffd37a' : '1px solid #555',
+                                                    borderRadius: '4px',
+                                                    fontWeight: active ? 'bold' : 'normal'
+                                                }}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                <button
+                                    onClick={reopenAllPetLetters}
+                                    disabled={letterCount === 0}
+                                    style={{ padding: '10px 14px', cursor: letterCount ? 'pointer' : 'not-allowed', background: '#27ae60', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', opacity: letterCount ? 1 : 0.5 }}
+                                >
+                                    全部改成未讀
+                                </button>
+                                <button
+                                    onClick={clearPetLettersForRegen}
+                                    style={{ padding: '10px 14px', cursor: 'pointer', background: '#2980b9', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
+                                >
+                                    清空今日來信並重產
+                                </button>
+                                <button
+                                    onClick={clearPetLetterReplies}
+                                    style={{ padding: '10px 14px', cursor: 'pointer', background: '#8e44ad', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
+                                >
+                                    清除回信紀錄
+                                </button>
+                            </div>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '10px', lineHeight: 1.5 }}>
+                                ※「全部改成未讀」可重複看已產生的信；「清空今日來信並重產」會讓系統依目前時間重新產生已到點的信。
+                            </p>
+                        </div>
+
+                        <div style={{ padding: '15px', border: '1px solid #444', backgroundColor: '#1b1b1b', borderRadius: '8px' }}>
+                            <div style={{ color: '#ccc', fontWeight: 'bold', marginBottom: '10px' }}>今日信件狀態</div>
+                            {letterCount === 0 ? (
+                                <div style={{ color: '#888' }}>尚未產生任何信件。</div>
+                            ) : (
+                                Object.entries(petLetters?.slots || {}).map(([slotId, letter]) => (
+                                    <div key={slotId} style={{ borderTop: '1px solid #333', padding: '8px 0', color: '#ddd', fontSize: '12px' }}>
+                                        <div style={{ fontWeight: 'bold' }}>{letter.label || slotId}：{letter.read ? '已讀' : '未讀'}</div>
+                                        <div style={{ color: '#aaa', marginTop: '4px' }}>{(letter.pages || []).join(' / ')}</div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}

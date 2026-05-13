@@ -12,6 +12,7 @@ import EvolutionPerformance from './components/EvolutionPerformance';
 import MemoryCapsulePerformance from './components/MemoryCapsulePerformance';
 import SettingsOverlay from './components/SettingsOverlay';
 import TutorialAI from './components/TutorialAI';
+import PetLetterOverlay from './components/PetLetterOverlay';
 import DefeatTutorialOverlay from './components/DefeatTutorialOverlay';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './styles.css';
@@ -61,6 +62,7 @@ import { buildPlayerBattleProfile, getNatureMods } from './utils/battleStats';
 import { useCloudSync } from './utils/useCloudSync';
 import { useSingleActiveTab } from './utils/useSingleActiveTab';
 import { useSkillLearning } from './utils/useSkillLearning';
+import { getUnreadPetLetter, markPetLetterRead, normalizePetLetters, refreshPetLetters, savePlayerPetReply } from './utils/petLetterSystem';
 import { TournamentOverlay } from './components/TournamentOverlay';
 
 
@@ -137,6 +139,8 @@ export default function App() {
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+    const [petLetters, setPetLetters] = useState(() => normalizePetLetters(getInit('petLetters', null)));
+    const [isPetLetterOpen, setIsPetLetterOpen] = useState(false);
 
 
 
@@ -551,6 +555,7 @@ export default function App() {
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
                 todayHasEvolved, todaySpecialEvent, todayEventPriority,
                 ownedMonsters,
+                petLetters,
                 lastSaveTime: lastSaveTime,
                 ownerUid: user?.uid || null
             };
@@ -561,7 +566,7 @@ export default function App() {
             lastSavedDataRef.current = currentDataStr;
             lastSaveTimeRef.current = now;
         } catch (e) { }
-    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, birthTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, monsterTraits, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, lastSaveTime]);
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, birthTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, monsterTraits, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, petLetters, lastSaveTime]);
 
     // 2️⃣ 雲端同步：獨立監控重大行為，不受 hunger/mood 跳動影響
     useEffect(() => {
@@ -1380,6 +1385,10 @@ export default function App() {
             playBloop('select');
             return;
         }
+        if (isPetLetterOpen) {
+            playBloop('select');
+            return;
+        }
         if (isExpeditionOpen) {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z' }));
             return;
@@ -1529,6 +1538,10 @@ export default function App() {
         if (defeatTutorialType) {
             setDefeatTutorialType(null);
             playBloop('confirm');
+            return;
+        }
+        if (isPetLetterOpen) {
+            window.dispatchEvent(new CustomEvent('petLetterAdvance'));
             return;
         }
         if (isCloudLoading || isInteractAnimating || isEvolving) return;
@@ -1790,6 +1803,11 @@ export default function App() {
             return;
         }
 
+        if (activeIndex === -1 && unreadPetLetter && !isPetLetterOpen) {
+            openPetLetter();
+            return;
+        }
+
         if (activeIndex === -1) {
             velRef.current = { x: velRef.current.x, y: -4.0 };
             updateDialogue("抓到你了！");
@@ -1802,6 +1820,12 @@ export default function App() {
     const handleC = () => {
         if (defeatTutorialType) {
             setDefeatTutorialType(null);
+            playBloop('back');
+            return;
+        }
+        if (isPetLetterOpen) {
+            if (unreadPetLetter) markCurrentPetLetterRead(unreadPetLetter.id);
+            setIsPetLetterOpen(false);
             playBloop('back');
             return;
         }
@@ -2965,6 +2989,7 @@ export default function App() {
         setActiveIndex(-1);
         setFeedCount(0);
         setDeathBranch(null); // 重置 D線籤
+        setPetLetters(normalizePetLetters(null));
 
         // --- 修正戰力與技能繼承邏輯 ---
         // 取得死前等級，最高上限以 100 級為基準進行繼承計算
@@ -3075,6 +3100,55 @@ export default function App() {
     // 包裝函式保持相同的呼叫介面，補入原本使用 closure 取得的 state 參數
     const getMonsterIdWrapped = (branch = evolutionBranch, stage = evolutionStage) =>
         getMonsterId(branch, stage, isDead, bondValue, soulTagCounts);
+
+    useEffect(() => {
+        if (isBooting || isDead || isDuplicateTab) return;
+
+        const refresh = () => {
+            const letterNow = new Date();
+            if (Number.isFinite(debugOverrides.petLetterHour)) {
+                letterNow.setHours(debugOverrides.petLetterHour, 0, 0, 0);
+            }
+            const currentMonsterId = getMonsterIdWrapped();
+            setPetLetters(prev => refreshPetLetters(prev, {
+                monsterName: MONSTER_NAMES[String(currentMonsterId)] || '像素怪獸',
+                monsterId: currentMonsterId,
+                hunger,
+                mood,
+                bondValue,
+                derivedLevel,
+                todayTrainWins,
+                todayWildDefeated,
+                todayFeedCount,
+                traitName: monsterTraits?.trait?.name || null,
+                soulTagCounts,
+                lastPlayerReply: petLetters?.lastPlayerReply || null
+            }, letterNow));
+        };
+
+        refresh();
+        const timer = setInterval(refresh, 60 * 1000);
+        return () => clearInterval(timer);
+    }, [isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour]);
+
+    const unreadPetLetter = getUnreadPetLetter(petLetters);
+
+    const openPetLetter = () => {
+        if (!unreadPetLetter || isBooting || isDead || isEvolving || miniGame || isAdvMode || battleState.active || isPvpMode || isLeaderboardOpen || tournament.isTournamentOpen || cloudChoicePrompt || isCloudLoading) return;
+        setIsPetLetterOpen(true);
+        playBloop('confirm');
+    };
+
+    const markCurrentPetLetterRead = (letterId) => {
+        setPetLetters(prev => markPetLetterRead(prev, letterId));
+        recordGameAction();
+    };
+
+    const sendPetLetterReply = (letterId, text) => {
+        setPetLetters(prev => savePlayerPetReply(prev, letterId, text));
+        updateDialogue("回信寄出去了。");
+        recordGameAction();
+    };
 
     // 啟動時或更換怪獸時自動解鎖圖鑑
     useEffect(() => {
@@ -3252,6 +3326,8 @@ export default function App() {
                 interactionCount={interactionCount}
                 getMonsterIdWrapped={getMonsterIdWrapped}
                 getPowerThreshold={getPowerThreshold}
+                petLetters={petLetters}
+                setPetLetters={setPetLetters}
             />
 
             {/* --- 自動縮放包裝容器 (Responsive Wrapper) --- */}
@@ -3444,6 +3520,16 @@ export default function App() {
                                     setDefeatTutorialType(null);
                                     playBloop('back');
                                 }}
+                            />
+
+                            <PetLetterOverlay
+                                isOpen={isPetLetterOpen}
+                                letter={unreadPetLetter}
+                                monsterId={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()}
+                                monsterName={MONSTER_NAMES[String(isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped())] || '像素怪獸'}
+                                onRead={markCurrentPetLetterRead}
+                                onReply={sendPetLetterReply}
+                                onClose={() => setIsPetLetterOpen(false)}
                             />
 
                             {/* 狀態查詢 Overlay */}
@@ -3850,6 +3936,19 @@ export default function App() {
                                                     <DitheredSprite id={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()} pure={true} />
                                                 </div>
                                             </div>
+
+                                            {unreadPetLetter && !isBooting && !isDead && !miniGame && !isAdvMode && !battleState.active && !isPvpMode && !tournament.isTournamentOpen && (
+                                                <button
+                                                    type="button"
+                                                    onClick={openPetLetter}
+                                                    className="absolute right-[34px] top-[42px] z-[180] pointer-events-auto w-[30px] h-[28px] flex items-center justify-center bg-[#ffca28] border-[3px] border-[#1a1a1a] shadow-[3px_3px_0_rgba(0,0,0,0.24)] active:translate-y-[1px]"
+                                                    title="怪獸來信"
+                                                    aria-label="怪獸來信"
+                                                >
+                                                    <PixelArt sprite={ICONS.mail} color="#1a1a1a" scale={2.3} />
+                                                    <span className="absolute -right-[4px] -top-[5px] w-[9px] h-[9px] bg-[#ff5252] border-2 border-[#1a1a1a]"></span>
+                                                </button>
+                                            )}
 
                                             {/* 死亡後提示文字 */}
                                             {isDead && showRestartHint && (
