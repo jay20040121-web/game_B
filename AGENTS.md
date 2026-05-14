@@ -36,6 +36,13 @@
 - 目前不要再回頭用 `electron-builder` 做 Windows installer，這台環境在 Windows code signing / symlink 上有卡點；若要發佈 PC 版，先以 portable folder 為準。
 - 怪獸來信系統已加入：每天 09:00、12:00、21:00 依本地時間產生最多三封信，主畫面 LCD 若有未讀信會顯示信封圖示，玩家讀完可回一封 120 字內的回信；下一封怪獸來信會參考上一封玩家回信產生回應。狀態與回信存在主存檔的 `petLetters`，修改存檔、雲端同步或清存檔流程時要保留這個欄位。
 - 怪獸來信邏輯在 `src/utils/petLetterSystem.js`，UI 在 `src/components/PetLetterOverlay.jsx`，離線個性台詞庫在 `src/data/petLetterLines.js`。目前每個個性（溫柔、執著、熱血、搞怪、冷靜）至少 40 句，狀態句也有多句輪替；不要把它退回只有少量固定模板。
+- 怪獸來信離線版目前固定 4 頁結構：第 1 頁天氣提醒、第 2 頁日期/節日/今日話題、第 3 頁今日狀態與高權重事件（附魔、進化、特殊事件、低飽食/低心情等）、第 4 頁玩家回信回應或個性收尾。不要再改回不固定順序，除非使用者明確要求。
+- 天氣感知在 `src/utils/weatherSystem.js`，使用瀏覽器定位與 Open-Meteo 免 key API；會抓目前天氣與未來 6 小時降雨機率/雨量，避免下雨天只因查詢當下沒雨而漏判。天氣查不到時要安靜 fallback，不可阻塞信件。
+- 今日話題在 `src/utils/dailyTopicSystem.js`，每天準備新聞、歷史上的今天、外部星象、外部明日塔羅四種 topic。信件規則：早上第 2 頁用新聞，中午第 2 頁用歷史上的今天，晚上第 1 頁用星象、第 2 頁用明日塔羅。星象與塔羅目前優先抓 `freehoroscopeapi.com`，外部查不到時要使用本機 fallback，不可阻塞信件。
+- 天氣與今日話題會優先走 Cloudflare Worker 代理（`worker/src/index.js` 的 `/external/weather`、`/external/topics`），避免前端直接抓 Open-Meteo、Wikipedia、freehoroscopeapi 時被 CORS 擋。DebugPanel 的「外部資訊 Debug」會顯示來源與錯誤；若看到 `fallback` 代表外部來源沒抓成功。
+- 怪獸來信 AI 串接已預留前端入口：`src/utils/petLetterAiClient.js` 會讀 `VITE_PET_LETTER_AI_ENDPOINT`，未設定時完全使用離線模板。前端不能放 AI API key；要走後端 endpoint，後端只回 `{ "pages": [...] }`。Endpoint 合約記錄在 `docs/pet-letter-ai-endpoint.md`。
+- AI 來信是非阻塞保底流程：新信先以離線模板建立，若 endpoint 啟用則標記 `aiStatus: pending`，AI 成功才替換成 `source: 'ai'`；失敗、格式錯誤或玩家已讀過時都不能讓信件消失，也不要重複燒 token。`petLetters` slot 目前會保留 `source`、`aiStatus`、`aiRequestedAt`、`aiResolvedAt`、`aiError`。
+- AI 來信後端目前改用 Cloudflare Worker，程式在 `worker/src/index.js`，不需要 Firebase Blaze。Worker 會用 Google JWK 驗證 Firebase Auth ID token；未登入玩家會 fallback 離線模板。OpenAI key 用 Worker secret `OPENAI_API_KEY`，不要寫進 repo 或前端 `.env`。
 - 怪獸來信的 Debug 測試入口在 `DebugPanel.jsx` 的「來信」分頁，可重開已讀信、清空今日來信並重產、清除回信紀錄，也可用 `debugOverrides.petLetterHour` 覆蓋測試時間（08/09/12/21）。這是測試用，不要把時間覆蓋當成正式遊戲邏輯。
 
 ## 協作偏好

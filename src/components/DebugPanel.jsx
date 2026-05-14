@@ -3,6 +3,7 @@ import { ADV_ITEMS, DIARY_ITEM } from '../data/gameConfig';
 import { getLevelByPower } from '../monsterData';
 import { SKILL_DATABASE } from '../monsterData';
 import { MONSTER_TRAITS } from '../data/monsterTraits';
+import { queuePetLetterAiRetry } from '../utils/petLetterSystem';
 
 /**
  * 🛠️ 偵錯面板元件 (Debug Panel)
@@ -17,7 +18,10 @@ const DebugPanel = ({
     lockedAffinity, setLockedAffinity, soulAffinityCounts, setSoulAffinityCounts, soulTagCounts, setSoulTagCounts, monsterTraits, setMonsterTraits,
     interactionLogs, interactionCount, getMonsterIdWrapped,
     getPowerThreshold,
-    petLetters, setPetLetters
+    petLetters, setPetLetters,
+    weatherContext,
+    dailyTopics,
+    onRefreshExternalLetterContext
 }) => {
     if (!show) return null;
 
@@ -192,6 +196,20 @@ const DebugPanel = ({
         updateDialogue('Debug: 已清空今日來信，等待系統重新產生');
     };
 
+    const retryPetLetterAi = (letterId) => {
+        setPetLetters?.(prev => queuePetLetterAiRetry(prev, letterId));
+        updateDialogue('Debug: 已排入怪獸來信 AI 重試');
+    };
+
+    const renderTopicDebug = (key, label) => {
+        const topic = dailyTopics?.topics?.[key];
+        return (
+            <div style={{ color: '#aaa', fontSize: '11px', lineHeight: 1.5, marginTop: '4px' }}>
+                <b style={{ color: '#ddd' }}>{label}</b> [{topic?.source || '無來源'}{topic?.error ? ` / ${topic.error}` : ''}]：{topic?.text || '無資料'}
+            </div>
+        );
+    };
+
     return (
         <div className="debug-overlay" style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -320,7 +338,19 @@ const DebugPanel = ({
                             <div style={{ color: '#ccc', fontSize: '12px', marginBottom: '12px', lineHeight: 1.6 }}>
                                 日期：{petLetters?.date || '尚未建立'} / 已產生：{letterCount} 封 / 未讀：{unreadLetterCount} 封<br />
                                 上一封玩家回信：{petLetters?.lastPlayerReply?.text || '無'}<br />
-                                測試時間：{Number.isFinite(debugOverrides.petLetterHour) ? `${debugOverrides.petLetterHour}:00` : '使用目前時間'}
+                                測試時間：{Number.isFinite(debugOverrides.petLetterHour) ? `${debugOverrides.petLetterHour}:00` : '使用目前時間'}<br />
+                                天氣：{weatherContext?.status || 'unknown'} / {Number.isFinite(weatherContext?.apparentTemperature) ? `${Math.round(weatherContext.apparentTemperature)}°C` : '無溫度'} / 降雨{Number.isFinite(weatherContext?.precipitationProbability) ? `${Math.round(weatherContext.precipitationProbability)}%` : '未知'} / 未來雨時數{weatherContext?.nextRainHours ?? 0} / {weatherContext?.source || weatherContext?.reason || '無來源'}<br />
+                                今日話題：新聞 {dailyTopics?.topics?.news?.type || '-'} / 歷史 {dailyTopics?.topics?.history?.type || '-'} / 星象 {dailyTopics?.topics?.astro?.type || '-'} / 塔羅 {dailyTopics?.topics?.tarot?.type || '-'}
+                            </div>
+                            <div style={{ padding: '10px', background: '#181818', border: '1px solid #333', borderRadius: '6px', marginBottom: '12px' }}>
+                                <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '6px' }}>外部資訊 Debug</div>
+                                <div style={{ color: '#aaa', fontSize: '11px', lineHeight: 1.5 }}>
+                                    天氣來源：{weatherContext?.source || '無'} / 原因：{weatherContext?.reason || '無'} / 溫度：{Number.isFinite(weatherContext?.temperature) ? `${weatherContext.temperature}°C` : '無'} / 體感：{Number.isFinite(weatherContext?.apparentTemperature) ? `${weatherContext.apparentTemperature}°C` : '無'} / code：{weatherContext?.weatherCode ?? '無'}
+                                </div>
+                                {renderTopicDebug('news', '新聞')}
+                                {renderTopicDebug('history', '歷史')}
+                                {renderTopicDebug('astro', '星象')}
+                                {renderTopicDebug('tarot', '塔羅')}
                             </div>
                             <div style={{ marginBottom: '12px' }}>
                                 <div style={{ color: '#bbb', fontSize: '12px', marginBottom: '6px' }}>來信時間覆蓋</div>
@@ -355,6 +385,43 @@ const DebugPanel = ({
                                     })}
                                 </div>
                             </div>
+                            <div style={{ marginBottom: '12px' }}>
+                                <div style={{ color: '#bbb', fontSize: '12px', marginBottom: '6px' }}>天氣覆蓋</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                    {[
+                                        { label: '實際天氣', value: null },
+                                        { label: '炎熱', value: 'hot' },
+                                        { label: '寒冷', value: 'cold' },
+                                        { label: '下雨', value: 'rainy' },
+                                        { label: '暴風雨', value: 'storm' },
+                                        { label: '下雪', value: 'snowy' },
+                                        { label: '風大', value: 'windy' },
+                                        { label: '陰天', value: 'cloudy' },
+                                        { label: '舒適', value: 'comfortable' }
+                                    ].map(option => {
+                                        const active = option.value === null
+                                            ? !debugOverrides.weatherStatus
+                                            : debugOverrides.weatherStatus === option.value;
+                                        return (
+                                            <button
+                                                key={option.label}
+                                                onClick={() => setDebugOverrides(prev => ({ ...prev, weatherStatus: option.value }))}
+                                                style={{
+                                                    padding: '7px 10px',
+                                                    cursor: 'pointer',
+                                                    background: active ? '#f39c12' : '#333',
+                                                    color: active ? '#111' : 'white',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    fontWeight: 'bold'
+                                                }}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                                 <button
                                     onClick={reopenAllPetLetters}
@@ -375,6 +442,12 @@ const DebugPanel = ({
                                 >
                                     清除回信紀錄
                                 </button>
+                                <button
+                                    onClick={onRefreshExternalLetterContext}
+                                    style={{ padding: '10px 14px', cursor: 'pointer', background: '#16a085', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}
+                                >
+                                    重抓外部資訊
+                                </button>
                             </div>
                             <p style={{ fontSize: '11px', color: '#888', marginTop: '10px', lineHeight: 1.5 }}>
                                 ※「全部改成未讀」可重複看已產生的信；「清空今日來信並重產」會讓系統依目前時間重新產生已到點的信。
@@ -388,8 +461,15 @@ const DebugPanel = ({
                             ) : (
                                 Object.entries(petLetters?.slots || {}).map(([slotId, letter]) => (
                                     <div key={slotId} style={{ borderTop: '1px solid #333', padding: '8px 0', color: '#ddd', fontSize: '12px' }}>
-                                        <div style={{ fontWeight: 'bold' }}>{letter.label || slotId}：{letter.read ? '已讀' : '未讀'}</div>
+                                        <div style={{ fontWeight: 'bold' }}>{letter.label || slotId}：{letter.read ? '已讀' : '未讀'} / {letter.source || 'local'} / AI: {letter.aiStatus || '舊格式'}</div>
+                                        {letter.aiError && <div style={{ color: '#ff8a80', marginTop: '4px' }}>錯誤：{letter.aiError}</div>}
                                         <div style={{ color: '#aaa', marginTop: '4px' }}>{(letter.pages || []).join(' / ')}</div>
+                                        <button
+                                            onClick={() => retryPetLetterAi(letter.id)}
+                                            style={{ marginTop: '6px', padding: '5px 8px', cursor: 'pointer', background: '#f39c12', color: '#111', border: 'none', borderRadius: '4px', fontWeight: 'bold', fontSize: '11px' }}
+                                        >
+                                            重試 AI
+                                        </button>
                                     </div>
                                 ))
                             )}

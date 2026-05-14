@@ -62,7 +62,10 @@ import { buildPlayerBattleProfile, getNatureMods } from './utils/battleStats';
 import { useCloudSync } from './utils/useCloudSync';
 import { useSingleActiveTab } from './utils/useSingleActiveTab';
 import { useSkillLearning } from './utils/useSkillLearning';
-import { getUnreadPetLetter, markPetLetterRead, normalizePetLetters, refreshPetLetters, savePlayerPetReply } from './utils/petLetterSystem';
+import { applyAiPetLetter, getPendingAiPetLetter, getUnreadPetLetter, markPetLetterAiFailed, markPetLetterAiRequested, markPetLetterAiTimedOut, markPetLetterRead, normalizePetLetters, refreshPetLetters, savePlayerPetReply } from './utils/petLetterSystem';
+import { isPetLetterAiEnabled, requestAiPetLetter } from './utils/petLetterAiClient';
+import { clearCachedWeatherContext, createDebugWeatherContext, createEmptyWeatherContext, fetchWeatherContext, loadCachedWeatherContext } from './utils/weatherSystem';
+import { clearCachedDailyTopics, createFallbackDailyTopics, fetchDailyTopics, loadCachedDailyTopics } from './utils/dailyTopicSystem';
 import { TournamentOverlay } from './components/TournamentOverlay';
 
 
@@ -141,6 +144,8 @@ export default function App() {
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
     const [petLetters, setPetLetters] = useState(() => normalizePetLetters(getInit('petLetters', null)));
     const [isPetLetterOpen, setIsPetLetterOpen] = useState(false);
+    const [weatherContext, setWeatherContext] = useState(() => loadCachedWeatherContext() || createEmptyWeatherContext('initial'));
+    const [dailyTopics, setDailyTopics] = useState(() => loadCachedDailyTopics() || createFallbackDailyTopics());
 
 
 
@@ -174,7 +179,9 @@ export default function App() {
         encounterRates: null, // { trainer, wild, gather }
         catchRate: null,
         adventureCD: null,
-        memoryRate: null
+        memoryRate: null,
+        petLetterHour: null,
+        weatherStatus: null
     });
 
     const [miniGame, setMiniGame] = useState(null);
@@ -531,6 +538,7 @@ export default function App() {
 
     // 追蹤上一次存檔的內容（不含時間戳記），用來判斷是否真的有變動
     const lastSavedDataRef = useRef("");
+    const aiPetLetterRequestsRef = useRef(new Set());
 
     // 核心動作紀錄器：只有發生具體遊戲行為時更新 lastSaveTime
     const recordGameAction = () => {
@@ -3102,6 +3110,58 @@ export default function App() {
         getMonsterId(branch, stage, isDead, bondValue, soulTagCounts);
 
     useEffect(() => {
+        if (debugOverrides.weatherStatus) {
+            setWeatherContext(createDebugWeatherContext(debugOverrides.weatherStatus));
+            return;
+        }
+        if (isBooting || isDead || isDuplicateTab) return;
+
+        let cancelled = false;
+        fetchWeatherContext()
+            .then(weather => {
+                if (!cancelled) setWeatherContext(weather);
+            })
+            .catch(error => {
+                if (!cancelled) setWeatherContext(prev => prev?.status && prev.status !== 'unknown' ? prev : createEmptyWeatherContext(error?.message || 'weather_unavailable'));
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [isBooting, isDead, isDuplicateTab, debugOverrides.weatherStatus]);
+
+    useEffect(() => {
+        if (isBooting || isDuplicateTab) return;
+        let cancelled = false;
+        fetchDailyTopics()
+            .then(topics => {
+                if (!cancelled) setDailyTopics(topics);
+            })
+            .catch(() => {
+                if (!cancelled) setDailyTopics(createFallbackDailyTopics());
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [isBooting, isDuplicateTab]);
+
+    const refreshExternalLetterContext = async () => {
+        clearCachedWeatherContext();
+        clearCachedDailyTopics();
+        try {
+            const [weather, topics] = await Promise.all([
+                debugOverrides.weatherStatus ? Promise.resolve(createDebugWeatherContext(debugOverrides.weatherStatus)) : fetchWeatherContext({ force: true }),
+                fetchDailyTopics(new Date(), { force: true })
+            ]);
+            setWeatherContext(weather);
+            setDailyTopics(topics);
+            updateDialogue("已重抓外部資訊。");
+        } catch (error) {
+            setDailyTopics(createFallbackDailyTopics());
+            updateDialogue(`外部資訊重抓失敗：${error?.message || 'unknown'}`);
+        }
+    };
+
+    useEffect(() => {
         if (isBooting || isDead || isDuplicateTab) return;
 
         const refresh = () => {
@@ -3110,6 +3170,7 @@ export default function App() {
                 letterNow.setHours(debugOverrides.petLetterHour, 0, 0, 0);
             }
             const currentMonsterId = getMonsterIdWrapped();
+            const moveUpgradeValues = Object.values(advStats?.moveUpgrades || {}).map(value => Number(value || 0)).filter(value => value > 0);
             setPetLetters(prev => refreshPetLetters(prev, {
                 monsterName: MONSTER_NAMES[String(currentMonsterId)] || '像素怪獸',
                 monsterId: currentMonsterId,
@@ -3120,18 +3181,97 @@ export default function App() {
                 todayTrainWins,
                 todayWildDefeated,
                 todayFeedCount,
+                todayHasEvolved,
+                todaySpecialEvent,
+                moveUpgradeCount: moveUpgradeValues.length,
+                maxMoveUpgradeLevel: moveUpgradeValues.length ? Math.max(...moveUpgradeValues) : 0,
+                inventoryCount: inventory.length,
+                evolutionStage,
                 traitName: monsterTraits?.trait?.name || null,
                 soulTagCounts,
-                lastPlayerReply: petLetters?.lastPlayerReply || null
+                lastPlayerReply: petLetters?.lastPlayerReply || null,
+                aiEnabled: isPetLetterAiEnabled(),
+                weatherContext,
+                dailyTopics,
+                monsterTypes: SPECIES_BASE_STATS[String(currentMonsterId)]?.types || []
             }, letterNow));
         };
 
         refresh();
         const timer = setInterval(refresh, 60 * 1000);
         return () => clearInterval(timer);
-    }, [isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour]);
+    }, [isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, advStats?.moveUpgrades, inventory.length, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour, weatherContext, dailyTopics]);
 
     const unreadPetLetter = getUnreadPetLetter(petLetters);
+    const pendingAiPetLetter = getPendingAiPetLetter(petLetters);
+
+    useEffect(() => {
+        if (!pendingAiPetLetter || !user || !isPetLetterAiEnabled() || isBooting || isDead || isDuplicateTab) return;
+        if (aiPetLetterRequestsRef.current.has(pendingAiPetLetter.id)) return;
+
+        aiPetLetterRequestsRef.current.add(pendingAiPetLetter.id);
+        setPetLetters(prev => markPetLetterAiRequested(prev, pendingAiPetLetter.id));
+
+        const currentMonsterId = getMonsterIdWrapped();
+        const aiContext = {
+            letterId: pendingAiPetLetter.id,
+            date: pendingAiPetLetter.date,
+            slotId: pendingAiPetLetter.slotId,
+            label: pendingAiPetLetter.label,
+            monsterName: MONSTER_NAMES[String(currentMonsterId)] || '像素怪獸',
+            monsterId: String(currentMonsterId),
+            level: derivedLevel,
+            hunger,
+            mood,
+            bondValue,
+            todayTrainWins,
+            todayWildDefeated,
+            todayFeedCount,
+            personalityCounts: soulTagCounts,
+            traitName: monsterTraits?.trait?.name || null,
+            lastPlayerReply: petLetters?.lastPlayerReply?.text || '',
+            weather: weatherContext,
+            dailyTopic: dailyTopics?.topics?.[pendingAiPetLetter.slotId] || null,
+            constraints: {
+                locale: 'zh-TW',
+                maxPages: 5,
+                minPages: 3,
+                maxCharsPerPage: 45
+            }
+        };
+
+        let cancelled = false;
+        const timeoutId = setTimeout(() => {
+            if (cancelled) return;
+            setPetLetters(prev => markPetLetterAiTimedOut(prev, pendingAiPetLetter.id));
+            aiPetLetterRequestsRef.current.delete(pendingAiPetLetter.id);
+            recordGameAction();
+        }, 20000);
+
+        const run = async () => {
+            try {
+                const authToken = user?.getIdToken ? await user.getIdToken() : null;
+                const pages = await requestAiPetLetter(aiContext, authToken);
+                if (cancelled) return;
+                clearTimeout(timeoutId);
+                setPetLetters(prev => applyAiPetLetter(prev, pendingAiPetLetter.id, pages));
+                recordGameAction();
+            } catch (error) {
+                if (cancelled) return;
+                clearTimeout(timeoutId);
+                setPetLetters(prev => markPetLetterAiFailed(prev, pendingAiPetLetter.id, error?.message || 'request_failed'));
+                recordGameAction();
+            } finally {
+                aiPetLetterRequestsRef.current.delete(pendingAiPetLetter.id);
+            }
+        };
+        run();
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeoutId);
+        };
+    }, [pendingAiPetLetter?.id, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply?.text, user]);
 
     const openPetLetter = () => {
         if (!unreadPetLetter || isBooting || isDead || isEvolving || miniGame || isAdvMode || battleState.active || isPvpMode || isLeaderboardOpen || tournament.isTournamentOpen || cloudChoicePrompt || isCloudLoading) return;
@@ -3328,6 +3468,9 @@ export default function App() {
                 getPowerThreshold={getPowerThreshold}
                 petLetters={petLetters}
                 setPetLetters={setPetLetters}
+                weatherContext={weatherContext}
+                dailyTopics={dailyTopics}
+                onRefreshExternalLetterContext={refreshExternalLetterContext}
             />
 
             {/* --- 自動縮放包裝容器 (Responsive Wrapper) --- */}

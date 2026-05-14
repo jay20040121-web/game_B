@@ -9,3 +9,4 @@ export const isLocalhost = !isDesktopBuild && typeof window !== "undefined" && (
 
 export const FIRESTORE_COLLECTION = 'users';
 export const PEER_PREFIX = isLocalhost ? "gameB_v1_dev_" : "gameB_v1_";
+export const PET_LETTER_AI_ENDPOINT = import.meta.env.VITE_PET_LETTER_AI_ENDPOINT || '';
