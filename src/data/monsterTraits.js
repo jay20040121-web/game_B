@@ -47,8 +47,8 @@ export const MONSTER_TRAITS = [
         drawbackValue: '特訓/戰鬥成長 -10%',
         modifiers: { soulBondGain: 1.2, trainingGrowth: 0.9, battleGrowth: 0.9 },
         implementation: {
-            status: 'partial',
-            notes: '羈絆加成可直接接談心結算；特訓/戰鬥培育效率需另接各自系統。'
+            status: 'ready',
+            notes: '已接談心羈絆、靈魂探險羈絆、特訓 EV 與冒險/聯盟戰鬥成長。'
         }
     },
     {
@@ -60,8 +60,8 @@ export const MONSTER_TRAITS = [
         drawbackValue: '50 級前全能力 x0.90',
         modifiers: { highLevelStat: 1.15, lowLevelStat: 0.9, thresholdLevel: 50 },
         implementation: {
-            status: 'partial',
-            notes: '需要依等級切換倍率，例如 50 級前降低、50 級後提高。'
+            status: 'ready',
+            notes: '已接狀態與戰鬥能力計算，依等級切換 50 級前降低、50 級後提高。'
         }
     },
     {
@@ -101,6 +101,58 @@ export const MONSTER_TRAITS = [
         implementation: {
             status: 'ready',
             notes: '已接戰鬥 HP 歸 0 流程；每場非 PvP 戰鬥最多觸發一次。'
+        }
+    },
+    {
+        id: 'absolute_defense',
+        name: '絕對防禦',
+        bonus: '每回合受到對手攻擊時，有 50% 機率讓該次傷害無效化。',
+        drawback: '攻擊與速度大幅降低，需要靠耐久和運氣拖住戰局。',
+        bonusValue: '受攻擊時 50% 機率無效化',
+        drawbackValue: '攻擊 x0.50 / 速度 x0.50',
+        modifiers: { atk: 0.5, spd: 0.5, nullifyIncomingDamageChance: 0.5 },
+        implementation: {
+            status: 'ready',
+            notes: '已接能力值計算與戰鬥傷害流程；受到有傷害的攻擊時擲 50% 機率無效化。'
+        }
+    },
+    {
+        id: 'sun_child',
+        name: '太陽之子',
+        bonus: '火屬性技能傷害提高，受到水屬性技能時傷害大幅降低。',
+        drawback: '攻擊與生命大幅降低，需要靠火力時機和抗水能力創造優勢。',
+        bonusValue: '火屬性技能傷害 x1.30 / 受到水屬性技能傷害 x0.30',
+        drawbackValue: '攻擊 x0.50 / HP x0.50',
+        modifiers: { atk: 0.5, hp: 0.5, fireMoveDamage: 1.3, waterDamageTaken: 0.3, battleSceneEffect: '太陽之子' },
+        implementation: {
+            status: 'ready',
+            notes: '已接能力值、戰鬥傷害倍率與戰鬥場景太陽特效。'
+        }
+    },
+    {
+        id: 'rain_doll',
+        name: '雨天娃娃',
+        bonus: '水屬性技能傷害大幅提高，受到草屬性技能時傷害大幅降低。',
+        drawback: '生命與防禦大幅降低，需要避免被非草屬性高傷害擊中。',
+        bonusValue: '水屬性技能傷害 x2.30 / 受到草屬性技能傷害 x0.30',
+        drawbackValue: 'HP x0.50 / 防禦 x0.50',
+        modifiers: { hp: 0.5, def: 0.5, waterMoveDamage: 2.3, grassDamageTaken: 0.3, battleSceneEffect: '雨天娃娃' },
+        implementation: {
+            status: 'ready',
+            notes: '已接能力值、戰鬥傷害倍率與戰鬥場景雨天娃娃特效。'
+        }
+    },
+    {
+        id: 'magician',
+        name: '魔術師',
+        bonus: '戰鬥開場時，將自己的第一招與附魔轉移給對方，並取得對方原本的第一招與附魔。',
+        drawback: '一場戰鬥只能在開場觸發一次。',
+        bonusValue: '開場交換雙方第一招與附魔',
+        drawbackValue: '每場戰鬥限開場 1 次',
+        modifiers: { openingMoveTransfer: 1 },
+        implementation: {
+            status: 'ready',
+            notes: '已接戰鬥建立流程；開場時交換雙方第一格招式與該招式附魔。'
         }
     }
 ];

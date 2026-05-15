@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { OBTAINABLE_MONSTER_IDS, SPECIES_BASE_STATS, generateMoves, calcFinalStat, MONSTER_NAMES, SKILL_DATABASE, NATURE_CONFIG } from '../monsterData';
 import { ROGUE_CARDS } from '../data/rogueCards';
 import { generateNpcMoveUpgrades } from './npcEnchantSystem';
+import { applyOpeningTraitEffects } from './battleTraitSystem';
 
 // 🔹 訓練家擬人化名稱池
 const TRAINER_NAMES_POOL = [
@@ -105,6 +106,7 @@ export function useTournament({
     myMonsterId,
     advStats,
     soulTagCounts,
+    monsterTraits,
     leaderboard,
     updateDialogue,
     setAlertMsg,
@@ -128,6 +130,8 @@ export function useTournament({
     const [championRewardChoicesRemaining, setChampionRewardChoicesRemaining] = useState(1);
     const [rewardReturnPhase, setRewardReturnPhase] = useState('champion');
     const [lastTournamentEnemyId, setLastTournamentEnemyId] = useState(null);
+
+    const applyBattleGrowthMod = (value) => Math.max(1, Math.floor(Number(value || 0) * (monsterTraits?.trait?.modifiers?.battleGrowth || 1)));
     const [lastPvpChallengePlayerId, setLastPvpChallengePlayerId] = useState(null);
 
     // 冠軍附魔選擇狀態
@@ -470,11 +474,17 @@ export function useTournament({
         const best = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
         const pTag = best[1] > 0 ? best[0] : 'none';
         const pNatureMods = getNatureMods(pTag);
+        const trait = monsterTraits?.trait || null;
+        const traitMods = trait?.modifiers || {};
+        const levelTraitMod = derivedLevel >= (traitMods.thresholdLevel || Infinity)
+            ? (traitMods.highLevelStat || 1)
+            : (traitMods.lowLevelStat || 1);
+        const getTraitStatMod = (key) => (traitMods[key] || 1) * levelTraitMod;
 
-        const pMaxHP = calcFinalStat('hp', myId, advStats.ivs.hp, advStats.evs.hp, derivedLevel, pNatureMods.hp);
-        const pATK = calcFinalStat('atk', myId, advStats.ivs.atk, advStats.evs.atk, derivedLevel, pNatureMods.atk);
-        const pDEF = calcFinalStat('def', myId, advStats.ivs.def, advStats.evs.def, derivedLevel, pNatureMods.def);
-        const pSPD = calcFinalStat('spd', myId, advStats.ivs.spd, advStats.evs.spd, derivedLevel, pNatureMods.spd);
+        const pMaxHP = Math.max(1, Math.floor(calcFinalStat('hp', myId, advStats.ivs.hp, advStats.evs.hp, derivedLevel, pNatureMods.hp) * getTraitStatMod('hp')));
+        const pATK = Math.max(1, Math.floor(calcFinalStat('atk', myId, advStats.ivs.atk, advStats.evs.atk, derivedLevel, pNatureMods.atk) * getTraitStatMod('atk')));
+        const pDEF = Math.max(1, Math.floor(calcFinalStat('def', myId, advStats.ivs.def, advStats.evs.def, derivedLevel, pNatureMods.def) * getTraitStatMod('def')));
+        const pSPD = Math.max(1, Math.floor(calcFinalStat('spd', myId, advStats.ivs.spd, advStats.evs.spd, derivedLevel, pNatureMods.spd) * getTraitStatMod('spd')));
 
         let playerMoves = (advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean);
 
@@ -536,7 +546,8 @@ export function useTournament({
                 status: null,
                 statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 },
                 rogueEffects: specialEffects,
-                moveUpgrades: advStats.moveUpgrades || {} // 傳遞附魔數據給戰鬥引擎
+                moveUpgrades: advStats.moveUpgrades || {}, // 傳遞附魔數據給戰鬥引擎
+                trait
             },
             enemy: {
                 ...enemy.monster,
@@ -553,16 +564,17 @@ export function useTournament({
             tournamentEnemyInfo: enemy
         };
 
-        setBattleState(newBattleState);
+        setBattleState(applyOpeningTraitEffects(newBattleState));
     };
 
     const handleTournamentWin = () => {
         setLastTournamentEnemyId(battleState?.tournamentEnemyInfo?.monster?.id || battleState?.enemy?.id || null);
 
         // 發放每場勝利的一般獎勵： +10 base power (戰力)
+        const battlePowerGain = applyBattleGrowthMod(10);
         setAdvStats(prev => ({
             ...prev,
-            basePower: Math.min(9999, prev.basePower + 10)
+            basePower: Math.min(9999, prev.basePower + battlePowerGain)
         }));
 
         if (isExtraChampionChallenge) {
@@ -761,7 +773,7 @@ export function useTournament({
             return {
                 ...prev,
                 moveUpgrades: nextUpgrades,
-                basePower: Math.min(9999, prev.basePower + 50)
+                basePower: Math.min(9999, prev.basePower + applyBattleGrowthMod(50))
             };
         });
 

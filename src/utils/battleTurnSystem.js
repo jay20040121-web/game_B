@@ -494,11 +494,39 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         if (result.dmg > 0) {
             let finalDamage = result.dmg;
             const attackerSide = isPlayer ? 'player' : 'enemy';
+            const defenderSide = isPlayer ? 'enemy' : 'player';
             const attackerTraitMods = getTraitMods(attackerSide);
             const attackerTraitUsage = traitUsage[attackerSide];
             if ((attackerTraitMods.damageRampPerTurn || 0) > 0 && !attackerTraitUsage.eightGatesEnded) {
                 const damageMultiplier = 1 + Math.max(0, prev.turn - 1) * attackerTraitMods.damageRampPerTurn;
                 finalDamage = Math.max(1, Math.floor(finalDamage * damageMultiplier));
+            }
+            if (move.type === 'fire' && (attackerTraitMods.fireMoveDamage || 0) > 0) {
+                finalDamage = Math.max(1, Math.floor(finalDamage * attackerTraitMods.fireMoveDamage));
+            }
+            if (move.type === 'water' && (attackerTraitMods.waterMoveDamage || 0) > 0) {
+                finalDamage = Math.max(1, Math.floor(finalDamage * attackerTraitMods.waterMoveDamage));
+            }
+
+            const defenderTrait = getTrait(defenderSide);
+            const defenderTraitMods = getTraitMods(defenderSide);
+            if (move.type === 'water' && (defenderTraitMods.waterDamageTaken || 0) > 0) {
+                finalDamage = Math.max(1, Math.floor(finalDamage * defenderTraitMods.waterDamageTaken));
+            }
+            if (move.type === 'grass' && (defenderTraitMods.grassDamageTaken || 0) > 0) {
+                finalDamage = Math.max(1, Math.floor(finalDamage * defenderTraitMods.grassDamageTaken));
+            }
+            const nullifyChance = defenderTraitMods.nullifyIncomingDamageChance || 0;
+            if (nullifyChance > 0 && rFunc() < nullifyChance) {
+                pushMsg(`${defenderTrait?.name || '天賦'}觸發！${defenderName} 完全擋下了攻擊。`, {
+                    kind: 'system',
+                    actorSide: defenderSide,
+                    targetSide: attackerSide,
+                    actorName: defenderTrait?.name || '天賦',
+                    targetName: attackerName,
+                    cue: 'blocked'
+                });
+                return;
             }
 
             const { actual: actualDmg, shieldValue: shieldDmg, hpValue: hpDmg } = applyDamageToState(defender, finalDamage);

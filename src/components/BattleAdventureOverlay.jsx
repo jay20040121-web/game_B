@@ -20,6 +20,8 @@ const FLYING_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/
 const BUG_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/蟲.png`;
 const ROCK_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/岩.png`;
 const FINISHER_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/必殺技.gif`;
+const SUN_CHILD_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/太陽之子.png`;
+const RAIN_DOLL_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/雨天娃娃.png`;
 const TYPE_EFFECT_DISPLAY_SIZE = 52;
 const TYPE_EFFECT_POSITION_OFFSET = 17;
 const TYPE_EFFECT_SHEETS = {
@@ -209,6 +211,32 @@ function StatusRecoveryCue({ status, className = '' }) {
     );
 }
 
+const getBattleTraitEffect = (trait) => {
+    if (trait?.id === 'sun_child' || trait?.name === '太陽之子') return { sheet: SUN_CHILD_EFFECT_SHEET, tone: 'sun' };
+    if (trait?.id === 'rain_doll' || trait?.name === '雨天娃娃') return { sheet: RAIN_DOLL_EFFECT_SHEET, tone: 'rain' };
+    return null;
+};
+
+function BattleTraitEffect({ effect, className = '' }) {
+    const [imageReady, setImageReady] = React.useState(true);
+
+    React.useEffect(() => {
+        setImageReady(true);
+    }, [effect?.sheet, className]);
+
+    if (!effect?.sheet || !imageReady) return null;
+
+    return (
+        <img
+            src={effect.sheet}
+            alt=""
+            className={`pointer-events-none absolute z-[25] w-[42px] h-[42px] object-contain trait-scene-effect ${effect.tone === 'rain' ? 'trait-scene-effect-rain' : 'trait-scene-effect-sun'} ${className}`}
+            style={{ imageRendering: 'pixelated' }}
+            onError={() => setImageReady(false)}
+        />
+    );
+}
+
 function BattleMonsterSprite({ side, hitPop, children }) {
     const [hitId, setHitId] = React.useState(null);
     const [resetTick, setResetTick] = React.useState(0);
@@ -347,7 +375,26 @@ export default function BattleAdventureOverlay({
                             animation: monster-hit-shake 320ms steps(1, end) both;
                             transform-origin: center bottom;
                         }
+                        @keyframes trait-scene-effect {
+                            0%, 100% { opacity: 0.78; transform: translateY(0) scale(1); }
+                            50% { opacity: 1; transform: translateY(-2px) scale(1.06); }
+                        }
+                        .trait-scene-effect {
+                            animation: trait-scene-effect 1800ms ease-in-out infinite;
+                        }
+                        .trait-scene-effect-sun {
+                            filter: drop-shadow(0 0 10px rgba(255, 210, 64, 0.9));
+                        }
+                        .trait-scene-effect-rain {
+                            filter: drop-shadow(0 0 10px rgba(80, 210, 255, 0.9));
+                        }
                     `}</style>
+                    {getBattleTraitEffect(battleState?.enemy?.trait) && (
+                        <BattleTraitEffect effect={getBattleTraitEffect(battleState.enemy.trait)} className="right-[12px] top-[10px]" />
+                    )}
+                    {getBattleTraitEffect(battleState?.player?.trait) && (
+                        <BattleTraitEffect effect={getBattleTraitEffect(battleState.player.trait)} className="left-[104px] bottom-[122px]" />
+                    )}
                     {/* Enemy Area */}
                     <div className="absolute top-2 left-2 flex flex-col items-start min-w-[100px] z-20 bg-white/12 backdrop-blur-sm border-2 border-white/20 rounded-md p-1 pl-2 shadow-sm">
                         <div className="flex items-center gap-1">

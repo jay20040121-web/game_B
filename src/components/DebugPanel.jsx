@@ -18,6 +18,7 @@ const DebugPanel = ({
     lockedAffinity, setLockedAffinity, soulAffinityCounts, setSoulAffinityCounts, soulTagCounts, setSoulTagCounts, monsterTraits, setMonsterTraits,
     interactionLogs, interactionCount, getMonsterIdWrapped,
     getPowerThreshold,
+    battleState, setBattleState,
     petLetters, setPetLetters,
     weatherContext,
     dailyTopics,
@@ -38,6 +39,34 @@ const DebugPanel = ({
     const [enchantMoveId, setEnchantMoveId] = React.useState(advStats.moves?.[0] || '');
     const [enchantCount, setEnchantCount] = React.useState(0);
     const [enchantJson, setEnchantJson] = React.useState('{}');
+    const getTraitStatMod = (trait, key, level = 1) => {
+        const modifiers = trait?.modifiers || {};
+        const levelMod = level >= (modifiers.thresholdLevel || Infinity)
+            ? (modifiers.highLevelStat || 1)
+            : (modifiers.lowLevelStat || 1);
+        return (modifiers[key] || 1) * levelMod;
+    };
+    const convertBattleEntityTrait = (entity, currentTrait, nextTrait) => {
+        if (!entity) return entity;
+        const level = entity.level || getLevelByPower(advStats.basePower);
+        const convertStat = (key) => {
+            const currentMod = getTraitStatMod(currentTrait, key, level);
+            const nextMod = getTraitStatMod(nextTrait, key, level);
+            const baseValue = Math.max(1, Math.round(Number(entity[key] || 1) / currentMod));
+            return Math.max(1, Math.floor(baseValue * nextMod));
+        };
+        const nextMaxHp = convertStat('maxHp');
+        const hpRatio = (entity.maxHp || 0) > 0 ? Math.max(0, Math.min(1, (entity.hp || 0) / entity.maxHp)) : 1;
+        return {
+            ...entity,
+            hp: Math.max(1, Math.floor(nextMaxHp * hpRatio)),
+            maxHp: nextMaxHp,
+            atk: convertStat('atk'),
+            def: convertStat('def'),
+            spd: convertStat('spd'),
+            trait: nextTrait
+        };
+    };
     const letterCount = Object.keys(petLetters?.slots || {}).length;
     const unreadLetterCount = Object.values(petLetters?.slots || {}).filter(letter => letter && !letter.read).length;
     const enchantableMoveIds = React.useMemo(
@@ -488,7 +517,15 @@ const DebugPanel = ({
                                         <button
                                             key={trait.id}
                                             onClick={() => {
+                                                const currentTrait = monsterTraits?.trait || null;
                                                 setMonsterTraits({ trait });
+                                                if (battleState?.active) {
+                                                    setBattleState?.(prev => ({
+                                                        ...prev,
+                                                        player: convertBattleEntityTrait(prev?.player, currentTrait, trait),
+                                                        playerFinalState: prev?.playerFinalState ? convertBattleEntityTrait(prev.playerFinalState, currentTrait, trait) : prev?.playerFinalState
+                                                    }));
+                                                }
                                                 updateDialogue(`Debug: 天賦切換為 ${trait.name}`);
                                             }}
                                             title={`增益: ${trait.bonus}\n代價: ${trait.drawback}`}

@@ -50,6 +50,7 @@ import { playBloop, playBGM } from './utils/audioSystem';
 import { SAVE_VERSION, loadSaveData, persistSaveData, clearPersistedSaveData } from './utils/storageSystem';
 import { isLocalhost, PEER_PREFIX } from './utils/envConfig';
 import { processBattleTurn, splitShieldDamage } from './utils/battleTurnSystem';
+import { applyOpeningTraitEffects } from './utils/battleTraitSystem';
 import { usePvpConnection } from './utils/usePvpConnection';
 import { getMonsterId } from './utils/monsterIdMapper';
 import { useLeaderboard } from './utils/useLeaderboard';
@@ -720,6 +721,9 @@ export default function App() {
         latestStats.current = { mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats };
     }, [mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats]);
 
+    const getTraitGrowthMod = (key) => monsterTraits?.trait?.modifiers?.[key] || 1;
+    const applyTraitGrowthMod = (value, key) => Math.max(1, Math.floor(Number(value || 0) * getTraitGrowthMod(key)));
+
     useEffect(() => {
         if (isBooting || isDead || isEvolving || miniGame || isRunaway || isDuplicateTab) return;
 
@@ -747,6 +751,7 @@ export default function App() {
 
         let pts = (opt.tag === topTag || opt.affinity === lockedAffinity) ? 10 : 5;
         if (!lockedAffinity && topTag === 'none') { pts = 5; } // base points for early stage
+        pts = applyTraitGrowthMod(pts, 'soulBondGain');
 
         setBondValue(b => b + pts);
         setTalkCount(t => t + 1);
@@ -789,6 +794,7 @@ export default function App() {
             else if (type === 'charge_click' || type === 'charge') { statKey = 'def'; statName = '防禦'; }
 
             const gotHPBonus = Math.random() < 0.4; // 40% 機率額外提升 HP 潛能
+            const evGain = applyTraitGrowthMod(10, 'trainingGrowth');
 
             setAdvStats(prev => {
                 const nextEVs = { ...prev.evs };
@@ -798,8 +804,8 @@ export default function App() {
                     if (canAdd > 0) nextEVs[key] += canAdd;
                 };
 
-                updateEVFunc(statKey, 10);
-                if (gotHPBonus && statKey !== 'hp') updateEVFunc('hp', 10);
+                updateEVFunc(statKey, evGain);
+                if (gotHPBonus && statKey !== 'hp') updateEVFunc('hp', evGain);
 
                 return { ...prev, evs: nextEVs };
             });
@@ -807,7 +813,7 @@ export default function App() {
             recordGameAction(); // 紀錄特訓成功
             const bonusStr = gotHPBonus ? "與體力" : "";
             updateDialogue(`經過訓練，${statName}${bonusStr}潛能提升了！`);
-            logEvent(`特訓成功！${statName}${bonusStr}潛能 +10`);
+            logEvent(`特訓成功！${statName}${bonusStr}潛能 +${evGain}`);
         } else {
             playSoundEffect('fail');
             setMood(m => Math.max(0, m - 5));
@@ -1283,9 +1289,10 @@ export default function App() {
     const resolveBattleWin = (finalGain, enemy) => {
         const myId = getMonsterIdWrapped();
         const logs = [];
+        const adjustedGain = applyTraitGrowthMod(finalGain, 'battleGrowth');
 
-        logs.push({ msg: `🏆 戰鬥勝利！獲得 ${finalGain} 點成長。`, hpRatio: 1, iconId: myId });
-        applyAdvGain(finalGain, logs, advCurrentHP, myId);
+        logs.push({ msg: `🏆 戰鬥勝利！獲得 ${adjustedGain} 點成長。`, hpRatio: 1, iconId: myId });
+        applyAdvGain(adjustedGain, logs, advCurrentHP, myId);
         recordGameAction(); // 紀錄對戰勝利
         if (battleState.encounterType === 'wild' && enemy) {
             setTodayWildDefeated(n => n + 1);
@@ -2606,7 +2613,7 @@ export default function App() {
         const eImg = new Image();
         eImg.src = `${base}assets/exclusive/idle/${eAssetId}.gif`;
 
-        return resultState;
+        return applyOpeningTraitEffects(resultState);
     };
 
 
@@ -3380,7 +3387,7 @@ export default function App() {
     // --- 聯盟大賽 (Tournament System) ---
     const tournament = useTournament({
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
-        advStats, soulTagCounts, leaderboard, updateDialogue, setAlertMsg, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
+        advStats, soulTagCounts, monsterTraits, leaderboard, updateDialogue, setAlertMsg, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
         pendingSkillLearn,
         onTournamentLossReturn: () => setDefeatTutorialType('tournament')
     });
@@ -3470,6 +3477,8 @@ export default function App() {
                 interactionCount={interactionCount}
                 getMonsterIdWrapped={getMonsterIdWrapped}
                 getPowerThreshold={getPowerThreshold}
+                battleState={battleState}
+                setBattleState={setBattleState}
                 petLetters={petLetters}
                 setPetLetters={setPetLetters}
                 weatherContext={weatherContext}
@@ -3725,8 +3734,9 @@ export default function App() {
                                     onComplete={({ finalEnergy, collectedStats }) => {
                                         setIsExpeditionOpen(false);
                                         setHunger(finalEnergy);
-                                        setBondValue(b => Math.min(999, b + collectedStats.bond));
-                                        setTodayBondGained(b => b + collectedStats.bond);
+                                        const bondGain = applyTraitGrowthMod(collectedStats.bond, 'soulBondGain');
+                                        setBondValue(b => Math.min(999, b + bondGain));
+                                        setTodayBondGained(b => b + bondGain);
                                         setTalkCount(t => t + 1);
 
                                         // Update Tags

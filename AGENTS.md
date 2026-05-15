@@ -227,6 +227,17 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 
 戰鬥畫面的 GIF sprite 很容易因為同層疊加效果而進入瀏覽器的合成路徑，造成受擊後模糊、馬賽克或渲染卡住。
 
+### 天賦系統交接
+
+天賦資料在 `src/data/monsterTraits.js`，戰鬥能力倍率主要經由 `src/utils/battleStats.js`、`src/App.jsx` 的戰鬥建立流程，以及 `src/utils/useTournament.jsx` 聯盟戰鬥建立流程套用。DebugPanel 切換天賦時，若玩家已在戰鬥中，也會同步修正目前 battleState 內玩家能力，避免偵錯器改天賦後看起來沒生效。
+
+目前新增且已接戰鬥流程的天賦：
+
+- `絕對防禦`：攻擊 x0.50、速度 x0.50；受到有傷害的攻擊時，在 `src/utils/battleTurnSystem.js` 以 50% 機率讓該次傷害無效化。
+- `太陽之子`：攻擊 x0.50、HP x0.50；火屬性技能傷害 x1.30，受到水屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/太陽之子.png`。
+- `雨天娃娃`：HP x0.50、防禦 x0.50；水屬性技能傷害 x2.30，受到草屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/雨天娃娃.png`，光暈使用偏藍色調。
+- `魔術師`：開場觸發一次，在 `src/utils/battleTraitSystem.js` 的 `applyOpeningTraitEffects` 交換雙方第一格招式，並連同該招式的 `moveUpgrades` 附魔資料一起交換。單機冒險與聯盟戰鬥建立後都要呼叫這個 helper；若之後要支援 PvP，必須由主機端統一產生並同步結果，不能讓雙方客戶端各自交換以免不同步。
+
 之後若再碰到類似問題，優先遵守：
 
 - 受擊閃爍不要直接動 sprite 本體的 `opacity`
