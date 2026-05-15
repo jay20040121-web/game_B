@@ -19,7 +19,13 @@ cd worker
 npx wrangler login
 ```
 
-設定 OpenAI key 到 Worker secret：
+設定 Gemini key 到 Worker secret：
+
+```bash
+npx wrangler secret put GEMINI_API_KEY
+```
+
+目前預設 AI provider 是 Gemini Free Tier 可用的 `gemini-2.5-flash-lite`。若要改回 OpenAI，可在 `worker/wrangler.toml` 把 `PET_LETTER_AI_PROVIDER` 改成 `openai`，並設定 OpenAI key 到 Worker secret：
 
 ```bash
 npx wrangler secret put OPENAI_API_KEY
@@ -61,6 +67,15 @@ VITE_PET_LETTER_AI_ENDPOINT=https://pixel-monster-pet-letter.<your-subdomain>.wo
   },
   "traitName": "堅毅",
   "lastPlayerReply": "今天也一起加油",
+  "weather": {
+    "status": "rainy",
+    "temperature": 24,
+    "precipitationProbability": 70
+  },
+  "dailyTopic": {
+    "type": "news",
+    "text": "中央社新聞：..."
+  },
   "constraints": {
     "locale": "zh-TW",
     "maxPages": 5,
@@ -76,6 +91,7 @@ VITE_PET_LETTER_AI_ENDPOINT=https://pixel-monster-pet-letter.<your-subdomain>.wo
 
 ```json
 {
+  "provider": "gemini",
   "pages": [
     "早安，我剛剛在 LCD 裡醒來。",
     "我有記得你昨天說要一起加油。",
@@ -89,6 +105,7 @@ VITE_PET_LETTER_AI_ENDPOINT=https://pixel-monster-pet-letter.<your-subdomain>.wo
 ## 安全規則
 
 - 前端不能存 OpenAI API key。
+- 前端也不能存 Gemini API key；Gemini / OpenAI key 都只能放 Worker secret。
 - Worker 預設需要 Firebase Auth ID token；未登入玩家會收到 401，前端會保留離線模板。
 - Worker 允許 CORS 來源：GitHub Pages、localhost、127.0.0.1。
 - 若之後需要避免同一封信重複消耗 token，可以再加 Cloudflare KV，用 `uid + date + slotId` 快取結果。

@@ -39,10 +39,13 @@
 - 怪獸來信離線版目前固定 4 頁結構：第 1 頁天氣提醒、第 2 頁日期/節日/今日話題、第 3 頁今日狀態與高權重事件（附魔、進化、特殊事件、低飽食/低心情等）、第 4 頁玩家回信回應或個性收尾。不要再改回不固定順序，除非使用者明確要求。
 - 天氣感知在 `src/utils/weatherSystem.js`，使用瀏覽器定位與 Open-Meteo 免 key API；會抓目前天氣與未來 6 小時降雨機率/雨量，避免下雨天只因查詢當下沒雨而漏判。天氣查不到時要安靜 fallback，不可阻塞信件。
 - 今日話題在 `src/utils/dailyTopicSystem.js`，每天準備新聞、歷史上的今天、外部星象、外部明日塔羅四種 topic。信件規則：早上第 2 頁用新聞，中午第 2 頁用歷史上的今天，晚上第 1 頁用星象、第 2 頁用明日塔羅。星象與塔羅目前優先抓 `freehoroscopeapi.com`，外部查不到時要使用本機 fallback，不可阻塞信件。
+- 每日話題的新聞與歷史偏好要避開政治、選舉、兩岸、軍事、戰爭與社會案件。新聞優先挑動物、生態、自然、科學新知、太空天文等較適合怪獸信件的輕知識；歷史上的今天優先挑動物、外太空、科學發現、人物出生、特殊節慶或紀念日。若抓不到符合白名單的外部資料，寧可使用小知識 fallback，不要硬塞政治新聞。
 - 天氣與今日話題會優先走 Cloudflare Worker 代理（`worker/src/index.js` 的 `/external/weather`、`/external/topics`），避免前端直接抓 Open-Meteo、Wikipedia、freehoroscopeapi 時被 CORS 擋。DebugPanel 的「外部資訊 Debug」會顯示來源與錯誤；若看到 `fallback` 代表外部來源沒抓成功。
+- 新聞與歷史資料來源要用多 endpoint 保底：新聞優先抓中央社 RSS（政治、兩岸、產經、科技、生活、地方）以台灣/中華地區為主，失敗才退 Google News 台灣 RSS，再退 Wikipedia `featured`；歷史用 `onthisday/events`、`onthisday/all`，必要時再試 Wikimedia gateway。英文來源不可原樣進信件，要先經 `translateExternalTopicText` 壓成繁中短句。新聞若 `title` 只是人物或條目名，要優先合併 `story` / `extract` 做成「標題/重點」；星象英文 horoscope 要經 `translateHoroscopeText` 轉成「星座守護星/主題 + 運勢焦點」，不要只寫「星象更新到某星座」；塔羅英文牌名要經牌名/花色字典轉譯，並用牌義解釋抽到該牌代表什麼，不要接泛用罐頭建議。
+- 每封怪獸來信會保存 `contextSignature`，讓尚未讀取、尚未送出 AI 請求的本地模板信，在天氣或今日話題從 fallback 更新成外部資訊後可以重生內容。不要讓已讀信、已送 AI 的信或 AI 成功信被背景改寫，避免玩家看到的信件內容前後不一致。
 - 怪獸來信 AI 串接已預留前端入口：`src/utils/petLetterAiClient.js` 會讀 `VITE_PET_LETTER_AI_ENDPOINT`，未設定時完全使用離線模板。前端不能放 AI API key；要走後端 endpoint，後端只回 `{ "pages": [...] }`。Endpoint 合約記錄在 `docs/pet-letter-ai-endpoint.md`。
 - AI 來信是非阻塞保底流程：新信先以離線模板建立，若 endpoint 啟用則標記 `aiStatus: pending`，AI 成功才替換成 `source: 'ai'`；失敗、格式錯誤或玩家已讀過時都不能讓信件消失，也不要重複燒 token。`petLetters` slot 目前會保留 `source`、`aiStatus`、`aiRequestedAt`、`aiResolvedAt`、`aiError`。
-- AI 來信後端目前改用 Cloudflare Worker，程式在 `worker/src/index.js`，不需要 Firebase Blaze。Worker 會用 Google JWK 驗證 Firebase Auth ID token；未登入玩家會 fallback 離線模板。OpenAI key 用 Worker secret `OPENAI_API_KEY`，不要寫進 repo 或前端 `.env`。
+- AI 來信後端目前改用 Cloudflare Worker，程式在 `worker/src/index.js`，不需要 Firebase Blaze。Worker 會用 Google JWK 驗證 Firebase Auth ID token；未登入玩家會 fallback 離線模板。預設 provider 是 Gemini（`PET_LETTER_AI_PROVIDER=gemini`、`GEMINI_MODEL=gemini-2.5-flash-lite`），Gemini key 用 Worker secret `GEMINI_API_KEY`；OpenAI 可作 fallback，key 用 Worker secret `OPENAI_API_KEY`。任何 AI key 都不要寫進 repo 或前端 `.env`。
 - 怪獸來信的 Debug 測試入口在 `DebugPanel.jsx` 的「來信」分頁，可重開已讀信、清空今日來信並重產、清除回信紀錄，也可用 `debugOverrides.petLetterHour` 覆蓋測試時間（08/09/12/21）。這是測試用，不要把時間覆蓋當成正式遊戲邏輯。
 
 ## 協作偏好

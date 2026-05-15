@@ -23,11 +23,28 @@ const createEmptyState = (date = getTodayStr(), previousState = null) => ({
     letterSeed: previousState?.letterSeed || 0
 });
 
+const stripNewsDetailSegment = (line) => String(line || '')
+    .replace(/新聞重點\s*[:：]/g, '新聞：')
+    .replace(/。?\s*重點\s*[:：].*$/g, '')
+    .trim();
+
+const sanitizeStoredLetterPages = (pages) => {
+    if (!Array.isArray(pages)) return pages;
+    return pages.map(page => stripNewsDetailSegment(page));
+};
+
 export const normalizePetLetters = (state, date = getTodayStr()) => {
     if (!state || state.date !== date || !state.slots) return createEmptyState(date, state);
+    const slots = {};
+    Object.entries(state.slots || {}).forEach(([slotId, letter]) => {
+        slots[slotId] = letter ? {
+            ...letter,
+            pages: sanitizeStoredLetterPages(letter.pages)
+        } : letter;
+    });
     return {
         date,
-        slots: { ...state.slots },
+        slots,
         lastPlayerReply: state.lastPlayerReply || null,
         replies: { ...(state.replies || {}) },
         letterSeed: state.letterSeed || 0
@@ -399,11 +416,20 @@ const getDateLine = (slotId, now = new Date(), seed = 0, dailyTopic = null) => {
 
 const getTopicText = (dailyTopics, key) => dailyTopics?.topics?.[key]?.text || null;
 
+const getTopicKeyForSlot = (slotId) => {
+    if (slotId === 'morning') return 'news';
+    if (slotId === 'noon') return 'history';
+    if (slotId === 'night') return 'tarot';
+    return slotId;
+};
+
+const getDailyTopicForSlot = (dailyTopics, slotId) => dailyTopics?.topics?.[getTopicKeyForSlot(slotId)] || null;
+
 const getSlotTopicLine = ({ slotId, dailyTopics, seed }) => {
     if (slotId === 'morning') {
         return getTopicText(dailyTopics, 'news') || pickBySeed([
-            '早上的新聞很多，我挑重點提醒你：先確認今天最重要的一件事。',
-            '今天外面的消息很多，你不用全接住，先照顧眼前的生活。'
+            '今日小知識：海獺睡覺時會牽著同伴，避免自己被海流沖走。',
+            '今日自然消息：蜜蜂會用跳舞告訴同伴花蜜方向。'
         ], seed);
     }
     if (slotId === 'noon') {
@@ -747,6 +773,34 @@ export const generatePetLetter = (slotId, context = {}) => {
     ].filter(Boolean);
 };
 
+const buildLetterContextSignature = (slotId, context = {}) => {
+    const topic = getDailyTopicForSlot(context.dailyTopics, slotId);
+    const weather = context.weatherContext || {};
+    return JSON.stringify({
+        weather: {
+            status: weather.status || 'unknown',
+            temperature: Number.isFinite(weather.apparentTemperature) ? Math.round(weather.apparentTemperature) : null,
+            rain: Number.isFinite(weather.precipitationProbability) ? Math.round(weather.precipitationProbability) : null,
+            nextRainHours: Number.isFinite(weather.nextRainHours) ? Number(weather.nextRainHours) : 0
+        },
+        topic: {
+            type: topic?.type || null,
+            text: topic?.text || null,
+            source: topic?.source || null
+        },
+        aiEnabled: Boolean(context.aiEnabled)
+    });
+};
+
+const canRefreshExistingLocalLetter = (letter) => (
+    letter
+    && !letter.read
+    && letter.source !== 'ai'
+    && !letter.aiRequestedAt
+    && letter.aiStatus !== PET_LETTER_AI_STATUS.DONE
+    && letter.aiStatus !== PET_LETTER_AI_STATUS.SKIPPED_READ
+);
+
 export const refreshPetLetters = (state, context = {}, now = new Date()) => {
     const today = getTodayStr(now);
     const currentHour = now.getHours();
@@ -755,7 +809,27 @@ export const refreshPetLetters = (state, context = {}, now = new Date()) => {
     const slots = { ...base.slots };
 
     PET_LETTER_SLOTS.forEach(slot => {
-        if (currentHour < slot.hour || slots[slot.id]) return;
+        if (currentHour < slot.hour) return;
+        const contextSignature = buildLetterContextSignature(slot.id, context);
+        if (slots[slot.id]) {
+            if (!canRefreshExistingLocalLetter(slots[slot.id]) || slots[slot.id].contextSignature === contextSignature) return;
+            slots[slot.id] = {
+                ...slots[slot.id],
+                contextSignature,
+                aiStatus: context.aiEnabled ? PET_LETTER_AI_STATUS.PENDING : PET_LETTER_AI_STATUS.DISABLED,
+                aiRequestedAt: null,
+                aiResolvedAt: null,
+                aiError: null,
+                pages: generatePetLetter(slot.id, {
+                    ...context,
+                    dailyTopic: getDailyTopicForSlot(context.dailyTopics, slot.id)?.text || context.dailyTopic || null,
+                    letterSeed: base.letterSeed || 0,
+                    now
+                })
+            };
+            changed = true;
+            return;
+        }
         slots[slot.id] = {
             id: `${today}-${slot.id}`,
             slotId: slot.id,
@@ -769,9 +843,10 @@ export const refreshPetLetters = (state, context = {}, now = new Date()) => {
             aiResolvedAt: null,
             aiError: null,
             replyRefId: base.lastPlayerReply?.id || null,
+            contextSignature,
             pages: generatePetLetter(slot.id, {
                 ...context,
-                dailyTopic: context.dailyTopics?.topics?.[slot.id]?.text || context.dailyTopic || null,
+                dailyTopic: getDailyTopicForSlot(context.dailyTopics, slot.id)?.text || context.dailyTopic || null,
                 letterSeed: base.letterSeed || 0,
                 now
             })

@@ -4,4 +4,6 @@ compatibility_date = "2026-05-14"
 
 [vars]
 OPENAI_MODEL = "gpt-4.1-mini"
+GEMINI_MODEL = "gemini-2.5-flash-lite"
+PET_LETTER_AI_PROVIDER = "gemini"
 FIREBASE_PROJECT_ID = "gamea-42ecd"

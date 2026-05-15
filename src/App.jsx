@@ -3190,7 +3190,7 @@ export default function App() {
                 traitName: monsterTraits?.trait?.name || null,
                 soulTagCounts,
                 lastPlayerReply: petLetters?.lastPlayerReply || null,
-                aiEnabled: isPetLetterAiEnabled(),
+                aiEnabled: isPetLetterAiEnabled() && Boolean(user),
                 weatherContext,
                 dailyTopics,
                 monsterTypes: SPECIES_BASE_STATS[String(currentMonsterId)]?.types || []
@@ -3200,10 +3200,14 @@ export default function App() {
         refresh();
         const timer = setInterval(refresh, 60 * 1000);
         return () => clearInterval(timer);
-    }, [isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, advStats?.moveUpgrades, inventory.length, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour, weatherContext, dailyTopics]);
+    }, [isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, advStats?.moveUpgrades, inventory.length, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour, weatherContext, dailyTopics, user]);
 
     const unreadPetLetter = getUnreadPetLetter(petLetters);
     const pendingAiPetLetter = getPendingAiPetLetter(petLetters);
+    const getDailyTopicForLetterSlot = (slotId) => {
+        const topicKeyBySlot = { morning: 'news', noon: 'history', night: 'tarot' };
+        return dailyTopics?.topics?.[topicKeyBySlot[slotId] || slotId] || null;
+    };
 
     useEffect(() => {
         if (!pendingAiPetLetter || !user || !isPetLetterAiEnabled() || isBooting || isDead || isDuplicateTab) return;
@@ -3231,7 +3235,7 @@ export default function App() {
             traitName: monsterTraits?.trait?.name || null,
             lastPlayerReply: petLetters?.lastPlayerReply?.text || '',
             weather: weatherContext,
-            dailyTopic: dailyTopics?.topics?.[pendingAiPetLetter.slotId] || null,
+            dailyTopic: getDailyTopicForLetterSlot(pendingAiPetLetter.slotId),
             constraints: {
                 locale: 'zh-TW',
                 maxPages: 5,
