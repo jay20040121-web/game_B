@@ -2242,7 +2242,10 @@ export default function App() {
                             const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
                             soulNext = ['passionate', 'stubborn'].includes(dominantNature) ? 'GR_SOUL_ALT' : 'GR_SOUL';
                         }
-                        if (stats.lockedAffinity === 'bug') soulNext = 'B_SOUL';
+                        if (stats.lockedAffinity === 'bug') {
+                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
+                            soulNext = ['stubborn', 'nonsense'].includes(dominantNature) ? 'B_SOUL_ALT' : 'B_SOUL';
+                        }
                     }
                 }
 

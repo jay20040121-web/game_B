@@ -46,6 +46,11 @@ export const MONSTER_REGISTRY = [
     { id: 1011, name: "社畜蜂兵", types: ["bug"], baseStats: { hp: 80, atk: 50, def: 65, spd: 45 } },
     { id: 1012, name: "女王蜂", types: ["bug"], baseStats: { hp: 80, atk: 90, def: 110, spd: 90 } },
 
+    // === 蟲系靈魂 (固執/無俚頭分支) ===
+    { id: 1035, name: "小角幼甲", types: ["bug"], baseStats: { hp: 52, atk: 58, def: 72, spd: 38 } },
+    { id: 1036, name: "鐵角甲士", types: ["bug"], baseStats: { hp: 72, atk: 82, def: 98, spd: 48 } },
+    { id: 1037, name: "聖甲戰蟲", types: ["bug"], baseStats: { hp: 96, atk: 112, def: 124, spd: 58 } },
+
     // === 一般線 A (德魯線) ===
     { id: 1013, name: "黑德魯", types: ["poison"], baseStats: { hp: 46, atk: 57, def: 40, spd: 50 } },
     { id: 1014, name: "野性德魯", types: ["poison"], baseStats: { hp: 61, atk: 72, def: 65, spd: 65 } },

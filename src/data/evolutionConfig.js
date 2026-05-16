@@ -34,7 +34,7 @@ export const EVOLUTION_CHAINS = {
     "START": {
         stage1: {
             "A": { id: 1000 }, "C": { id: 1000 },
-            "F_SOUL": { id: 1000 }, "W_SOUL": { id: 1000 }, "GR_SOUL": { id: 1000 }, "GR_SOUL_ALT": { id: 1000 }, "B_SOUL": { id: 1000 }
+            "F_SOUL": { id: 1000 }, "W_SOUL": { id: 1000 }, "GR_SOUL": { id: 1000 }, "GR_SOUL_ALT": { id: 1000 }, "B_SOUL": { id: 1000 }, "B_SOUL_ALT": { id: 1000 }
         },
         branches: [
             // 靈魂進化優先級最高
@@ -42,6 +42,7 @@ export const EVOLUTION_CHAINS = {
             { to: "W_SOUL", condition: "bond >= 40 && affinity == 'water'", desc: `水系靈魂 (${getMName(1004)}線)` },
             { to: "GR_SOUL_ALT", condition: "bond >= 40 && affinity == 'grass' && topTag in ['passionate', 'stubborn']", desc: `草系靈魂 (${getMName(1032)}線，熱血/執著)` },
             { to: "GR_SOUL", condition: "bond >= 40 && affinity == 'grass'", desc: `草系靈魂 (${getMName(1007)}線)` },
+            { to: "B_SOUL_ALT", condition: "bond >= 40 && affinity == 'bug' && topTag in ['stubborn', 'nonsense']", desc: `蟲系靈魂 (${getMName(1035)}線，固執/無俚頭)` },
             { to: "B_SOUL", condition: "bond >= 40 && affinity == 'bug'", desc: `蟲系靈魂 (${getMName(1010)}線)` },
 
             // 基礎分支
@@ -91,9 +92,18 @@ export const EVOLUTION_CHAINS = {
     },
 
     "SOUL_BUG": {
-        stage2: { "B_SOUL": { id: 1010, desc: `${getMName(1010)}` } },
-        stage3: { "B_SOUL": { id: 1011, from: "B_SOUL", desc: `${getMName(1011)} (無條件進化)` } },
-        stage4: { "B_SOUL": { id: 1012, from: "B_SOUL", desc: `${getMName(1012)} (無條件進化)` } }
+        stage2: {
+            "B_SOUL": { id: 1010, desc: `${getMName(1010)}` },
+            "B_SOUL_ALT": { id: 1035, desc: `${getMName(1035)} (固執/無俚頭)` }
+        },
+        stage3: {
+            "B_SOUL": { id: 1011, from: "B_SOUL", desc: `${getMName(1011)} (無條件進化)` },
+            "B_SOUL_ALT": { id: 1036, from: "B_SOUL_ALT", desc: `${getMName(1036)} (無條件進化)` }
+        },
+        stage4: {
+            "B_SOUL": { id: 1012, from: "B_SOUL", desc: `${getMName(1012)} (無條件進化)` },
+            "B_SOUL_ALT": { id: 1037, from: "B_SOUL_ALT", desc: `${getMName(1037)} (無條件進化)` }
+        }
     },
 
     "NORMAL": {

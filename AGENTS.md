@@ -200,6 +200,7 @@ Firebase compat SDK 設定在 `src/utils/firebase.js`。
 - `public/assets/` 裡是否有對應 sprite 或素材
 
 草系靈魂線目前有兩條不互通分支。一般草魂線是 `1007 -> 1008 -> 1009`；若首次進入草魂線時最優勢個性是熱血 `passionate` 或執著/固執 `stubborn`，會進入 `GR_SOUL_ALT` 的 `1032 -> 1033 -> 1034`。進入 `GR_SOUL_ALT` 後後續無條件沿 1032 線進化，不會切回 1007 線；已在 1007 線也不會因後續個性變化切到 1032 線。
+蟲系靈魂線目前也有兩條不互通分支。一般蟲魂線是 `1010 -> 1011 -> 1012`；若首次進入蟲魂線時最優勢個性是執著/固執 `stubborn` 或無俚頭 `nonsense`，會進入 `B_SOUL_ALT` 的 `1035 -> 1036 -> 1037`。進入 `B_SOUL_ALT` 後後續無條件沿 1035 線進化，不會切回 1010 線；已在 1010 線也不會因後續個性變化切到 1035 線。
 DebugPanel 的「數值調整」頁有靈魂屬性 / 個性快速設定，可以直接改 `lockedAffinity`、`soulAffinityCounts`、`soulTagCounts`。測草系 1032 線時，將羈絆設 40 以上，屬性鎖定草，個性設熱血 `passionate` 或執著/固執 `stubborn`，再把等級推到進化門檻。
 
 死亡重生目前只有 `G1` 幽燭燭線：`1019 -> 1020 -> 1021`。壽命結束或終止生命時的 D 線抽籤都是 20% 機率進入 `G1`，不要再抽未實作的 `G2`，除非已同步補上 `EVOLUTION_CHAINS`、`monsterIdMapper`、registry、圖鑑與素材資料。
