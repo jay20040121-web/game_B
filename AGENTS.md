@@ -407,5 +407,12 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
   - `back` = `取消按鈕.wav`，對應 C
 - 音效檔請優先從 `public/assets/sound/` 讀取，不要改成其他來源，避免桌面版或網頁版路徑失效。
 
+### 語系切換
+
+- 遊戲目前有繁中 / 英文顯示切換，設定存在 `localStorage.pixel_monster_language`。
+- 語系核心在 `src/utils/languageSystem.js`，英文翻譯表與常見前綴替換都集中在這裡。
+- 全域顯示層翻譯在 `src/components/LanguageDomTranslator.jsx`，由 `App.jsx` 掛載；英文模式會掃描 React render 出來的文字節點並套用翻譯表。
+- 設定頁 `src/components/SettingsOverlay.jsx` 有語言切換按鈕。新增重要 UI 文字時，若希望英文模式顯示完整，優先補 `languageSystem.js` 的翻譯表。
+- 目前不是線上機器翻譯，不會也不應在前端放翻譯 API key；大量劇情、怪獸來信或 AI 文字若要高品質英文，需要另外補人工翻譯表或走後端服務。
 
 

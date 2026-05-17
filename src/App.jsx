@@ -14,6 +14,7 @@ import SettingsOverlay from './components/SettingsOverlay';
 import TutorialAI from './components/TutorialAI';
 import PetLetterOverlay from './components/PetLetterOverlay';
 import DefeatTutorialOverlay from './components/DefeatTutorialOverlay';
+import LanguageDomTranslator from './components/LanguageDomTranslator';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './styles.css';
 import {
@@ -68,6 +69,7 @@ import { isPetLetterAiEnabled, requestAiPetLetter } from './utils/petLetterAiCli
 import { clearCachedWeatherContext, createDebugWeatherContext, createEmptyWeatherContext, fetchWeatherContext, loadCachedWeatherContext } from './utils/weatherSystem';
 import { clearCachedDailyTopics, createFallbackDailyTopics, fetchDailyTopics, loadCachedDailyTopics } from './utils/dailyTopicSystem';
 import { TournamentOverlay } from './components/TournamentOverlay';
+import { getStoredLanguage, setStoredLanguage } from './utils/languageSystem';
 
 
 
@@ -92,6 +94,7 @@ const drawBootMonsterId = (poolRef, currentId = null) => {
 export default function App() {
     const isDesktopBuild = import.meta.env.VITE_DESKTOP === '1';
     const [initialData] = useState(() => loadSaveData());
+    const [language, setLanguageState] = useState(() => getStoredLanguage());
 
     const getInit = (key, defaultVal) => {
         return (initialData && initialData[key] !== undefined) ? initialData[key] : defaultVal;
@@ -147,6 +150,11 @@ export default function App() {
     const [isPetLetterOpen, setIsPetLetterOpen] = useState(false);
     const [weatherContext, setWeatherContext] = useState(() => loadCachedWeatherContext() || createEmptyWeatherContext('initial'));
     const [dailyTopics, setDailyTopics] = useState(() => loadCachedDailyTopics() || createFallbackDailyTopics());
+
+    const setLanguage = useCallback((nextLanguage) => {
+        setStoredLanguage(nextLanguage);
+        setLanguageState(getStoredLanguage());
+    }, []);
 
 
 
@@ -3429,6 +3437,7 @@ export default function App() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
+            <LanguageDomTranslator language={language} />
             <style dangerouslySetInnerHTML={{ __html: BATTLE_STYLES }} />
 
             {isLocalhost && !isDesktopBuild && (
@@ -4306,6 +4315,8 @@ export default function App() {
                         manualScale={manualScale}
                         setManualScale={setManualScale}
                         setIsBooting={setIsBooting}
+                        language={language}
+                        setLanguage={setLanguage}
                     />
 
                     <TutorialAI 
