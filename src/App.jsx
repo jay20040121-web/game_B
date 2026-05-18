@@ -70,6 +70,7 @@ import { clearCachedWeatherContext, createDebugWeatherContext, createEmptyWeathe
 import { clearCachedDailyTopics, createFallbackDailyTopics, fetchDailyTopics, loadCachedDailyTopics } from './utils/dailyTopicSystem';
 import { TournamentOverlay } from './components/TournamentOverlay';
 import { getStoredLanguage, setStoredLanguage } from './utils/languageSystem';
+import { getDefeatTutorialEnabled, getPetLettersEnabled } from './utils/gamePreferenceSystem';
 
 
 
@@ -146,6 +147,8 @@ export default function App() {
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+    const [defeatTutorialEnabled, setDefeatTutorialEnabledState] = useState(() => getDefeatTutorialEnabled());
+    const [petLettersEnabled, setPetLettersEnabledState] = useState(() => getPetLettersEnabled());
     const [petLetters, setPetLetters] = useState(() => normalizePetLetters(getInit('petLetters', null)));
     const [isPetLetterOpen, setIsPetLetterOpen] = useState(false);
     const [weatherContext, setWeatherContext] = useState(() => loadCachedWeatherContext() || createEmptyWeatherContext('initial'));
@@ -155,6 +158,19 @@ export default function App() {
         setStoredLanguage(nextLanguage);
         setLanguageState(getStoredLanguage());
     }, []);
+
+    useEffect(() => {
+        if (!defeatTutorialEnabled) {
+            setPendingDefeatTutorial(null);
+            setDefeatTutorialType(null);
+        }
+    }, [defeatTutorialEnabled]);
+
+    useEffect(() => {
+        if (!petLettersEnabled) {
+            setIsPetLetterOpen(false);
+        }
+    }, [petLettersEnabled]);
 
 
 
@@ -1382,7 +1398,9 @@ export default function App() {
         const logs = [];
         if (!isRun) {
             setAdvCurrentHP(0);
-            setPendingDefeatTutorial('adventure');
+            if (defeatTutorialEnabled) {
+                setPendingDefeatTutorial('adventure');
+            }
             logs.push({ msg: `💀 戰敗撤退中... 需要多吃點飯糰了`, hpRatio: 0 });
         } else {
             logs.push({ msg: `💨 逃跑成功...`, hpRatio: advCurrentHP });
@@ -1717,8 +1735,10 @@ export default function App() {
                     setIsAdvMode(false);
                     setLastAdvTime(Date.now());
                     updateDialogue("冒險結束。");
-                    if (pendingDefeatTutorial) {
+                    if (pendingDefeatTutorial && defeatTutorialEnabled) {
                         setDefeatTutorialType(pendingDefeatTutorial);
+                        setPendingDefeatTutorial(null);
+                    } else if (pendingDefeatTutorial) {
                         setPendingDefeatTutorial(null);
                     }
                     playBloop('confirm');
@@ -3180,7 +3200,7 @@ export default function App() {
     };
 
     useEffect(() => {
-        if (isBooting || isDead || isDuplicateTab) return;
+        if (!petLettersEnabled || isBooting || isDead || isDuplicateTab) return;
 
         const refresh = () => {
             const letterNow = new Date();
@@ -3218,17 +3238,17 @@ export default function App() {
         refresh();
         const timer = setInterval(refresh, 60 * 1000);
         return () => clearInterval(timer);
-    }, [isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, advStats?.moveUpgrades, inventory.length, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour, weatherContext, dailyTopics, user]);
+    }, [petLettersEnabled, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, advStats?.moveUpgrades, inventory.length, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour, weatherContext, dailyTopics, user]);
 
-    const unreadPetLetter = getUnreadPetLetter(petLetters);
-    const pendingAiPetLetter = getPendingAiPetLetter(petLetters);
+    const unreadPetLetter = petLettersEnabled ? getUnreadPetLetter(petLetters) : null;
+    const pendingAiPetLetter = petLettersEnabled ? getPendingAiPetLetter(petLetters) : null;
     const getDailyTopicForLetterSlot = (slotId) => {
         const topicKeyBySlot = { morning: 'news', noon: 'history', night: 'tarot' };
         return dailyTopics?.topics?.[topicKeyBySlot[slotId] || slotId] || null;
     };
 
     useEffect(() => {
-        if (!pendingAiPetLetter || !user || !isPetLetterAiEnabled() || isBooting || isDead || isDuplicateTab) return;
+        if (!petLettersEnabled || !pendingAiPetLetter || !user || !isPetLetterAiEnabled() || isBooting || isDead || isDuplicateTab) return;
         if (aiPetLetterRequestsRef.current.has(pendingAiPetLetter.id)) return;
 
         aiPetLetterRequestsRef.current.add(pendingAiPetLetter.id);
@@ -3293,7 +3313,7 @@ export default function App() {
             cancelled = true;
             clearTimeout(timeoutId);
         };
-    }, [pendingAiPetLetter?.id, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply?.text, user]);
+    }, [petLettersEnabled, pendingAiPetLetter?.id, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply?.text, user]);
 
     const openPetLetter = () => {
         if (!unreadPetLetter || isBooting || isDead || isEvolving || miniGame || isAdvMode || battleState.active || isPvpMode || isLeaderboardOpen || tournament.isTournamentOpen || cloudChoicePrompt || isCloudLoading) return;
@@ -3400,7 +3420,9 @@ export default function App() {
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
         advStats, soulTagCounts, monsterTraits, leaderboard, updateDialogue, setAlertMsg, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
         pendingSkillLearn,
-        onTournamentLossReturn: () => setDefeatTutorialType('tournament')
+        onTournamentLossReturn: () => {
+            if (defeatTutorialEnabled) setDefeatTutorialType('tournament');
+        }
     });
 
     // --- PVP 殭屍對局檢測 (Zombie Match Detector) ---
@@ -4317,6 +4339,10 @@ export default function App() {
                         setIsBooting={setIsBooting}
                         language={language}
                         setLanguage={setLanguage}
+                        defeatTutorialEnabled={defeatTutorialEnabled}
+                        setDefeatTutorialEnabledState={setDefeatTutorialEnabledState}
+                        petLettersEnabled={petLettersEnabled}
+                        setPetLettersEnabledState={setPetLettersEnabledState}
                     />
 
                     <TutorialAI 

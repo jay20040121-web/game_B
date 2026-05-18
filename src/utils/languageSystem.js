@@ -1,3 +1,6 @@
+import { SKILL_DATABASE } from '../monsterData';
+import { MONSTER_TRAITS } from '../data/monsterTraits';
+
 export const LANGUAGE_STORAGE_KEY = 'pixel_monster_language';
 
 export const LANGUAGES = {
@@ -117,13 +120,11 @@ const EXACT_TRANSLATIONS = {
     '大尺寸': 'Large',
     '小 / 中 / 大': 'Small / Medium / Large',
     '320×620 起': '320x620+',
-    '怪物圖示類型': 'Monster Sprite Type',
-    'GIF (動態)': 'GIF (Animated)',
-    'PNG (靜態)': 'PNG (Static)',
-    '※ 靜態圖載入較快且省流量': 'Static images load faster and use less data.',
     '語言': 'Language',
     '中文': 'Chinese',
     '英文': 'English',
+    '死亡引導': 'Defeat Guide',
+    '每日信件': 'Daily Letters',
     '遊戲音效': 'Sound Effects',
     '背景音樂': 'Music',
     '音量': 'Volume',
@@ -278,12 +279,15 @@ const REGEX_TRANSLATIONS = [
     [/^一般線 ([A-Z]) \((.+)\)$/u, (_, branch, name) => `Normal Line ${branch} (${translateText(name, LANGUAGES.en)})`],
     [/^絆 \+(\d+)！$/u, (_, points) => `Bond +${points}!`],
     [/^我好累，讓我休息 (\d+) 秒再出發吧$/u, (_, seconds) => `I am tired. Let me rest ${seconds} seconds before heading out.`],
+    [/^(.+) 想學會 (.+)$/u, (_, name, move) => `${translateText(name, LANGUAGES.en)} wants to learn ${translateText(move, LANGUAGES.en)}.`],
     [/^解鎖了新的圖鑑：(.+)$/u, (_, name) => `New dex entry unlocked: ${translateText(name, LANGUAGES.en)}`],
     [/^經過訓練，(.+)潛能提升了！$/u, (_, stat) => `Training improved ${translateText(stat, LANGUAGES.en)} potential!`],
     [/^特訓成功！(.+)潛能 \+(\d+)$/u, (_, stat, gain) => `Training success! ${translateText(stat, LANGUAGES.en)} potential +${gain}`],
     [/^✨ (.+) 成為了你的新夥伴！$/u, (_, name) => `${translateText(name, LANGUAGES.en)} became your new partner!`],
     [/^(.+)觸發！HP 回到 1，戰鬥繼續。$/u, (_, trait) => `${translateText(trait, LANGUAGES.en)} activated! HP returned to 1. Battle continues.`],
+    [/^(.+)結束，傷害倍率回到 100%。$/u, (_, trait) => `${translateText(trait, LANGUAGES.en)} ended. Damage multiplier returned to 100%.`],
     [/^🏆 戰鬥勝利！獲得 (\d+) 點成長。$/u, (_, gain) => `Battle won! Gained ${gain} growth.`],
+    [/^戰鬥勝利！獲得 (\d+) 點成長。$/u, (_, gain) => `Battle won! Gained ${gain} growth.`],
     [/^擊敗了精英怪：(.+)$/u, (_, name) => `Defeated elite monster: ${translateText(name, LANGUAGES.en)}`],
     [/^擊敗了野怪：(.+)$/u, (_, name) => `Defeated wild monster: ${translateText(name, LANGUAGES.en)}`],
     [/^🎁 獲得了戰利品：(.+)！$/u, (_, item) => `Obtained loot: ${translateText(item, LANGUAGES.en)}!`],
@@ -291,12 +295,67 @@ const REGEX_TRANSLATIONS = [
     [/^房間已建立，等待對手輸入房號 (.+) \.\.\.$/u, (_, room) => `Room created. Waiting for opponent to enter code ${room}...`],
     [/^大賽引擎發生錯誤：(.+)$/u, (_, error) => `Tournament engine error: ${error}`],
     [/^冠軍挑戰：排行榜訓練家 (.+) 現身！$/u, (_, name) => `Champion challenge: leaderboard trainer ${name} appears!`],
+    [/^(.+) 使出了 \[(.+)\]！$/u, (_, name, move) => `${translateText(name, LANGUAGES.en)} used [${translateText(move, LANGUAGES.en)}]!`],
+    [/^(.+) 的招式偏離了目標！$/u, (_, name) => `${translateText(name, LANGUAGES.en)}'s move missed the target!`],
     [/^【附魔失敗】技能 \[(.+)\] 是輔助類技能，無法附魔！$/u, (_, move) => `Enchantment failed: [${translateText(move, LANGUAGES.en)}] is a support skill and cannot be enchanted!`],
     [/^【機率已達上限】技能 \[(.+)\] 的 (.+) 已達 100% 上限！$/u, (_, move, effect) => `Chance cap reached: [${translateText(move, LANGUAGES.en)}] ${translateText(effect, LANGUAGES.en)} is already at 100%!`],
     [/^【強化次數上限】技能 \[(.+)\] 已達強化上限 \(10\/10\)！$/u, (_, move) => `Upgrade cap reached: [${translateText(move, LANGUAGES.en)}] is already at 10/10!`],
     [/^冠軍獎勵：\[(.+)\] 獲得了 (.+)！\((\d+)\/10\)$/u, (_, move, effect, count) => `Champion reward: [${translateText(move, LANGUAGES.en)}] gained ${translateText(effect, LANGUAGES.en)}! (${count}/10)`],
     [/^(.+) \/ 威力:(.+) \/ 命中:(.+)$/u, (_, type, power, accuracy) => `${translateText(type, LANGUAGES.en)} / Power:${power} / Accuracy:${accuracy}`],
 ];
+
+const ENGLISH_NAME_OVERRIDES = {
+    cross_defense: 'Cross Defense',
+    reflect_shield: 'Reflect Shield',
+    guardian_shield: 'Guardian Shield',
+    swords_dance: 'Battle Dance',
+    double_team: 'Shadow Clone',
+    water_gun: 'Water Gun',
+    vine_whip: 'Vine Whip',
+    quick_attack: 'Quick Attack',
+    extreme_speed: 'Extreme Speed',
+    fake_out: 'Fake Out',
+    hyper_beam: 'Hyper Beam',
+    giga_impact: 'Giga Impact',
+    last_resort: 'Last Resort',
+    skull_bash: 'Skull Bash',
+    mega_kick: 'Mega Kick',
+    double_edge: 'Double-Edge',
+    brave_heart: 'Brave Heart',
+    steady_body: 'Steady Body',
+    quick_sense: 'Quick Sense',
+    kind_soul: 'Kind Soul',
+    late_bloomer: 'Late Bloomer',
+    eight_gates: 'Eight Gates',
+    feign_death: 'Feign Death',
+    absolute_defense: 'Absolute Defense',
+    sun_child: 'Child of the Sun',
+    rain_doll: 'Rain Doll',
+    magician: 'Magician',
+};
+
+const toEnglishTitle = (id = '') => {
+    const override = ENGLISH_NAME_OVERRIDES[id];
+    if (override) return override;
+    return String(id)
+        .split(/[_-]+/u)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+};
+
+const DATA_NAME_TRANSLATIONS = {
+    ...Object.fromEntries(
+        Object.values(SKILL_DATABASE || {})
+            .filter(move => move?.name && move?.id)
+            .map(move => [move.name, toEnglishTitle(move.id)])
+    ),
+    ...Object.fromEntries(
+        (MONSTER_TRAITS || [])
+            .filter(trait => trait?.name && trait?.id)
+            .map(trait => [trait.name, toEnglishTitle(trait.id)])
+    ),
+};
 
 const PHRASE_TRANSLATIONS = {
     '像素怪獸': 'Pixel Monster',
@@ -589,7 +648,12 @@ const PHRASE_TRANSLATIONS = {
     '與': ' and ',
 };
 
-const REPLACEMENT_ORDER = Object.keys(PHRASE_TRANSLATIONS).sort((a, b) => b.length - a.length);
+const TRANSLATION_GLOSSARY = {
+    ...DATA_NAME_TRANSLATIONS,
+    ...PHRASE_TRANSLATIONS,
+};
+
+const REPLACEMENT_ORDER = Object.keys(TRANSLATION_GLOSSARY).sort((a, b) => b.length - a.length);
 
 const CHAR_TRANSLATIONS = {
     '一': 'one',
@@ -1022,7 +1086,7 @@ const CHAR_TRANSLATIONS = {
 const replaceKnownPhrases = (text) => {
     let translated = text;
     REPLACEMENT_ORDER.forEach((phrase) => {
-        translated = translated.split(phrase).join(` ${PHRASE_TRANSLATIONS[phrase]} `);
+        translated = translated.split(phrase).join(` ${TRANSLATION_GLOSSARY[phrase]} `);
     });
     return translated;
 };
@@ -1059,7 +1123,7 @@ const removeRemainingChinese = (text, original) => {
     if (!/[\p{Script=Han}]/u.test(text)) return text;
 
     return text.replace(/[\p{Script=Han}]+/gu, (match) => {
-        if (PHRASE_TRANSLATIONS[match]) return PHRASE_TRANSLATIONS[match];
+        if (TRANSLATION_GLOSSARY[match]) return TRANSLATION_GLOSSARY[match];
         if (/怪獸|寵物|牠|獸/.test(match)) return 'Monster';
         if (/技能|招式/.test(match)) return 'Skill';
         if (/物品|背包/.test(match)) return 'Item';

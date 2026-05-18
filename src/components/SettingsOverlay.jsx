@@ -2,6 +2,7 @@
 import { playBloop, getSfxEnabled, setSfxEnabled, getBgmEnabled, setBgmEnabled, getSfxVolume, setSfxVolume, getBgmVolume, setBgmVolume } from '../utils/audioSystem';
 import { clearPersistedSaveData } from '../utils/storageSystem';
 import { LANGUAGES } from '../utils/languageSystem';
+import { getDefeatTutorialEnabled, getPetLettersEnabled, setDefeatTutorialEnabled, setPetLettersEnabled } from '../utils/gamePreferenceSystem';
 
 export default function SettingsOverlay({
     isSettingsOpen,
@@ -10,13 +11,18 @@ export default function SettingsOverlay({
     setManualScale,
     setIsBooting,
     language,
-    setLanguage
+    setLanguage,
+    defeatTutorialEnabled,
+    setDefeatTutorialEnabledState,
+    petLettersEnabled,
+    setPetLettersEnabledState
 }) {
     const [sfx, setSfx] = useState(getSfxEnabled());
     const [bgm, setBgm] = useState(getBgmEnabled());
     const [sfxVol, setSfxVol] = useState(getSfxVolume());
     const [bgmVol, setBgmVol] = useState(getBgmVolume());
-    const [spriteFormat, setSpriteFormat] = useState(() => localStorage.getItem('pixel_monster_sprite_format') || 'gif');
+    const [localDefeatTutorialEnabled, setLocalDefeatTutorialEnabled] = useState(getDefeatTutorialEnabled());
+    const [localPetLettersEnabled, setLocalPetLettersEnabled] = useState(getPetLettersEnabled());
     const [showConfirmClear, setShowConfirmClear] = useState(false);
     const isDesktopBuild = import.meta.env.VITE_DESKTOP === '1';
     const scalePresets = [
@@ -41,10 +47,11 @@ export default function SettingsOverlay({
             setBgm(getBgmEnabled());
             setSfxVol(getSfxVolume());
             setBgmVol(getBgmVolume());
-            setSpriteFormat(localStorage.getItem('pixel_monster_sprite_format') || 'gif');
+            setLocalDefeatTutorialEnabled(defeatTutorialEnabled);
+            setLocalPetLettersEnabled(petLettersEnabled);
             setShowConfirmClear(false);
         }
-    }, [isSettingsOpen]);
+    }, [isSettingsOpen, defeatTutorialEnabled, petLettersEnabled]);
 
     if (!isSettingsOpen) return null;
 
@@ -62,13 +69,6 @@ export default function SettingsOverlay({
         playBloop('confirm');
     };
 
-    const handleSpriteFormatToggle = (format) => {
-        setSpriteFormat(format);
-        localStorage.setItem('pixel_monster_sprite_format', format);
-        window.dispatchEvent(new CustomEvent('pixel_monster_settings_update'));
-        playBloop('confirm');
-    };
-
     const handleScaleChange = (scaleValue) => {
         setManualScale(scaleValue);
         playBloop('confirm');
@@ -76,6 +76,22 @@ export default function SettingsOverlay({
 
     const handleLanguageChange = (nextLanguage) => {
         setLanguage(nextLanguage);
+        playBloop('confirm');
+    };
+
+    const handleDefeatTutorialToggle = () => {
+        const next = !localDefeatTutorialEnabled;
+        setDefeatTutorialEnabled(next);
+        setLocalDefeatTutorialEnabled(next);
+        setDefeatTutorialEnabledState?.(next);
+        playBloop('confirm');
+    };
+
+    const handlePetLettersToggle = () => {
+        const next = !localPetLettersEnabled;
+        setPetLettersEnabled(next);
+        setLocalPetLettersEnabled(next);
+        setPetLettersEnabledState?.(next);
         playBloop('confirm');
     };
 
@@ -115,7 +131,7 @@ export default function SettingsOverlay({
     };
 
     return (
-        <div className="absolute inset-0 z-[1001] flex flex-col items-center justify-start p-2" style={{
+        <div className="absolute inset-0 z-[10050] flex flex-col items-center justify-start p-2" style={{
             backgroundImage: `url("${import.meta.env.BASE_URL}assets/BG/共用底圖.png")`,
             backgroundSize: 'cover',
             backgroundPosition: 'center'
@@ -163,24 +179,29 @@ export default function SettingsOverlay({
                     </div>
                 </div>
 
-                {/* 怪物圖示設定 */}
-                <div className="flex flex-col gap-1 bg-[#1a1a1a]/40 p-2 rounded border border-[#ccd6be]/30">
-                    <div className="text-[10px] text-[#ccd6be] font-bold mb-1">怪物圖示類型</div>
-                    <div className="flex justify-between gap-1">
+                {/* 引導與每日內容 */}
+                <div className="flex flex-col gap-3 bg-[#1a1a1a]/40 p-2 rounded border border-[#ccd6be]/30">
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-[#ccd6be] font-bold">死亡引導</span>
                         <button
-                            onClick={() => handleSpriteFormatToggle('gif')}
-                            className={`flex-1 py-1 text-[9px] font-bold rounded ${spriteFormat === 'gif' ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
+                            onClick={handleDefeatTutorialToggle}
+                            className={`px-3 py-1 text-[9px] font-bold rounded ${localDefeatTutorialEnabled ? 'bg-[#9dae8a] text-black' : 'bg-red-900/80 text-white'} border border-[#1a1a1a] transition-all`}
                         >
-                            GIF (動態)
-                        </button>
-                        <button
-                            onClick={() => handleSpriteFormatToggle('png')}
-                            className={`flex-1 py-1 text-[9px] font-bold rounded ${spriteFormat === 'png' ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
-                        >
-                            PNG (靜態)
+                            {localDefeatTutorialEnabled ? '開啟' : '關閉'}
                         </button>
                     </div>
-                    <div className="text-[7px] text-[#ccd6be]/60 mt-1">※ 靜態圖載入較快且省流量</div>
+
+                    <div className="h-px w-full bg-[#ccd6be]/20"></div>
+
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-[#ccd6be] font-bold">每日信件</span>
+                        <button
+                            onClick={handlePetLettersToggle}
+                            className={`px-3 py-1 text-[9px] font-bold rounded ${localPetLettersEnabled ? 'bg-[#9dae8a] text-black' : 'bg-red-900/80 text-white'} border border-[#1a1a1a] transition-all`}
+                        >
+                            {localPetLettersEnabled ? '開啟' : '關閉'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* 音效/音樂開關 */}

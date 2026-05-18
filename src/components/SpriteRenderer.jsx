@@ -8,18 +8,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
     
-    // --- Global Setting for Animation ---
-    const [globalAnimated, setGlobalAnimated] = useState(() => localStorage.getItem('pixel_monster_sprite_format') !== 'png');
-
-    useEffect(() => {
-        const handleUpdate = () => {
-            setGlobalAnimated(localStorage.getItem('pixel_monster_sprite_format') !== 'png');
-        };
-        window.addEventListener('pixel_monster_settings_update', handleUpdate);
-        return () => window.removeEventListener('pixel_monster_settings_update', handleUpdate);
-    }, []);
-
-    const effectiveAnimated = animated && globalAnimated && !forceStatic;
+    const effectiveAnimated = animated && !forceStatic;
 
     // --- Progressive Loading Logic ---
     const staticSrc = `${base}assets/exclusive/sprites/${assetId}.png`;
@@ -125,18 +114,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const base = import.meta.env.BASE_URL;
 
-    // --- Global Setting for Animation ---
-    const [globalAnimated, setGlobalAnimated] = useState(() => localStorage.getItem('pixel_monster_sprite_format') !== 'png');
-
-    useEffect(() => {
-        const handleUpdate = () => {
-            setGlobalAnimated(localStorage.getItem('pixel_monster_sprite_format') !== 'png');
-        };
-        window.addEventListener('pixel_monster_settings_update', handleUpdate);
-        return () => window.removeEventListener('pixel_monster_settings_update', handleUpdate);
-    }, []);
-
-    const effectiveAnimated = animated && globalAnimated && !forceStatic;
+    const effectiveAnimated = animated && !forceStatic;
 
     // --- Progressive Loading Logic ---
     const staticSrc = `${base}assets/exclusive/back/${assetId}.png`;

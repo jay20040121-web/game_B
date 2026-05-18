@@ -47,6 +47,8 @@
 - AI 來信是非阻塞保底流程：新信先以離線模板建立，若 endpoint 啟用則標記 `aiStatus: pending`，AI 成功才替換成 `source: 'ai'`；失敗、格式錯誤或玩家已讀過時都不能讓信件消失，也不要重複燒 token。`petLetters` slot 目前會保留 `source`、`aiStatus`、`aiRequestedAt`、`aiResolvedAt`、`aiError`。
 - AI 來信後端目前改用 Cloudflare Worker，程式在 `worker/src/index.js`，不需要 Firebase Blaze。Worker 會用 Google JWK 驗證 Firebase Auth ID token；未登入玩家會 fallback 離線模板。預設 provider 是 Gemini（`PET_LETTER_AI_PROVIDER=gemini`、`GEMINI_MODEL=gemini-2.5-flash-lite`），Gemini key 用 Worker secret `GEMINI_API_KEY`；OpenAI 可作 fallback，key 用 Worker secret `OPENAI_API_KEY`。任何 AI key 都不要寫進 repo 或前端 `.env`。
 - 怪獸來信的 Debug 測試入口在 `DebugPanel.jsx` 的「來信」分頁，可重開已讀信、清空今日來信並重產、清除回信紀錄，也可用 `debugOverrides.petLetterHour` 覆蓋測試時間（08/09/12/21）。這是測試用，不要把時間覆蓋當成正式遊戲邏輯。
+- 英文模式目前由 `src/components/LanguageDomTranslator.jsx` 掃描 DOM，再交給 `src/utils/languageSystem.js` 翻譯。準確度優先靠 exact / regex 句型與技能、天賦等 glossary；不要依賴逐字 `CHAR_TRANSLATIONS` 生成正式英文，否則容易出現像技能名被拆成不自然英文的問題。新增怪獸、技能、天賦、戰鬥 log 或重要 UI 文案時，優先補明確英文名稱或 regex 句型，DOM 翻譯只當過渡 fallback。
+- 設定內的「死亡引導」與「每日信件」開關走獨立 localStorage 偏好，helper 在 `src/utils/gamePreferenceSystem.js`，不是主存檔欄位。關閉每日信件時只停止新信產生、信封入口與 AI 來信請求，不刪除既有 `petLetters` 存檔；關閉死亡引導時會清掉待顯示或正在顯示的戰敗教學。
 
 ## 協作偏好
 
