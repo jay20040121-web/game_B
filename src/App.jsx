@@ -2229,7 +2229,7 @@ export default function App() {
 
             // 2. 進化檢查 (改用等級判定)
             const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
-            const isFinalState = evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch));
+            const isFinalState = evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'G1_ALT', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch));
 
             if (isFinalState) return;
 
@@ -2293,9 +2293,13 @@ export default function App() {
                     } else {
                         nextBranch = evolutionBranch; // 已是最終型態
                     }
-                } else if (['G1'].includes(evolutionBranch)) {
-                    // D 線完全封閉，沿原線繼續 (優先度高於靈魂進化，防止幽靈線被劫持)
-                    nextBranch = evolutionBranch;
+                } else if (['G1', 'G1_ALT'].includes(evolutionBranch)) {
+                    // D 線完全封閉，沿死亡線繼續 (優先度高於靈魂進化，防止幽靈線被劫持)
+                    if (evolutionBranch === 'G1' && evolutionStage === 1 && stats.bondValue >= 100) {
+                        nextBranch = 'G1_ALT';
+                    } else {
+                        nextBranch = evolutionBranch;
+                    }
 
                 } else if (soulNext || evolutionBranch.endsWith('_SOUL') || evolutionBranch.endsWith('_ALT')) {
 
@@ -3069,10 +3073,11 @@ export default function App() {
         // 把長度限制在最大四招內
         combinedMoves = combinedMoves.slice(0, 4);
 
-        // --- 遺傳繼承：從前代個體值中挑選最強的一項繼承 ---
+        // --- 遺傳繼承：從前代個體值中挑選最強的三項繼承 ---
         const prevIVs = latestStats.current.advStats?.ivs || { hp: 0, atk: 0, def: 0, spd: 0 };
-        const maxIVEntry = Object.entries(prevIVs).reduce((a, b) => (a[1] || 0) >= (b[1] || 0) ? a : b);
-        const [bestStatKey, bestIVValue] = maxIVEntry;
+        const inheritedIVEntries = Object.entries(prevIVs)
+            .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+            .slice(0, 3);
 
         const nextIVs = {
             hp: Math.floor(Math.random() * 32),
@@ -3080,7 +3085,9 @@ export default function App() {
             def: Math.floor(Math.random() * 32),
             spd: Math.floor(Math.random() * 32)
         };
-        nextIVs[bestStatKey] = bestIVValue; // 繼承前代最強的一項基因
+        inheritedIVEntries.forEach(([statKey, statValue]) => {
+            nextIVs[statKey] = Number(statValue || 0);
+        });
 
         // --- 附魔繼承：保留繼承技能的強化數據 ---
         const prevUpgrades = latestStats.current.advStats?.moveUpgrades || {};

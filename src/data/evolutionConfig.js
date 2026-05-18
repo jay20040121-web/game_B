@@ -123,13 +123,16 @@ export const EVOLUTION_CHAINS = {
 
     "SOUL_DEATH": {
         stage1: {
-            "G1": { id: 1019, desc: `${getMName(1019)}` }
+            "G1": { id: 1019, desc: `${getMName(1019)}` },
+            "G1_ALT": { id: 1019, desc: `${getMName(1019)}` }
         },
         stage2: {
-            "G1": { id: 1020, from: "G1", desc: `${getMName(1020)} (無特殊條件)` }
+            "G1": { id: 1020, from: "G1", desc: `${getMName(1020)} (其餘條件)` },
+            "G1_ALT": { id: 1038, from: "G1", desc: `${getMName(1038)} (羈絆值 >= 100)` }
         },
         stage3: {
-            "G1": { id: 1021, from: "G1", desc: `${getMName(1021)} (無特殊條件)` }
+            "G1": { id: 1021, from: "G1", desc: `${getMName(1021)} (無條件進化)` },
+            "G1_ALT": { id: 1039, from: "G1_ALT", desc: `${getMName(1039)} (無條件進化)` }
         }
     }
 };

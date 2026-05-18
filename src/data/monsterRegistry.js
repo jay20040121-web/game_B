@@ -67,6 +67,8 @@ export const MONSTER_REGISTRY = [
     { id: 1019, name: "幽燭燭", types: ["ghost"], baseStats: { hp: 30, atk: 100, def: 35, spd: 80 } },
     { id: 1020, name: "鍋爐燭燭", types: ["ghost"], baseStats: { hp: 45, atk: 115, def: 55, spd: 95 } },
     { id: 1021, name: "幽靈女王", types: ["ghost"], baseStats: { hp: 60, atk: 130, def: 75, spd: 110 } },
+    { id: 1038, name: "螢手噗", types: ["ghost"], baseStats: { hp: 45, atk: 100, def: 65, spd: 105 } },
+    { id: 1039, name: "露璃", types: ["ghost"], baseStats: { hp: 70, atk: 115, def: 85, spd: 125 } },
 
     // === 野外 (小雞獸線) ===
     { id: 1022, name: "小雞獸", types: ["flying"], baseStats: { hp: 40, atk: 45, def: 40, spd: 56 } },

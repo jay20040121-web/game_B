@@ -621,6 +621,8 @@ const PHRASE_TRANSLATIONS = {
     '幽燭燭': 'Ghost Candle',
     '鍋爐燭燭': 'Boiler Candle',
     '幽靈女王': 'Ghost Queen',
+    '螢手噗': 'Glowpuff',
+    '露璃': 'Luli',
     '小雞獸': 'Chickmon',
     '捲尾麻雀': 'Curlytail Sparrow',
     'US老鷹獸': 'US Eaglemon',

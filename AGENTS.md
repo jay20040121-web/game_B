@@ -49,6 +49,7 @@
 - 怪獸來信的 Debug 測試入口在 `DebugPanel.jsx` 的「來信」分頁，可重開已讀信、清空今日來信並重產、清除回信紀錄，也可用 `debugOverrides.petLetterHour` 覆蓋測試時間（08/09/12/21）。這是測試用，不要把時間覆蓋當成正式遊戲邏輯。
 - 英文模式目前由 `src/components/LanguageDomTranslator.jsx` 掃描 DOM，再交給 `src/utils/languageSystem.js` 翻譯。準確度優先靠 exact / regex 句型與技能、天賦等 glossary；不要依賴逐字 `CHAR_TRANSLATIONS` 生成正式英文，否則容易出現像技能名被拆成不自然英文的問題。新增怪獸、技能、天賦、戰鬥 log 或重要 UI 文案時，優先補明確英文名稱或 regex 句型，DOM 翻譯只當過渡 fallback。
 - 設定內的「死亡引導」與「每日信件」開關走獨立 localStorage 偏好，helper 在 `src/utils/gamePreferenceSystem.js`，不是主存檔欄位。關閉每日信件時只停止新信產生、信封入口與 AI 來信請求，不刪除既有 `petLetters` 存檔；關閉死亡引導時會清掉待顯示或正在顯示的戰敗教學。
+- 重製生命 / 死亡後重生的繼承邏輯在 `src/App.jsx` 的 `handleRestart()`。下一代會用前代等級換算初始 `basePower`、繼承最多 4 招與對應 `moveUpgrades`，IV 則從前代 `ivs` 挑最高 3 項原值繼承，剩下 1 項重新隨機；EV 仍全部歸零。
 
 ## 協作偏好
 
@@ -198,14 +199,14 @@ Firebase compat SDK 設定在 `src/utils/firebase.js`。
 
 - `src/data/monsterRegistry.js`
 - `src/data/evolutionConfig.js`
-- `src/monsterData.js` 從 registry 派生出的資料
+- `src/monsterData.js` 從 registry 派生出的資料，以及圖鑑清單 `OBTAINABLE_MONSTER_IDS`
 - `public/assets/` 裡是否有對應 sprite 或素材
 
 草系靈魂線目前有兩條不互通分支。一般草魂線是 `1007 -> 1008 -> 1009`；若首次進入草魂線時最優勢個性是熱血 `passionate` 或執著/固執 `stubborn`，會進入 `GR_SOUL_ALT` 的 `1032 -> 1033 -> 1034`。進入 `GR_SOUL_ALT` 後後續無條件沿 1032 線進化，不會切回 1007 線；已在 1007 線也不會因後續個性變化切到 1032 線。
 蟲系靈魂線目前也有兩條不互通分支。一般蟲魂線是 `1010 -> 1011 -> 1012`；若首次進入蟲魂線時最優勢個性是執著/固執 `stubborn` 或無俚頭 `nonsense`，會進入 `B_SOUL_ALT` 的 `1035 -> 1036 -> 1037`。進入 `B_SOUL_ALT` 後後續無條件沿 1035 線進化，不會切回 1010 線；已在 1010 線也不會因後續個性變化切到 1035 線。
 DebugPanel 的「數值調整」頁有靈魂屬性 / 個性快速設定，可以直接改 `lockedAffinity`、`soulAffinityCounts`、`soulTagCounts`。測草系 1032 線時，將羈絆設 40 以上，屬性鎖定草，個性設熱血 `passionate` 或執著/固執 `stubborn`，再把等級推到進化門檻。
 
-死亡重生目前只有 `G1` 幽燭燭線：`1019 -> 1020 -> 1021`。壽命結束或終止生命時的 D 線抽籤都是 20% 機率進入 `G1`，不要再抽未實作的 `G2`，除非已同步補上 `EVOLUTION_CHAINS`、`monsterIdMapper`、registry、圖鑑與素材資料。
+死亡重生目前使用 `G1` 幽燭燭線，起點固定 `1019`。一般路線是 `1019 -> 1020 -> 1021`；若 1019 進化到第二階段時羈絆值 `bondValue >= 100`，會切到高羈絆分支 `G1_ALT`：`1019 -> 1038 -> 1039`，其中 `1038` 會無條件進化成 `1039`。壽命結束或終止生命時的 D 線抽籤都是 20% 機率進入 `G1`，不要再抽未實作的 `G2`，除非已同步補上 `EVOLUTION_CHAINS`、`monsterIdMapper`、registry、圖鑑與素材資料。
 
 ## UI 注意事項
 
