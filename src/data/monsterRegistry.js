@@ -59,6 +59,7 @@ export const MONSTER_REGISTRY = [
     // === 一般線 C (咪球) ===
     { id: 1016, name: "伊麗莎", types: ["normal"], baseStats: { hp: 50, atk: 56, def: 50, spd: 72 } },
     { id: 1017, name: "麗莎狐", types: ["normal"], baseStats: { hp: 55, atk: 81, def: 50, spd: 97 } },
+    { id: 1040, name: "流流子", types: ["normal"], baseStats: { hp: 72, atk: 98, def: 68, spd: 118 } },
 
     // === 一般線 FAIL ===
     { id: 1018, name: "女皇莎白", types: ["normal"], baseStats: { hp: 81, atk: 85, def: 80, spd: 80 } },

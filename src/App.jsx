@@ -2336,7 +2336,9 @@ export default function App() {
 
                 } else if (['A', 'C'].includes(evolutionBranch)) {
                     // ★ 已在 A/C 一般線（Stage>=2）：依據數值決定下一階段路徑
-                    if (m >= 50 && h >= 50) {
+                    if (evolutionBranch === 'C' && evolutionStage === 3 && stats.bondValue > 90) {
+                        nextBranch = 'C_BOND';
+                    } else if (m >= 50 && h >= 50) {
                         nextBranch = 'A';
                     } else {
                         nextBranch = 'C';
