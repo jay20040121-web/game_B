@@ -243,6 +243,8 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - `雨天娃娃`：HP x0.50、防禦 x0.50；水屬性技能傷害 x2.30，受到草屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/雨天娃娃.png`，光暈使用偏藍色調。
 - `魔術師`：開場觸發一次，在 `src/utils/battleTraitSystem.js` 的 `applyOpeningTraitEffects` 交換雙方第一格招式，並連同該招式的 `moveUpgrades` 附魔資料一起交換。單機冒險與聯盟戰鬥建立後都要呼叫這個 helper；若之後要支援 PvP，必須由主機端統一產生並同步結果，不能讓雙方客戶端各自交換以免不同步。
 
+聯盟大會 NPC 在第 3、4、5 場會由 `src/utils/useTournament.jsx` 隨機取得一個 `MONSTER_TRAITS` 天賦，並將天賦的 HP/攻擊/防禦/速度倍率套進 NPC 戰鬥數值；第 1、2 場維持無天賦，PVP 冠軍挑戰沿用排行榜玩家自己的天賦資料。
+
 之後若再碰到類似問題，優先遵守：
 
 - 受擊閃爍不要直接動 sprite 本體的 `opacity`

@@ -3,6 +3,7 @@ import { OBTAINABLE_MONSTER_IDS, SPECIES_BASE_STATS, generateMoves, calcFinalSta
 import { ROGUE_CARDS } from '../data/rogueCards';
 import { generateNpcMoveUpgrades } from './npcEnchantSystem';
 import { applyOpeningTraitEffects } from './battleTraitSystem';
+import { MONSTER_TRAITS } from '../data/monsterTraits';
 
 // 🔹 訓練家擬人化名稱池
 const TRAINER_NAMES_POOL = [
@@ -58,6 +59,20 @@ const getTournamentDifficulty = (round) => {
 };
 
 const getMonsterStage = (id) => MONSTER_STAGE_BY_ID[String(id)] || 1;
+
+const pickNpcTraitForRound = (round, currentTrait = null) => {
+    if (round < 3) return null;
+    if (currentTrait) return currentTrait;
+    return MONSTER_TRAITS[Math.floor(Math.random() * MONSTER_TRAITS.length)] || null;
+};
+
+const getTraitStatMod = (trait, level, key) => {
+    const modifiers = trait?.modifiers || {};
+    const levelMod = level >= (modifiers.thresholdLevel || Infinity)
+        ? (modifiers.highLevelStat || 1)
+        : (modifiers.lowLevelStat || 1);
+    return (modifiers[key] || 1) * levelMod;
+};
 
 const getTournamentNpcPoolForRound = (round, playerStage) => {
     const stage = Math.max(1, Math.min(4, Number(playerStage) || 1));
@@ -150,7 +165,8 @@ export function useTournament({
             ? currentMonsterStage <= playerStage
             : currentMonsterStage >= playerStage;
         const repeatsPreviousRound = lastTournamentEnemyId && String(opponent.monster.id) === String(lastTournamentEnemyId);
-        if (opponent.monster.difficultyRound === round && isStageAllowed && !repeatsPreviousRound) return opponent;
+        const hasRequiredTrait = round < 3 || !!opponent.monster.trait;
+        if (opponent.monster.difficultyRound === round && isStageAllowed && !repeatsPreviousRound && hasRequiredTrait) return opponent;
 
         const roundPool = getTournamentNpcPoolForRound(round, playerStage);
         const filteredPool = roundPool.length > 1
@@ -163,10 +179,11 @@ export function useTournament({
         const species = SPECIES_BASE_STATS[id] || SPECIES_BASE_STATS['1'];
         const ivs = { hp: 15, atk: 15, def: 15, spd: 15 };
         const evs = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const trait = pickNpcTraitForRound(round, opponent.monster.trait);
         const moves = isStageAllowed && opponent.monster.difficultyRound === round
             ? opponent.monster.moves
             : generateMoves(4, species.types);
-        const maxHp = calcFinalStat('hp', id, ivs.hp, evs.hp, level);
+        const maxHp = Math.max(1, Math.floor(calcFinalStat('hp', id, ivs.hp, evs.hp, level) * getTraitStatMod(trait, level, 'hp')));
 
         return {
             ...opponent,
@@ -178,11 +195,12 @@ export function useTournament({
                 level,
                 hp: maxHp,
                 maxHp,
-                atk: calcFinalStat('atk', id, ivs.atk, evs.atk, level),
-                def: calcFinalStat('def', id, ivs.def, evs.def, level),
-                spd: calcFinalStat('spd', id, ivs.spd, evs.spd, level),
+                atk: Math.max(1, Math.floor(calcFinalStat('atk', id, ivs.atk, evs.atk, level) * getTraitStatMod(trait, level, 'atk'))),
+                def: Math.max(1, Math.floor(calcFinalStat('def', id, ivs.def, evs.def, level) * getTraitStatMod(trait, level, 'def'))),
+                spd: Math.max(1, Math.floor(calcFinalStat('spd', id, ivs.spd, evs.spd, level) * getTraitStatMod(trait, level, 'spd'))),
                 moves,
                 moveUpgrades: generateNpcMoveUpgrades(moves, derivedLevel, { enchantCount: difficulty.enchantCount }),
+                trait,
                 difficultyRound: round
             }
         };
