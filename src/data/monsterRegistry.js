@@ -54,6 +54,7 @@ export const MONSTER_REGISTRY = [
     // === 一般線 A (德魯線) ===
     { id: 1013, name: "黑德魯", types: ["poison"], baseStats: { hp: 46, atk: 57, def: 40, spd: 50 } },
     { id: 1014, name: "野性德魯", types: ["poison"], baseStats: { hp: 61, atk: 72, def: 65, spd: 65 } },
+    { id: 1041, name: "影忍", types: ["poison", "ghost"], baseStats: { hp: 74, atk: 112, def: 70, spd: 106 } },
     { id: 1015, name: "王者德魯", types: ["poison"], baseStats: { hp: 91, atk: 92, def: 90, spd: 65 } },
 
     // === 一般線 C (咪球) ===

@@ -117,6 +117,7 @@ export const EVOLUTION_CHAINS = {
         },
         stage4: {
             "A": { id: 1015, from: ["A", "C"], desc: `${getMName(1015)} (心情、飽食度 >= 50)` },
+            "A_BOND": { id: 1041, from: ["A"], desc: `${getMName(1041)} (羈絆值 > 90)` },
             "C_BOND": { id: 1040, from: ["C"], desc: `${getMName(1040)} (羈絆值 > 90)` },
             "C": { id: 1018, from: ["A", "C"], desc: `${getMName(1018)} (其餘條件)` }
         }
