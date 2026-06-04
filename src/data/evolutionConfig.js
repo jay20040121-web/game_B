@@ -72,6 +72,7 @@ export const EVOLUTION_CHAINS = {
         },
         stage4: {
             "W_SOUL": { id: 1006, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1006)} (其餘條件)` },
+            "W_SOUL_BOND": { id: 1042, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1042)} (羈絆值 > 90)` },
             "W_SOUL_ALT": { id: 1029, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1029)} (熱血/無俚頭)` }
         }
     },

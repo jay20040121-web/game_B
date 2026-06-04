@@ -2310,7 +2310,9 @@ export default function App() {
                         // 水系/火系靈魂分支判斷 (Stage 2 <-> Stage 3 <-> Stage 4 皆可互相切換)
                         if (['W_SOUL', 'W_SOUL_ALT'].includes(evolutionBranch)) {
                             const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                            if (['nonsense', 'passionate'].includes(dominantNature)) {
+                            if (evolutionStage === 3 && stats.bondValue > 90) {
+                                nextBranch = 'W_SOUL_BOND';
+                            } else if (['nonsense', 'passionate'].includes(dominantNature)) {
                                 nextBranch = 'W_SOUL_ALT';
                             } else {
                                 nextBranch = 'W_SOUL';

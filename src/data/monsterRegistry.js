@@ -21,6 +21,7 @@ export const MONSTER_REGISTRY = [
     // === 水系靈魂 ===
     { id: 1004, name: "泡泡娃", types: ["water"], baseStats: { hp: 44, atk: 50, def: 65, spd: 43 } },
     { id: 1005, name: "吹泡蠑螈", types: ["water"], baseStats: { hp: 59, atk: 65, def: 80, spd: 58 } },
+    { id: 1042, name: "泡沫鱷王", types: ["water"], baseStats: { hp: 100, atk: 102, def: 92, spd: 91 } },
     { id: 1006, name: "大師蠑螈", types: ["water"], baseStats: { hp: 79, atk: 85, def: 105, spd: 78 } },
 
     // === 水系靈魂 (熱血/無俚頭分支) ===
