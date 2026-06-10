@@ -67,24 +67,24 @@ export const MONSTER_TRAITS = [
     {
         id: 'eight_gates',
         name: '八門',
-        bonus: '戰鬥開始後傷害逐回合提高，持續疊加到第 5 回合。',
-        drawback: '第 5 回合結束後失去目前 HP 的 80%，並結束增傷效果。',
+        bonus: '戰鬥開始後傷害逐回合提高，持續疊加到第 3 回合。',
+        drawback: '第 3 回合結束後失去目前 HP 的 80%，並結束增傷效果。',
         bonusValue: '傷害每回合 +50%',
-        drawbackValue: '5 回合後目前 HP -80%',
-        modifiers: { damageRampPerTurn: 0.5, rampTurns: 5, rampEndHpLoss: 0.8 },
+        drawbackValue: '3 回合後目前 HP -80%',
+        modifiers: { damageRampPerTurn: 0.5, rampTurns: 3, rampEndHpLoss: 0.8 },
         implementation: {
             status: 'ready',
-            notes: '已接非 PvP 戰鬥傷害流程；第 5 回合結束後扣目前 HP 並停止增傷。'
+            notes: '已接非 PvP 戰鬥傷害流程；第 3 回合結束後扣目前 HP 並停止增傷。'
         }
     },
     {
         id: 'zombie',
         name: '殭屍',
-        bonus: '最大生命增加 50%，戰鬥中每回合回復最大生命的 20%。',
+        bonus: '最大生命增加 50%，戰鬥中每回合回復最大生命的 10%。',
         drawback: '攻擊降低 20%，速度降低 50%。',
-        bonusValue: 'HP x1.50 / 每回合回復最大 HP 20%',
+        bonusValue: 'HP x1.50 / 每回合回復最大 HP 10%',
         drawbackValue: '攻擊 x0.80 / 速度 x0.50',
-        modifiers: { hp: 1.5, atk: 0.8, spd: 0.5, battleRegenMaxHp: 0.2 },
+        modifiers: { hp: 1.5, atk: 0.8, spd: 0.5, battleRegenMaxHp: 0.1 },
         implementation: {
             status: 'ready',
             notes: '已接能力值與非 PvP 戰鬥回合結束回血流程。'
@@ -134,9 +134,9 @@ export const MONSTER_TRAITS = [
         name: '雨天娃娃',
         bonus: '水屬性技能傷害大幅提高，受到草屬性技能時傷害大幅降低。',
         drawback: '生命與防禦大幅降低，需要避免被非草屬性高傷害擊中。',
-        bonusValue: '水屬性技能傷害 x2.30 / 受到草屬性技能傷害 x0.30',
-        drawbackValue: 'HP x0.50 / 防禦 x0.50',
-        modifiers: { hp: 0.5, def: 0.5, waterMoveDamage: 2.3, grassDamageTaken: 0.3, battleSceneEffect: '雨天娃娃' },
+        bonusValue: '水屬性技能傷害 x1.30 / 受到草屬性技能傷害 x0.30',
+        drawbackValue: 'HP x0.80 / 防禦 x0.80',
+        modifiers: { hp: 0.8, def: 0.8, waterMoveDamage: 1.3, grassDamageTaken: 0.3, battleSceneEffect: '雨天娃娃' },
         implementation: {
             status: 'ready',
             notes: '已接能力值、戰鬥傷害倍率與戰鬥場景雨天娃娃特效。'

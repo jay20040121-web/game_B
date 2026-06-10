@@ -241,7 +241,7 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 
 - `絕對防禦`：攻擊 x0.50、速度 x0.50；受到有傷害的攻擊時，在 `src/utils/battleTurnSystem.js` 以 50% 機率讓該次傷害無效化。
 - `太陽之子`：攻擊 x0.50、HP x0.50；火屬性技能傷害 x1.30，受到水屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/太陽之子.png`。
-- `雨天娃娃`：HP x0.50、防禦 x0.50；水屬性技能傷害 x2.30，受到草屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/雨天娃娃.png`，光暈使用偏藍色調。
+- `雨天娃娃`：HP x0.80、防禦 x0.80；水屬性技能傷害 x1.30，受到草屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/雨天娃娃.png`，光暈使用偏藍色調。
 - `魔術師`：開場觸發一次，在 `src/utils/battleTraitSystem.js` 的 `applyOpeningTraitEffects` 交換雙方第一格招式，並連同該招式的 `moveUpgrades` 附魔資料一起交換。單機冒險與聯盟戰鬥建立後都要呼叫這個 helper；若之後要支援 PvP，必須由主機端統一產生並同步結果，不能讓雙方客戶端各自交換以免不同步。
 
 聯盟大會 NPC 在第 3、4、5 場會由 `src/utils/useTournament.jsx` 隨機取得一個 `MONSTER_TRAITS` 天賦，並將天賦的 HP/攻擊/防禦/速度倍率套進 NPC 戰鬥數值；第 1、2 場維持無天賦，PVP 冠軍挑戰沿用排行榜玩家自己的天賦資料。
