@@ -122,8 +122,8 @@ export const MONSTER_TRAITS = [
         bonus: '火屬性技能傷害提高，受到水屬性技能時傷害大幅降低。',
         drawback: '攻擊與生命大幅降低，需要靠火力時機和抗水能力創造優勢。',
         bonusValue: '火屬性技能傷害 x1.30 / 受到水屬性技能傷害 x0.30',
-        drawbackValue: '攻擊 x0.50 / HP x0.50',
-        modifiers: { atk: 0.5, hp: 0.5, fireMoveDamage: 1.3, waterDamageTaken: 0.3, battleSceneEffect: '太陽之子' },
+        drawbackValue: '攻擊 x0.80 / HP x0.80',
+        modifiers: { atk: 0.8, hp: 0.8, fireMoveDamage: 1.3, waterDamageTaken: 0.3, battleSceneEffect: '太陽之子' },
         implementation: {
             status: 'ready',
             notes: '已接能力值、戰鬥傷害倍率與戰鬥場景太陽特效。'
