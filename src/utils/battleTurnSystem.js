@@ -1,4 +1,4 @@
-﻿import { SKILL_DATABASE, getTypeMultiplier } from '../monsterData';
+import { SKILL_DATABASE, getTypeMultiplier } from '../monsterData';
 import { checkPreTurnStatus, applyMoveEffects, processPostTurnStatus, getStatMultiplier } from './battleEngine';
 
 export const splitShieldDamage = (target, amount) => {
@@ -295,6 +295,37 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             cue: payload.cue
         }));
     };
+
+    // --- 天賦系統：回合前置處理 (千變萬化) ---
+    const TYPE_KEYS = ['normal', 'fire', 'water', 'grass', 'poison', 'flying', 'bug', 'rock', 'ghost'];
+    const TYPE_NAMES = {
+        normal: '普', fire: '火', water: '水', grass: '草',
+        poison: '毒', flying: '飛', bug: '蟲', rock: '岩', ghost: '鬼'
+    };
+
+    if (getTraitMods('player').randomTypePerTurn) {
+        const nextType = TYPE_KEYS[Math.floor(rFunc() * TYPE_KEYS.length)];
+        updatedPlayer.type = [nextType];
+        const pName = (prev.mode === 'pvp') ? (updatedPlayer.name || '玩家') : '你';
+        pushMsg(`${activeTrait.name}觸發！${pName}變成了${TYPE_NAMES[nextType]}屬性！`, {
+            kind: 'system',
+            actorSide: 'player',
+            actorName: activeTrait.name,
+            cue: 'trait-transform'
+        });
+    }
+
+    if (getTraitMods('enemy').randomTypePerTurn) {
+        const nextType = TYPE_KEYS[Math.floor(rFunc() * TYPE_KEYS.length)];
+        updatedEnemy.type = [nextType];
+        const eName = updatedEnemy.name || '對手';
+        pushMsg(`${enemyTrait?.name || '天賦'}觸發！${eName}變成了${TYPE_NAMES[nextType]}屬性！`, {
+            kind: 'system',
+            actorSide: 'enemy',
+            actorName: enemyTrait?.name || '天賦',
+            cue: 'trait-transform'
+        });
+    }
 
     const tryFeignDeath = (side) => {
         const target = side === 'player' ? updatedPlayer : updatedEnemy;

@@ -154,6 +154,19 @@ export const MONSTER_TRAITS = [
             status: 'ready',
             notes: '已接戰鬥建立流程；開場時交換雙方第一格招式與該招式附魔。'
         }
+    },
+    {
+        id: 'ever_changing',
+        name: '千變萬化',
+        bonus: '戰鬥中每回合會換屬性(從現在有的屬性裡面隨機變換)。',
+        drawback: '防禦降低 10%。',
+        bonusValue: '每回合隨機變換屬性',
+        drawbackValue: '防禦 x0.90',
+        modifiers: { def: 0.9, randomTypePerTurn: true },
+        implementation: {
+            status: 'ready',
+            notes: '已接能力值計算與戰鬥回合前處理；每回合從可用屬性中隨機變換。'
+        }
     }
 ];
 
