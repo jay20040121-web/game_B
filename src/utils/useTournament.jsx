@@ -61,7 +61,7 @@ const getTournamentDifficulty = (round) => {
 const getMonsterStage = (id) => MONSTER_STAGE_BY_ID[String(id)] || 1;
 
 const pickNpcTraitForRound = (round, currentTrait = null) => {
-    if (round < 3) return null;
+    if (round < 4) return null;
     if (currentTrait) return currentTrait;
     return MONSTER_TRAITS[Math.floor(Math.random() * MONSTER_TRAITS.length)] || null;
 };
@@ -165,7 +165,7 @@ export function useTournament({
             ? currentMonsterStage <= playerStage
             : currentMonsterStage >= playerStage;
         const repeatsPreviousRound = lastTournamentEnemyId && String(opponent.monster.id) === String(lastTournamentEnemyId);
-        const hasRequiredTrait = round < 3 || !!opponent.monster.trait;
+        const hasRequiredTrait = round < 4 || !!opponent.monster.trait;
         if (opponent.monster.difficultyRound === round && isStageAllowed && !repeatsPreviousRound && hasRequiredTrait) return opponent;
 
         const roundPool = getTournamentNpcPoolForRound(round, playerStage);

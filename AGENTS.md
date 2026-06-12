@@ -61,7 +61,11 @@
 
 - `npm run dev`：啟動 Vite 開發伺服器。
 - `npm run build`：建立 production build，輸出到 `dist/`。
+- `npm run build:itch`：建立 itch.io HTML5 上傳用 web build，輸出到 `dist/`，Vite `base` 會使用 `./`，避免 itch.io iframe/CDN 子目錄載入素材失敗。
+- `npm run zip:itch`：將 `dist/` 打包成 itch.io 上傳用 `release/pixel-monster-itch-html5.zip`，ZIP 內部路徑固定使用 `/`，避免 Windows `Compress-Archive` 產生的反斜線路徑在 itch.io HTML5 CDN 上造成 `assets/*.js` / `assets/*.css` 403。
 - `npm run preview`：本機預覽 production build。
+
+手機網頁版 / PWA 支援目前放在 `index.html`、`public/manifest.webmanifest`、`public/sw.js` 與 `public/pwa/` icon。iPhone Safari 可用「加入主畫面」產生類似 App 的入口；修改 Vite `base`、manifest 路徑或 icon 時，要同時測 `npm run build` 與 `npm run build:itch`，確認 GitHub Pages `/game_B/` 與 itch.io 相對路徑都能載入。
 
 目前沒有專門的 test script。一般修改完成後，至少要跑 `npm run build` 確認能正常編譯。
 
@@ -244,7 +248,7 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - `雨天娃娃`：HP x0.80、防禦 x0.80；水屬性技能傷害 x1.30，受到草屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/雨天娃娃.png`，光暈使用偏藍色調。
 - `魔術師`：開場觸發一次，在 `src/utils/battleTraitSystem.js` 的 `applyOpeningTraitEffects` 交換雙方第一格招式，並連同該招式的 `moveUpgrades` 附魔資料一起交換。單機冒險與聯盟戰鬥建立後都要呼叫這個 helper；若之後要支援 PvP，必須由主機端統一產生並同步結果，不能讓雙方客戶端各自交換以免不同步。
 
-聯盟大會 NPC 在第 3、4、5 場會由 `src/utils/useTournament.jsx` 隨機取得一個 `MONSTER_TRAITS` 天賦，並將天賦的 HP/攻擊/防禦/速度倍率套進 NPC 戰鬥數值；第 1、2 場維持無天賦，PVP 冠軍挑戰沿用排行榜玩家自己的天賦資料。
+聯盟大會 NPC 從第 4 場開始才會由 `src/utils/useTournament.jsx` 隨機取得一個 `MONSTER_TRAITS` 天賦，並將天賦的 HP/攻擊/防禦/速度倍率套進 NPC 戰鬥數值；第 1、2、3 場維持無天賦，避免第一次附魔前敵人強度過高。PVP 冠軍挑戰沿用排行榜玩家自己的天賦資料。
 
 之後若再碰到類似問題，優先遵守：
 
