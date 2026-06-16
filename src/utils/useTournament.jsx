@@ -60,10 +60,24 @@ const getTournamentDifficulty = (round) => {
 
 const getMonsterStage = (id) => MONSTER_STAGE_BY_ID[String(id)] || 1;
 
+const SOCCER_IDS = new Set(['1043', '1044']);
+
+/** 若怪獸是世足丸系列，強制回傳戰術切換天賦；其他怪獸走正常邏輯 */
+const pickNpcTraitForId = (id, round, currentTrait = null) => {
+    if (SOCCER_IDS.has(String(id))) {
+        return MONSTER_TRAITS.find(t => t.id === 'tactical_switch') || null;
+    }
+    if (round < 4) return null;
+    if (currentTrait && !SOCCER_IDS.has(String(currentTrait?.id))) return currentTrait;
+    const pool = MONSTER_TRAITS.filter(t => !t.modifiers?.isExclusive);
+    return pool[Math.floor(Math.random() * pool.length)] || null;
+};
+
 const pickNpcTraitForRound = (round, currentTrait = null) => {
     if (round < 4) return null;
     if (currentTrait) return currentTrait;
-    return MONSTER_TRAITS[Math.floor(Math.random() * MONSTER_TRAITS.length)] || null;
+    const pool = MONSTER_TRAITS.filter(t => !t.modifiers?.isExclusive);
+    return pool[Math.floor(Math.random() * pool.length)] || null;
 };
 
 const getTraitStatMod = (trait, level, key) => {
@@ -179,7 +193,7 @@ export function useTournament({
         const species = SPECIES_BASE_STATS[id] || SPECIES_BASE_STATS['1'];
         const ivs = { hp: 15, atk: 15, def: 15, spd: 15 };
         const evs = { hp: 0, atk: 0, def: 0, spd: 0 };
-        const trait = pickNpcTraitForRound(round, opponent.monster.trait);
+        const trait = pickNpcTraitForId(id, round, opponent.monster.trait);
         const moves = isStageAllowed && opponent.monster.difficultyRound === round
             ? opponent.monster.moves
             : generateMoves(4, species.types);
@@ -333,6 +347,7 @@ export function useTournament({
                     spd,
                     moves,
                     moveUpgrades,
+                    trait: pickNpcTraitForId(id, 1), // 1043/1044 強制戰術切換，其他初期無天賦
                     status: null,
                     statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 }
                 }

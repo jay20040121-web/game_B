@@ -82,6 +82,10 @@ export const MONSTER_REGISTRY = [
     { id: 1025, name: "石精靈", types: ["rock"], baseStats: { hp: 40, atk: 80, def: 100, spd: 20 } },
     { id: 1026, name: "岩石巨兵", types: ["rock"], baseStats: { hp: 55, atk: 95, def: 115, spd: 35 } },
     { id: 1027, name: "石像魔", types: ["rock"], baseStats: { hp: 80, atk: 120, def: 130, spd: 45 } },
+
+    // === 野外 (足球線) ===
+    { id: 1043, name: "世足丸A型", types: ["rock"], baseStats: { hp: 70, atk: 130, def: 70, spd: 150 } },
+    { id: 1044, name: "世足丸B型", types: ["rock"], baseStats: { hp: 130, atk: 70, def: 150, spd: 70 } },
 ];
 
 // 快速查找工具

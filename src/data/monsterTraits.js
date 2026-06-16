@@ -167,14 +167,28 @@ export const MONSTER_TRAITS = [
             status: 'ready',
             notes: '已接能力值計算與戰鬥回合前處理；每回合從可用屬性中隨機變換。'
         }
+    },
+    {
+        id: 'tactical_switch',
+        name: '戰術切換',
+        bonus: '使用攻擊技能自動切換成1043型態，使用無傷害輔助技能自動切換成1044型態。',
+        drawback: '專屬於世足丸系列的特殊機制。',
+        bonusValue: '依據招式動態切換攻防型態',
+        drawbackValue: '無',
+        modifiers: { isExclusive: true, tacticalSwitch: true },
+        implementation: {
+            status: 'ready',
+            notes: '已接戰鬥回合系統，依據招式有無威力(power)動態切換 id、名稱、屬性與數值。'
+        }
     }
 ];
 
 const pickRandom = (list) => list[Math.floor(Math.random() * list.length)];
 
-export const generateMonsterTraits = () => ({
-    trait: pickRandom(MONSTER_TRAITS)
-});
+export const generateMonsterTraits = () => {
+    const pool = MONSTER_TRAITS.filter(t => !t.modifiers?.isExclusive);
+    return { trait: pickRandom(pool) };
+};
 
 export const normalizeMonsterTraits = (traits) => {
     if (traits?.trait) return traits;

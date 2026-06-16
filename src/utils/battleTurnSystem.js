@@ -292,7 +292,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             targetName: payload.targetName,
             moveId: payload.moveId,
             moveName: payload.moveName,
-            cue: payload.cue
+            cue: payload.cue,
+            hpValue: payload.hpValue,
+            maxHpValue: payload.maxHpValue
         }));
     };
 
@@ -401,6 +403,50 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             console.warn(`[Battle] ${attackerName} 嘗試使用不存在的招式`, move);
             move = SKILL_DATABASE.tackle;
         }
+
+        // --- 戰術切換 (Tactical Switch) 邏輯 ---
+        const attackerTraitMods = getTraitMods(isPlayer ? 'player' : 'enemy');
+        if (attackerTraitMods.tacticalSwitch && [1043, 1044].includes(Number(attacker.id))) {
+            const isAttack = (move.power || 0) > 0;
+            const targetId = isAttack ? 1043 : 1044;
+            
+            if (Number(attacker.id) !== targetId) {
+                // 執行切換
+                const newId = targetId;
+                const newName = targetId === 1043 ? '世足丸A型' : '世足丸B型';
+                const oldMaxHp = attacker.maxHp;
+                const hpRatio = attacker.hp / oldMaxHp;
+                
+                // 依據種族值比例重新計算能力值
+                const baseStats1043 = { hp: 70, atk: 130, def: 70, spd: 150 };
+                const baseStats1044 = { hp: 130, atk: 70, def: 150, spd: 70 };
+                const oldBase = targetId === 1043 ? baseStats1044 : baseStats1043;
+                const newBase = targetId === 1043 ? baseStats1043 : baseStats1044;
+                
+                attacker.maxHp = Math.max(1, Math.floor(attacker.maxHp * (newBase.hp / oldBase.hp)));
+                attacker.hp = Math.max(1, Math.floor(attacker.maxHp * hpRatio));
+                attacker.atk = Math.max(1, Math.floor(attacker.atk * (newBase.atk / oldBase.atk)));
+                attacker.def = Math.max(1, Math.floor(attacker.def * (newBase.def / oldBase.def)));
+                attacker.spd = Math.max(1, Math.floor(attacker.spd * (newBase.spd / oldBase.spd)));
+                attacker.id = newId;
+                attacker.name = newName;
+                
+                // 更新播報名稱
+                attackerName = isPvpMode 
+                    ? (attacker.name || (isPlayer ? '玩家' : '對手')) 
+                    : (isPlayer ? '你' : attacker.name);
+
+                pushMsg(`戰術切換發動！型態轉換為${newName}！`, {
+                    kind: 'system',
+                    actorSide: isPlayer ? 'player' : 'enemy',
+                    actorName: attackerName,
+                    cue: 'form_change',
+                    hpValue: attacker.hp,
+                    maxHpValue: attacker.maxHp
+                });
+            }
+        }
+
         pushMsg(`${attackerName} 使出了 [${move.name || '未知招式'}]！`, {
             kind: 'speech',
             actorSide: isPlayer ? 'player' : 'enemy',

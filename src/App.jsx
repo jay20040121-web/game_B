@@ -1,4 +1,4 @@
-﻿import BattleAdventureOverlay from './components/BattleAdventureOverlay';
+import BattleAdventureOverlay from './components/BattleAdventureOverlay';
 import DiaryOverlay from './components/DiaryOverlay';
 import InventoryOverlay from './components/InventoryOverlay';
 import StatusOverlay from './components/StatusOverlay';
@@ -36,7 +36,7 @@ import {
 } from './monsterData';
 
 import { EVO_TIMES, EVO_LEVELS, WILD_EVOLUTION_MAP } from './data/evolutionConfig';
-import { generateMonsterTraits, normalizeMonsterTraits } from './data/monsterTraits';
+import { generateMonsterTraits, normalizeMonsterTraits, MONSTER_TRAITS } from './data/monsterTraits';
 
 import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } from './components/SpriteRenderer';
 
@@ -1078,6 +1078,14 @@ export default function App() {
                     updated.phase = 'end';
                     setTimeout(() => resolveBattleLoss(true), 1200);
                 } else {
+                    if (nextStep.cue === 'form_change' && nextStep.hpValue !== undefined) {
+                        const targetKey = nextStep.actorSide === 'player' ? 'player' : 'enemy';
+                        updated[targetKey] = {
+                            ...updated[targetKey],
+                            hp: nextStep.hpValue,
+                            maxHp: nextStep.maxHpValue || updated[targetKey].maxHp
+                        };
+                    }
                     updated.flashTarget = null;
                 }
 
@@ -2653,6 +2661,17 @@ export default function App() {
         const eAssetId = MONSTER_ASSET_IDS[resultState.enemy.id] || resultState.enemy.id;
         const eImg = new Image();
         eImg.src = `${base}assets/exclusive/idle/${eAssetId}.gif`;
+
+        // --- 處理專屬天賦: 戰術切換 ---
+        const tacticalTrait = MONSTER_TRAITS.find(t => t.id === 'tactical_switch');
+        if (tacticalTrait) {
+            if ([1043, 1044].includes(Number(resultState.player.id))) {
+                resultState.player.trait = tacticalTrait;
+            }
+            if ([1043, 1044].includes(Number(resultState.enemy.id))) {
+                resultState.enemy.trait = tacticalTrait;
+            }
+        }
 
         return applyOpeningTraitEffects(resultState);
     };

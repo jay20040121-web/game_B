@@ -1,4 +1,4 @@
-﻿// Generated from PokeAPI (zh-Hant)
+// Generated from PokeAPI (zh-Hant)
 
 // 怪獸名稱表 — 使用自有 ID 系統 (1000 起)
 import { MONSTER_REGISTRY } from './data/monsterRegistry';
@@ -2135,7 +2135,8 @@ export const TYPE_SKILLS = {
 
 export const ADV_WILD_POOL = [
     { id: 1022, name: MONSTER_NAMES[1022], weight: 1, power: 90, type: "flying" },
-    { id: 1025, name: MONSTER_NAMES[1025], weight: 1, power: 80, type: "rock" }
+    { id: 1025, name: MONSTER_NAMES[1025], weight: 1, power: 80, type: "rock" },
+    { id: 1043, name: MONSTER_NAMES[1043], weight: 1, power: 90, type: "rock" }
 ];
 
 // 已遷移至 src/data/evolutionConfig.js
@@ -2168,6 +2169,7 @@ export const OBTAINABLE_MONSTER_IDS = [
     1019, 1020, 1021, 1038, 1039,    // 幽影線 (G1) & 高羈絆分支
     1022, 1023, 1024,    // 小雞獸線 (Wild)
     1025, 1026, 1027,    // 石精靈線 (Wild)
+    1043, 1044,          // 足球線 (Wild)
 
 ].map(String);
 
