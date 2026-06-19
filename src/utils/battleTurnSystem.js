@@ -294,7 +294,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             moveName: payload.moveName,
             cue: payload.cue,
             hpValue: payload.hpValue,
-            maxHpValue: payload.maxHpValue
+            maxHpValue: payload.maxHpValue,
+            newId: payload.newId,
+            newName: payload.newName
         }));
     };
 
@@ -428,10 +430,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 attacker.atk = Math.max(1, Math.floor(attacker.atk * (newBase.atk / oldBase.atk)));
                 attacker.def = Math.max(1, Math.floor(attacker.def * (newBase.def / oldBase.def)));
                 attacker.spd = Math.max(1, Math.floor(attacker.spd * (newBase.spd / oldBase.spd)));
-                attacker.id = newId;
-                attacker.name = newName;
+                // 不要立刻改變 attacker.id / name，讓畫面不會馬上切換，透過 step 延遲切換
                 
-                // 更新播報名稱
+                // 更新播報名稱 (使用舊名)
                 attackerName = isPvpMode 
                     ? (attacker.name || (isPlayer ? '玩家' : '對手')) 
                     : (isPlayer ? '你' : attacker.name);
@@ -442,7 +443,9 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                     actorName: attackerName,
                     cue: 'form_change',
                     hpValue: attacker.hp,
-                    maxHpValue: attacker.maxHp
+                    maxHpValue: attacker.maxHp,
+                    newId: newId,
+                    newName: newName
                 });
             }
         }

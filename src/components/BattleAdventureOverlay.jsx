@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
 import { getTypeMultiplier, getLevelByPower } from '../monsterData';
 import { buildAilmentBadges } from '../utils/ailmentBadgeUtils';
@@ -20,6 +20,7 @@ const FLYING_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/
 const BUG_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/蟲.png`;
 const ROCK_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/岩.png`;
 const FINISHER_HIT_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/必殺技.gif`;
+const FORM_CHANGE_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/風格轉換.gif`;
 const SUN_CHILD_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/太陽之子.png`;
 const RAIN_DOLL_EFFECT_SHEET = `${import.meta.env.BASE_URL}assets/exclusive/effect/雨天娃娃.png`;
 const TYPE_EFFECT_DISPLAY_SIZE = 52;
@@ -107,7 +108,7 @@ function TypeDamageEffect({ pop, className = "" }) {
 }
 
 function DamageEffect({ pop, className = "" }) {
-    if (!pop?.effectType) return null;
+    if (!pop?.effectType && !pop?.effectStyle) return null;
 
     if (pop.effectStyle === 'finisher') {
         return (
@@ -124,6 +125,24 @@ function DamageEffect({ pop, className = "" }) {
             />
         );
     }
+
+    if (pop.effectStyle === 'form_change') {
+        return (
+            <div
+                key={`${pop.id}-effect-form-change`}
+                className={`pointer-events-none absolute z-[150] w-[96px] h-[96px] finisher-effect-pop ${className}`}
+                style={{
+                    backgroundImage: `url("${FORM_CHANGE_EFFECT_SHEET}")`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    imageRendering: 'pixelated'
+                }}
+            />
+        );
+    }
+
+    if (!pop.effectType) return null;
 
     return <TypeDamageEffect pop={pop} className={className} />;
 }

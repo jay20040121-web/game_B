@@ -920,6 +920,16 @@ export default function App() {
             setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
             setInteractionLogs([]);
             setInteractionCount(0);
+
+            // --- 🔹 防呆：分配新夥伴的初始天賦 🔹 ---
+            // 由於世足丸擁有專屬天賦，野外捕捉替換時必須重新發派
+            if (String(pendingWildCapture.id) === '1043' || String(pendingWildCapture.id) === '1044') {
+                const switchTrait = MONSTER_TRAITS.find(t => t.id === 'tactical_switch');
+                if (switchTrait) setMonsterTraits({ trait: switchTrait });
+            } else {
+                setMonsterTraits(generateMonsterTraits());
+            }
+
             setHunger(60);
             setMood(50);
             setIsPooping(false);
@@ -1085,6 +1095,37 @@ export default function App() {
                             hp: nextStep.hpValue,
                             maxHp: nextStep.maxHpValue || updated[targetKey].maxHp
                         };
+                        
+                        // 產生風格轉換特效 pop (利用既有 damagePop 架構但不傳 value 避免顯示傷害數字)
+                        const damagePopId = nextStep.id || `${prev.turn}-${targetKey}-form_change`;
+                        updated.damagePop = {
+                            id: damagePopId,
+                            target: targetKey,
+                            value: 0, 
+                            effectStyle: 'form_change'
+                        };
+
+                        // 設定在 450ms (GIF 播放大約一半) 時切換怪獸 ID 與名稱
+                        if (nextStep.newId && nextStep.newName) {
+                            setTimeout(() => {
+                                setBattleState(current => {
+                                    if (!current) return current;
+                                    return {
+                                        ...current,
+                                        [targetKey]: {
+                                            ...current[targetKey],
+                                            id: nextStep.newId,
+                                            name: nextStep.newName
+                                        },
+                                        [`${targetKey}FinalState`]: current[`${targetKey}FinalState`] ? {
+                                            ...current[`${targetKey}FinalState`],
+                                            id: nextStep.newId,
+                                            name: nextStep.newName
+                                        } : current[`${targetKey}FinalState`]
+                                    };
+                                });
+                            }, 450);
+                        }
                     }
                     updated.flashTarget = null;
                 }
@@ -3151,6 +3192,10 @@ export default function App() {
             bug: prevAffinity === 'bug' ? 1 : 0
         });
         setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
+        
+        // --- 🔹 防呆：重生與重置時的天賦轉換 🔹 ---
+        // 使用 generateMonsterTraits() 確保隨機分發的天賦不會包含專屬天賦 (isExclusive)
+        // 避免前一隻是世足丸時，死亡重生卻讓幽靈或新蛋繼承了「戰術切換」的 BUG
         setMonsterTraits(generateMonsterTraits());
 
         if (savedDeathBranch) {
