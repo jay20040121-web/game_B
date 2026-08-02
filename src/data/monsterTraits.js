@@ -1,200 +1,28 @@
-export const MONSTER_TRAITS = [
-    {
-        id: 'brave_heart',
-        name: '勇敢之心',
-        bonus: '攻擊成長傾向提高，適合主動進攻與挑戰強敵。',
-        drawback: '防禦面較不穩，長線戰鬥需要更注意承傷。',
-        bonusValue: '攻擊 x1.20',
-        drawbackValue: '防禦 x0.90',
-        modifiers: { atk: 1.2, def: 0.9 },
-        implementation: {
-            status: 'ready',
-            notes: '可直接接到戰鬥能力計算：攻擊倍率提高，防禦倍率降低。'
-        }
-    },
-    {
-        id: 'steady_body',
-        name: '穩健體魄',
-        bonus: '防禦成長傾向提高，適合耐久與穩定培育。',
-        drawback: '速度成長較慢，戰鬥中較不容易取得先手。',
-        bonusValue: '防禦 x1.20',
-        drawbackValue: '速度 x0.90',
-        modifiers: { def: 1.2, spd: 0.9 },
-        implementation: {
-            status: 'ready',
-            notes: '可直接接到戰鬥能力計算：防禦倍率提高，速度倍率降低。'
-        }
-    },
-    {
-        id: 'quick_sense',
-        name: '敏銳感官',
-        bonus: '速度成長傾向提高，適合先手與閃避型打法。',
-        drawback: '攻擊火力較不穩，爆發傷害需要靠招式與加護補足。',
-        bonusValue: '速度 x1.20',
-        drawbackValue: '攻擊 x0.90',
-        modifiers: { spd: 1.2, atk: 0.9 },
-        implementation: {
-            status: 'ready',
-            notes: '可直接接到戰鬥能力計算：速度倍率提高，攻擊倍率降低。'
-        }
-    },
-    {
-        id: 'kind_soul',
-        name: '親和靈魂',
-        bonus: '談心獲得的羈絆提高，較容易走向靈魂進化。',
-        drawback: '特訓與戰鬥培育效率較低，需要更多照顧時間。',
-        bonusValue: '談心羈絆 +20%',
-        drawbackValue: '特訓/戰鬥成長 -10%',
-        modifiers: { soulBondGain: 1.2, trainingGrowth: 0.9, battleGrowth: 0.9 },
-        implementation: {
-            status: 'ready',
-            notes: '已接談心羈絆、靈魂探險羈絆、特訓 EV 與冒險/聯盟戰鬥成長。'
-        }
-    },
-    {
-        id: 'late_bloomer',
-        name: '大器晚成',
-        bonus: '高等級後能力成長更強，適合長線培育。',
-        drawback: '低等級時成長較慢，前期推進壓力較高。',
-        bonusValue: '50 級後全能力 x1.15',
-        drawbackValue: '50 級前全能力 x0.90',
-        modifiers: { highLevelStat: 1.15, lowLevelStat: 0.9, thresholdLevel: 50 },
-        implementation: {
-            status: 'ready',
-            notes: '已接狀態與戰鬥能力計算，依等級切換 50 級前降低、50 級後提高。'
-        }
-    },
-    {
-        id: 'eight_gates',
-        name: '八門',
-        bonus: '戰鬥開始後傷害逐回合提高，持續疊加到第 3 回合。',
-        drawback: '第 3 回合結束後失去目前 HP 的 80%，並結束增傷效果。',
-        bonusValue: '傷害每回合 +50%',
-        drawbackValue: '3 回合後目前 HP -80%',
-        modifiers: { damageRampPerTurn: 0.5, rampTurns: 3, rampEndHpLoss: 0.8 },
-        implementation: {
-            status: 'ready',
-            notes: '已接非 PvP 戰鬥傷害流程；第 3 回合結束後扣目前 HP 並停止增傷。'
-        }
-    },
-    {
-        id: 'zombie',
-        name: '殭屍',
-        bonus: '最大生命增加 50%，戰鬥中每回合回復最大生命的 10%。',
-        drawback: '攻擊降低 20%，速度降低 50%。',
-        bonusValue: 'HP x1.50 / 每回合回復最大 HP 10%',
-        drawbackValue: '攻擊 x0.80 / 速度 x0.50',
-        modifiers: { hp: 1.5, atk: 0.8, spd: 0.5, battleRegenMaxHp: 0.1 },
-        implementation: {
-            status: 'ready',
-            notes: '已接能力值與非 PvP 戰鬥回合結束回血流程。'
-        }
-    },
-    {
-        id: 'feign_death',
-        name: '裝死',
-        bonus: '戰鬥中 HP 歸 0 時可以自動復活 1 次，HP 回到 1，且不觸發戰鬥失敗。',
-        drawback: '最大血量降低，戰鬥承受失誤的空間變小。',
-        bonusValue: '戰鬥復活 1 次',
-        drawbackValue: 'HP x0.70',
-        modifiers: { hp: 0.7, battleRevive: 1 },
-        implementation: {
-            status: 'ready',
-            notes: '已接戰鬥 HP 歸 0 流程；每場非 PvP 戰鬥最多觸發一次。'
-        }
-    },
-    {
-        id: 'absolute_defense',
-        name: '絕對防禦',
-        bonus: '每回合受到對手攻擊時，有 50% 機率讓該次傷害無效化。',
-        drawback: '攻擊與速度大幅降低，需要靠耐久和運氣拖住戰局。',
-        bonusValue: '受攻擊時 50% 機率無效化',
-        drawbackValue: '攻擊 x0.50 / 速度 x0.50',
-        modifiers: { atk: 0.5, spd: 0.5, nullifyIncomingDamageChance: 0.5 },
-        implementation: {
-            status: 'ready',
-            notes: '已接能力值計算與戰鬥傷害流程；受到有傷害的攻擊時擲 50% 機率無效化。'
-        }
-    },
-    {
-        id: 'sun_child',
-        name: '太陽之子',
-        bonus: '火屬性技能傷害提高，受到水屬性技能時傷害大幅降低。',
-        drawback: '攻擊與生命大幅降低，需要靠火力時機和抗水能力創造優勢。',
-        bonusValue: '火屬性技能傷害 x1.30 / 受到水屬性技能傷害 x0.30',
-        drawbackValue: '攻擊 x0.80 / HP x0.80',
-        modifiers: { atk: 0.8, hp: 0.8, fireMoveDamage: 1.3, waterDamageTaken: 0.3, battleSceneEffect: '太陽之子' },
-        implementation: {
-            status: 'ready',
-            notes: '已接能力值、戰鬥傷害倍率與戰鬥場景太陽特效。'
-        }
-    },
-    {
-        id: 'rain_doll',
-        name: '雨天娃娃',
-        bonus: '水屬性技能傷害大幅提高，受到草屬性技能時傷害大幅降低。',
-        drawback: '生命與防禦大幅降低，需要避免被非草屬性高傷害擊中。',
-        bonusValue: '水屬性技能傷害 x1.30 / 受到草屬性技能傷害 x0.30',
-        drawbackValue: 'HP x0.80 / 防禦 x0.80',
-        modifiers: { hp: 0.8, def: 0.8, waterMoveDamage: 1.3, grassDamageTaken: 0.3, battleSceneEffect: '雨天娃娃' },
-        implementation: {
-            status: 'ready',
-            notes: '已接能力值、戰鬥傷害倍率與戰鬥場景雨天娃娃特效。'
-        }
-    },
-    {
-        id: 'magician',
-        name: '魔術師',
-        bonus: '戰鬥開場時，將自己的第一招與附魔轉移給對方，並取得對方原本的第一招與附魔。',
-        drawback: '一場戰鬥只能在開場觸發一次。',
-        bonusValue: '開場交換雙方第一招與附魔',
-        drawbackValue: '每場戰鬥限開場 1 次',
-        modifiers: { openingMoveTransfer: 1 },
-        implementation: {
-            status: 'ready',
-            notes: '已接戰鬥建立流程；開場時交換雙方第一格招式與該招式附魔。'
-        }
-    },
-    {
-        id: 'ever_changing',
-        name: '千變萬化',
-        bonus: '戰鬥中每回合會換屬性(從現在有的屬性裡面隨機變換)。',
-        drawback: '防禦降低 10%。',
-        bonusValue: '每回合隨機變換屬性',
-        drawbackValue: '防禦 x0.90',
-        modifiers: { def: 0.9, randomTypePerTurn: true },
-        implementation: {
-            status: 'ready',
-            notes: '已接能力值計算與戰鬥回合前處理；每回合從可用屬性中隨機變換。'
-        }
-    },
-    {
-        id: 'tactical_switch',
-        name: '戰術切換',
-        bonus: '使用攻擊技能自動切換成1043型態，使用無傷害輔助技能自動切換成1044型態。',
-        drawback: '專屬於世足丸系列的特殊機制。',
-        bonusValue: '依據招式動態切換攻防型態',
-        drawbackValue: '無',
-        modifiers: { isExclusive: true, tacticalSwitch: true },
-        implementation: {
-            status: 'ready',
-            notes: '已接戰鬥回合系統，依據招式有無威力(power)動態切換 id、名稱、屬性與數值。'
-        }
-    }
-];
-
-const pickRandom = (list) => list[Math.floor(Math.random() * list.length)];
-
-export const generateMonsterTraits = () => {
-    const pool = MONSTER_TRAITS.filter(t => !t.modifiers?.isExclusive);
-    return { trait: pickRandom(pool) };
-};
-
-export const normalizeMonsterTraits = (traits) => {
-    if (traits?.trait) return traits;
-    if (traits?.talent) {
-        const matched = MONSTER_TRAITS.find(trait => trait.id === traits.talent.id);
-        return { trait: matched || traits.talent };
-    }
-    return generateMonsterTraits();
+import { ADVENTURE_WILD_ABILITY_DEFINITIONS, ADVENTURE_WILD_ABILITY_POOLS } from './adventureWildPokemonData.js';
+import { ADDITIONAL_THREE_STAGE_ABILITY_DEFINITIONS, ADDITIONAL_THREE_STAGE_ABILITY_POOLS } from './additionalThreeStagePokemonData.js';
+// Generated from PokeAPI. Pokémon species use National Pokédex IDs.
+const BASE_ABILITY_DEFINITIONS = {"overgrow":{"id":"overgrow","name":"茂盛","bonus":"ＨＰ減少的時候， 草屬性的招式威力會提高。","drawback":"無","bonusValue":"ＨＰ減少的時候， 草屬性的招式威力會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"chlorophyll":{"id":"chlorophyll","name":"葉綠素","bonus":"天氣為晴朗時， 速度會提高。","drawback":"無","bonusValue":"天氣為晴朗時， 速度會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"blaze":{"id":"blaze","name":"猛火","bonus":"ＨＰ減少的時候， 火屬性的招式威力會提高。","drawback":"無","bonusValue":"ＨＰ減少的時候， 火屬性的招式威力會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"solar-power":{"id":"solar-power","name":"太陽之力","bonus":"天氣為晴朗時特攻會提高， 但每回合ＨＰ會減少。","drawback":"無","bonusValue":"天氣為晴朗時特攻會提高， 但每回合ＨＰ會減少。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"torrent":{"id":"torrent","name":"激流","bonus":"ＨＰ減少的時候， 水屬性的招式威力會提高。","drawback":"無","bonusValue":"ＨＰ減少的時候， 水屬性的招式威力會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"rain-dish":{"id":"rain-dish","name":"雨盤","bonus":"天氣為下雨時， 會漸漸回復ＨＰ。","drawback":"無","bonusValue":"天氣為下雨時， 會漸漸回復ＨＰ。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"shield-dust":{"id":"shield-dust","name":"鱗粉","bonus":"被鱗粉守護著， 不會受到招式的追加效果影響。","drawback":"無","bonusValue":"被鱗粉守護著， 不會受到招式的追加效果影響。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"run-away":{"id":"run-away","name":"逃跑","bonus":"一定能從野生寶可夢 那裡逃走。","drawback":"無","bonusValue":"一定能從野生寶可夢 那裡逃走。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"shed-skin":{"id":"shed-skin","name":"蛻皮","bonus":"透過蛻去身上的皮， 有時會治癒異常狀態。","drawback":"無","bonusValue":"透過蛻去身上的皮， 有時會治癒異常狀態。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"swarm":{"id":"swarm","name":"蟲之預感","bonus":"ＨＰ減少的時候， 蟲屬性的招式威力會提高。","drawback":"無","bonusValue":"ＨＰ減少的時候， 蟲屬性的招式威力會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"sniper":{"id":"sniper","name":"狙擊手","bonus":"擊中要害時， 威力會進一步提高。","drawback":"無","bonusValue":"擊中要害時， 威力會進一步提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"static":{"id":"static","name":"靜電","bonus":"身上帶有靜電， 有時會令接觸到的對手麻痺。","drawback":"無","bonusValue":"身上帶有靜電， 有時會令接觸到的對手麻痺。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"lightning-rod":{"id":"lightning-rod","name":"避雷針","bonus":"將電屬性的招式吸引到自己身上， 不但不會受到傷害，反而會提高特攻。","drawback":"無","bonusValue":"將電屬性的招式吸引到自己身上， 不但不會受到傷害，反而會提高特攻。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"guts":{"id":"guts","name":"毅力","bonus":"陷入異常狀態時， 會拿出毅力， 攻擊會提高。","drawback":"無","bonusValue":"陷入異常狀態時， 會拿出毅力， 攻擊會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"no-guard":{"id":"no-guard","name":"無防守","bonus":"由於無防守戰術， 雙方使出的招式都必定會擊中。","drawback":"無","bonusValue":"由於無防守戰術， 雙方使出的招式都必定會擊中。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"steadfast":{"id":"steadfast","name":"不屈之心","bonus":"每次畏縮時， 不屈之心就會燃起， 速度也會提高。","drawback":"無","bonusValue":"每次畏縮時， 不屈之心就會燃起， 速度也會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"rock-head":{"id":"rock-head","name":"堅硬腦袋","bonus":"即使使出會受反作用力傷害的招式， ＨＰ也不會減少。","drawback":"無","bonusValue":"即使使出會受反作用力傷害的招式， ＨＰ也不會減少。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"sturdy":{"id":"sturdy","name":"結實","bonus":"受到對手的招式攻擊時 不會被一擊打倒。 一擊必殺的招式也沒有效果。","drawback":"無","bonusValue":"受到對手的招式攻擊時 不會被一擊打倒。 一擊必殺的招式也沒有效果。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"sand-veil":{"id":"sand-veil","name":"沙隱","bonus":"在沙暴中 閃避率會提高。","drawback":"無","bonusValue":"在沙暴中 閃避率會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"levitate":{"id":"levitate","name":"飄浮","bonus":"從地面浮起， 從而不會受到地面屬性招式的攻擊。","drawback":"無","bonusValue":"從地面浮起， 從而不會受到地面屬性招式的攻擊。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"cursed-body":{"id":"cursed-body","name":"詛咒之軀","bonus":"受到攻擊時， 有時會把對手的招式 變為定身法狀態。","drawback":"無","bonusValue":"受到攻擊時， 有時會把對手的招式 變為定身法狀態。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"swift-swim":{"id":"swift-swim","name":"悠游自如","bonus":"天氣為下雨時， 速度會提高。","drawback":"無","bonusValue":"天氣為下雨時， 速度會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"damp":{"id":"damp","name":"濕氣","bonus":"透過把周圍都弄濕， 使誰都無法使用自爆等爆炸類的招式。","drawback":"無","bonusValue":"透過把周圍都弄濕， 使誰都無法使用自爆等爆炸類的招式。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"poison-point":{"id":"poison-point","name":"毒刺","bonus":"有時會讓接觸到自己的 對手陷入中毒狀態。","drawback":"無","bonusValue":"有時會讓接觸到自己的 對手陷入中毒狀態。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"marvel-scale":{"id":"marvel-scale","name":"神奇鱗片","bonus":"陷入異常狀態時， 神奇鱗片會發生反應， 防禦會提高。","drawback":"無","bonusValue":"陷入異常狀態時， 神奇鱗片會發生反應， 防禦會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"inner-focus":{"id":"inner-focus","name":"精神力","bonus":"靠著經過鍛鍊的精神， 不會因對手的攻擊而畏縮。","drawback":"無","bonusValue":"靠著經過鍛鍊的精神， 不會因對手的攻擊而畏縮。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"multiscale":{"id":"multiscale","name":"多重鱗片","bonus":"ＨＰ全滿時， 受到的傷害會變少。","drawback":"無","bonusValue":"ＨＰ全滿時， 受到的傷害會變少。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"unburden":{"id":"unburden","name":"輕裝","bonus":"失去所持有的道具時， 速度會提高。","drawback":"無","bonusValue":"失去所持有的道具時， 速度會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"synchronize":{"id":"synchronize","name":"同步","bonus":"將自己的中毒、麻痺或 灼傷狀態傳染給對手。","drawback":"無","bonusValue":"將自己的中毒、麻痺或 灼傷狀態傳染給對手。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"trace":{"id":"trace","name":"複製","bonus":"出場時，複製對手的特性， 變為與之相同的特性。","drawback":"無","bonusValue":"出場時，複製對手的特性， 變為與之相同的特性。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"telepathy":{"id":"telepathy","name":"心靈感應","bonus":"預測我方的攻擊， 並閃避其招式。","drawback":"無","bonusValue":"預測我方的攻擊， 並閃避其招式。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"keen-eye":{"id":"keen-eye","name":"銳利目光","bonus":"靠著銳利的目光， 命中率不會被降低。","drawback":"無","bonusValue":"靠著銳利的目光， 命中率不會被降低。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"reckless":{"id":"reckless","name":"捨身","bonus":"會讓自己因反作用力而受傷的招式 威力會提高。","drawback":"無","bonusValue":"會讓自己因反作用力而受傷的招式 威力會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"intimidate":{"id":"intimidate","name":"威嚇","bonus":"出場時威嚇對手， 使其退縮， 從而降低對手的攻擊。","drawback":"無","bonusValue":"出場時威嚇對手， 使其退縮， 從而降低對手的攻擊。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"speed-boost":{"id":"speed-boost","name":"加速","bonus":"每一回合速度會變快。","drawback":"無","bonusValue":"每一回合速度會變快。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"flash-fire":{"id":"flash-fire","name":"引火","bonus":"受到火屬性的招式攻擊時， 吸收火焰，讓自己使出的 火屬性招式變強。","drawback":"無","bonusValue":"受到火屬性的招式攻擊時， 吸收火焰，讓自己使出的 火屬性招式變強。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"flame-body":{"id":"flame-body","name":"火焰之軀","bonus":"有時會讓接觸到自己的 對手陷入灼傷狀態。","drawback":"無","bonusValue":"有時會讓接觸到自己的 對手陷入灼傷狀態。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"infiltrator":{"id":"infiltrator","name":"穿透","bonus":"可穿透對手的屏障 或替身進行攻擊。","drawback":"無","bonusValue":"可穿透對手的屏障 或替身進行攻擊。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料；事件型戰鬥效果需由戰鬥引擎逐項實作。"}},"drought":{"id":"drought","name":"日照","bonus":"出場時會讓天氣變為晴朗。","drawback":"無","bonusValue":"出場時會讓天氣變為晴朗。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"cloud-nine":{"id":"cloud-nine","name":"無關天氣","bonus":"任何天氣的影響都會消失。","drawback":"無","bonusValue":"任何天氣的影響都會消失。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"justified":{"id":"justified","name":"正義之心","bonus":"受到惡屬性招式攻擊時，攻擊會提高。","drawback":"無","bonusValue":"受到惡屬性招式攻擊時，攻擊會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"weak-armor":{"id":"weak-armor","name":"碎裂鎧甲","bonus":"受到物理招式傷害時，防禦降低但速度大幅提高。","drawback":"無","bonusValue":"受到物理招式傷害時，防禦降低但速度大幅提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"soundproof":{"id":"soundproof","name":"隔音","bonus":"不受聲音類招式影響。","drawback":"無","bonusValue":"不受聲音類招式影響。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"aftermath":{"id":"aftermath","name":"引爆","bonus":"被接觸招式打倒時，會傷害攻擊者。","drawback":"無","bonusValue":"被接觸招式打倒時，會傷害攻擊者。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"technician":{"id":"technician","name":"技術高手","bonus":"威力較低的招式威力會提高。","drawback":"無","bonusValue":"威力較低的招式威力會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"rattled":{"id":"rattled","name":"膽怯","bonus":"受到惡、幽靈或蟲屬性招式攻擊時，速度會提高。","drawback":"無","bonusValue":"受到惡、幽靈或蟲屬性招式攻擊時，速度會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"water-absorb":{"id":"water-absorb","name":"儲水","bonus":"受到水屬性招式攻擊時不會受傷，反而回復HP。","drawback":"無","bonusValue":"受到水屬性招式攻擊時不會受傷，反而回復HP。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"shell-armor":{"id":"shell-armor","name":"硬殼盔甲","bonus":"被堅硬外殼保護，不會被擊中要害。","drawback":"無","bonusValue":"被堅硬外殼保護，不會被擊中要害。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"hydration":{"id":"hydration","name":"濕潤之軀","bonus":"下雨時會治癒異常狀態。","drawback":"無","bonusValue":"下雨時會治癒異常狀態。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"adaptability":{"id":"adaptability","name":"適應力","bonus":"與自身同屬性的招式威力會提高。","drawback":"無","bonusValue":"與自身同屬性的招式威力會提高。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}},"anticipation":{"id":"anticipation","name":"危險預知","bonus":"可以察覺對手持有的危險招式。","drawback":"無","bonusValue":"可以察覺對手持有的危險招式。","drawbackValue":"無","modifiers":{},"implementation":{"status":"data_ready","notes":"官方特性資料。"}}};
+const ABILITY_DEFINITIONS = { ...BASE_ABILITY_DEFINITIONS, ...ADVENTURE_WILD_ABILITY_DEFINITIONS, ...ADDITIONAL_THREE_STAGE_ABILITY_DEFINITIONS };
+const BASE_POKEMON_ABILITY_POOLS = {"1":["overgrow","chlorophyll"],"2":["overgrow","chlorophyll"],"3":["overgrow","chlorophyll"],"4":["blaze","solar-power"],"5":["blaze","solar-power"],"6":["blaze","solar-power"],"7":["torrent","rain-dish"],"8":["torrent","rain-dish"],"9":["torrent","rain-dish"],"13":["shield-dust","run-away"],"14":["shed-skin"],"15":["swarm","sniper"],"25":["static","lightning-rod"],"26":["static","lightning-rod"],"66":["guts","no-guard","steadfast"],"67":["guts","no-guard","steadfast"],"68":["guts","no-guard","steadfast"],"74":["rock-head","sturdy","sand-veil"],"75":["rock-head","sturdy","sand-veil"],"76":["rock-head","sturdy","sand-veil"],"92":["levitate"],"93":["levitate"],"94":["cursed-body"],"116":["swift-swim","sniper","damp"],"117":["poison-point","sniper","damp"],"147":["shed-skin","marvel-scale"],"148":["shed-skin","marvel-scale"],"149":["inner-focus","multiscale"],"172":["static","lightning-rod"],"230":["swift-swim","sniper","damp"],"252":["overgrow","unburden"],"253":["overgrow","unburden"],"254":["overgrow","unburden"],"280":["synchronize","trace","telepathy"],"281":["synchronize","trace","telepathy"],"282":["synchronize","trace","telepathy"],"396":["keen-eye","reckless"],"397":["intimidate","reckless"],"398":["intimidate","reckless"],"543":["poison-point","swarm","speed-boost"],"544":["poison-point","swarm","speed-boost"],"545":["poison-point","swarm","speed-boost"],"607":["flash-fire","flame-body","infiltrator"],"608":["flash-fire","flame-body","infiltrator"],"609":["flash-fire","flame-body","infiltrator"],"37":["flash-fire","drought"],"54":["damp","cloud-nine","swift-swim"],"58":["intimidate","flash-fire","justified"],"77":["run-away","flash-fire","flame-body"],"95":["rock-head","sturdy","weak-armor"],"100":["soundproof","static","aftermath"],"123":["swarm","technician","steadfast"],"129":["swift-swim","rattled"],"131":["water-absorb","shell-armor","hydration"],"133":["run-away","adaptability","anticipation"]};
+export const POKEMON_ABILITY_POOLS = Object.freeze({ ...BASE_POKEMON_ABILITY_POOLS, ...ADVENTURE_WILD_ABILITY_POOLS, ...ADDITIONAL_THREE_STAGE_ABILITY_POOLS });
+const CONTEXTUAL_ABILITIES = new Set(['chlorophyll', 'solar-power', 'rain-dish', 'sand-veil', 'swift-swim', 'unburden', 'telepathy', 'keen-eye', 'run-away']);
+const withImplementationStatus = ability => ({
+  ...ability,
+  implementation: {
+    status: CONTEXTUAL_ABILITIES.has(ability.id) ? 'ready_contextual' : 'ready',
+    notes: CONTEXTUAL_ABILITIES.has(ability.id)
+      ? '效果已接入；目前戰鬥沒有對應天氣、持有道具、命中下降或雙打隊友時，會依官方條件保持不觸發。'
+      : '已接入單機、聯盟與 PvP 共用的主機端戰鬥結算。'
+  }
+});
+export const MONSTER_TRAITS = Object.values(ABILITY_DEFINITIONS).map(withImplementationStatus);
+const ABILITY_BY_ID = Object.fromEntries(MONSTER_TRAITS.map(ability => [ability.id, ability]));
+export const getPokemonAbilities = speciesId => (POKEMON_ABILITY_POOLS[String(speciesId)] || []).map(id => ABILITY_BY_ID[id]).filter(Boolean);
+const pickRandom = (list, random = Math.random) => list[Math.floor(random() * list.length)] || null;
+export const generateMonsterTraits = (speciesId, random = Math.random) => ({ trait: pickRandom(getPokemonAbilities(speciesId), random) });
+export const normalizeMonsterTraits = (traits, speciesId, random = Math.random) => {
+  const legal = getPokemonAbilities(speciesId);
+  const savedId = traits?.trait?.id || traits?.talent?.id;
+  const matched = legal.find(ability => ability.id === savedId);
+  return { trait: matched || pickRandom(legal, random) };
 };

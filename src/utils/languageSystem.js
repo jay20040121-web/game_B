@@ -1,5 +1,6 @@
 import { SKILL_DATABASE } from '../monsterData';
 import { MONSTER_TRAITS } from '../data/monsterTraits';
+import { POKEMON_ENGLISH_NAMES } from '../data/pokemonMapping';
 
 export const LANGUAGE_STORAGE_KEY = 'pixel_monster_language';
 
@@ -191,9 +192,7 @@ const EXACT_TRANSLATIONS = {
     '[B] 狀態': '[B] Status',
     '[B] 技能': '[B] Skills',
     '[C] 關閉': '[C] Close',
-    '屬性': 'Type',
-    '性格': 'Nature',
-    '飽食度': 'Fullness',
+    '屬性': 'Type',    '飽食度': 'Fullness',
     '心情度': 'Mood',
     '羈絆值': 'Bond',
     '生命': 'HP',
@@ -266,16 +265,10 @@ const REGEX_TRANSLATIONS = [
     [/^(.+) \(無條件進化\)$/u, (_, name) => `${translateText(name, LANGUAGES.en)} (Evolves without extra requirements)`],
     [/^(.+) \(其餘條件\)$/u, (_, name) => `${translateText(name, LANGUAGES.en)} (Other requirements)`],
     [/^(.+) \(心情、飽食度 >= 50\)$/u, (_, name) => `${translateText(name, LANGUAGES.en)} (Mood and Fullness >= 50)`],
-    [/^(.+) \(溫柔\/理性\)$/u, (_, name) => `${translateText(name, LANGUAGES.en)} (Gentle / Rational)`],
-    [/^(.+) \(熱血\/無俚頭\)$/u, (_, name) => `${translateText(name, LANGUAGES.en)} (Passionate / Silly)`],
-    [/^(.+) \(熱血\/執著\)$/u, (_, name) => `${translateText(name, LANGUAGES.en)} (Passionate / Stubborn)`],
-    [/^(.+) \(固執\/無俚頭\)$/u, (_, name) => `${translateText(name, LANGUAGES.en)} (Stubborn / Silly)`],
     [/^火系靈魂 \((.+)線\)$/u, (_, name) => `Fire Soul (${translateText(name, LANGUAGES.en)} line)`],
     [/^水系靈魂 \((.+)線\)$/u, (_, name) => `Water Soul (${translateText(name, LANGUAGES.en)} line)`],
     [/^草系靈魂 \((.+)線\)$/u, (_, name) => `Grass Soul (${translateText(name, LANGUAGES.en)} line)`],
-    [/^草系靈魂 \((.+)線，熱血\/執著\)$/u, (_, name) => `Grass Soul (${translateText(name, LANGUAGES.en)} line, Passionate / Stubborn)`],
     [/^蟲系靈魂 \((.+)線\)$/u, (_, name) => `Bug Soul (${translateText(name, LANGUAGES.en)} line)`],
-    [/^蟲系靈魂 \((.+)線，固執\/無俚頭\)$/u, (_, name) => `Bug Soul (${translateText(name, LANGUAGES.en)} line, Stubborn / Silly)`],
     [/^一般線 ([A-Z]) \((.+)\)$/u, (_, branch, name) => `Normal Line ${branch} (${translateText(name, LANGUAGES.en)})`],
     [/^絆 \+(\d+)！$/u, (_, points) => `Bond +${points}!`],
     [/^我好累，讓我休息 (\d+) 秒再出發吧$/u, (_, seconds) => `I am tired. Let me rest ${seconds} seconds before heading out.`],
@@ -305,17 +298,7 @@ const REGEX_TRANSLATIONS = [
 ];
 
 const ENGLISH_NAME_OVERRIDES = {
-    cross_defense: 'Cross Defense',
-    reflect_shield: 'Reflect Shield',
-    guardian_shield: 'Guardian Shield',
-    swords_dance: 'Battle Dance',
     double_team: 'Shadow Clone',
-    water_gun: 'Water Gun',
-    vine_whip: 'Vine Whip',
-    quick_attack: 'Quick Attack',
-    extreme_speed: 'Extreme Speed',
-    fake_out: 'Fake Out',
-    hyper_beam: 'Hyper Beam',
     giga_impact: 'Giga Impact',
     last_resort: 'Last Resort',
     skull_bash: 'Skull Bash',
@@ -345,6 +328,7 @@ const toEnglishTitle = (id = '') => {
 };
 
 const DATA_NAME_TRANSLATIONS = {
+    ...POKEMON_ENGLISH_NAMES,
     ...Object.fromEntries(
         Object.values(SKILL_DATABASE || {})
             .filter(move => move?.name && move?.id)
@@ -471,14 +455,6 @@ const PHRASE_TRANSLATIONS = {
     '心情': 'mood',
     '羈絆': 'bond',
     '飽食': 'fullness',
-    '個性': 'personality',
-    '溫柔': 'Gentle',
-    '執著': 'Stubborn',
-    '熱血': 'Passionate',
-    '搞怪': 'Playful',
-    '冷靜': 'Calm',
-    '理性': 'Rational',
-    '無俚頭': 'Silly',
     '火系': 'Fire',
     '水系': 'Water',
     '草系': 'Grass',
@@ -513,9 +489,7 @@ const PHRASE_TRANSLATIONS = {
     '活力噴泉': 'Energy Fountain',
     '休息茶': 'Rest Tea',
     '小點心': 'Snack',
-    '神秘加護': 'Mystic Blessing',
-    '鏡面命運': 'Mirror Fate',
-    '替換命運': 'Swap Fate',
+    '神秘加護': 'Mystic Blessing',    '替換命運': 'Swap Fate',
     '活力命運': 'Energy Fate',
     '體力命運': 'HP Fate',
     '回聲命運': 'Echo Fate',
@@ -535,9 +509,7 @@ const PHRASE_TRANSLATIONS = {
     '覺醒加護': 'Awakening Blessing',
     '累積': 'accumulate',
     '剩餘': 'remaining',
-    '傾向': 'tendency',
-    '性格': 'Nature',
-    '決賽': 'Finals',
+    '傾向': 'tendency',    '決賽': 'Finals',
     '輔助技': 'Support Skill',
     '背景': 'background',
     '遮罩': 'overlay',
@@ -901,7 +873,6 @@ const CHAR_TRANSLATIONS = {
     '終': 'end',
     '談': 'talk',
     '互': 'interact',
-    '溫': 'gentle',
     '和': 'and',
     '執': 'execute',
     '行': 'run',
@@ -1037,7 +1008,6 @@ const CHAR_TRANSLATIONS = {
     '顧': 'review',
     '婉': 'graceful',
     '嘴': 'mouth',
-    '硬': 'stubborn',
     '澎': 'surging',
     '湃': 'surging',
     '調': 'playful',

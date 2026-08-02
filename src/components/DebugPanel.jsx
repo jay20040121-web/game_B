@@ -1,8 +1,7 @@
-﻿import React from 'react';
-import { ADV_ITEMS, DIARY_ITEM } from '../data/gameConfig';
+import React from 'react';
 import { getLevelByPower } from '../monsterData';
 import { SKILL_DATABASE } from '../monsterData';
-import { MONSTER_TRAITS } from '../data/monsterTraits';
+import { getPokemonAbilities } from '../data/monsterTraits';
 import { queuePetLetterAiRetry } from '../utils/petLetterSystem';
 
 /**
@@ -15,7 +14,7 @@ const DebugPanel = ({
     advStats, setAdvStats, inventory, setInventory, updateDialogue,
     // --- ✨ 解構新傳入的狀態 ---
     evolutionStage, evolutionBranch, bondValue, setBondValue, talkCount,
-    lockedAffinity, setLockedAffinity, soulAffinityCounts, setSoulAffinityCounts, soulTagCounts, setSoulTagCounts, monsterTraits, setMonsterTraits,
+    lockedAffinity, setLockedAffinity, soulAffinityCounts, setSoulAffinityCounts, monsterTraits, setMonsterTraits,
     interactionLogs, interactionCount, getMonsterIdWrapped,
     getPowerThreshold,
     battleState, setBattleState,
@@ -101,13 +100,6 @@ const DebugPanel = ({
         { id: 'grass', label: '草' },
         { id: 'bug', label: '蟲' }
     ];
-    const tagOptions = [
-        { id: 'passionate', label: '熱血' },
-        { id: 'stubborn', label: '執著/固執' },
-        { id: 'rational', label: '冷靜' },
-        { id: 'gentle', label: '溫柔' },
-        { id: 'nonsense', label: '搞怪' }
-    ];
 
     const setDebugAffinity = (affinity) => {
         setLockedAffinity?.(affinity);
@@ -117,14 +109,7 @@ const DebugPanel = ({
             grass: affinity === 'grass' ? 10 : 0,
             bug: affinity === 'bug' ? 10 : 0
         });
-        updateDialogue(affinity ? `Debug: 靈魂屬性鎖定為 ${affinity}` : 'Debug: 已清除靈魂屬性鎖定');
-    };
-
-    const setDebugDominantTag = (tag) => {
-        const next = { passionate: 0, stubborn: 0, rational: 0, gentle: 0, nonsense: 0 };
-        if (tag) next[tag] = 10;
-        setSoulTagCounts?.(next);
-        updateDialogue(tag ? `Debug: 最優勢個性改為 ${tag}` : 'Debug: 已清除個性點數');
+        updateDialogue(affinity ? `偵錯： 靈魂屬性鎖定為 ${affinity}` : '偵錯： 已清除靈魂屬性鎖定');
     };
 
     const applyEvs = () => {
@@ -142,20 +127,6 @@ const DebugPanel = ({
     const handleEvChange = (stat, val) => {
         const num = Math.min(252, Math.max(0, parseInt(val) || 0));
         setEvInput(prev => ({ ...prev, [stat]: num }));
-    };
-
-    const addItems = () => {
-        const itemDef = ADV_ITEMS.find(it => it.id === itemId) || DIARY_ITEM;
-        setInventory(prev => {
-            const idx = prev.findIndex(it => it.id === itemId);
-            if (idx !== -1) {
-                const next = [...prev];
-                next[idx] = { ...next[idx], count: (next[idx].count || 0) + itemCount };
-                return next;
-            }
-            return [...prev, { ...itemDef, count: itemCount }];
-        });
-        updateDialogue(`已新增 ${itemCount} 個 ${itemDef.name}`);
     };
 
     const applyMoveEnchant = () => {
@@ -191,7 +162,7 @@ const DebugPanel = ({
                 moveUpgrades: nextMoveUpgrades
             };
         });
-        updateDialogue(`Debug：已套用技能附魔「${SKILL_DATABASE[moveId]?.name || moveId}」`);
+        updateDialogue(`偵錯：已套用技能附魔「${SKILL_DATABASE[moveId]?.name || moveId}」`);
     };
 
     const reopenAllPetLetters = () => {
@@ -202,7 +173,7 @@ const DebugPanel = ({
             });
             return { ...(prev || {}), slots: nextSlots };
         });
-        updateDialogue('Debug: 今日怪獸來信已全部改為未讀');
+        updateDialogue('偵錯： 今日怪獸來信已全部改為未讀');
     };
 
     const clearPetLetterReplies = () => {
@@ -211,7 +182,7 @@ const DebugPanel = ({
             replies: {},
             lastPlayerReply: null
         }));
-        updateDialogue('Debug: 已清除怪獸來信回信紀錄');
+        updateDialogue('偵錯： 已清除怪獸來信回信紀錄');
     };
 
     const clearPetLettersForRegen = () => {
@@ -222,12 +193,12 @@ const DebugPanel = ({
             lastPlayerReply: prev?.lastPlayerReply || null,
             letterSeed: Date.now()
         }));
-        updateDialogue('Debug: 已清空今日來信，等待系統重新產生');
+        updateDialogue('偵錯： 已清空今日來信，等待系統重新產生');
     };
 
     const retryPetLetterAi = (letterId) => {
         setPetLetters?.(prev => queuePetLetterAiRetry(prev, letterId));
-        updateDialogue('Debug: 已排入怪獸來信 AI 重試');
+        updateDialogue('偵錯： 已排入怪獸來信 人工智慧 重試');
     };
 
     const renderTopicDebug = (key, label) => {
@@ -253,7 +224,6 @@ const DebugPanel = ({
 
             <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
                 <button onClick={() => setActiveTab('evo')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'evo' ? '#e67e22' : '#333', color: 'white' }}>進化/冒險</button>
-                <button onClick={() => setActiveTab('items')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'items' ? '#e67e22' : '#333', color: 'white' }}>物品</button>
                 <button onClick={() => setActiveTab('stats')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'stats' ? '#e67e22' : '#333', color: 'white' }}>數值調整</button>
                 <button onClick={() => setActiveTab('letters')} style={{ padding: '8px 15px', border: 'none', cursor: 'pointer', background: activeTab === 'letters' ? '#e67e22' : '#333', color: 'white' }}>來信</button>
             </div>
@@ -273,9 +243,9 @@ const DebugPanel = ({
                             </div>
                         </div>
                         <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
-                            <div style={{ marginBottom: '5px' }}>冒險 CD 覆蓋 (目前: {debugOverrides.adventureCD === 0 ? '無 CD' : '預設'})</div>
+                            <div style={{ marginBottom: '5px' }}>冒險冷卻覆蓋 (目前: {debugOverrides.adventureCD === 0 ? '無冷卻' : '預設'})</div>
                             <button style={{ padding: '8px 15px', cursor: 'pointer', background: '#3498db', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, adventureCD: debugOverrides.adventureCD === 0 ? null : 0 }))}>
-                                {debugOverrides.adventureCD === 0 ? '恢復預設' : '立即免除冷卻 (0s)'}
+                                {debugOverrides.adventureCD === 0 ? '恢復預設' : '立即免除冷卻（0 秒）'}
                             </button>
                         </div>
                         <div>
@@ -289,74 +259,6 @@ const DebugPanel = ({
                                 <button style={{ padding: '5px 10px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, catchRate: null }))}>重置</button>
                             </div>
                         </div>
-                        <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
-                            <div style={{ marginBottom: '5px' }}>回憶膠囊機率 (目前: {debugOverrides.memoryRate !== null ? debugOverrides.memoryRate * 100 + '%' : '預設 100%'})</div>
-                            <div style={{ display: 'flex', gap: '5px' }}>
-                                {[0, 0.5, 1.0].map(rate => (
-                                    <button key={rate} style={{ padding: '8px 12px', cursor: 'pointer', background: debugOverrides.memoryRate === rate ? '#f39c12' : '#333', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, memoryRate: rate }))}>
-                                        {rate * 100}%
-                                    </button>
-                                ))}
-                                <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, memoryRate: null }))}>重置</button>
-                            </div>
-                        </div>
-
-                        <div style={{ padding: '10px', border: '1px solid #444', backgroundColor: '#222' }}>
-                            <div style={{ marginBottom: '5px' }}>冒險事件強制觸發:</div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 1, trainer: 0, gather: 0 } }))}>必遇野怪</button>
-                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 0, trainer: 1, gather: 0 } }))}>必遇訓練家</button>
-                                <button style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: { wild: 0, trainer: 0, gather: 1 } }))}>必遇採集</button>
-                                <button style={{ padding: '8px 12px', cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none' }} onClick={() => setDebugOverrides(p => ({ ...p, encounterRates: null }))}>恢復隨機</button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'items' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                        <p style={{ color: '#aaa', margin: 0 }}>物品 ID 例: 001(飯糰), 002(蛋白粉), 004(核心), 005(糖果)</p>
-                        <p style={{ color: '#aaa', margin: 0 }}>秘笈書 ID: 006(爆裂拳), 008(煉獄), 009(電磁炮), 010(茁茁轟炸)...</p>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <span>ID:</span>
-                            <input type="text" value={itemId} onChange={e => setItemId(e.target.value)} style={{ width: '80px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
-                            <span>數量:</span>
-                            <input type="number" value={itemCount} onChange={e => setItemCount(parseInt(e.target.value) || 1)} style={{ width: '60px', padding: '8px', background: '#333', color: 'white', border: '1px solid #555' }} />
-                            <button onClick={addItems} style={{ padding: '10px 20px', background: '#27ae60', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>執行新增</button>
-                        </div>
-
-                        <div style={{ marginTop: '20px', padding: '15px', border: '2px dashed #f39c12', borderRadius: '8px' }}>
-                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>🧪 專屬測試工具</div>
-                            <button 
-                                onClick={() => {
-                                    const snapshot = {
-                                        speciesId: getMonsterIdWrapped(),
-                                        evolutionStage: evolutionStage,
-                                        evolutionBranch: evolutionBranch,
-                                        advStats: JSON.parse(JSON.stringify(advStats)),
-                                        bondValue: bondValue,
-                                        talkCount: talkCount,
-                                        lockedAffinity: lockedAffinity,
-                                        soulAffinityCounts: { ...soulAffinityCounts },
-                                        soulTagCounts: { ...soulTagCounts },
-                                        monsterTraits,
-                                        interactionLogs: [...interactionLogs],
-                                        interactionCount: interactionCount
-                                    };
-
-                                    const itemDef = ADV_ITEMS.find(it => it.id === '021');
-                                    setInventory(prev => [
-                                        ...prev, 
-                                        { ...itemDef, count: 1, instanceId: Date.now(), snapshot }
-                                    ]);
-                                    updateDialogue("Debug: 已產出當前怪獸的回憶膠囊！");
-                                }}
-                                style={{ width: '100%', padding: '12px', background: '#f39c12', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold', borderRadius: '4px' }}
-                            >
-                                📸 產出回憶膠囊 (捕捉當前怪獸快照)
-                            </button>
-                            <p style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>※ 此按鈕會將目前怪獸的所有狀態封裝進膠囊，方便測試復活邏輯。</p>
-                        </div>
                     </div>
                 )}
 
@@ -368,13 +270,13 @@ const DebugPanel = ({
                                 日期：{petLetters?.date || '尚未建立'} / 已產生：{letterCount} 封 / 未讀：{unreadLetterCount} 封<br />
                                 上一封玩家回信：{petLetters?.lastPlayerReply?.text || '無'}<br />
                                 測試時間：{Number.isFinite(debugOverrides.petLetterHour) ? `${debugOverrides.petLetterHour}:00` : '使用目前時間'}<br />
-                                天氣：{weatherContext?.status || 'unknown'} / {Number.isFinite(weatherContext?.apparentTemperature) ? `${Math.round(weatherContext.apparentTemperature)}°C` : '無溫度'} / 降雨{Number.isFinite(weatherContext?.precipitationProbability) ? `${Math.round(weatherContext.precipitationProbability)}%` : '未知'} / 未來雨時數{weatherContext?.nextRainHours ?? 0} / {weatherContext?.source || weatherContext?.reason || '無來源'}<br />
+                                天氣：{weatherContext?.status || '未知'} / {Number.isFinite(weatherContext?.apparentTemperature) ? `${Math.round(weatherContext.apparentTemperature)}°C` : '無溫度'} / 降雨{Number.isFinite(weatherContext?.precipitationProbability) ? `${Math.round(weatherContext.precipitationProbability)}%` : '未知'} / 未來雨時數{weatherContext?.nextRainHours ?? 0} / {weatherContext?.source || weatherContext?.reason || '無來源'}<br />
                                 今日話題：新聞 {dailyTopics?.topics?.news?.type || '-'} / 歷史 {dailyTopics?.topics?.history?.type || '-'} / 星象 {dailyTopics?.topics?.astro?.type || '-'} / 塔羅 {dailyTopics?.topics?.tarot?.type || '-'}
                             </div>
                             <div style={{ padding: '10px', background: '#181818', border: '1px solid #333', borderRadius: '6px', marginBottom: '12px' }}>
-                                <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '6px' }}>外部資訊 Debug</div>
+                                <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '6px' }}>外部資訊偵錯</div>
                                 <div style={{ color: '#aaa', fontSize: '11px', lineHeight: 1.5 }}>
-                                    天氣來源：{weatherContext?.source || '無'} / 原因：{weatherContext?.reason || '無'} / 溫度：{Number.isFinite(weatherContext?.temperature) ? `${weatherContext.temperature}°C` : '無'} / 體感：{Number.isFinite(weatherContext?.apparentTemperature) ? `${weatherContext.apparentTemperature}°C` : '無'} / code：{weatherContext?.weatherCode ?? '無'}
+                                    天氣來源：{weatherContext?.source || '無'} / 原因：{weatherContext?.reason || '無'} / 溫度：{Number.isFinite(weatherContext?.temperature) ? `${weatherContext.temperature}°C` : '無'} / 體感：{Number.isFinite(weatherContext?.apparentTemperature) ? `${weatherContext.apparentTemperature}°C` : '無'} / 天氣代碼：{weatherContext?.weatherCode ?? '無'}
                                 </div>
                                 {renderTopicDebug('news', '新聞')}
                                 {renderTopicDebug('history', '歷史')}
@@ -490,7 +392,7 @@ const DebugPanel = ({
                             ) : (
                                 Object.entries(petLetters?.slots || {}).map(([slotId, letter]) => (
                                     <div key={slotId} style={{ borderTop: '1px solid #333', padding: '8px 0', color: '#ddd', fontSize: '12px' }}>
-                                        <div style={{ fontWeight: 'bold' }}>{letter.label || slotId}：{letter.read ? '已讀' : '未讀'} / {letter.source || 'local'} / AI: {letter.aiStatus || '舊格式'}</div>
+                                        <div style={{ fontWeight: 'bold' }}>{letter.label || slotId}：{letter.read ? '已讀' : '未讀'} / {letter.source === 'local' ? '本機' : (letter.source || '未知來源')} / 人工智慧： {letter.aiStatus || '舊格式'}</div>
                                         {letter.aiError && <div style={{ color: '#ff8a80', marginTop: '4px' }}>錯誤：{letter.aiError}</div>}
                                         <div style={{ color: '#aaa', marginTop: '4px' }}>{(letter.pages || []).join(' / ')}</div>
                                         <button
@@ -509,9 +411,9 @@ const DebugPanel = ({
                 {activeTab === 'stats' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         <div style={{ padding: '15px', border: '1px solid #8e44ad', backgroundColor: '#222', borderRadius: '8px' }}>
-                            <div style={{ color: '#d7a7ff', fontWeight: 'bold', marginBottom: '10px' }}>天賦切換</div>
+                            <div style={{ color: '#d7a7ff', fontWeight: 'bold', marginBottom: '10px' }}>特性切換</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                {MONSTER_TRAITS.map(trait => {
+                                {getPokemonAbilities(getMonsterIdWrapped()).map(trait => {
                                     const active = monsterTraits?.trait?.id === trait.id;
                                     return (
                                         <button
@@ -526,7 +428,7 @@ const DebugPanel = ({
                                                         playerFinalState: prev?.playerFinalState ? convertBattleEntityTrait(prev.playerFinalState, currentTrait, trait) : prev?.playerFinalState
                                                     }));
                                                 }
-                                                updateDialogue(`Debug: 天賦切換為 ${trait.name}`);
+                                                updateDialogue(`偵錯： 特性切換為 ${trait.name}`);
                                             }}
                                             title={`增益: ${trait.bonus}\n代價: ${trait.drawback}`}
                                             style={{
@@ -545,12 +447,12 @@ const DebugPanel = ({
                                 })}
                             </div>
                             <div style={{ marginTop: '10px', fontSize: '12px', color: '#ccc' }}>
-                                目前: {monsterTraits?.trait?.name || '尚未覺醒'} / 增益: {monsterTraits?.trait?.bonus || '-'} / 代價: {monsterTraits?.trait?.drawback || '-'}
+                                目前特性: {monsterTraits?.trait?.name || '尚未設定'} / 增益: {monsterTraits?.trait?.bonus || '-'}
                             </div>
                         </div>
 
                         <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
-                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>💖 羈絆值調整 (Bond)</div>
+                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>💖 羈絆值調整</div>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 <input 
                                     type="range" min="0" max="100" value={bondValue} 
@@ -563,9 +465,9 @@ const DebugPanel = ({
                         </div>
 
                         <div style={{ padding: '15px', border: '1px solid #27ae60', backgroundColor: '#222', borderRadius: '8px' }}>
-                            <div style={{ color: '#58d68d', fontWeight: 'bold', marginBottom: '10px' }}>靈魂屬性 / 個性快速設定</div>
+                            <div style={{ color: '#58d68d', fontWeight: 'bold', marginBottom: '10px' }}>靈魂屬性快速設定</div>
                             <div style={{ marginBottom: '8px', color: '#ccc', fontSize: '12px' }}>
-                                目前屬性：{lockedAffinity || '未鎖定'} / 個性點數：{Object.entries(soulTagCounts || {}).map(([k, v]) => `${k}:${v}`).join(' ')}
+                                目前屬性：{lockedAffinity || '未鎖定'}
                             </div>
                             <div style={{ marginBottom: '8px', color: '#bbb' }}>鎖定屬性</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
@@ -590,40 +492,10 @@ const DebugPanel = ({
                                     );
                                 })}
                             </div>
-                            <div style={{ marginBottom: '8px', color: '#bbb' }}>最優勢個性</div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                {tagOptions.map(option => {
-                                    const active = Object.entries(soulTagCounts || {}).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0] === option.id;
-                                    return (
-                                        <button
-                                            key={option.id}
-                                            onClick={() => setDebugDominantTag(option.id)}
-                                            style={{
-                                                padding: '8px 12px',
-                                                cursor: 'pointer',
-                                                background: active ? '#27ae60' : '#333',
-                                                color: 'white',
-                                                border: active ? '1px solid #58d68d' : '1px solid #555',
-                                                borderRadius: '4px',
-                                                fontWeight: active ? 'bold' : 'normal'
-                                            }}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    );
-                                })}
-                                <button
-                                    onClick={() => setDebugDominantTag(null)}
-                                    style={{ padding: '8px 12px', cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none', borderRadius: '4px' }}
-                                >
-                                    清除個性
-                                </button>
-                            </div>
-                            <p style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>※ 測草系 1032 線：羈絆設 40 以上，屬性選草，個性選熱血或執著/固執，再把等級推到進化門檻。</p>
                         </div>
 
                         <div style={{ padding: '15px', border: '1px solid #f39c12', backgroundColor: '#222', borderRadius: '8px' }}>
-                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>⭐ 等級調整 (Level)</div>
+                            <div style={{ color: '#f39c12', fontWeight: 'bold', marginBottom: '10px' }}>⭐ 等級調整</div>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 <input 
                                     type="number" 
@@ -638,14 +510,14 @@ const DebugPanel = ({
                                         const lv = parseInt(document.getElementById('debug-level-input').value) || 1;
                                         const newPower = getPowerThreshold(lv);
                                         setAdvStats(prev => ({ ...prev, basePower: newPower }));
-                                        updateDialogue(`Debug: 等級已精準調整為 Lv.${lv}`);
+                                        updateDialogue(`偵錯： 等級已精準調整為 等級 ${lv}`);
                                     }}
                                     style={{ padding: '10px 20px', background: '#f39c12', color: 'black', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
                                 >
                                     設定等級
                                 </button>
                             </div>
-                            <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 設定為 100 級後配合「進化時間」設為 10s 可測試正規死亡流程。</p>
+                            <p style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>※ 設定為 100 級後配合「進化時間」設為 10 秒 可測試正規死亡流程。</p>
                         </div>
 
                                                 <div style={{ padding: '15px', border: '1px solid #16a085', backgroundColor: '#222', borderRadius: '8px' }}>
@@ -703,7 +575,7 @@ const DebugPanel = ({
                                     </button>
                                 </div>
                                 <div>
-                                    <div style={{ marginBottom: '6px', color: '#bbb' }}>異常效果 JSON</div>
+                                    <div style={{ marginBottom: '6px', color: '#bbb' }}>異常效果資料</div>
                                     <textarea
                                         value={enchantJson}
                                         onChange={e => setEnchantJson(e.target.value)}
@@ -743,7 +615,7 @@ const DebugPanel = ({
                         </div>
 
                         <div style={{ marginBottom: '10px', borderBottom: '1px solid #444', paddingBottom: '5px' }}>
-                            <strong>努力值調整 (EVs)</strong> - 當前總計: <span style={{ color: totalEvs > 510 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{totalEvs}</span> / 510
+                            <strong>努力值調整</strong>－目前總計： <span style={{ color: totalEvs > 510 ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>{totalEvs}</span> / 510
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {['hp', 'atk', 'def', 'spd'].map(stat => (

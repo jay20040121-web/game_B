@@ -1,69 +1,77 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-const FALLBACK_TYPES = ['fire', 'water', 'grass', 'electric', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'steel', 'fairy'];
+import { getPokemonLevelUpLearnset } from '../monsterData';
 
 export const useSkillLearning = ({
     advStats,
     derivedLevel,
     getMonsterId,
     skillDatabase,
-    speciesBaseStats,
-    typeMap,
 }) => {
     const previousLevelRef = useRef(derivedLevel);
-    const [pendingSkillLearn, setPendingSkillLearn] = useState(null);
+    const previousSpeciesRef = useRef(null);
+    const learnQueueRef = useRef([]);
+    const [pendingSkillLearnState, setPendingSkillLearnState] = useState(null);
     const [skillSelectIdx, setSkillSelectIdx] = useState(0);
     const [isConfirmingReplace, setIsConfirmingReplace] = useState(false);
     const [tempReplaceIdx, setTempReplaceIdx] = useState(-1);
     const [isSkillRearrangeOpen, setIsSkillRearrangeOpen] = useState(false);
-    const [usingItemIdx, setUsingItemIdx] = useState(-1);
+
+    const setPendingSkillLearn = useCallback((valueOrUpdater) => {
+        setPendingSkillLearnState(previous => {
+            const requested = typeof valueOrUpdater === 'function'
+                ? valueOrUpdater(previous)
+                : valueOrUpdater;
+            if (requested !== null) return requested;
+            return learnQueueRef.current.shift() || null;
+        });
+    }, []);
 
     const resetLevelTracker = useCallback((level) => {
         previousLevelRef.current = level;
+        learnQueueRef.current = [];
+        setPendingSkillLearnState(null);
     }, []);
 
     useEffect(() => {
-        if (derivedLevel > previousLevelRef.current) {
-            if (typeof speciesBaseStats === "object" && typeof skillDatabase === "object") {
-                const myId = getMonsterId();
-                const speciesData = speciesBaseStats[String(myId)];
-                const myType = speciesData?.types || ['normal'];
-                let targetType = 'normal';
+        const speciesId = String(getMonsterId());
+        const previousLevel = previousLevelRef.current;
+        const previousSpecies = previousSpeciesRef.current;
+        const speciesChanged = previousSpecies !== null && speciesId !== previousSpecies;
+        const levelIncreased = derivedLevel > previousLevel;
 
-                if (derivedLevel === 5) {
-                    targetType = 'normal';
-                } else if (derivedLevel === 10) {
-                    const allTypes = typeof TYPE_CHART === "object" ? Object.keys(TYPE_CHART) : FALLBACK_TYPES;
-                    const foreignTypes = allTypes.filter(t => !myType.includes(t));
-                    targetType = foreignTypes.length > 0 ? foreignTypes[Math.floor(Math.random() * foreignTypes.length)] : 'normal';
-                } else {
-                    const isStab = Math.random() < 0.7;
-                    if (isStab) {
-                        targetType = myType[Math.floor(Math.random() * myType.length)];
-                    } else {
-                        const allTypes = Object.keys(typeMap || {
-                            'normal': '普', 'fire': '火', 'water': '水', 'grass': '草', 'electric': '電', 'ice': '冰', 'fighting': '鬥', 'poison': '毒', 'ground': '地', 'flying': '飛', 'psychic': '超', 'bug': '蟲', 'rock': '岩', 'ghost': '鬼', 'dragon': '龍', 'steel': '鋼', 'dark': '惡', 'fairy': '妖'
-                        });
-                        targetType = allTypes[Math.floor(Math.random() * allTypes.length)];
-                    }
-                }
+        if (speciesChanged || levelIncreased) {
+            const currentMoves = new Set(advStats.moves || []);
+            const queuedMoves = new Set([
+                pendingSkillLearnState?.skill?.id,
+                ...learnQueueRef.current.map(item => item.skill.id),
+            ].filter(Boolean));
+            const candidates = getPokemonLevelUpLearnset(speciesId).filter(entry => {
+                if (speciesChanged && (entry.level === 0 || entry.level === derivedLevel)) return true;
+                return levelIncreased && entry.level > previousLevel && entry.level <= derivedLevel;
+            });
+            const uniqueCandidates = [...new Map(candidates.map(entry => [entry.moveId, entry])).values()]
+                .filter(entry => skillDatabase[entry.moveId] && !currentMoves.has(entry.moveId) && !queuedMoves.has(entry.moveId))
+                .map(entry => ({ level: entry.level, skill: skillDatabase[entry.moveId] }));
 
-                const candidateIds = Object.keys(skillDatabase).filter(k => skillDatabase[k].type === targetType);
-                if (candidateIds.length > 0) {
-                    const newSkillId = candidateIds[Math.floor(Math.random() * candidateIds.length)];
-                    const newSkill = skillDatabase[newSkillId];
-                    const currentMoveIds = advStats.moves || [];
-                    if (!currentMoveIds.includes(newSkillId)) {
-                        setPendingSkillLearn({ level: derivedLevel, skill: newSkill });
+            if (uniqueCandidates.length > 0) {
+                setPendingSkillLearnState(previous => {
+                    if (previous) {
+                        learnQueueRef.current.push(...uniqueCandidates);
+                        return previous;
                     }
-                }
+                    const [first, ...rest] = uniqueCandidates;
+                    learnQueueRef.current.push(...rest);
+                    return first;
+                });
             }
         }
+
         previousLevelRef.current = derivedLevel;
-    }, [advStats.moves, derivedLevel, getMonsterId, skillDatabase, speciesBaseStats, typeMap]);
+        previousSpeciesRef.current = speciesId;
+    }, [advStats.moves, derivedLevel, getMonsterId, pendingSkillLearnState?.skill?.id, skillDatabase]);
 
     return {
-        pendingSkillLearn,
+        pendingSkillLearn: pendingSkillLearnState,
         setPendingSkillLearn,
         skillSelectIdx,
         setSkillSelectIdx,
@@ -73,8 +81,6 @@ export const useSkillLearning = ({
         setTempReplaceIdx,
         isSkillRearrangeOpen,
         setIsSkillRearrangeOpen,
-        usingItemIdx,
-        setUsingItemIdx,
         resetLevelTracker,
     };
 };

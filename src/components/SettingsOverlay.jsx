@@ -1,7 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { playBloop, getSfxEnabled, setSfxEnabled, getBgmEnabled, setBgmEnabled, getSfxVolume, setSfxVolume, getBgmVolume, setBgmVolume } from '../utils/audioSystem';
 import { clearPersistedSaveData } from '../utils/storageSystem';
-import { LANGUAGES } from '../utils/languageSystem';
 import { getDefeatTutorialEnabled, getPetLettersEnabled, setDefeatTutorialEnabled, setPetLettersEnabled } from '../utils/gamePreferenceSystem';
 
 export default function SettingsOverlay({
@@ -10,8 +9,6 @@ export default function SettingsOverlay({
     manualScale,
     setManualScale,
     setIsBooting,
-    language,
-    setLanguage,
     defeatTutorialEnabled,
     setDefeatTutorialEnabledState,
     petLettersEnabled,
@@ -74,10 +71,6 @@ export default function SettingsOverlay({
         playBloop('confirm');
     };
 
-    const handleLanguageChange = (nextLanguage) => {
-        setLanguage(nextLanguage);
-        playBloop('confirm');
-    };
 
     const handleDefeatTutorialToggle = () => {
         const next = !localDefeatTutorialEnabled;
@@ -159,24 +152,10 @@ export default function SettingsOverlay({
                         ))}
                     </div>
                 </div>
-
-                {/* 語言設定 */}
-                <div className="flex flex-col gap-1 bg-[#1a1a1a]/40 p-2 rounded border border-[#ccd6be]/30">
+                {/* 語言設定：遊戲固定使用繁體中文 */}
+                <div className="mb-3">
                     <div className="text-[10px] text-[#ccd6be] font-bold mb-1">語言</div>
-                    <div className="flex justify-between gap-1">
-                        <button
-                            onClick={() => handleLanguageChange(LANGUAGES.zh)}
-                            className={`flex-1 py-1.5 text-[9px] font-bold rounded ${language === LANGUAGES.zh ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
-                        >
-                            中文
-                        </button>
-                        <button
-                            onClick={() => handleLanguageChange(LANGUAGES.en)}
-                            className={`flex-1 py-1.5 text-[9px] font-bold rounded ${language === LANGUAGES.en ? 'bg-[#9dae8a] text-black' : 'bg-[#383a37] text-white'} border border-[#1a1a1a] transition-all`}
-                        >
-                            English
-                        </button>
-                    </div>
+                    <div className="w-full py-1.5 text-[9px] font-bold rounded bg-[#9dae8a] text-black border border-[#1a1a1a] text-center">繁體中文</div>
                 </div>
 
                 {/* 引導與每日內容 */}

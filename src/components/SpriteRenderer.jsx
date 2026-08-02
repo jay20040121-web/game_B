@@ -1,11 +1,32 @@
 import React, { useState, useEffect, memo } from 'react';
 import { MONSTER_ASSET_IDS } from '../monsterData';
+import { POKEMON_VISIBLE_HEIGHTS } from '../data/pokemonMapping';
+
+const measureVisiblePixelHeight = image => {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(image, 0, 0);
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let top = canvas.height;
+        let bottom = -1;
+        for (let y = 0; y < canvas.height; y += 1) {
+            for (let x = 0; x < canvas.width; x += 1) {
+                if (pixels[(y * canvas.width + x) * 4 + 3] > 8) { top = Math.min(top, y); bottom = Math.max(bottom, y); }
+            }
+        }
+        return bottom >= top ? bottom - top + 1 : image.naturalHeight;
+    } catch { return image.naturalHeight; }
+};
 
 // ==========================================
 // 即時 4-Color 網點運算引擎 (Bayer Matrix Dithering)
 // ==========================================
-const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true, forceStatic = false, smoothAnimated = false, smoothSmallAnimatedScale = 1, smallSmoothImageRendering = 'auto' }) => {
+const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true, silhouette = false, pure = true, forceStatic = false, smoothAnimated = false, smoothSmallAnimatedScale = 1, smallSmoothImageRendering = 'auto', normalizePokemonBattleSize = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
+    const isPokemonSprite = Boolean(MONSTER_ASSET_IDS[id]);
     const base = import.meta.env.BASE_URL;
     
     const effectiveAnimated = animated && !forceStatic;
@@ -18,6 +39,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const [isGifLoaded, setIsGifLoaded] = useState(false);
     const [naturalWidth, setNaturalWidth] = useState(0);
     const [naturalHeight, setNaturalHeight] = useState(0);
+    const [visibleHeight, setVisibleHeight] = useState(0);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
@@ -28,6 +50,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
         setIsGifLoaded(false);
         setNaturalWidth(0); // Reset width when ID changes
         setNaturalHeight(0);
+        setVisibleHeight(0);
 
         if (effectiveAnimated) {
             // Background load the GIF
@@ -51,7 +74,14 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const useSmoothAnimated = effectiveAnimated && smoothAnimated;
     const isSmallSmoothGif = useSmoothAnimated && isGifLoaded && naturalWidth <= 64 && naturalHeight <= 64;
     const innerScale = useSmoothAnimated ? (isSmallSmoothGif ? smoothSmallAnimatedScale : 1) : (naturalWidth >= 120 ? 0.7 : 0.55);
-    const imageRendering = useSmoothAnimated ? (isSmallSmoothGif ? smallSmoothImageRendering : 'auto') : 'pixelated';
+    const imageRendering = isPokemonSprite ? 'pixelated' : (useSmoothAnimated ? (isSmallSmoothGif ? smallSmoothImageRendering : 'auto') : 'pixelated');
+    const pokemonScaleStep = naturalWidth > 0
+        ? (normalizePokemonBattleSize
+            ? 68 / (POKEMON_VISIBLE_HEIGHTS[assetId] || visibleHeight || naturalHeight || 68)
+            : (targetSize >= naturalWidth * 2 ? 2 : (targetSize >= naturalWidth ? 1 : 0.5)))
+        : 1;
+    const pokemonWidth = naturalWidth > 0 ? Math.round(naturalWidth * pokemonScaleStep) : targetSize;
+    const pokemonHeight = naturalHeight > 0 ? Math.round(naturalHeight * pokemonScaleStep) : targetSize;
 
     // --- Sprite Offsets ---
     // 可以在這裡針對各別怪獸 ID 設定垂直位移 (向下為正，向上為負)
@@ -84,20 +114,24 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
                 onLoad={(e) => {
                     setNaturalWidth(e.target.naturalWidth);
                     setNaturalHeight(e.target.naturalHeight);
+                    setVisibleHeight(measureVisiblePixelHeight(e.target));
                 }}
                 style={{ 
-                    filter: silhouette 
-                        ? 'brightness(0) contrast(100)' 
-                        : (pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)'),
-                    width: '100%',
-                    height: '100%',
-                    minWidth: '100%',
-                    minHeight: '100%',
+                    filter: silhouette
+                        ? 'brightness(0) contrast(100)'
+                        : (isPokemonSprite
+                            ? (pure ? 'contrast(1.18) saturate(0.82) brightness(1.04)' : 'contrast(1.25) saturate(0.72) brightness(0.58)')
+                            : (pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)')),
+                    width: isPokemonSprite ? `${pokemonWidth}px` : '100%',
+                    height: isPokemonSprite ? `${pokemonHeight}px` : '100%',
+                    minWidth: isPokemonSprite ? `${pokemonWidth}px` : '100%',
+                    minHeight: isPokemonSprite ? `${pokemonHeight}px` : '100%',
                     objectFit: 'contain',
+                    alignSelf: isPokemonSprite ? 'flex-end' : 'auto',
                     imageRendering,
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    transform: `scale(${innerScale}) translateY(${offsetY})`,
+                    transform: isPokemonSprite ? `translateY(${offsetY})` : `scale(${innerScale}) translateY(${offsetY})`,
                     transformOrigin: 'bottom center',
                     transition: 'opacity 0.3s ease-in-out'
                 }}
@@ -110,8 +144,9 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
 // ==========================================
 // 背面 4-Color 網點運算引擎
 // ==========================================
-const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true, forceStatic = false, smoothAnimated = false }) => {
+const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true, forceStatic = false, smoothAnimated = false, normalizePokemonBattleSize = false }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
+    const isPokemonSprite = Boolean(MONSTER_ASSET_IDS[id]);
     const base = import.meta.env.BASE_URL;
 
     const effectiveAnimated = animated && !forceStatic;
@@ -123,6 +158,8 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
     const [imgSrc, setImgSrc] = useState(staticSrc);
     const [isGifLoaded, setIsGifLoaded] = useState(false);
     const [naturalWidth, setNaturalWidth] = useState(0);
+    const [naturalHeight, setNaturalHeight] = useState(0);
+    const [visibleHeight, setVisibleHeight] = useState(0);
 
     useEffect(() => {
         const currentAssetId = MONSTER_ASSET_IDS[id] || id;
@@ -132,6 +169,8 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
         setImgSrc(newStatic);
         setIsGifLoaded(false);
         setNaturalWidth(0);
+        setNaturalHeight(0);
+        setVisibleHeight(0);
 
         if (effectiveAnimated) {
             const img = new Image();
@@ -152,6 +191,13 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
     const targetSize = baseSize * scale;
     const useSmoothAnimated = effectiveAnimated && smoothAnimated;
     const innerScale = useSmoothAnimated ? 1 : (naturalWidth >= 120 ? 0.7 : 0.55);
+    const pokemonScaleStep = naturalWidth > 0
+        ? (normalizePokemonBattleSize
+            ? 68 / (POKEMON_VISIBLE_HEIGHTS[assetId] || visibleHeight || naturalHeight || 68)
+            : (targetSize >= naturalWidth * 2 ? 2 : (targetSize >= naturalWidth ? 1 : 0.5)))
+        : 1;
+    const pokemonWidth = naturalWidth > 0 ? Math.round(naturalWidth * pokemonScaleStep) : targetSize;
+    const pokemonHeight = naturalHeight > 0 ? Math.round(naturalHeight * pokemonScaleStep) : targetSize;
 
     // --- Sprite Offsets ---
     // 可以在這裡針對各別怪獸 ID 設定垂直位移 (向下為正，向上為負)
@@ -181,18 +227,25 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
                 src={imgSrc}
                 loading="lazy"
                 className={`pixel-rendering ${!isGifLoaded && effectiveAnimated ? 'opacity-70 grayscale-[0.2]' : ''}`}
-                onLoad={(e) => setNaturalWidth(e.target.naturalWidth)}
+                onLoad={(e) => {
+                    setNaturalWidth(e.target.naturalWidth);
+                    setNaturalHeight(e.target.naturalHeight);
+                    setVisibleHeight(measureVisiblePixelHeight(e.target));
+                }}
                 style={{ 
-                    filter: pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)',
-                    width: '100%',
-                    height: '100%',
-                    minWidth: '100%',
-                    minHeight: '100%',
+                    filter: isPokemonSprite
+                        ? (pure ? 'contrast(1.18) saturate(0.82) brightness(1.04)' : 'contrast(1.25) saturate(0.72) brightness(0.58)')
+                        : (pure ? 'none' : 'saturate(1.0) brightness(0.5) contrast(1.1)'),
+                    width: isPokemonSprite ? `${pokemonWidth}px` : '100%',
+                    height: isPokemonSprite ? `${pokemonHeight}px` : '100%',
+                    minWidth: isPokemonSprite ? `${pokemonWidth}px` : '100%',
+                    minHeight: isPokemonSprite ? `${pokemonHeight}px` : '100%',
                     objectFit: 'contain',
-                    imageRendering: useSmoothAnimated ? 'auto' : 'pixelated',
+                    alignSelf: isPokemonSprite ? 'flex-end' : 'auto',
+                    imageRendering: isPokemonSprite ? 'pixelated' : (useSmoothAnimated ? 'auto' : 'pixelated'),
                     opacity: 1.0,
                     pointerEvents: 'none',
-                    transform: `scale(${innerScale}) translateY(${offsetY})`,
+                    transform: isPokemonSprite ? `translateY(${offsetY})` : `scale(${innerScale}) translateY(${offsetY})`,
                     transformOrigin: 'bottom center',
                     transition: 'opacity 0.3s ease-in-out'
                 }}

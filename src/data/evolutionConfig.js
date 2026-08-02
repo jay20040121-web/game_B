@@ -11,24 +11,20 @@ const getMName = id => MONSTER_REGISTRY.find(m => m.id === id)?.name || '未知'
  * - mood: 心情 (0-100)
  * - hunger: 飽足感 (0-100)
  * - bond: 羈絆值 (0-100)
- * - topTag: 最優勢個性標籤
  */
 
-export const EVO_TIMES = {
-    FINAL_LIFETIME: 604800000 // 最終壽命上限：7 天 (不論階段)
-};
-
 export const EVO_LEVELS = {
-    0: 5,   // 蛋/初生 -> 幼年期
-    1: 15,  // 幼年期 -> 成長期
-    2: 30,  // 成長期 -> 成熟期
-    3: 60   // 成熟期 -> 完全體
+    0: 15,
+    1: 15,  // 第一階進化
+    2: 30,  // 第二階進化
+    3: 45,  // 第三階進化
+    4: 60   // 預留後續階段：每 15 級一階
 };
 
 export const WILD_EVOLUTION_MAP = {
     "1022": 1023, "1023": 1024,    // 小雞獸線
-    "1025": 1026, "1026": 1027,    // 石精靈線
-    "1043": 1044,                  // 足球線
+    "1025": 1026, "1026": 1027,    // 小拳石線
+    "1038": 1039,                  // 飄飄球線
 };
 
 export const EVOLUTION_CHAINS = {
@@ -40,11 +36,7 @@ export const EVOLUTION_CHAINS = {
         branches: [
             // 靈魂進化優先級最高
             { to: "F_SOUL", condition: "bond >= 40 && affinity == 'fire'", desc: `火系靈魂 (${getMName(1001)}線)` },
-            { to: "W_SOUL", condition: "bond >= 40 && affinity == 'water'", desc: `水系靈魂 (${getMName(1004)}線)` },
-            { to: "GR_SOUL_ALT", condition: "bond >= 40 && affinity == 'grass' && topTag in ['passionate', 'stubborn']", desc: `草系靈魂 (${getMName(1032)}線，熱血/執著)` },
-            { to: "GR_SOUL", condition: "bond >= 40 && affinity == 'grass'", desc: `草系靈魂 (${getMName(1007)}線)` },
-            { to: "B_SOUL_ALT", condition: "bond >= 40 && affinity == 'bug' && topTag in ['stubborn', 'nonsense']", desc: `蟲系靈魂 (${getMName(1035)}線，固執/無俚頭)` },
-            { to: "B_SOUL", condition: "bond >= 40 && affinity == 'bug'", desc: `蟲系靈魂 (${getMName(1010)}線)` },
+            { to: "W_SOUL", condition: "bond >= 40 && affinity == 'water'", desc: `水系靈魂 (${getMName(1004)}線)` },            { to: "GR_SOUL", condition: "bond >= 40 && affinity == 'grass'", desc: `草系靈魂 (${getMName(1007)}線)` },            { to: "B_SOUL", condition: "bond >= 40 && affinity == 'bug'", desc: `蟲系靈魂 (${getMName(1010)}線)` },
 
             // 基礎分支
             { to: "A", condition: "mood >= 50 && hunger >= 50", desc: `一般線 A (${getMName(1013)})` },
@@ -54,34 +46,36 @@ export const EVOLUTION_CHAINS = {
 
     // --- 魂系分支 (Soul Lines) ---
     "SOUL_FIRE": {
-        stage2: { "F_SOUL": { id: 1001, desc: `${getMName(1001)}` } },
+        stage2: {
+            "F_SOUL": { id: 1001, desc: `${getMName(1001)}` },
+            "F_SOUL_ALT": { id: 1030, desc: `${getMName(1030)}` }
+        },
         stage3: {
-            "F_SOUL": { id: 1002, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1002)} (其餘條件)` },
-            "F_SOUL_ALT": { id: 1030, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1030)} (溫柔/理性)` }
+            "F_SOUL": { id: 1002, from: "F_SOUL", desc: `${getMName(1002)} (無條件進化)` },
+            "F_SOUL_ALT": { id: 1031, from: "F_SOUL_ALT", desc: `${getMName(1031)} (無條件進化)` }
         },
         stage4: {
-            "F_SOUL": { id: 1003, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1003)} (其餘條件)` },
-            "F_SOUL_ALT": { id: 1031, from: ["F_SOUL", "F_SOUL_ALT"], desc: `${getMName(1031)} (溫柔/理性)` }
+            "F_SOUL": { id: 1003, from: "F_SOUL", desc: `${getMName(1003)} (無條件進化)` }
         }
     },
-
     "SOUL_WATER": {
-        stage2: { "W_SOUL": { id: 1004, desc: `${getMName(1004)}` } },
+        stage2: {
+            "W_SOUL": { id: 1004, desc: `${getMName(1004)}` },
+            "W_SOUL_ALT": { id: 1028, desc: `${getMName(1028)}` }
+        },
         stage3: {
-            "W_SOUL": { id: 1005, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1005)} (其餘條件)` },
-            "W_SOUL_ALT": { id: 1028, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1028)} (熱血/無俚頭)` }
+            "W_SOUL": { id: 1005, from: "W_SOUL", desc: `${getMName(1005)} (無條件進化)` },
+            "W_SOUL_ALT": { id: 1029, from: "W_SOUL_ALT", desc: `${getMName(1029)} (無條件進化)` }
         },
         stage4: {
-            "W_SOUL": { id: 1006, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1006)} (其餘條件)` },
-            "W_SOUL_BOND": { id: 1042, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1042)} (羈絆值 > 90)` },
-            "W_SOUL_ALT": { id: 1029, from: ["W_SOUL", "W_SOUL_ALT"], desc: `${getMName(1029)} (熱血/無俚頭)` }
+            "W_SOUL": { id: 1006, from: "W_SOUL", desc: `${getMName(1006)} (無條件進化)` },
+            "W_SOUL_ALT": { id: 1042, from: "W_SOUL_ALT", desc: `${getMName(1042)} (無條件進化)` }
         }
     },
-
     "SOUL_GRASS": {
         stage2: {
             "GR_SOUL": { id: 1007, desc: `${getMName(1007)}` },
-            "GR_SOUL_ALT": { id: 1032, desc: `${getMName(1032)} (熱血/執著)` }
+            "GR_SOUL_ALT": { id: 1032, desc: `${getMName(1032)}` }
         },
         stage3: {
             "GR_SOUL": { id: 1008, from: "GR_SOUL", desc: `${getMName(1008)} (無條件進化)` },
@@ -96,7 +90,7 @@ export const EVOLUTION_CHAINS = {
     "SOUL_BUG": {
         stage2: {
             "B_SOUL": { id: 1010, desc: `${getMName(1010)}` },
-            "B_SOUL_ALT": { id: 1035, desc: `${getMName(1035)} (固執/無俚頭)` }
+            "B_SOUL_ALT": { id: 1035, desc: `${getMName(1035)}` }
         },
         stage3: {
             "B_SOUL": { id: 1011, from: "B_SOUL", desc: `${getMName(1011)} (無條件進化)` },
@@ -128,15 +122,15 @@ export const EVOLUTION_CHAINS = {
     "SOUL_DEATH": {
         stage1: {
             "G1": { id: 1019, desc: `${getMName(1019)}` },
-            "G1_ALT": { id: 1019, desc: `${getMName(1019)}` }
+            "G1_ALT": { id: 1019, desc: `${getMName(1019)} (舊存檔相容)` }
         },
         stage2: {
-            "G1": { id: 1020, from: "G1", desc: `${getMName(1020)} (其餘條件)` },
-            "G1_ALT": { id: 1038, from: "G1", desc: `${getMName(1038)} (羈絆值 >= 100)` }
+            "G1": { id: 1020, from: ["G1", "G1_ALT"], desc: `${getMName(1020)} (無條件進化)` },
+            "G1_ALT": { id: 1020, from: ["G1", "G1_ALT"], desc: `${getMName(1020)} (舊存檔相容)` }
         },
         stage3: {
-            "G1": { id: 1021, from: "G1", desc: `${getMName(1021)} (無條件進化)` },
-            "G1_ALT": { id: 1039, from: "G1_ALT", desc: `${getMName(1039)} (無條件進化)` }
+            "G1": { id: 1021, from: ["G1", "G1_ALT"], desc: `${getMName(1021)} (無條件進化)` },
+            "G1_ALT": { id: 1021, from: ["G1", "G1_ALT"], desc: `${getMName(1021)} (舊存檔相容)` }
         }
     }
 };

@@ -127,7 +127,7 @@ export default function SkillRearrangeOverlay({
                                             ));
                                         })()}
                                         {skill.stat_changes && skill.stat_changes.some(s => s.change > 0) && (
-                                            <span className="text-[6px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black bg-[#42a5f5] text-white uppercase">Buff</span>
+                                            <span className="text-[6px] px-0.5 rounded-[1px] border border-black/10 leading-none py-0.5 font-black bg-[#42a5f5] text-white uppercase">增益</span>
                                         )}
                                     </div>
                                     <div className="text-[7px] text-white/60">屬性: {TYPE_MAP[skill.type] || skill.type} / 威力: {skill.power} / 命中: {skill.accuracy || '--'}</div>
@@ -140,7 +140,7 @@ export default function SkillRearrangeOverlay({
 
                 <div className={`mt-2 p-1.5 border-2 rounded text-center transition-all ${cursorIdx === 4 ? 'border-yellow-400 bg-yellow-400/20 scale-[1.02]' : 'border-white/10 bg-black/40'
                     }`}>
-                    <div className="text-[11px] font-black text-white">完成調整並使用道具</div>
+                    <div className="text-[11px] font-black text-white">完成技能順序調整</div>
                     <div className="text-[7px] text-white/60">點擊 [B] 確認生效</div>
                 </div>
             </div>

@@ -27,9 +27,10 @@ export default function SkillLearnOverlay({
     skillSelectIdx,
     handleB
 }) {
-    if (!pendingSkillLearn || isAdvMode || isPvpMode) return null;
-
     const [selectedSkillDetail, setSelectedSkillDetail] = useState(null);
+    const moves = advStats?.moves || [];
+
+    if (!pendingSkillLearn || isAdvMode || isPvpMode) return null;
     const selectedMoveId = selectedSkillDetail?.moveId;
     const selectedMoveSkill = selectedMoveId ? SKILL_DATABASE[selectedMoveId] : null;
     const selectedMoveEnchantData = selectedMoveId ? (advStats?.moveUpgrades?.[selectedMoveId]?.ailments || {}) : {};
@@ -79,7 +80,7 @@ export default function SkillLearnOverlay({
                         <div style={{ fontSize: '11px', fontWeight: '900', color: '#111', lineHeight: '1.4' }}>
                             要替換學會的技能嗎？
                             <br />
-                            <span style={{ color: '#d32f2f' }}>{SKILL_DATABASE[advStats.moves[tempReplaceIdx]]?.name}</span>
+                            <span style={{ color: '#d32f2f' }}>{SKILL_DATABASE[moves[tempReplaceIdx]]?.name}</span>
                             <br />
                             按下確認後會進行替換
                         </div>
@@ -106,7 +107,7 @@ export default function SkillLearnOverlay({
             )}
 
             <div className="w-full bg-[#383a37] text-[#8fa07e] text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black">
-                <span>獲得技能（Lv.{pendingSkillLearn.level}）</span>
+                <span>獲得技能（等級 {pendingSkillLearn.level}）</span>
             </div>
 
             <div className="flex-1 w-full flex flex-col items-center justify-center gap-2">
@@ -152,7 +153,7 @@ export default function SkillLearnOverlay({
                     )}
                 </div>
 
-                {advStats.moves.length < 4 ? (
+                {moves.length < 4 ? (
                     <div className="flex flex-col gap-3 items-center">
                         <div className="text-[9px] text-[#383a37]">技能欄已滿，無法再學新招</div>
                         <div className="mt-2 text-[10px] font-black bg-[#ff5252] text-white px-4 py-1 rounded-full border-2 border-[#1a1a1a] animate-pulse shadow-[2px_2px_0_#1a1a1a]">
@@ -163,7 +164,7 @@ export default function SkillLearnOverlay({
                     <div className="w-full flex flex-col gap-1 px-4">
                         <div className="text-[9px] mb-1 font-bold text-[#1a1a1a]">選擇要替換的技能</div>
                         {[0, 1, 2, 3].map((idx) => {
-                            const moveId = advStats.moves[idx];
+                            const moveId = moves[idx];
                             const moveDef = SKILL_DATABASE[moveId];
                             const isSelected = skillSelectIdx === idx;
                             const badges = moveDef ? buildAilmentBadges({

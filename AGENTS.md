@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 給之後協助這個專案的 coding agent 使用。
 
@@ -35,8 +35,8 @@
 - PC 尺寸診斷工具、always-on-top 診斷視窗、txt log、console log、DOM 量測標記都只能臨時使用；交付或打包給使用者前必須移除，避免影響遊戲畫面與效能。
 - 目前不要再回頭用 `electron-builder` 做 Windows installer，這台環境在 Windows code signing / symlink 上有卡點；若要發佈 PC 版，先以 portable folder 為準。
 - 怪獸來信系統已加入：每天 09:00、12:00、21:00 依本地時間產生最多三封信，主畫面 LCD 若有未讀信會顯示信封圖示，玩家讀完可回一封 120 字內的回信；下一封怪獸來信會參考上一封玩家回信產生回應。狀態與回信存在主存檔的 `petLetters`，修改存檔、雲端同步或清存檔流程時要保留這個欄位。
-- 怪獸來信邏輯在 `src/utils/petLetterSystem.js`，UI 在 `src/components/PetLetterOverlay.jsx`，離線個性台詞庫在 `src/data/petLetterLines.js`。目前每個個性（溫柔、執著、熱血、搞怪、冷靜）至少 40 句，狀態句也有多句輪替；不要把它退回只有少量固定模板。
-- 怪獸來信離線版目前固定 4 頁結構：第 1 頁天氣提醒、第 2 頁日期/節日/今日話題、第 3 頁今日狀態與高權重事件（附魔、進化、特殊事件、低飽食/低心情等）、第 4 頁玩家回信回應或個性收尾。不要再改回不固定順序，除非使用者明確要求。
+- 怪獸來信邏輯在 `src/utils/petLetterSystem.js`，UI 在 `src/components/PetLetterOverlay.jsx`，通用離線台詞庫在 `src/data/petLetterLines.js`。台詞不再依賴怪獸性格或舊存檔的 `soulTagCounts`。
+- 怪獸來信離線版目前固定 4 頁結構：第 1 頁天氣提醒、第 2 頁日期/節日/今日話題、第 3 頁今日狀態與高權重事件（附魔、進化、特殊事件、低飽食/低心情等）、第 4 頁玩家回信回應或通用收尾。不要再改回不固定順序，除非使用者明確要求。
 - 天氣感知在 `src/utils/weatherSystem.js`，使用瀏覽器定位與 Open-Meteo 免 key API；會抓目前天氣與未來 6 小時降雨機率/雨量，避免下雨天只因查詢當下沒雨而漏判。天氣查不到時要安靜 fallback，不可阻塞信件。
 - 今日話題在 `src/utils/dailyTopicSystem.js`，每天準備新聞、歷史上的今天、外部星象、外部明日塔羅四種 topic。信件規則：早上第 2 頁用新聞，中午第 2 頁用歷史上的今天，晚上第 1 頁用星象、第 2 頁用明日塔羅。星象與塔羅目前優先抓 `freehoroscopeapi.com`，外部查不到時要使用本機 fallback，不可阻塞信件。
 - 每日話題的新聞與歷史偏好要避開政治、選舉、兩岸、軍事、戰爭與社會案件。新聞優先挑動物、生態、自然、科學新知、太空天文等較適合怪獸信件的輕知識；歷史上的今天優先挑動物、外太空、科學發現、人物出生、特殊節慶或紀念日。若抓不到符合白名單的外部資料，寧可使用小知識 fallback，不要硬塞政治新聞。
@@ -47,9 +47,9 @@
 - AI 來信是非阻塞保底流程：新信先以離線模板建立，若 endpoint 啟用則標記 `aiStatus: pending`，AI 成功才替換成 `source: 'ai'`；失敗、格式錯誤或玩家已讀過時都不能讓信件消失，也不要重複燒 token。`petLetters` slot 目前會保留 `source`、`aiStatus`、`aiRequestedAt`、`aiResolvedAt`、`aiError`。
 - AI 來信後端目前改用 Cloudflare Worker，程式在 `worker/src/index.js`，不需要 Firebase Blaze。Worker 會用 Google JWK 驗證 Firebase Auth ID token；未登入玩家會 fallback 離線模板。預設 provider 是 Gemini（`PET_LETTER_AI_PROVIDER=gemini`、`GEMINI_MODEL=gemini-2.5-flash-lite`），Gemini key 用 Worker secret `GEMINI_API_KEY`；OpenAI 可作 fallback，key 用 Worker secret `OPENAI_API_KEY`。任何 AI key 都不要寫進 repo 或前端 `.env`。
 - 怪獸來信的 Debug 測試入口在 `DebugPanel.jsx` 的「來信」分頁，可重開已讀信、清空今日來信並重產、清除回信紀錄，也可用 `debugOverrides.petLetterHour` 覆蓋測試時間（08/09/12/21）。這是測試用，不要把時間覆蓋當成正式遊戲邏輯。
-- 英文模式目前由 `src/components/LanguageDomTranslator.jsx` 掃描 DOM，再交給 `src/utils/languageSystem.js` 翻譯。準確度優先靠 exact / regex 句型與技能、天賦等 glossary；不要依賴逐字 `CHAR_TRANSLATIONS` 生成正式英文，否則容易出現像技能名被拆成不自然英文的問題。新增怪獸、技能、天賦、戰鬥 log 或重要 UI 文案時，優先補明確英文名稱或 regex 句型，DOM 翻譯只當過渡 fallback。
+- 遊戲目前固定使用繁體中文。`App.jsx` 不再掛載 `LanguageDomTranslator`，設定頁也不提供英文切換；新增 UI、戰鬥訊息、技能、特性或教學文字時，玩家可見內容必須直接提供繁體中文。程式識別字、API 欄位與 Pokémon 英文索引可保留，不可直接顯示給玩家。
 - 設定內的「死亡引導」與「每日信件」開關走獨立 localStorage 偏好，helper 在 `src/utils/gamePreferenceSystem.js`，不是主存檔欄位。關閉每日信件時只停止新信產生、信封入口與 AI 來信請求，不刪除既有 `petLetters` 存檔；關閉死亡引導時會清掉待顯示或正在顯示的戰敗教學。
-- 重製生命 / 死亡後重生的繼承邏輯在 `src/App.jsx` 的 `handleRestart()`。下一代會用前代等級換算初始 `basePower`、繼承最多 4 招與對應 `moveUpgrades`，IV 則從前代 `ivs` 挑最高 3 項原值繼承，剩下 1 項重新隨機；EV 仍全部歸零。
+- 重製生命 / 死亡後重生的邏輯在 `src/App.jsx` 的 `handleRestart()`。下一代會從 `POKEMON_STARTER_IDS` 隨機抽出一條固定進化鏈的首階怪獸；前代等級換算初始 `basePower`，IV 從前代 `ivs` 挑最高 3 項原值繼承，剩下 1 項重新隨機，EV 全部歸零。招式與 `moveUpgrades` 不跨物種繼承，新生招式必須由新物種在目前等級的正式 learnset 產生。
 
 ## 協作偏好
 
@@ -67,6 +67,8 @@
 
 手機網頁版 / PWA 支援目前放在 `index.html`、`public/manifest.webmanifest`、`public/sw.js` 與 `public/pwa/` icon。iPhone Safari 可用「加入主畫面」產生類似 App 的入口；修改 Vite `base`、manifest 路徑或 icon 時，要同時測 `npm run build` 與 `npm run build:itch`，確認 GitHub Pages `/game_B/` 與 itch.io 相對路徑都能載入。
 
+GitHub Actions build 時，`vite.config.js` 會從 `GITHUB_REPOSITORY` 自動取得 repository 名稱作為 Pages base path。原站會使用 `/game_B/`，獨立 poke 網頁 repository 會使用 `/game_B-poke/`；本機一般 production build未提供該環境變數時仍 fallback `/game_B/`。
+
 目前沒有專門的 test script。一般修改完成後，至少要跑 `npm run build` 確認能正常編譯。
 
 ## 架構地圖
@@ -76,10 +78,11 @@
 - `src/styles.css`：全域樣式與 Tailwind 相關樣式。
 - `src/monsterData.js`：匯出怪獸名稱、基礎能力、招式、屬性邏輯、招式生成、能力計算，以及戰鬥資料。
 - `src/data/monsterRegistry.js`：怪獸登錄資料，是怪獸 ID、名稱、基礎能力等資料的主要來源。
-- `src/data/evolutionConfig.js`：進化等級、進化鏈、野外怪獸進化對應、最終壽命等設定。
+- `src/data/evolutionConfig.js`：進化等級、進化鏈與野外怪獸進化對應等設定。
 - `src/data/gameConfig.js`：遊戲常數，例如物理移動、冒險道具、日記資料、靈魂問題、戰鬥規則、AI 選招邏輯。
 - `src/data/menuConfig.js`：主選單項目設定，包含選單 id、label、icon sprite 與背景圖路徑組合。
 - `src/data/tutorialKnowledge.js`：新手教學 AI 使用的知識資料。
+- Pokémon 招式資料由 `scripts/generate-pokemon-moves.mjs` 從 PokéAPI 產生至 `src/data/pokemonMoveData.js`，來源摘要在 `docs/pokemon-move-data.md`。每個物種選擇依實際發行順序判定的最新可用 level-up 版本群組，只匯入等級招式，不包含招式機、蛋招式或教學招式。`SKILL_DATABASE`、初始配招、野怪、聯盟與升級學招都必須使用這份資料。
 - `src/components/`：UI 覆蓋視窗與專用渲染元件。
 - `src/components/AutoFitText.jsx`：共用自動縮字元件，優先用在固定寬高的標題、名牌、按鈕與卡片名稱。
 - `src/utils/`：共用系統，包含戰鬥、存檔、Firebase、PvP、排行榜、淘汰賽、音效、環境設定。
@@ -110,9 +113,10 @@
 - `src/utils/useCloudSync.js`：Firebase auth listener、Google 登入/登出、雲端存檔 `saveToCloud`、雲端載入、版本檢查、防誤蓋與跨帳號本地存檔保護。
 - `src/utils/useSingleActiveTab.js`：多分頁 heartbeat lock，避免同一個存檔在多個分頁同時運行。
 - `src/utils/useDisplayScale.js`：裝置畫面自動縮放、手動縮放與 `pixel_monster_scale` localStorage。
-- `src/utils/useSkillLearning.js`：升級後自動學招、學招 pending state、替換確認 state、技能順序調整開關與等級追蹤重置。捕捉新怪或回憶膠囊復活後要呼叫 `resetLevelTracker(level)`，避免沿用前一隻怪的等級觸發學招。
+- `src/utils/useSkillLearning.js`：依物種正式 learnset 與學習等級自動學招；跨多級會用 queue 依序提示，進化時會檢查等級 0 與當前等級招式。捕捉新怪或回憶膠囊復活後要呼叫 `resetLevelTracker(level)`，避免沿用前一隻怪的等級觸發學招。
 - `src/utils/dateUtils.js`：本地日期字串 `getTodayStr`，避免 UTC 跨日誤差。
-- `src/utils/battleStats.js`：玩家戰鬥能力 profile、性格修正 `getNatureMods`、trait 對能力的倍率套用。修改能力計算時要確認 `generateMyBattleStats`、`generateBattleState` 和 PvP INIT 資料仍一致。
+- `src/utils/battleStats.js`：玩家戰鬥能力 profile 與 trait 對能力的倍率套用。性格系統已移除，不再對能力值提供性格修正；修改能力計算時要確認 `generateMyBattleStats`、`generateBattleState` 和 PvP INIT 資料仍一致。
+- 怪獸性格系統已完整移除：不再建立、累積、保存或顯示 `soulTagCounts`，談心只保留羈絆與屬性親和，舊存檔若仍帶有該欄位會被安全忽略，不要重新接回戰鬥、進化、日記、來信或 Debug 流程。
 - `src/data/menuConfig.js`：主選單項目資料。新增或調整主選單入口時先改這裡，再檢查 `executeAction` 是否有對應行為。
 
 ### 戰鬥系統
@@ -138,6 +142,8 @@
 玩家戰鬥能力 profile 計算已拆到 `src/utils/battleStats.js`。這會被 App 內的 `generateMyBattleStats` 與 `generateBattleState` 串接使用，修改時要避免單機戰鬥與 PvP INIT 使用不同算法。
 
 修改戰鬥邏輯時，要同時考慮單機冒險戰鬥和 PvP。PvP 由主機計算結果，再把 `RESULT` 傳給客機。如果讓客機也自行計算結果，很容易造成雙方不同步。
+
+寶可夢招式的通用與特殊效果集中在 `src/utils/pokemonMoveEffectSystem.js`，再由 `battleTurnSystem.js` 統一結算。命中／閃避階級、急所率、連擊、天氣、場地、牆壁、替身、挺住、同命、揮發狀態與特殊變化招式都不可只做 UI 文案；新增招式後要跑 `node scripts/test-pokemon-move-effects.mjs`，確認特殊變化招式沒有掉回無效果。遊戲目前是單隻怪獸對戰，接棒、後備治療、強制換人與場地陷阱會保留狀態或採單打適配；若未來加入隊伍切換，應從既有 `fieldEffects`、hazard 與換人狀態延伸，不要另做第二套戰鬥結算。
 
 ### PvP
 
@@ -169,10 +175,26 @@ PvP 使用 PeerJS，主要在 `src/utils/usePvpConnection.js`。
 
 目前規則：
 
-- 冒險事件機率會依玩家等級從「探索 50% / 野怪 50% / 訓練師 0%」逐步變成等級 50 以上的「探索 0% / 野怪 30% / 訓練師 70%」。
+- 冒險事件只會遭遇野生怪獸；探索物資與訓練家事件、資料池及 Debug 強制觸發入口均已移除。
 - 一般野怪等級是玩家等級的 70% 到 90%，最高 100 等；精銳野怪仍是玩家同等級。
 - 野怪目前不附魔，`moveUpgrades` 應維持空物件。
-- 訓練師等級目前是玩家等級 -10，最低 1 等；訓練師附魔仍走 `generateNpcMoveUpgrades(eMoves, playerLevel)`。
+- 冒險野怪戰使用與聯盟相同的手動選招節奏：開場後進入 player_action，A 切換技能、B 確認出招；每回合結算後必須回到 player_action，不可恢復舊的 combat 自動攻擊排程。
+- 冒險野怪池只使用 `ADVENTURE_ONLY_WILD_IDS`：目前由 `scripts/generate-adventure-wild-pokemon.mjs` 管理 Generation I–V 中非傳說／非幻之、非三階進化家族且自身未進化的基礎型，依六項官方種族值總和排序取前 50。三階家族即使是第一階段也不能放入冒險池。冒險限定怪可捕捉成夥伴，但不加入三階家族圖鑑清單 `OBTAINABLE_MONSTER_IDS`。
+
+### 無限波次 Rogue 模式
+
+- 主選單原本的談心入口已改為無限波次挑戰，UI 與單局狀態集中在 `src/components/PokeRogueOverlay.jsx`；舊 `SoulExpeditionOverlay` 與談心卡牌不可重新接回入口。
+- 起始隊伍直接讀取寶可夢球快照，最多選 3 隻；闖關中收服可擴充到 6 隻。闖關的 HP、能力強化與新成員都是 run-local，不可回寫 `inventory` 或主畫面夥伴。
+- Rogue 敵人等級以當前隊伍平均等級計算：1–10 層平均 -5；11–15 層 -4；16–20 層 -3；21–25 層 -2；26 層起平均 +1，之後每 5 層再 +1，並限制 Lv.1–100。計算集中在 `src/utils/rogueDifficultySystem.js`。每 10 波是 1.15 倍能力的強化頭目。每一層（包含第 1 層）都必須先進入戰前出場選擇，再開始戰鬥；勝利後直接進入三選一獎勵，不再顯示戰後換怪。若收服獎勵發生時隊伍已有 6 隻，必須顯示隊員替換畫面，完成替換或由玩家明確放棄收服後才能前往下一層。Rogue 戰鬥由 `RogueBattleController.jsx` 直接呼叫共用 `processBattleTurn`，並依同一份 `stepQueue` 播放日誌、傷害跳字、屬性特效、治療、護盾與狀態結果；畫面重用 `BattleAdventureOverlay`，不可再建立另一套傷害公式、戰鬥 UI 或跳過表演佇列。波次模組只負責 run-local 隊伍與戰後獎勵。A/B/C 鍵由 Rogue overlay 在 capture phase 攔截；畫面下方三顆按鈕則由 App 發送 `rogue-control` 事件並進入同一個 `handleControl`，兩條輸入路徑必須保持一致。
+- 此模式目前是 PokeRogue 核心循環的簡化獨立實作，不直接複製其 AGPL 原始碼或授權不明素材。後續擴充 biome、商店、隨機獎池或 run save 時應繼續維持獨立模組。
+
+### 寶可夢球背包
+
+- 舊物品系統已移除；背包的存檔欄位仍沿用 `inventory` 以相容既有本機與雲端存檔，但陣列內容現在只能是 `POKE_BALL`。球的建立、驗證與舊資料正規化集中在 `src/utils/pokemonBallSystem.js`。
+- 每顆球使用獨立 `ballId`，並保存一份 `pokemon` 快照，內容包含物種、進化階段、技能與技能強化、IV/EV/戰鬥力、屬性、官方特性、羈絆及主要培育狀態；相同物種可以存在多顆球中。
+- 目前同行球另存為 `activeBallId`。切換時必須先將主畫面夥伴的最新狀態寫回原球，再載入目標球；主畫面狀態變動時也要同步更新目前球，避免切換後回溯。
+- 舊存檔載入時會濾除所有舊道具，若沒有有效寶可夢球，會把當前夥伴遷移到第一顆球。此遷移刻意不提升 `SAVE_VERSION`，避免既有本機存檔被 loader 視為不相容而重置。
+- 冒險收服成功時會建立新球並保存捕捉個體，不可只把物種 ID 加入圖鑑；捕捉與切換後要重置技能等級追蹤，避免沿用上一隻寶可夢的升級學招狀態。
 
 ### 存檔
 
@@ -195,26 +217,29 @@ Firebase compat SDK 設定在 `src/utils/firebase.js`。
 
 ### 進化系統
 
-進化設定在 `src/data/evolutionConfig.js`。
+`poke` 分支已改為 Pokémon 式固定路線等級進化，正式設定在 `src/data/pokemonEvolutionSystem.js`。
 
-遊戲有普通路線、靈魂屬性路線、野外怪獸路線與死亡相關路線。進化條件會用到心情、飽食度、羈絆、階段勝場、靈魂屬性、人格 tag 等資料。
-
-新增怪獸時，通常要同步檢查：
-
-- `src/data/monsterRegistry.js`
-- `src/data/evolutionConfig.js`
-- `src/monsterData.js` 從 registry 派生出的資料，以及圖鑑清單 `OBTAINABLE_MONSTER_IDS`
-- `public/assets/` 裡是否有對應 sprite 或素材
-
-一般 A/C 線目前有高羈絆分支：`1013 -> 1014` 後，若 1014 要進化且 `bondValue > 90`，會走 `A_BOND` 進化成 `1041`（影忍）；`1016 -> 1017` 後，若 1017 要進化且 `bondValue > 90`，會走 `C_BOND` 進化成 `1040`（流流子）；否則依原本一般線條件進入 `1015` 或 `1018`。
-水系靈魂線目前有高羈絆最終分支：`1004 -> 1005` 或 `1004 -> 1028` 後，若 1005 / 1028 要進化且 `bondValue > 90`，會優先走 `W_SOUL_BOND` 進化成 `1042`（泡沫鱷王）；否則依個性分支進入 `1006` 或 `1029`。
-草系靈魂線目前有兩條不互通分支。一般草魂線是 `1007 -> 1008 -> 1009`；若首次進入草魂線時最優勢個性是熱血 `passionate` 或執著/固執 `stubborn`，會進入 `GR_SOUL_ALT` 的 `1032 -> 1033 -> 1034`。進入 `GR_SOUL_ALT` 後後續無條件沿 1032 線進化，不會切回 1007 線；已在 1007 線也不會因後續個性變化切到 1032 線。
-蟲系靈魂線目前也有兩條不互通分支。一般蟲魂線是 `1010 -> 1011 -> 1012`；若首次進入蟲魂線時最優勢個性是執著/固執 `stubborn` 或無俚頭 `nonsense`，會進入 `B_SOUL_ALT` 的 `1035 -> 1036 -> 1037`。進入 `B_SOUL_ALT` 後後續無條件沿 1035 線進化，不會切回 1010 線；已在 1010 線也不會因後續個性變化切到 1035 線。
-DebugPanel 的「數值調整」頁有靈魂屬性 / 個性快速設定，可以直接改 `lockedAffinity`、`soulAffinityCounts`、`soulTagCounts`。測草系 1032 線時，將羈絆設 40 以上，屬性鎖定草，個性設熱血 `passionate` 或執著/固執 `stubborn`，再把等級推到進化門檻。
-
-死亡重生目前使用 `G1` 幽燭燭線，起點固定 `1019`。一般路線是 `1019 -> 1020 -> 1021`；若 1019 進化到第二階段時羈絆值 `bondValue >= 100`，會切到高羈絆分支 `G1_ALT`：`1019 -> 1038 -> 1039`，其中 `1038` 會無條件進化成 `1039`。壽命結束或終止生命時的 D 線抽籤都是 20% 機率進入 `G1`，不要再抽未實作的 `G2`，除非已同步補上 `EVOLUTION_CHAINS`、`monsterIdMapper`、registry、圖鑑與素材資料。
-
+- `currentMonsterId` 是目前物種的權威狀態；`evolutionBranch` 與 `evolutionStage` 只保留作舊存檔相容與既有介面資料。
+- 每條進化鏈依陣列順序固定前進，不再根據心情、飽食度、羈絆、勝場、靈魂屬性或人格 tag 分支。
+- 第 1、2、3 次進化門檻固定為等級 15、30、45；更長的鏈每一階再增加 15 級。
+- 新遊戲固定從 National Pokédex ID `4`（小火龍）開始。捕捉與回憶膠囊會直接以取得的怪獸 ID 接續其固定進化鏈。
+- 重製生命與玩家主動終止生命後重生，會從每條固定進化鏈的第一個 ID 等機率抽選；抽選池由 `POKEMON_STARTER_IDS` 派生，不要另建一份容易失同步的清單。
+- 怪獸已移除七天壽命限制，不會因經過時間自然死亡。`birthTime` 僅為舊存檔相容欄位，不可再用它建立死亡計時器；死亡狀態只應由玩家主動確認終止生命等明確操作觸發。
+- `src/data/evolutionConfig.js` 與 `src/utils/monsterIdMapper.js` 的舊分支表只用於將沒有 `currentMonsterId` 的舊存檔轉換成目前物種，不可再拿來決定正式進化。
+- 圖鑑詳細頁只顯示怪獸名稱與圖片，不顯示進化方向或進化條件。
+- 新增或調整進化鏈時，要同步檢查 `src/data/pokemonEvolutionSystem.js`、`src/data/pokemonMapping.js`、`src/data/monsterRegistry.js`、`src/monsterData.js` 的圖鑑清單，以及 `public/assets/exclusive/` 的素材。
+- 目前完整三階圖鑑共有 49 條進化線、147 隻寶可夢。後追加的 34 條／102 隻集中由 `src/data/additionalThreeStagePokemonData.js` 提供，產生器是 `scripts/generate-additional-three-stage-pokemon.mjs`，會同步抓取 National Pokédex ID、繁中名稱、種族能力、特性池及 Black/White 規格的正面／背面 GIF 與 PNG。重產後還要執行 `node scripts/generate-pokemon-moves.mjs` 取得官方等級學招，不要只改進化鏈。
 ## UI 注意事項
+
+### 無限挑戰經驗值
+
+- 無限挑戰經驗只存在該次挑戰隊伍，不直接修改背包寶可夢球的日常資料。
+- 勝利後依敵方種族值推導基礎經驗，再用敵方等級與 Boss 加成計算總量，平均分給所有隊員（包含倒下成員）。
+- 局內採等級三次方累積曲線，最高 100 級；升級時由 IV/EV 重算能力並更新該等級可用招式。
+- 邏輯在 src/utils/rogueExperienceSystem.js，畫面在 RogueExperienceOverlay.jsx。
+- 每 5 層固定為訓練家戰：尾數 5 是路邊訓練家小 Boss，尾數 0 是道館館主 Boss。第 5／10 層各 2 隻、第 15／20 層各 3 隻，之後每 10 層區間增加 1 隻，最多 6 隻。
+- 訓練家會依序派出整隊，全部擊敗才結算該層；其持有寶可夢不可捕捉。小 Boss 使用不重複的一般野怪，館主只能使用 src/utils/rogueTrainerSystem.js 中各自明確配置的專屬隊伍，不可從全域池亂抽。
+- 目前館主池為小剛、馬志士、莉佳、娜姿、夏伯、坂木；新增館主前必須確認從 2 到 6 隻的所有配置 ID 都已有名稱、能力、技能與 sprite。
 
 這個遊戲的 UI 是小型像素對打機/電子寵物風格，使用 Tailwind utility class 加上自訂 CSS。
 
@@ -237,19 +262,14 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 
 戰鬥畫面的 GIF sprite 很容易因為同層疊加效果而進入瀏覽器的合成路徑，造成受擊後模糊、馬賽克或渲染卡住。
 
-### 天賦系統交接
+### Pokémon 特性系統交接
 
-天賦資料在 `src/data/monsterTraits.js`，戰鬥能力倍率主要經由 `src/utils/battleStats.js`、`src/App.jsx` 的戰鬥建立流程，以及 `src/utils/useTournament.jsx` 聯盟戰鬥建立流程套用。DebugPanel 切換天賦時，若玩家已在戰鬥中，也會同步修正目前 battleState 內玩家能力，避免偵錯器改天賦後看起來沒生效。
-
-目前新增且已接戰鬥流程的天賦：
-
-- `絕對防禦`：攻擊 x0.50、速度 x0.50；受到有傷害的攻擊時，在 `src/utils/battleTurnSystem.js` 以 50% 機率讓該次傷害無效化。
-- `太陽之子`：攻擊 x0.50、HP x0.50；火屬性技能傷害 x1.30，受到水屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/太陽之子.png`。
-- `雨天娃娃`：HP x0.80、防禦 x0.80；水屬性技能傷害 x1.30，受到草屬性技能傷害 x0.30。戰鬥場景會在有此天賦的怪獸旁顯示 `public/assets/exclusive/effect/雨天娃娃.png`，光暈使用偏藍色調。
-- `魔術師`：開場觸發一次，在 `src/utils/battleTraitSystem.js` 的 `applyOpeningTraitEffects` 交換雙方第一格招式，並連同該招式的 `moveUpgrades` 附魔資料一起交換。單機冒險與聯盟戰鬥建立後都要呼叫這個 helper；若之後要支援 PvP，必須由主機端統一產生並同步結果，不能讓雙方客戶端各自交換以免不同步。
-
-聯盟大會 NPC 從第 4 場開始才會由 `src/utils/useTournament.jsx` 隨機取得一個 `MONSTER_TRAITS` 天賦，並將天賦的 HP/攻擊/防禦/速度倍率套進 NPC 戰鬥數值；第 1、2、3 場維持無天賦，避免第一次附魔前敵人強度過高。PVP 冠軍挑戰沿用排行榜玩家自己的天賦資料。
-
+- 舊的自創天賦已移除。`src/data/monsterTraits.js` 現在保存從 PokeAPI 取得的 45 隻 Pokémon 正式特性池、繁中名稱與官方說明，共 38 種特性。
+- `generateMonsterTraits(speciesId)` 必須依物種抽取；有兩種或三種特性時等機率隨機，隱藏特性也包含在池中。不得再從全域特性清單亂抽。
+- `normalizeMonsterTraits(saved, speciesId)` 會保留仍屬於該物種的合法特性；舊自創天賦或不合法特性會重新抽取，負責舊存檔轉換。
+- 新生、野外捕捉、進化、回憶膠囊與聯盟 NPC 都必須傳入實際 National Pokédex ID。進化後會依新物種的特性池重新抽取。
+- `MONSTER_TRAITS` 只供翻譯等全域查表；DebugPanel 必須用 `getPokemonAbilities(currentMonsterId)`，避免設定其他物種的特性。
+- 38 種官方特性已接入共用戰鬥結算。`implementation.status` 為 `ready` 或 `ready_contextual`；後者代表規則已存在，但目前無戰鬥天氣、持有道具、命中下降或雙打隊友時會依官方條件不觸發。後續新增這些系統時要沿用既有條件，不可改成常駐倍率。
 之後若再碰到類似問題，優先遵守：
 
 - 受擊閃爍不要直接動 sprite 本體的 `opacity`
@@ -399,10 +419,11 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 
 - PvP 排行榜的週期重點是「月榜相容」，不是再回到純日榜。
 - 聯盟大會目前是 32 強，玩家主線會打 5 輪；冠軍後有 50% 機率觸發第 6 輪 PvP 排行榜挑戰。
-- 聯盟 NPC 強度依輪次，不再單純依玩家等級：第 1 輪玩家 -5 等 0 附魔、第 2 輪玩家 -3 等 0 附魔、第 3 輪同等級 3 附魔、第 4 輪同等級 7 附魔、第 5 輪玩家 +5 等 10 附魔且封頂 100 等。
+- 聯盟大會已移除 Stage 2 報名限制，Stage 1 怪獸也可以參賽。
+- 聯盟 NPC 強度依輪次，不再單純依玩家等級：第 1 輪玩家 -5 等、第 2 輪玩家 -3 等、第 3、4 輪同等級、第 5 輪玩家 +5 等且封頂 100 等。聯盟戰鬥不套用玩家、NPC 或排行榜對手的技能附魔。
 - 聯盟 NPC stage 規則：第 1 到第 3 輪不能高於玩家 stage；第 4、5 輪不能低於玩家 stage。
-- 第 3 輪勝利後會進一次中途附魔，完成後回到卡片選擇再進第 4 輪。附魔全 MAX 時要跳過附魔選擇，不應中斷大會流程。
-- 第 6 輪 PvP 排行榜挑戰會讀排行榜玩家的等級、技能、附魔與天賦。新資料來自 `battleProfile`；舊排行榜資料沒有完整快照時會 fallback 成可戰鬥資料。
+- 聯盟大會已移除肉鴿卡片與所有中途／冠軍附魔流程；每輪勝利後直接推進下一輪，決賽與額外冠軍挑戰結束後直接顯示冠軍畫面。
+- 第 6 輪 PvP 排行榜挑戰會讀排行榜玩家的等級、技能與特性，但不帶入技能附魔。新資料來自 `battleProfile`；舊排行榜資料沒有完整快照時會 fallback 成可戰鬥資料。
 - 聯盟一般 NPC 與第 6 輪 PvP 排行榜挑戰都有避免連續重複對手的邏輯；若候選池太小才允許重複。
 - 聯盟大會若要讀 PvP 名單，要確認它吃的是目前月榜邏輯或相容資料來源，不要直接依賴過期的日格式。
 - 排行榜、聯盟大會、PvP 資料來源最好分清楚：
@@ -422,8 +443,8 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 
 - 遊戲目前有繁中 / 英文顯示切換，設定存在 `localStorage.pixel_monster_language`。
 - 語系核心在 `src/utils/languageSystem.js`，英文翻譯表與常見前綴替換都集中在這裡。
-- 全域顯示層翻譯在 `src/components/LanguageDomTranslator.jsx`，由 `App.jsx` 掛載；英文模式會掃描 React render 出來的文字節點並套用翻譯表。
-- 設定頁 `src/components/SettingsOverlay.jsx` 有語言切換按鈕。新增重要 UI 文字時，若希望英文模式顯示完整，優先補 `languageSystem.js` 的翻譯表。
+- 舊的 `src/components/LanguageDomTranslator.jsx` 與 `src/utils/languageSystem.js` 已不再接入執行流程，只保留作歷史相容參考；不要重新掛載 DOM 英文化。
+- 設定頁 `src/components/SettingsOverlay.jsx` 只顯示「繁體中文」。玩家可見的英文縮寫也應改成中文，例如 `Lv.` 改為「等級」、`Buff` 改為「增益」；A/B/C 操作鍵名與 Google 等正式品牌名稱可保留。
 - 目前不是線上機器翻譯，不會也不應在前端放翻譯 API key；大量劇情、怪獸來信或 AI 文字若要高品質英文，需要另外補人工翻譯表或走後端服務。
 
 
@@ -448,3 +469,14 @@ Use the five default Matt Pocock triage roles and matching GitHub label names. S
 ### Domain docs
 
 This is a single-context repository using root `CONTEXT.md` and `docs/adr/` when those documents are created. See `docs/agents/domain.md`.
+## poke 分支 Pokémon 圖鑑與 ID 規格
+
+- 正式怪獸主鍵直接使用 National Pokédex ID，不再使用 `1000–1044` 自有 ID。主要資料在 `src/data/pokemonMapping.js`、`src/data/monsterRegistry.js` 與 `src/data/pokemonEvolutionSystem.js`。
+- 圖鑑只收錄完整三階家族。現在共有 15 條家族、45 隻怪獸；`OBTAINABLE_MONSTER_IDS` 必須由 `POKEMON_EVOLUTION_CHAINS.flat()` 派生。
+- 舊存檔透過 `LEGACY_GAME_ID_TO_POKEMON_ID` 與 `normalizePokemonSpeciesId` 轉換目前物種、收藏圖鑑和回憶膠囊物種 ID；不可刪除這份相容表。
+- 已移除波克比、六尾→九尾、夢妖、艾路雷朵、飄飄球→隨風球、打擊鬼與投摔鬼。替代家族是皮丘→皮卡丘→雷丘、腕力→豪力→怪力、迷你龍→哈克龍→快龍。
+- Pokémon 素材檔名就是 National Pokédex ID，位於 `public/assets/exclusive/idle/`、`back/` 與 `sprites/`。來源與權利提醒記錄在 `public/assets/exclusive/POKEMON_SPRITES.md`。
+- 戰鬥尺寸使用 `POKEMON_VISIBLE_HEIGHTS` 與 `normalizePokemonBattleSize` 正規化；新增素材時要補可見高度或確認自然尺寸 fallback 合理。
+- 圖鑑詳細頁只顯示怪獸名稱與圖片，不顯示進化條件。
+- 主選單第二格已由互動系統改為技能入口：狀態頁只顯示能力與特性，技能頁獨立顯示招式；餵食、撫摸及互動子選單功能已移除。舊存檔的互動紀錄欄位暫時保留，只作相容用途。
+- Pokémon 名稱與 sprites 涉及第三方權利；公開發布或商用前必須另行確認授權，不可直接合併到正式 `main` 當作可商用素材。

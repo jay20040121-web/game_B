@@ -110,14 +110,57 @@ export const checkPreTurnStatus = (state, rng = Math.random) => {
 
 export const applyMoveEffects = (move, targetState, sourceState, rng = Math.random) => {
     let messageObjs = [];
+    const blocksSecondary = targetState.trait?.id === 'shield-dust' && (move.power || 0) > 0;
 
     // 1. Ailment
-    if (move.ailment && move.ailment !== 'none' && !targetState.status) {
+    const blockedBySafeguard = (targetState.fieldEffects?.safeguardTurns || 0) > 0;
+    const blockedByTerrain = targetState.isGrounded !== false && ['electric', 'misty'].includes(targetState.battleTerrain);
+    const terrainBlocksAilment = blockedByTerrain && (targetState.battleTerrain === 'misty' || move.ailment === 'sleep');
+    const sleepImmune = ['insomnia', 'vital-spirit'].includes(targetState.trait?.id);
+    const volatileAilments = ['disable', 'ingrain', 'perish-song', 'unknown', 'silence', 'torment'];
+    if (move.ailment === 'disable') {
+        targetState.disabledMoveId = targetState.lastMove?.id || null;
+        targetState.disabledMoveTurns = targetState.disabledMoveId ? 4 : 0;
+        messageObjs.push({ text: targetState.disabledMoveId ? '最近使用的招式被封印了！' : '但是定身法失敗了！', targetType: 'target' });
+    } else if (move.ailment === 'ingrain') {
+        sourceState.ingrain = true;
+        sourceState.trapped = true;
+        messageObjs.push({ text: '扎下了根，每回合會回復體力！', targetType: 'source' });
+    } else if (move.ailment === 'perish-song') {
+        sourceState.perishTurns = 3;
+        targetState.perishTurns = 3;
+        messageObjs.push({ text: '雙方的滅亡倒數變成 3！', targetType: 'target' });
+    } else if (move.ailment === 'unknown' && move.id === 'smack-down') {
+        targetState.isGrounded = true;
+        targetState.groundedTurns = 5;
+        targetState.magnetRiseTurns = 0;
+        messageObjs.push({ text: '被擊落到地面了！', targetType: 'target' });
+    } else if (move.ailment === 'unknown' && move.id === 'tri-attack' && !targetState.status) {
+        const ailments = ['burn', 'freeze', 'paralysis'];
+        targetState.status = ailments[Math.floor(rng() * ailments.length)];
+        targetState.statusTurns = targetState.status === 'freeze' ? Math.floor(rng() * 3) + 1 : 0;
+        messageObjs.push({ text: '受到三重攻擊的附加異常效果！', targetType: 'target' });
+    } else if (move.ailment === 'silence') {
+        targetState.silenceTurns = 2;
+        messageObjs.push({ text: '暫時無法使用聲音類招式！', targetType: 'target' });
+    } else if (move.ailment === 'torment') {
+        targetState.tormentTurns = 4;
+        messageObjs.push({ text: '不能連續使用相同招式了！', targetType: 'target' });
+    }
+    if (move.ailment && move.ailment !== 'none' && !volatileAilments.includes(move.ailment) && !targetState.status && !blockedBySafeguard
+        && !terrainBlocksAilment
+        && !(move.ailment === 'sleep' && sleepImmune)) {
         let chance = move.ailment_chance || 100;
-        if (rng() * 100 < chance) {
-            targetState.status = move.ailment;
+        if ((!blocksSecondary || chance >= 100) && rng() * 100 < chance) {
+            const normalizedAilment = move.ailment === 'yawn' ? 'drowsy' : move.ailment;
+            targetState.status = normalizedAilment;
 
             const ailmentMap = {
+                disable: '招式被封印了！',
+                ingrain: '扎下了根！',
+                'perish-song': '聽見了滅亡之歌！',
+                silence: '陷入沉默了！',
+                yawn: '產生了睡意！',
                 burn: "燒傷了！",
                 paralysis: "麻痺了！",
                 poison: "中毒了！",
@@ -129,6 +172,10 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
             };
 
             if (move.ailment === 'sleep') targetState.statusTurns = Math.floor(rng() * 3) + 1;
+            else if (move.ailment === 'disable') targetState.statusTurns = 4;
+            else if (move.ailment === 'perish-song') targetState.statusTurns = 3;
+            else if (move.ailment === 'silence') targetState.statusTurns = 3;
+            else if (move.ailment === 'yawn') targetState.statusTurns = 1;
             else if (move.ailment === 'freeze') targetState.statusTurns = Math.floor(rng() * 3) + 1;
             else if (move.ailment === 'confusion') targetState.statusTurns = Math.floor(rng() * 3) + 2;
             else if (move.ailment === 'leech-seed' || move.ailment === 'trap') targetState.statusTurns = 5;
@@ -141,7 +188,7 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
     }
 
     // 2. Flinch
-    if (move.flinch_chance && move.flinch_chance > 0) {
+    if (!blocksSecondary && move.flinch_chance && move.flinch_chance > 0) {
         if (rng() * 100 < move.flinch_chance) {
             if (!targetState.status) {
                 targetState.flinch = true;
@@ -156,14 +203,17 @@ export const applyMoveEffects = (move, targetState, sourceState, rng = Math.rand
 
         if (rng() * 100 <= chance) {
             const isSelf = move.stat_target === 'self';
+            if (blocksSecondary && !isSelf && chance < 100) return { messages: messageObjs, drainPct: move.drain || 0, recoilPct: move.recoil || 0 };
             let targetObj = isSelf ? sourceState : targetState;
 
             move.stat_changes.forEach(sc => {
                 const stat = sc.stat;
                 if (!targetObj.statStages) targetObj.statStages = { atk: 0, def: 0, spd: 0 };
 
+                if (!isSelf && sc.change < 0 && (targetState.fieldEffects?.mistTurns || 0) > 0) return;
                 let oldStage = targetObj.statStages[stat] || 0;
-                let newStage = Math.max(-6, Math.min(6, oldStage + sc.change));
+                const stageDelta = targetObj.trait?.id === 'simple' ? sc.change * 2 : sc.change;
+                let newStage = Math.max(-6, Math.min(6, oldStage + stageDelta));
                 targetObj.statStages[stat] = newStage;
 
                 const statNameMap = { atk: "攻擊", def: "防禦", spd: "速度" };
@@ -240,6 +290,26 @@ export const processPostTurnStatus = (state, maxHp, rng = Math.random) => {
             nextStatus,
             nextTurns: state.statusTurns - 1
         };
+    }
+
+    if (state.status === 'ingrain') {
+        return { dmg: 0, heal: Math.max(1, Math.floor(maxHp / 16)), message: '因扎根回復了體力。', nextStatus, nextTurns };
+    }
+
+    if (state.status === 'drowsy') {
+        return { dmg: 0, heal: 0, message: '睡意襲來，陷入了睡眠。', nextStatus: 'sleep', nextTurns: 2 };
+    }
+
+    if (state.status === 'perish-song') {
+        const remaining = Math.max(0, nextTurns - 1);
+        return remaining === 0
+            ? { dmg: maxHp, heal: 0, message: '滅亡倒數歸零了！', nextStatus: null, nextTurns: 0 }
+            : { dmg: 0, heal: 0, message: `滅亡倒數剩下 ${remaining}。`, nextStatus, nextTurns: remaining };
+    }
+
+    if (state.status === 'disable' || state.status === 'silence') {
+        const remaining = Math.max(0, nextTurns - 1);
+        return { dmg: 0, heal: 0, message: remaining ? null : '封印效果解除了。', nextStatus: remaining ? nextStatus : null, nextTurns: remaining };
     }
 
     return { dmg: 0, heal: 0, message: null, nextStatus, nextTurns };

@@ -1,5 +1,5 @@
 import { getTodayStr } from './dateUtils';
-import { PET_PERSONALITY_LABELS, PET_PERSONALITY_LINES } from '../data/petLetterLines';
+import { PET_LETTER_VOICE_LINES } from '../data/petLetterLines';
 
 export const PET_LETTER_SLOTS = [
     { id: 'morning', label: '早安來信', hour: 9 },
@@ -71,13 +71,6 @@ const trimMultiline = (text, maxPerLine = 42, maxLines = 2) => String(text || ''
     .slice(0, maxLines)
     .join('\n');
 
-const getTopTagMeta = (soulTagCounts = {}) => {
-    const entries = Object.entries(soulTagCounts).filter(([, value]) => Number(value || 0) > 0);
-    if (entries.length === 0) return { id: 'gentle', label: PET_PERSONALITY_LABELS.gentle };
-    entries.sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0));
-    const id = entries[0][0];
-    return { id, label: PET_PERSONALITY_LABELS[id] || null };
-};
 
 const CONDITION_LINES = {
     hungry: [
@@ -157,7 +150,7 @@ const getConditionLine = ({ hunger, mood, bondValue, derivedLevel, todayTrainWin
     return pickConditionLine(CONDITION_LINES.idle, seed);
 };
 
-const getSpecialStatusLine = ({ hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, moveUpgradeCount, maxMoveUpgradeLevel, inventoryCount, seed }) => {
+const getSpecialStatusLine = ({ hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, moveUpgradeCount, maxMoveUpgradeLevel, pokemonBallCount, seed }) => {
     if (moveUpgradeCount > 0) {
         const lines = [
             `我有 ${moveUpgradeCount} 個附魔，力量還在發熱。`,
@@ -180,10 +173,10 @@ const getSpecialStatusLine = ({ hunger, mood, bondValue, derivedLevel, todayTrai
             `我還想著：${String(todaySpecialEvent).slice(0, 28)}。`
         ], seed);
     }
-    if (inventoryCount >= 5) {
+    if (pokemonBallCount >= 5) {
         return pickBySeed([
-            `背包東西很多，我會小心保管。`,
-            `道具準備好了，像要出遠門。`,
+            `寶可夢球裡的夥伴們，我都會好好照顧。`,
+            `背包裡有好多夥伴，冒險一定很熱鬧。`,
             `物品欄很滿，我覺得很踏實。`
         ], seed);
     }
@@ -447,16 +440,11 @@ const getSlotTopicLine = ({ slotId, dailyTopics, seed }) => {
     return getDateLine(slotId, new Date(), seed);
 };
 
-const getPersonalityLine = ({ personalityId, traitName, personalityLabel, seed }) => {
-    const lines = PET_PERSONALITY_LINES[personalityId] || PET_PERSONALITY_LINES.gentle;
-    const picked = pickBySeed(lines, seed);
-    if (traitName && seed % 5 === 0) {
-        return `我的天賦是「${traitName}」，所以今天我想這樣告訴你：${picked}`;
-    }
-    if (personalityLabel && seed % 7 === 0) {
-        return `如果你覺得我有點${personalityLabel}，也許就是因為：${picked}`;
-    }
-    return picked;
+const getLetterVoiceLine = ({ traitName, seed }) => {
+    const picked = pickBySeed(PET_LETTER_VOICE_LINES, seed);
+    return traitName && seed % 5 === 0
+        ? `我的特性是「${traitName}」，所以今天我想這樣告訴你：${picked}`
+        : picked;
 };
 
 const getSlotOpening = (slotId, name, seed) => {
@@ -501,7 +489,7 @@ const getSlotClosing = (slotId, seed) => {
     return pickBySeed(closings[slotId] || closings.morning, seed);
 };
 
-const getFinalPageLine = ({ slotId, personalityId, weatherStatus, hasReply, seed }) => {
+const getFinalPageLine = ({ slotId, weatherStatus, hasReply, seed }) => {
     if (hasReply) return null;
     const slotLines = {
         morning: [
@@ -524,33 +512,6 @@ const getFinalPageLine = ({ slotId, personalityId, weatherStatus, hasReply, seed
             '如果你等等要睡了，我先把晚安放在這裡。',
             '明天醒來後，我還會在這裡等你叫我。',
             '今天剩下的事不用全扛著，先讓心安靜一下。'
-        ]
-    };
-    const personalityLines = {
-        gentle: [
-            '你只要出現一下，我就會覺得今天被好好接住。',
-            '我會安靜陪著，不催你，也不讓你一個人。',
-            '如果你累了，就把我放旁邊，我會乖乖待著。'
-        ],
-        stubborn: [
-            '我會守住自己的位置，不讓今天白白過去。',
-            '下次你來時，我想讓你看到我又撐住了一點。',
-            '我不會隨便認輸，尤其是你還在看著我的時候。'
-        ],
-        passionate: [
-            '我已經準備好下一次出發，只等你一聲令下。',
-            '今天還有力氣的話，我想把它用得很亮。',
-            '你一回來，我就想把精神全部拿出來給你看。'
-        ],
-        nonsense: [
-            '我會先練習不亂撞邊框，雖然不保證成功。',
-            '如果你聽到奇怪的按鈕聲，可能是我在裝忙。',
-            '我先把精神收好，免得它又自己跑去跳舞。'
-        ],
-        rational: [
-            '我會把今天的狀態整理好，等你下次確認。',
-            '目前結論是：你來看我，對我很重要。',
-            '我先保存體力，等需要時再精準使用。'
         ]
     };
     const weatherLines = {
@@ -576,43 +537,18 @@ const getFinalPageLine = ({ slotId, personalityId, weatherStatus, hasReply, seed
         ]
     };
     const pool = [
-        ...(slotLines[slotId] || slotLines.morning),
-        ...(personalityLines[personalityId] || personalityLines.gentle),
-        ...(weatherLines[weatherStatus] || [])
+        ...(slotLines[slotId] || slotLines.morning),        ...(weatherLines[weatherStatus] || [])
     ];
     return pickBySeed(pool, seed);
 };
 
-const getReplyTone = (personalityId, seed) => {
-    const tones = {
-        gentle: [
-            '我讀的時候放慢了呼吸，怕漏掉你真正想說的地方。',
-            '那句話讓 LCD 裡安靜了一下，但不是寂寞，是安心。',
-            '我把它收在心裡比較柔軟的位置，今天一直有想起來。'
-        ],
-        stubborn: [
-            '我沒有馬上回你，是因為我想把答案說得更確定一點。',
-            '那句話我記住了，接下來會用行動證明我真的聽進去了。',
-            '我嘴上可能不太會承認，但它讓我更想撐住。'
-        ],
-        passionate: [
-            '看到那句話時，我差點在 LCD 裡衝出去繞一圈。',
-            '它像把火一樣點到我心裡，今天整個人都更有精神。',
-            '我想把那份力氣帶去下一場戰鬥，讓你看見。'
-        ],
-        nonsense: [
-            '我讀完以後在 LCD 裡轉了半圈，差點把嚴肅的心情甩飛。',
-            '那句話很神奇，害我一邊想你一邊想找東西敲兩下。',
-            '我本來想裝酷，結果嘴角自己先跑出來了。'
-        ],
-        rational: [
-            '我把它想了好幾遍，發現那不是普通的一句話。',
-            '我試著分析那句話，最後得到的結論是：我很在意。',
-            '那句話讓我重新整理今天要做的事，也整理了心情。'
-        ]
-    };
-    return pickBySeed(tones[personalityId] || tones.gentle, seed);
-};
+const getReplyTone = (seed) => pickBySeed([
+    '我讀的時候放慢了呼吸，怕漏掉你真正想說的地方。',
+    '你的話讓 LCD 裡安靜了一下，但那是安心的安靜。',
+    '我把這封回信收好了，等等還會再讀一次。',
+    '看到你寫給我的話，我今天又多了一點精神。',
+    '不管今天忙不忙，我都很高興你願意回來說說話。'
+], seed);
 
 const summarizeReplyIntent = (text) => {
     const lower = text.toLowerCase();
@@ -680,7 +616,7 @@ const getIntentReplyLine = (intent, text, seed) => {
     return pickBySeed(lines[intent] || lines.default, seed);
 };
 
-const getReplyReactionLine = (replyText = '', personalityId = 'gentle', seed = 0) => {
+const getReplyReactionLine = (replyText = '', seed = 0) => {
     const text = String(replyText || '').trim();
     if (!text) return null;
     const intents = summarizeReplyIntent(text);
@@ -692,7 +628,7 @@ const getReplyReactionLine = (replyText = '', personalityId = 'gentle', seed = 0
     ];
     const lead = pickBySeed(leadIns, seed + text.length);
     const response = getIntentReplyLine(primary, text, seed + 11);
-    const tone = getReplyTone(personalityId, seed + 23);
+    const tone = getReplyTone(seed + 23);
     return [lead, response, tone].map(line => trimLine(line, 42)).filter(Boolean).join('\n');
 };
 
@@ -711,11 +647,9 @@ export const generatePetLetter = (slotId, context = {}) => {
         todaySpecialEvent = '',
         moveUpgradeCount = 0,
         maxMoveUpgradeLevel = 0,
-        inventoryCount = 0,
+        pokemonBallCount = 0,
         evolutionStage = 1,
-        traitName = null,
-        soulTagCounts = {},
-        lastPlayerReply = null,
+        traitName = null,        lastPlayerReply = null,
         weatherContext = null,
         dailyTopic = null,
         dailyTopics = null,
@@ -724,19 +658,17 @@ export const generatePetLetter = (slotId, context = {}) => {
         now = new Date()
     } = context;
     const seed = Number(`${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${slotId.length}${derivedLevel}${String(monsterId).slice(-2)}${Math.abs(Number(letterSeed || 0)) % 1000}`) || Date.now();
-    const topTag = getTopTagMeta(soulTagCounts);
-    const replyLine = getReplyReactionLine(lastPlayerReply?.text, topTag.id, seed);
+    const replyLine = getReplyReactionLine(lastPlayerReply?.text, seed);
 
-    const personalityLine = getPersonalityLine({ personalityId: topTag.id, personalityLabel: topTag.label, traitName, seed: seed + slotId.charCodeAt(0) });
+    const voiceLine = getLetterVoiceLine({ traitName, seed: seed + slotId.charCodeAt(0) });
     const closingLine = getSlotClosing(slotId, seed + 7);
     const finalLine = getFinalPageLine({
         slotId,
-        personalityId: topTag.id,
         weatherStatus: weatherContext?.status,
         hasReply: Boolean(replyLine),
         seed: seed + 59
     }) || closingLine;
-    const fourthPage = [replyLine ? trimMultiline(replyLine, 40, 2) : trimLine(personalityLine, 42), replyLine ? null : trimLine(finalLine, 46)].filter(Boolean).join('\n');
+    const fourthPage = [replyLine ? trimMultiline(replyLine, 40, 2) : trimLine(voiceLine, 42), replyLine ? null : trimLine(finalLine, 46)].filter(Boolean).join('\n');
 
     if (slotId === 'morning') {
         return [
@@ -768,8 +700,8 @@ export const generatePetLetter = (slotId, context = {}) => {
     return [
         getWeatherLine({ weatherContext, monsterTypes, seed: seed + 31 }),
         getDateLine(slotId, now, seed + 43, dailyTopic),
-        getSpecialStatusLine({ hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, moveUpgradeCount, maxMoveUpgradeLevel, inventoryCount, seed: seed + 17 }),
-        [replyLine ? trimMultiline(replyLine, 40, 2) : trimLine(personalityLine, 42), replyLine ? null : trimLine(finalLine, 46)].filter(Boolean).join('\n')
+        getSpecialStatusLine({ hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, moveUpgradeCount, maxMoveUpgradeLevel, pokemonBallCount, seed: seed + 17 }),
+        [replyLine ? trimMultiline(replyLine, 40, 2) : trimLine(voiceLine, 42), replyLine ? null : trimLine(finalLine, 46)].filter(Boolean).join('\n')
     ].filter(Boolean);
 };
 

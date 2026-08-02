@@ -154,7 +154,7 @@ export default function EvolutionPerformance({ fromId, toId, onFinish }) {
                 }
             `}</style>
 
-            <div className="evo-title">EVOLUTION</div>
+            <div className="evo-title">進化</div>
 
             <div className="sprite-container">
                 <div className="sprite-from">

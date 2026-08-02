@@ -6,15 +6,13 @@ import LeaderboardOverlay from './components/LeaderboardOverlay';
 import SkillLearnOverlay from './components/SkillLearnOverlay';
 import DebugPanel from './components/DebugPanel';
 import { MonsterpediaOverlay } from './components/MonsterpediaOverlay';
-import { SoulExpeditionOverlay } from './components/SoulExpeditionOverlay';
+import PokeRogueOverlay from './components/PokeRogueOverlay';
 import SkillRearrangeOverlay from './components/SkillRearrangeOverlay';
 import EvolutionPerformance from './components/EvolutionPerformance';
-import MemoryCapsulePerformance from './components/MemoryCapsulePerformance';
 import SettingsOverlay from './components/SettingsOverlay';
 import TutorialAI from './components/TutorialAI';
 import PetLetterOverlay from './components/PetLetterOverlay';
 import DefeatTutorialOverlay from './components/DefeatTutorialOverlay';
-import LanguageDomTranslator from './components/LanguageDomTranslator';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './styles.css';
 import {
@@ -24,25 +22,23 @@ import {
     TYPE_SKILLS,
     ADV_WILD_POOL,
     TYPE_MAP,
-    NATURE_CONFIG,
     getTypeMultiplier,
     generateMoves,
     calcFinalStat,
     getLevelByPower,
     getPowerThreshold,
     OBTAINABLE_MONSTER_IDS,
-    TRAINER_POOLS,
     MONSTER_ASSET_IDS
 } from './monsterData';
 
-import { EVO_TIMES, EVO_LEVELS, WILD_EVOLUTION_MAP } from './data/evolutionConfig';
-import { generateMonsterTraits, normalizeMonsterTraits, MONSTER_TRAITS } from './data/monsterTraits';
+import { drawRandomPokemonStarter, getNextPokemonEvolution, getPokemonEvolutionLevel, getPokemonEvolutionStage } from './data/pokemonEvolutionSystem';
+import { generateMonsterTraits, normalizeMonsterTraits } from './data/monsterTraits';
 
 import { DitheredSprite, DitheredBackSprite, PixelArt, ICONS, BATTLE_STYLES } from './components/SpriteRenderer';
 
 
 import {
-    apiKey, modelName, PHYSICS, ADV_ITEMS, DIARY_ITEM,
+    apiKey, modelName, PHYSICS,
     DIARY_MESSAGES_TEMPLATE, ADV_BATTLE_RULES, RAW_Q_DATA, SOUL_QUESTIONS,
     getPetDailyMessage, DIARY_STORAGE_KEY, loadDiaryData, saveDiaryData, getSmartMove
 } from './data/gameConfig';
@@ -56,11 +52,10 @@ import { usePvpConnection } from './utils/usePvpConnection';
 import { getMonsterId } from './utils/monsterIdMapper';
 import { useLeaderboard } from './utils/useLeaderboard';
 import { useTournament } from './utils/useTournament';
-import { generateNpcMoveUpgrades } from './utils/npcEnchantSystem';
 import { getTodayStr } from './utils/dateUtils';
 import { useDisplayScale } from './utils/useDisplayScale';
 import { createMenuItems } from './data/menuConfig';
-import { buildPlayerBattleProfile, getNatureMods } from './utils/battleStats';
+import { buildPlayerBattleProfile } from './utils/battleStats';
 import { useCloudSync } from './utils/useCloudSync';
 import { useSingleActiveTab } from './utils/useSingleActiveTab';
 import { useSkillLearning } from './utils/useSkillLearning';
@@ -69,14 +64,15 @@ import { isPetLetterAiEnabled, requestAiPetLetter } from './utils/petLetterAiCli
 import { clearCachedWeatherContext, createDebugWeatherContext, createEmptyWeatherContext, fetchWeatherContext, loadCachedWeatherContext } from './utils/weatherSystem';
 import { clearCachedDailyTopics, createFallbackDailyTopics, fetchDailyTopics, loadCachedDailyTopics } from './utils/dailyTopicSystem';
 import { TournamentOverlay } from './components/TournamentOverlay';
-import { getStoredLanguage, setStoredLanguage } from './utils/languageSystem';
+import { normalizePokemonSpeciesId } from './data/pokemonMapping';
 import { getDefeatTutorialEnabled, getPetLettersEnabled } from './utils/gamePreferenceSystem';
+import { createPokemonBall, createPokemonSnapshot, normalizePokemonBalls } from './utils/pokemonBallSystem';
 
 
 
 
 
-const BOOT_MONSTER_IDS = Array.from({ length: 30 }, (_, index) => 1000 + index);
+const BOOT_MONSTER_IDS = OBTAINABLE_MONSTER_IDS.map(Number);
 
 const drawBootMonsterId = (poolRef, currentId = null) => {
     let pool = poolRef.current.filter(id => id !== currentId);
@@ -95,7 +91,6 @@ const drawBootMonsterId = (poolRef, currentId = null) => {
 export default function App() {
     const isDesktopBuild = import.meta.env.VITE_DESKTOP === '1';
     const [initialData] = useState(() => loadSaveData());
-    const [language, setLanguageState] = useState(() => getStoredLanguage());
 
     const getInit = (key, defaultVal) => {
         return (initialData && initialData[key] !== undefined) ? initialData[key] : defaultVal;
@@ -117,7 +112,18 @@ export default function App() {
     const [isSleeping, setIsSleeping] = useState(getInit('isSleeping', false));
     const [isPooping, setIsPooping] = useState(getInit('isPooping', false));
     const [evolutionStage, setEvolutionStage] = useState(getInit('evolutionStage', 1));
-    const [evolutionBranch, setEvolutionBranch] = useState(getInit('evolutionBranch', 'A'));
+    const [evolutionBranch, setEvolutionBranch] = useState(getInit('evolutionBranch', 'WILD_4')); // 舊存檔相容欄位
+    const [currentMonsterId, setCurrentMonsterId] = useState(() => {
+        const savedId = Number(getInit('currentMonsterId', 0));
+        if (savedId) return normalizePokemonSpeciesId(savedId);
+        if (!initialData) return 4; // 新遊戲固定從小火龍開始
+        return normalizePokemonSpeciesId(getMonsterId(
+            getInit('evolutionBranch', 'A'),
+            getInit('evolutionStage', 1),
+            false,
+            getInit('bondValue', 0)
+        ));
+    });
     const [trainWins, setTrainWins] = useState(getInit('trainWins', 0));
     const [stageTrainWins, setStageTrainWins] = useState(getInit('stageTrainWins', 0));
     const [feedCount, setFeedCount] = useState(getInit('feedCount', 0));
@@ -131,13 +137,10 @@ export default function App() {
     const [talkCount, setTalkCount] = useState(getInit('talkCount', 0));
     const [lockedAffinity, setLockedAffinity] = useState(getInit('lockedAffinity', null));
     const [soulAffinityCounts, setSoulAffinityCounts] = useState(getInit('soulAffinityCounts', { fire: 0, water: 0, grass: 0, bug: 0 }));
-    const [soulTagCounts, setSoulTagCounts] = useState(getInit('soulTagCounts', { gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 }));
-    const [monsterTraits, setMonsterTraits] = useState(() => normalizeMonsterTraits(getInit('monsterTraits', null)));
+    const [monsterTraits, setMonsterTraits] = useState(() => normalizeMonsterTraits(getInit('monsterTraits', null), currentMonsterId));
 
     const [steps, setSteps] = useState(getInit('steps', 0));
     const [interactionLogs, setInteractionLogs] = useState(getInit('interactionLogs', []));
-    const [showMemoryPerformance, setShowMemoryPerformance] = useState(false);
-    const [memoryPerformanceMonsterId, setMemoryPerformanceMonsterId] = useState(null);
     const [interactionCount, setInteractionCount] = useState(getInit('interactionCount', 0));
     const [isDead, setIsDead] = useState(getInit('isDead', false));
     const [isRunaway, setIsRunaway] = useState(getInit('isRunaway', false));
@@ -154,11 +157,6 @@ export default function App() {
     const [weatherContext, setWeatherContext] = useState(() => loadCachedWeatherContext() || createEmptyWeatherContext('initial'));
     const [dailyTopics, setDailyTopics] = useState(() => loadCachedDailyTopics() || createFallbackDailyTopics());
 
-    const setLanguage = useCallback((nextLanguage) => {
-        setStoredLanguage(nextLanguage);
-        setLanguageState(getStoredLanguage());
-    }, []);
-
     useEffect(() => {
         if (!defeatTutorialEnabled) {
             setPendingDefeatTutorial(null);
@@ -174,12 +172,9 @@ export default function App() {
 
 
 
-    const [isInteractMenuOpen, setIsInteractMenuOpen] = useState(false);
-    const [interactMenuIdx, setInteractMenuIdx] = useState(0);
-    const [isInteractAnimating, setIsInteractAnimating] = useState(false);
 
     // 圖鑑系統狀態
-    const [ownedMonsters, setOwnedMonsters] = useState(getInit('ownedMonsters', []));
+    const [ownedMonsters, setOwnedMonsters] = useState(() => [...new Set(getInit('ownedMonsters', []).map(normalizePokemonSpeciesId).map(String))].filter(id => OBTAINABLE_MONSTER_IDS.includes(id)));
     const [isPediaOpen, setIsPediaOpen] = useState(false);
     const [isExpeditionOpen, setIsExpeditionOpen] = useState(false);
     const [pediaIdx, setPediaIdx] = useState(0);
@@ -201,10 +196,8 @@ export default function App() {
     const [showDebug, setShowDebug] = useState(false);
     const [debugOverrides, setDebugOverrides] = useState({
         evolutionMs: null,
-        encounterRates: null, // { trainer, wild, gather }
         catchRate: null,
         adventureCD: null,
-        memoryRate: null,
         petLetterHour: null,
         weatherStatus: null
     });
@@ -265,26 +258,15 @@ export default function App() {
                 spd: Math.min(252, Math.floor(Math.max(0, (d.spd || 1) - 1) * 8))
             };
         }
-        // 資料遷移：如果沒有 bonusMoveId，隨機選一個作為初始特技
-        if (!d.bonusMoveId) {
-            const pool = ['ember', 'water_gun', 'vine_whip', 'quick_attack'];
-            d.bonusMoveId = pool[Math.floor(Math.random() * pool.length)];
-        }
-
-        // --- 新增：招式永久化存檔 ---
-        if (!d.moves) {
-            // 嘗試取得暫存的物種ID
-            const monId = String(initialData?.id || localStorage.getItem('pixel_monster_id') || 1000);
-            const getStarterMove = (id) => {
-                if (id === "1019") return 'lick'; // 霧氣精靈
-                return 'tackle'; // 其他
-            };
-            // 初始招式：撞擊(或專屬) + 隨機贈送的那一招
-            d.moves = [getStarterMove(monId), d.bonusMoveId].filter(Boolean);
-        }
-
-        // 資料遷移：如果沒有 moveUpgrades，初始化空物件
-        if (!d.moveUpgrades) d.moveUpgrades = {};
+        // 舊技能資料轉換：只保留目前 Pokémon 在最新招式表中可學會的正式招式。
+        const monId = String(normalizePokemonSpeciesId(initialData?.currentMonsterId || initialData?.id || localStorage.getItem('pixel_monster_id') || 4));
+        const monLevel = getLevelByPower(d.basePower || 100);
+        const officialMoves = generateMoves(monId, monLevel);
+        const savedOfficialMoves = (d.moves || []).filter(moveId => officialMoves.includes(moveId));
+        d.moves = [...savedOfficialMoves, ...officialMoves.filter(moveId => !savedOfficialMoves.includes(moveId))].slice(-4);
+        delete d.bonusMoveId;
+        // 只保留目前正式招式仍對應得到的附魔資料。
+        d.moveUpgrades = Object.fromEntries(Object.entries(d.moveUpgrades || {}).filter(([moveId]) => d.moves.includes(moveId)));
 
         return d;
     });
@@ -301,16 +283,12 @@ export default function App() {
         setTempReplaceIdx,
         isSkillRearrangeOpen,
         setIsSkillRearrangeOpen,
-        usingItemIdx,
-        setUsingItemIdx,
         resetLevelTracker,
     } = useSkillLearning({
         advStats,
         derivedLevel,
         getMonsterId: () => getMonsterIdWrapped(),
         skillDatabase: SKILL_DATABASE,
-        speciesBaseStats: SPECIES_BASE_STATS,
-        typeMap: TYPE_MAP,
     });
 
     // --- PvP 系統專屬狀態 (WebRTC/PeerJS) ---
@@ -331,9 +309,7 @@ export default function App() {
             calcFinalStat,
             getLevelByPower,
             monsterTraits,
-            natureConfig: NATURE_CONFIG,
             skillDatabase: SKILL_DATABASE,
-            soulTagCounts,
             speciesBaseStats: SPECIES_BASE_STATS,
             speciesId,
         });
@@ -352,7 +328,8 @@ export default function App() {
 
     // Remote peer connect removed
 
-    const [inventory, setInventory] = useState(initialData?.inventory || []);
+    const [inventory, setInventory] = useState(() => normalizePokemonBalls(initialData?.inventory));
+    const [activeBallId, setActiveBallId] = useState(initialData?.activeBallId || null);
     const [lastAdvTime, setLastAdvTime] = useState(initialData?.lastAdvTime || 0);
     const [advLog, setAdvLog] = useState([]);
     const [isAdvMode, setIsAdvMode] = useState(false);
@@ -426,8 +403,7 @@ export default function App() {
     }, [alertMsg]);
 
     const [advCurrentHP, setAdvCurrentHP] = useState(1); // 1.0 = 100%
-    const [selectedItemIdx, setSelectedItemIdx] = useState(0);
-    const [isUsingItem, setIsUsingItem] = useState(false);
+    const [selectedBallIdx, setSelectedBallIdx] = useState(0);
     const [pendingWildCapture, setPendingWildCapture] = useState(null); // { id, name }
 
     // --- 經典回合制戰鬥狀態 ---
@@ -459,7 +435,7 @@ export default function App() {
 
     const [isGenerating, setIsGenerating] = useState(false);
     const [btnPressed, setBtnPressed] = useState(null);
-    const lastAliveMonsterIdRef = useRef(1000);
+    const lastAliveMonsterIdRef = useRef(4);
     const [showRestartHint, setShowRestartHint] = useState(false);
     const [isBooting, setIsBooting] = useState(() => {
         const shouldSkipBoot = sessionStorage.getItem('pixel_monster_skip_boot_once') === '1';
@@ -495,69 +471,20 @@ export default function App() {
         };
     }, [isBooting]);
 
-    // 自動合併舊有重複物品以及確認名稱/描述同步最新的設定
-    // 🚀 新增：資料清洗 (Sanitization) - 過濾掉已不存在的 ID 或無效數據
+    // 舊物品不再載入；舊存檔首次進入時，將目前夥伴放入第一顆寶可夢球。
     useEffect(() => {
-        // 1. 物品清洗
-        const merged = [];
-        let changed = false;
-
-        if (!inventory.find(it => it.id === 'DIARY')) {
-            merged.push({ ...DIARY_ITEM });
-            changed = true;
+        const balls = normalizePokemonBalls(inventory);
+        if (balls.length > 0) {
+            setInventory(balls);
+            if (!balls.some(ball => ball.ballId === activeBallId)) setActiveBallId(balls[0].ballId);
         } else {
-            merged.push({ ...DIARY_ITEM });
+            const firstBall = createPokemonBall(getCurrentPokemonSnapshot());
+            setInventory([firstBall]);
+            setActiveBallId(firstBall.ballId);
         }
 
-        inventory.forEach(item => {
-            if (item.id === 'DIARY') return;
-            let searchId = String(item.id);
-            if (searchId.length < 3 && !isNaN(searchId)) {
-                searchId = searchId.padStart(3, '0');
-            }
-            const latestDef = ADV_ITEMS.find(it => it.id === searchId);
-            const updatedItem = latestDef ? { ...item, ...latestDef, id: searchId } : item;
-
-            if (latestDef && (item.id !== searchId || item.name !== latestDef.name || item.skillId !== latestDef.skillId)) {
-                changed = true;
-            }
-
-            // 如果是特殊道具（如回憶膠囊），不參與合併，保持獨立性
-            const isUnique = !!updatedItem.snapshot;
-            const existing = isUnique ? null : merged.find(it => it.id === updatedItem.id);
-
-            if (existing) {
-                existing.count = (existing.count || 1) + (updatedItem.count || 1);
-                changed = true;
-            } else {
-                merged.push({ ...updatedItem, count: updatedItem.count || 1 });
-            }
-        });
-
-        setInventory(merged);
-
-        // 2. 圖鑑清洗 (Owned Monsters)
-        // 過濾掉不屬於 OBTAINABLE_MONSTER_IDS 的舊 ID
-        setOwnedMonsters(prev => {
-            const valid = prev.filter(id => OBTAINABLE_MONSTER_IDS.includes(String(id)));
-            if (valid.length !== prev.length) {
-                console.log(`🧹 已自動清除 ${prev.length - valid.length} 項過時的圖鑑紀錄`);
-                return valid;
-            }
-            return prev;
-        });
-
-        // 3. 招式清洗 (Monster Moves)
-        // 過濾掉已從 SKILL_DATABASE 移除的招式
-        setAdvStats(prev => {
-            const validMoves = (prev.moves || []).filter(mId => SKILL_DATABASE[mId]);
-            if (validMoves.length !== (prev.moves || []).length) {
-                console.log(`🧹 已從怪獸招式中移除 ${prev.moves.length - validMoves.length} 個過時招式`);
-                return { ...prev, moves: validMoves };
-            }
-            return prev;
-        });
-
+        setOwnedMonsters(prev => prev.filter(id => OBTAINABLE_MONSTER_IDS.includes(String(id))));
+        setAdvStats(prev => ({ ...prev, moves: (prev.moves || []).filter(moveId => SKILL_DATABASE[moveId]) }));
     }, []);
 
 
@@ -579,12 +506,12 @@ export default function App() {
 
             const currentData = {
                 saveVersion: SAVE_VERSION,
-                hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch,
+                hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, currentMonsterId,
                 trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords,
                 lastEvolutionTime, birthTime,
-                deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts,
+                deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts,
                 monsterTraits,
-                advStats, inventory, lastAdvTime,
+                advStats, inventory, activeBallId, lastAdvTime,
                 todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate,
                 todayHasEvolved, todaySpecialEvent, todayEventPriority,
                 ownedMonsters,
@@ -599,7 +526,7 @@ export default function App() {
             lastSavedDataRef.current = currentDataStr;
             lastSaveTimeRef.current = now;
         } catch (e) { }
-    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, birthTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, soulTagCounts, monsterTraits, advStats, inventory, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, petLetters, lastSaveTime]);
+    }, [user, hunger, mood, isSleeping, isPooping, evolutionStage, evolutionBranch, currentMonsterId, trainWins, stageTrainWins, feedCount, steps, interactionLogs, interactionCount, isDead, finalWords, lastEvolutionTime, birthTime, deathBranch, bondValue, talkCount, lockedAffinity, soulAffinityCounts, monsterTraits, advStats, inventory, activeBallId, lastAdvTime, todayTrainWins, todayWildDefeated, todayBondGained, todayFeedCount, lastDiaryDate, todayHasEvolved, todaySpecialEvent, todayEventPriority, ownedMonsters, petLetters, lastSaveTime]);
 
     // 2️⃣ 雲端同步：獨立監控重大行為，不受 hunger/mood 跳動影響
     useEffect(() => {
@@ -626,8 +553,6 @@ export default function App() {
             setLastDiaryDate(prev => {
                 if (prev !== todayStr) {
                     // 日期跨越：將昨日數據歸入日記
-                    // 計算當前最優勢個性
-                    const dominantTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
                     const petMsg = getPetDailyMessage(lockedAffinity);
 
                     setDiaryLog(d => ({
@@ -636,7 +561,6 @@ export default function App() {
                             trainWins: todayTrainWins,
                             wildDefeated: todayWildDefeated,
                             specialEvent: todaySpecialEvent,
-                            dominantTag: dominantTag,
                             petMessage: petMsg,
                             evolutionStageEnd: evolutionStage,
                             evolutionBranch: evolutionBranch,
@@ -740,10 +664,10 @@ export default function App() {
     }, [isDead, isEvolving, miniGame, isDuplicateTab, isSpinning]);
 
     // 用 Ref 確保可以隨時讀取最新狀態而不觸發 useEffect 重啟
-    const latestStats = useRef({ mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats });
+    const latestStats = useRef({ mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, bondValue, advStats });
     useEffect(() => {
-        latestStats.current = { mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats };
-    }, [mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, soulTagCounts, bondValue, advStats]);
+        latestStats.current = { mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, bondValue, advStats };
+    }, [mood, hunger, stageTrainWins, deathBranch, lockedAffinity, soulAffinityCounts, bondValue, advStats]);
 
     const getTraitGrowthMod = (key) => monsterTraits?.trait?.modifiers?.[key] || 1;
     const applyTraitGrowthMod = (value, key) => Math.max(1, Math.floor(Number(value || 0) * getTraitGrowthMod(key)));
@@ -771,16 +695,12 @@ export default function App() {
         const opt = SOUL_QUESTIONS[miniGame.qIdx].options[idx];
         if (!opt) return;
 
-        const topTag = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-
-        let pts = (opt.tag === topTag || opt.affinity === lockedAffinity) ? 10 : 5;
-        if (!lockedAffinity && topTag === 'none') { pts = 5; } // base points for early stage
+        let pts = opt.affinity === lockedAffinity ? 10 : 5;
         pts = applyTraitGrowthMod(pts, 'soulBondGain');
 
         setBondValue(b => b + pts);
         setTalkCount(t => t + 1);
         setTodayBondGained(b => b + pts);
-        setSoulTagCounts(s => ({ ...s, [opt.tag]: (s[opt.tag] || 0) + 1 }));
         if (!lockedAffinity) {
             setSoulAffinityCounts(s => ({ ...s, [opt.affinity]: (s[opt.affinity] || 0) + 1 }));
         }
@@ -853,98 +773,108 @@ export default function App() {
 
     const playSoundEffect = (type) => playBloop(type);
 
+    function getCurrentPokemonSnapshot() {
+        return createPokemonSnapshot({
+            speciesId: currentMonsterId, evolutionStage, evolutionBranch, types: SPECIES_BASE_STATS[String(currentMonsterId)]?.types || [], advStats, monsterTraits,
+            bondValue, talkCount, lockedAffinity, soulAffinityCounts, interactionLogs, interactionCount,
+            hunger, mood, isSleeping, isPooping, lastEvolutionTime
+        });
+    }
+
+    function applyPokemonSnapshot(snapshot) {
+        const pokemon = createPokemonSnapshot(snapshot);
+        const speciesId = normalizePokemonSpeciesId(pokemon.speciesId);
+        setCurrentMonsterId(speciesId);
+        setEvolutionStage(getPokemonEvolutionStage(speciesId));
+        setEvolutionBranch(pokemon.evolutionBranch || `WILD_${speciesId}`);
+        setAdvStats(pokemon.advStats);
+        setMonsterTraits(normalizeMonsterTraits(pokemon.monsterTraits, speciesId));
+        setBondValue(pokemon.bondValue);
+        setTalkCount(pokemon.talkCount);
+        setLockedAffinity(pokemon.lockedAffinity);
+        setSoulAffinityCounts(pokemon.soulAffinityCounts);
+        setInteractionLogs(pokemon.interactionLogs);
+        setInteractionCount(pokemon.interactionCount);
+        setHunger(pokemon.hunger);
+        setMood(pokemon.mood);
+        setIsSleeping(pokemon.isSleeping);
+        setIsPooping(pokemon.isPooping);
+        setLastEvolutionTime(pokemon.lastEvolutionTime || Date.now());
+        resetLevelTracker(getLevelByPower(pokemon.advStats.basePower));
+    }
+
+    const switchPokemonBall = (ballIdx) => {
+        const targetBall = inventory[ballIdx];
+        if (!targetBall?.pokemon) return;
+        if (targetBall.ballId === activeBallId) {
+            updateDialogue(`${MONSTER_NAMES[targetBall.pokemon.speciesId] || '這隻寶可夢'}已經在主畫面了。`);
+            playBloop('back');
+            return;
+        }
+        const currentSnapshot = getCurrentPokemonSnapshot();
+        setInventory(prev => prev.map(ball => ball.ballId === activeBallId ? { ...ball, pokemon: currentSnapshot } : ball));
+        setActiveBallId(targetBall.ballId);
+        applyPokemonSnapshot(targetBall.pokemon);
+        setIsInventoryOpen(false);
+        setSelectedBallIdx(ballIdx);
+        updateDialogue(`從寶可夢球放出了${MONSTER_NAMES[targetBall.pokemon.speciesId] || '寶可夢'}！`);
+        recordGameAction();
+        playBloop('confirm');
+    };
+
     const confirmWildCapture = (confirm) => {
         if (confirm && pendingWildCapture) {
-            setEvolutionBranch('WILD_' + pendingWildCapture.id);
-            setLastEvolutionTime(Date.now()); // 🔥 捕獲後務必重置進化時鐘，防止繼承舊寵物時間導致瞬間進化或暴斃
-            recordGameAction(); // 紀錄捕獲行為
-            setStageTrainWins(0);            // 重置當前階級勝次
-
-            // --- 🔹 重置冒險數值 (新怪獸新開場，且給予優質個體保底) 🔹 ---
-            // 讓玩家在犧牲練度轉換新寵物時，能換到更高資質 (A~S 級) 的個體
-            const randomHighIV = () => 25 + Math.floor(Math.random() * 7); // 25~31 (Grade A~S)
-
-            // 取得捕捉時保留的等級 (預設為 1)
+            const randomHighIV = () => 25 + Math.floor(Math.random() * 7);
+            const speciesId = Number(pendingWildCapture.id);
             const capturedLevel = pendingWildCapture.level || 1;
-            const targetBasePower = (capturedLevel - 1) * 10 + 100;
-
-            // 根據物種 ID 尋找屬性
-            const speciesData = SPECIES_BASE_STATS[String(pendingWildCapture.id)] || { types: ['normal'] };
-            const types = speciesData.types || ['normal'];
-
-            // 判定怪獸的生物階級 (透過檢查 WILD_EVOLUTION_MAP 來推測)
-            const getBioStage = (id) => {
-                let stage = 1;
-                const idStr = String(id);
-                // 檢查是否為某人的進化型 (Stage 2 或 3)
-                const isStage2 = Object.values(WILD_EVOLUTION_MAP).some(v => String(v) === idStr);
-                if (isStage2) {
-                    stage = 2;
-                    // 再檢查 Stage 2 是否還有前身 (Stage 3)
-                    const stage1Id = Object.keys(WILD_EVOLUTION_MAP).find(k => String(WILD_EVOLUTION_MAP[k]) === idStr);
-                    if (stage1Id) {
-                        const isStage3 = Object.values(WILD_EVOLUTION_MAP).some(v => String(v) === String(stage1Id));
-                        if (isStage3) stage = 3;
-                    }
-                }
-                return stage;
-            };
-            const bioStage = getBioStage(pendingWildCapture.id);
-            setEvolutionStage(bioStage); // 同步正確的進化階段
-
-            // 使用最新的 generateMoves 系統生成招式 (取代舊有硬編碼邏輯)
-            // 捕捉到的怪獸視為 initialized，不給予強制 bonusId，完全由 generateMoves 根據等級與階級決定
-            const moves = generateMoves(bioStage, types, null, capturedLevel, false);
-
-            setAdvStats({
-                basePower: targetBasePower,
-                ivs: {
-                    hp: randomHighIV(),
-                    atk: randomHighIV(),
-                    def: randomHighIV(),
-                    spd: randomHighIV()
+            const captured = createPokemonSnapshot({
+                speciesId,
+                evolutionStage: getPokemonEvolutionStage(speciesId),
+                evolutionBranch: `WILD_${speciesId}`,
+                types: SPECIES_BASE_STATS[String(speciesId)]?.types || [],
+                advStats: {
+                    basePower: (capturedLevel - 1) * 10 + 100,
+                    ivs: { hp: randomHighIV(), atk: randomHighIV(), def: randomHighIV(), spd: randomHighIV() },
+                    evs: { hp: 0, atk: 0, def: 0, spd: 0 },
+                    moves: generateMoves(speciesId, capturedLevel),
+                    moveUpgrades: {}
                 },
-                evs: { hp: 0, atk: 0, def: 0, spd: 0 },
-                bonusMoveId: moves[1] || 'tackle', // 保留一招作為潛力參考
-                moves: moves
+                monsterTraits: generateMonsterTraits(speciesId),
+                hunger: 60,
+                mood: 50
             });
-
-            // 🔥 強制重置等級偵測，確保新夥伴即刻生效且不觸發舊等級剩餘的學習
-            resetLevelTracker(capturedLevel);
-
-            // --- 🔹 重置個性與狀態 (新夥伴新開始) 🔹 ---
-            setBondValue(0);
-            setTalkCount(0);
-            setLockedAffinity(null);
-            setSoulAffinityCounts({ fire: 0, water: 0, grass: 0, bug: 0 });
-            setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
-            setInteractionLogs([]);
-            setInteractionCount(0);
-
-            // --- 🔹 防呆：分配新夥伴的初始天賦 🔹 ---
-            // 由於世足丸擁有專屬天賦，野外捕捉替換時必須重新發派
-            if (String(pendingWildCapture.id) === '1043' || String(pendingWildCapture.id) === '1044') {
-                const switchTrait = MONSTER_TRAITS.find(t => t.id === 'tactical_switch');
-                if (switchTrait) setMonsterTraits({ trait: switchTrait });
-            } else {
-                setMonsterTraits(generateMonsterTraits());
-            }
-
-            setHunger(60);
-            setMood(50);
-            setIsPooping(false);
-            setIsSleeping(false);
-
-            updateDialogue(`✨ ${pendingWildCapture.name} 成為了你的新夥伴！`);
-            unlockMonster(pendingWildCapture.id);
+            const newBall = createPokemonBall(captured);
+            const currentSnapshot = getCurrentPokemonSnapshot();
+            setInventory(prev => [...prev.map(ball => ball.ballId === activeBallId ? { ...ball, pokemon: currentSnapshot } : ball), newBall]);
+            setActiveBallId(newBall.ballId);
+            applyPokemonSnapshot(captured);
+            setStageTrainWins(0);
+            updateDialogue(`✨ 收服了${pendingWildCapture.name}！已放入新的寶可夢球。`);
+            unlockMonster(speciesId);
+            recordGameAction();
             playBloop('confirm');
         } else {
-            updateDialogue("保持現狀也很不錯。");
+            updateDialogue('沒有使用寶可夢球。');
             playBloop('back');
         }
         setPendingWildCapture(null);
-        setIsAdvMode(false); // 結束冒險模式
+        setIsAdvMode(false);
     };
+
+    useEffect(() => {
+        if (!activeBallId) return;
+        const snapshot = getCurrentPokemonSnapshot();
+        setInventory(prev => {
+            let changed = false;
+            const next = prev.map(ball => {
+                if (ball.ballId !== activeBallId) return ball;
+                if (JSON.stringify(ball.pokemon) === JSON.stringify(snapshot)) return ball;
+                changed = true;
+                return { ...ball, pokemon: snapshot };
+            });
+            return changed ? next : prev;
+        });
+    }, [activeBallId, currentMonsterId, evolutionStage, evolutionBranch, advStats, monsterTraits, bondValue, talkCount, lockedAffinity, soulAffinityCounts, interactionLogs, interactionCount, hunger, mood, isSleeping, isPooping, lastEvolutionTime]);
 
     function executeBattleTurn(playerAction = 'attack', actionMove = null, pvpEnemyMove = null) {
         if (playerAction === 'attack') playBloop('confirm');
@@ -966,14 +896,14 @@ export default function App() {
     };
 
     const getBattleStepDelay = (step) => {
-        if (!step) return 1000;
+        if (!step) return 4;
         if (step.kind === 'damage') return 620;
         if (step.kind === 'support') return 760;
         if (step.kind === 'status') return 940;
         if (step.kind === 'system') return 880;
         if (step.type === 'damage') return 620;
         if (step.type === 'heal' || step.type === 'shield') return 760;
-        return 1000;
+        return 4;
     };
 
     const advanceBattleStreaming = (prev) => {
@@ -1036,7 +966,7 @@ export default function App() {
                             ...(updated.traitUsage[targetKey].revives || {}),
                             [targetTrait.id]: true
                         };
-                        updated.activeMsg = `${targetTrait.name}觸發！HP 回到 1，戰鬥繼續。`;
+                        updated.activeMsg = `${targetTrait.name}觸發！體力回到 1，戰鬥繼續。`;
                     }
                     const finalHpAfter = targetKey === 'player' ? updated.playerHpAfter : updated.enemyHpAfter;
                     const finalShieldAfter = targetKey === 'player' ? updated.playerShieldAfter : updated.enemyShieldAfter;
@@ -1095,13 +1025,13 @@ export default function App() {
                             hp: nextStep.hpValue,
                             maxHp: nextStep.maxHpValue || updated[targetKey].maxHp
                         };
-                        
+
                         // 產生風格轉換特效 pop (利用既有 damagePop 架構但不傳 value 避免顯示傷害數字)
                         const damagePopId = nextStep.id || `${prev.turn}-${targetKey}-form_change`;
                         updated.damagePop = {
                             id: damagePopId,
                             target: targetKey,
-                            value: 0, 
+                            value: 0,
                             effectStyle: 'form_change'
                         };
 
@@ -1188,7 +1118,7 @@ export default function App() {
                 return next;
             }
 
-            const nextPhase = prev.encounterType === 'wild' ? 'combat' : 'player_action';
+            const nextPhase = 'player_action';
             const finalPlayer = {
                 ...(prev.playerFinalState || prev.player),
                 status: (prev.playerFinalState?.status !== undefined) ? prev.playerFinalState.status : prev.player.status,
@@ -1254,95 +1184,28 @@ export default function App() {
 
     const executeAdventureEvent = () => {
         const myId = getMonsterIdWrapped();
-        const r = Math.random();
-        let bStateToTrigger = null;
-        let tempLog = [];
+        const wildBattle = generateBattleState('wild', myId);
 
-        // --- 🛠️ 偵錯系統覆蓋：機率自定義 ---
-        if (debugOverrides.encounterRates) {
-            const rates = debugOverrides.encounterRates;
-            // 由於 rates 可能只有一個為 1 其餘為 0，這裡用簡單的隨機權重分配 (雖然目前 UI 只有單選)
-            if (rates.wild === 1) {
-                bStateToTrigger = generateBattleState('wild', myId);
-            } else if (rates.trainer === 1) {
-                bStateToTrigger = generateBattleState('trainer', myId);
-            } else if (rates.gather === 1) {
-                handleAdvGather(tempLog, myId);
-            }
-        } else {
-            // --- 根據玩家等級 (derivedLevel) 調整機率 ---
-            // 低等級時尋找物資的探索機率極高，高等級時逐漸轉換為戰鬥
-            // 等級 1：探索 50% / 野怪 50% / 訓練師 0% (改善前期體驗)
-            // 等級 50 及以上：探索 0% / 野怪 30% / 訓練師 70%
-            const levelRatio = Math.min(1, Math.max(0, (derivedLevel - 1) / 49)); // 1級為0，50級(含)以上為1
-
-            const gatherProb = 0.50 * (1 - levelRatio); // 探索機率 (從 50% 降至 0%)
-            const trainerProb = 0.70 * levelRatio;      // 訓練師機率 (從 0% 升至 70%)
-            const wildProb = 1 - gatherProb - trainerProb; // 野怪機率 (從 50% 漸變至 30%)
-
-            if (r < wildProb) {
-                bStateToTrigger = generateBattleState('wild', myId);
-            } else if (r < wildProb + trainerProb) {
-                bStateToTrigger = generateBattleState('trainer', myId);
-            } else {
-                handleAdvGather(tempLog, myId);
-            }
-        }
-
-        if (bStateToTrigger) {
-            if (bStateToTrigger.mode === 'wild') {
-                // 野怪事件：直接進入掃蕩戰，完全不經過第二段日誌確認
-                setAdvLog([]);
-                setPendingAdvLogs([]);
-                setIsAdvStreaming(false);
-                setTimeout(() => {
-                    setBattleState({ ...bStateToTrigger, active: true });
-                }, 0);
-            } else {
-                // 訓練家事件：保留原本的播報確認流程
-                const battleIntroLog = {
-                    msg: bStateToTrigger.initMsg,
-                    hpRatio: 1,
-                    iconId: bStateToTrigger.enemy.id,
-                    triggerBattle: bStateToTrigger
-                };
-                setAdvLog(prev => [...prev, battleIntroLog]);
-                setPendingAdvLogs([battleIntroLog]);
-                setIsAdvStreaming(true);
-            }
-        } else if (tempLog.length > 0) {
-            // 採集事件：將採集日誌送入播報隊列
-            const logs = [...tempLog, { msg: "🚩 冒險已結束，按 [B] 返回", hpRatio: tempLog[tempLog.length - 1].hpRatio }];
-            setAdvLog([logs[0]]);
-            setPendingAdvLogs(logs.slice(1));
-            setIsAdvStreaming(true);
-        } else {
-            // 異常情況也確保關閉串流狀態
-            setIsAdvStreaming(false);
-        }
+        setAdvLog([]);
+        setPendingAdvLogs([]);
+        setIsAdvStreaming(false);
+        setTimeout(() => {
+            setBattleState({ ...wildBattle, active: true });
+        }, 0);
     };
 
     // --- 經典回合制戰鬥引擎 ---
 
-    // Auto-battler loop hook
+    // 冒險、聯盟與連線戰鬥在開場後都進入玩家選招階段。
     useEffect(() => {
-        if (!battleState.active) return;
-        if (battleState.phase === 'end') return;
+        if (!battleState.active || battleState.phase !== 'intro') return;
+        if (battleState.mode !== 'trainer' && battleState.mode !== 'pvp' && battleState.mode !== 'tournament') return;
 
-        let timer;
-        if (battleState.encounterType === 'wild') {
-            if (battleState.phase === 'intro') {
-                timer = setTimeout(() => setBattleState(p => ({ ...p, phase: 'combat' })), 1500);
-            } else if (battleState.phase === 'combat') {
-                timer = setTimeout(() => executeBattleTurn('attack'), 1500);
-            }
-        } else if (battleState.mode === 'trainer' || battleState.mode === 'pvp' || battleState.mode === 'tournament') {
-            if (battleState.phase === 'intro') {
-                timer = setTimeout(() => setBattleState(p => ({ ...p, phase: 'player_action' })), 2000);
-            }
-        }
+        const timer = setTimeout(() => {
+            setBattleState(prev => ({ ...prev, phase: 'player_action' }));
+        }, battleState.encounterType === 'wild' ? 1500 : 2000);
         return () => clearTimeout(timer);
-    }, [battleState.active, battleState.phase, battleState.turn, battleState.mode]);
+    }, [battleState.active, battleState.phase, battleState.mode, battleState.encounterType]);
 
     // --- 🔹 戰鬥播報自動播放引擎 🔹 ---
     useEffect(() => {
@@ -1374,33 +1237,7 @@ export default function App() {
             updateDiaryEvent(`${prefix}${enemy.name || '未知怪獸'}`, priority);
         }
 
-        let shouldDropItem = false;
         const isWildEncounter = battleState.encounterType === 'wild';
-        if (!isWildEncounter && battleState.mode === 'trainer') shouldDropItem = true;
-        if (isWildEncounter && (enemy.isElite || Math.random() < 0.15)) shouldDropItem = true;
-
-        if (shouldDropItem) {
-            const weights = { 1: 100, 2: 50, 3: 20, 4: 5, 5: isWildEncounter ? 2 : 1 };
-            const pool = [];
-            ADV_ITEMS.forEach(it => {
-                const w = weights[it.rarity] || 1;
-                const count = enemy.isElite && it.rarity >= 3 ? w * 3 : w;
-                for (let i = 0; i < count; i++) pool.push(it);
-            });
-            const item = pool[Math.floor(Math.random() * pool.length)];
-
-            setInventory(prev => {
-                const idx = prev.findIndex(it => it.id === item.id);
-                if (idx !== -1) {
-                    const next = [...prev];
-                    next[idx] = { ...next[idx], count: (next[idx].count || 1) + 1 };
-                    return next;
-                }
-                if (prev.length >= 99) return prev;
-                return [...prev, { ...item, count: 1 }];
-            });
-            logs.push({ msg: `🎁 獲得了戰利品：${item.name}！`, hpRatio: 1, iconId: myId });
-        }
 
         const catchRate = debugOverrides.catchRate ?? 0.1;
         if (isWildEncounter && enemy && Math.random() < catchRate) {
@@ -1450,7 +1287,7 @@ export default function App() {
             if (defeatTutorialEnabled) {
                 setPendingDefeatTutorial('adventure');
             }
-            logs.push({ msg: `💀 戰敗撤退中... 需要多吃點飯糰了`, hpRatio: 0 });
+            logs.push({ msg: `💀 戰敗撤退中... 下次再調整戰術吧`, hpRatio: 0 });
         } else {
             logs.push({ msg: `💨 逃跑成功...`, hpRatio: advCurrentHP });
         }
@@ -1469,6 +1306,8 @@ export default function App() {
         playBloop('confirm');
     };
 
+    const dispatchRogueControl = key => window.dispatchEvent(new CustomEvent('rogue-control', { detail: key }));
+
     const handleA = () => {
         if (defeatTutorialType) {
             window.dispatchEvent(new CustomEvent('defeatTutorialNext'));
@@ -1480,10 +1319,10 @@ export default function App() {
             return;
         }
         if (isExpeditionOpen) {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z' }));
+            dispatchRogueControl('A');
             return;
         }
-        if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
+        if (isCloudLoading || isEvolving) return; // 雲端同步或進化表演中禁止操作
         if (cloudChoicePrompt) {
             selectCloudChoice(1);
             playBloop('select');
@@ -1546,9 +1385,8 @@ export default function App() {
         }
         if (isStatusUIOpen || isAdvMode) return;
         if (isInventoryOpen) {
-            if (isUsingItem) return; // 使用中禁止切換
             if (inventory.length > 0) {
-                setSelectedItemIdx(prev => (prev + 1) % inventory.length);
+                setSelectedBallIdx(prev => (prev + 1) % inventory.length);
                 playBloop('select');
             }
             return;
@@ -1598,13 +1436,8 @@ export default function App() {
             return;
         }
         if (isEvolving) return;
-        if (isInteractMenuOpen) {
-            setInteractMenuIdx(prev => (prev + 1) % 3);
-            const labels = ["餵食", "撫摸", "結束互動"];
-            updateDialogue(`選擇：${labels[(interactMenuIdx + 1) % 3]}`);
-            playBloop('select');
-            return;
-        }
+
+
         const next = (activeIndex + 1) % menuItems.length;
         setActiveIndex(next);
         updateDialogue(menuItems[next].label);
@@ -1634,7 +1467,7 @@ export default function App() {
             window.dispatchEvent(new CustomEvent('petLetterAdvance'));
             return;
         }
-        if (isCloudLoading || isInteractAnimating || isEvolving) return;
+        if (isCloudLoading || isEvolving) return;
         if (cloudChoicePrompt) {
             confirmCloudChoice();
             playBloop('confirm');
@@ -1648,7 +1481,7 @@ export default function App() {
             return;
         }
         if (isExpeditionOpen) {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
+            dispatchRogueControl('B');
             return;
         }
         if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer' || battleState.mode === 'tournament')) {
@@ -1736,13 +1569,9 @@ export default function App() {
             playBloop('confirm');
             return;
         }
-        // 附魔選擇階段不攔截 B 鍵（由 UI 按鈕操作）
-        if (tournament.isTournamentOpen && ['champion_reward_move', 'champion_reward_effect', 'card_selection'].includes(tournament.tPhase)) {
-            return;
-        }
 
         if (isEvolving || isAdvMode) {
-            // --- 戰鬥播報模式 (Step-by-Step) --- 
+            // --- 戰鬥播報模式 (Step-by-Step) ---
             if (battleState?.active) {
                 return; // 戰鬥期間（包含 intro, player_action, streaming, end）B 鍵都不應觸發冒險結束
             }
@@ -1847,36 +1676,17 @@ export default function App() {
         }
 
         if (isStatusUIOpen) {
-            setStatusPage(prev => prev === 'stats' ? 'moves' : 'stats');
-            playBloop('select');
             return;
         }
         if (isInventoryOpen) {
-            if (isUsingItem) return; // 使用中禁止重複觸發
             if (inventory.length > 0) {
-                useItem(selectedItemIdx);
+                switchPokemonBall(selectedBallIdx);
             }
             return;
         }
 
-        if (isInteractMenuOpen) {
-            if (interactMenuIdx === 0 || interactMenuIdx === 1) { // 餵食 或 撫摸
-                const action = interactMenuIdx === 0 ? 'feed' : 'pet';
-                setIsInteractMenuOpen(false); // 暫時關閉以看表演
-                setIsInteractAnimating(true); // 鎖定操作
-                executeAction(action);
-                // 1.5 秒後自動恢復子選單並解除鎖定
-                setTimeout(() => {
-                    setIsInteractAnimating(false);
-                    setIsInteractMenuOpen(true);
-                }, 1500);
-            } else { // 結束互動
-                setIsInteractMenuOpen(false);
-                updateDialogue("結束互動。");
-                playBloop('back');
-            }
-            return;
-        }
+
+
 
         if (isPediaOpen) {
             if (isPediaDetailOpen) {
@@ -1926,10 +1736,10 @@ export default function App() {
             return;
         }
         if (isExpeditionOpen) {
-            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x' }));
+            dispatchRogueControl('C');
             return;
         }
-        if (isCloudLoading || isInteractAnimating || isEvolving) return; // 雲端同步、互動表演或進化表演中禁止操作
+        if (isCloudLoading || isEvolving) return; // 雲端同步或進化表演中禁止操作
         if (cloudChoicePrompt) {
             dismissCloudChoice();
             playBloop('back');
@@ -2001,18 +1811,13 @@ export default function App() {
             return;
         }
         if (isInventoryOpen) {
-            if (isUsingItem) return; // 使用中禁止關閉背包
             setIsInventoryOpen(false);
             updateDialogue("吼吼吼～");
             playBloop('back');
             return;
         }
-        if (isInteractMenuOpen) {
-            setIsInteractMenuOpen(false);
-            updateDialogue("吼吼吼～");
-            playBloop('select');
-            return;
-        }
+
+
         if (isPediaOpen) {
             if (isPediaDetailOpen) {
                 setIsPediaDetailOpen(false);
@@ -2046,7 +1851,7 @@ export default function App() {
     const executeAction = (id) => {
         switch (id) {
             case 'pedia':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2057,55 +1862,27 @@ export default function App() {
                 updateDialogue("圖鑑系統開啟。", true);
                 playBloop('confirm');
                 break;
-            case 'interact':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+            case 'skills':
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
                 }
-                setIsInteractMenuOpen(true);
-                setInteractMenuIdx(0);
-                updateDialogue("選擇互動方式：", true);
+                setStatusPage('moves');
+                setIsStatusUIOpen(true);
+                updateDialogue("查看技能中...", true);
                 playBloop('confirm');
-                break;
-            case 'feed':
-                if (hunger >= 100) {
-                    updateDialogue("我吃不下了...");
-                    break;
-                }
-                setHunger(h => Math.min(100, h + 30));
-                setFeedCount(f => f + 1);
-                setTodayFeedCount(f => f + 1);
-                recordGameAction(); // 紀錄餵食
-                velRef.current = { x: velRef.current.x, y: -5.0 };
-                updateDialogue("真好吃！");
-                logEvent("餵食了怪獸。");
                 break;
             case 'talk':
-                if (hunger < 20) {
-                    setAlertMsg("飽食度不足 (需要 20 以上)");
-                    updateDialogue("肚子太餓了，沒力氣談心... (請先餵食)", true);
-                    playBloop('fail');
-                    break;
-                }
                 setIsExpeditionOpen(true);
                 recordGameAction();
-                logEvent("開始與怪獸談心。");
+                logEvent("開始無限波次挑戰。");
                 playBloop('confirm');
                 break;
-            case 'pet':
-                if (mood >= 100) {
-                    updateDialogue("摸太久了...");
-                    break;
-                }
-                setMood(m => Math.min(100, m + 20));
-                recordGameAction(); // 紀錄撫摸
-                velRef.current = { x: velRef.current.x, y: -4.0 };
-                updateDialogue("好開心！");
-                logEvent("親密互動。");
-                break;
+
+
             case 'status':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2116,7 +1893,7 @@ export default function App() {
                 playBloop('confirm');
                 break;
             case 'tournament':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2128,7 +1905,7 @@ export default function App() {
                 playBloop('confirm');
                 break;
             case 'connect':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2142,18 +1919,18 @@ export default function App() {
                 playBloop('confirm');
                 break;
             case 'info':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
                 }
                 setIsInventoryOpen(true);
-                setSelectedItemIdx(0);
+                setSelectedBallIdx(0);
                 updateDialogue("查看背包中...", true);
                 playBloop('confirm');
                 break;
             case 'adventure':
-                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+                if (isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
                     setAlertMsg("此功能僅限在主畫面使用");
                     playBloop('fail');
                     return;
@@ -2168,27 +1945,26 @@ export default function App() {
 
     // --- 進化表演結束回調 ---
     const handleEvolutionFinish = () => {
-        const nextBranch = window._nextBranch || 'C';
-        const evolvedId = window._evolvedId || 1000;
-        const evolvedName = MONSTER_NAMES[evolvedId] || nextBranch;
+        const evolvedId = Number(window._evolvedId) || currentMonsterId;
+        const evolvedName = MONSTER_NAMES[evolvedId] || 'Pokémon';
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         updateDiaryEvent(`${timeStr} 分進化成了：${evolvedName}`, 3);
         setTodayHasEvolved(true);
-
-        setEvolutionStage(prev => prev + 1);
-        setEvolutionBranch(nextBranch);
+        setCurrentMonsterId(evolvedId);
+        setMonsterTraits(generateMonsterTraits(evolvedId));
+        setEvolutionStage(getPokemonEvolutionStage(evolvedId));
+        setEvolutionBranch(`WILD_${evolvedId}`);
         setLastEvolutionTime(Date.now());
         setStageTrainWins(0);
         setIsEvolving(false);
         setEvolutionDetails(null);
-        updateDialogue("進化成功！");
+        updateDialogue('進化成功！');
         unlockMonster(evolvedId);
 
-        // 清除全域暫存
-        delete window._nextBranch;
+        recordGameAction();
         delete window._evolvedId;
     };
 
@@ -2197,234 +1973,29 @@ export default function App() {
 
         const checkEvolutionInterval = setInterval(() => {
             if (document.hidden) return;
-            const elapsed = Date.now() - lastEvolutionTime;
+            // Pokémon 不會因經過時間自然死亡，只檢查固定等級進化。
 
-            // 1. 壽命檢查 (最高優先級：從出生起算 7 天強制死亡)
-            const totalElapsed = Date.now() - birthTime;
-            const lifespan = debugOverrides.evolutionMs ?? EVO_TIMES.FINAL_LIFETIME;
+            const currentId = getMonsterIdWrapped();
+            const evolvedId = getNextPokemonEvolution(currentId);
+            const targetLevel = debugOverrides.evolutionMs ? 1 : getPokemonEvolutionLevel(currentId);
 
-            if (totalElapsed >= lifespan) {
+            if (evolvedId && targetLevel && derivedLevel >= targetLevel) {
                 clearInterval(checkEvolutionInterval);
-
-                const currentLevel = getLevelByPower(advStats.basePower);
-                let memoryCapsuleGranted = false;
-                let snapshot = null;
-
-                // --- 🌟 回憶膠囊獲得判定 (使用 Debug 覆蓋或預設 100%) ---
-                const mRate = debugOverrides.memoryRate ?? 1.0;
-                if (currentLevel >= 100 && Math.random() < mRate) {
-                    memoryCapsuleGranted = true;
-                    // 捕捉快照
-                    snapshot = {
-                        speciesId: getMonsterIdWrapped(),
-                        evolutionStage,
-                        evolutionBranch,
-                        advStats: JSON.parse(JSON.stringify(advStats)),
-                        bondValue,
-                        talkCount,
-                        lockedAffinity,
-                        soulAffinityCounts: { ...soulAffinityCounts },
-                        soulTagCounts: { ...soulTagCounts },
-                        monsterTraits,
-                        interactionLogs: [...interactionLogs],
-                        interactionCount
-                    };
-
-                    // 加入背包
-                    setInventory(prev => {
-                        const itemDef = ADV_ITEMS.find(it => it.id === '021');
-                        const newItem = {
-                            ...itemDef,
-                            count: 1,
-                            instanceId: Date.now(), // 確保每個膠囊獨立
-                            snapshot
-                        };
-                        return [...prev, newItem];
-                    });
-                }
-
-                // D線抽籤：20% 機率靈魂重生
-                const dRoll = Math.random();
-                const dLine = dRoll < 0.20 ? 'G1' : null;
-                setDeathBranch(dLine);
-                setIsGenerating(true);
-                setIsDead(true);
-                velRef.current = { x: 0, y: -0.1 };
-
-                setTimeout(() => {
-                    let words = "";
-                    if (memoryCapsuleGranted) {
-                        // --- 🌟 觸發全螢幕演出 ---
-                        setMemoryPerformanceMonsterId(getMonsterIdWrapped());
-                        setShowMemoryPerformance(true);
-                        words = "主人我們的回憶是不會消失的，這個給你只要你願意我會再出現在你身旁";
-                    } else if (dLine) {
-                        words = "靈魂不滅...我還會回來的...";
-                    } else {
-                        words = "謝謝你陪我走到最後一刻...";
-                    }
-
-                    setFinalWords(words);
-                    setIsGenerating(false);
-                    updateDialogue(words);
-                    recordGameAction(); // 確保獲得道具後有存檔
-                }, 1500);
-
-                setTimeout(() => {
-                    setShowRestartHint(true);
-                }, 2500);
-                return;
-            }
-
-            // 2. 進化檢查 (改用等級判定)
-            const isFinalWild = evolutionBranch.startsWith('WILD_') && !WILD_EVOLUTION_MAP[evolutionBranch.slice(5)];
-            const isFinalState = evolutionStage >= 4 || isFinalWild || (evolutionStage === 3 && ['G1', 'G1_ALT', 'F_FAIL1', 'F_NINETALES_SOUL'].includes(evolutionBranch));
-
-            if (isFinalState) return;
-
-            const targetLevel = debugOverrides.evolutionMs ? 1 : (EVO_LEVELS[evolutionStage] || 999);
-            if (derivedLevel >= targetLevel) {
-                clearInterval(checkEvolutionInterval);
-                setIsEvolving(true);
-                updateDialogue("進化中！！");
-
-                const stats = latestStats.current;
-                const m = stats.mood;
-                const h = stats.hunger;
-                const sWins = stats.stageTrainWins;
-                let nextBranch = 'C';
-
-                let soulNext = null;
-                // Stage 1 to 2: Lock affinity
-                if (evolutionStage === 1 && !stats.lockedAffinity) {
-                    let maxAff = 'none', mv = -1;
-                    for (const [k, v] of Object.entries(stats.soulAffinityCounts)) {
-                        if (v > mv && v > 0) {
-                            mv = v;
-                            maxAff = k;
-                        }
-                    }
-                    if (maxAff !== 'none') {
-                        setLockedAffinity(maxAff);
-                        stats.lockedAffinity = maxAff;
-                    }
-                }
-
-                // Determine basic soulNext based on locked affinity
-                if (stats.bondValue >= 40 && stats.lockedAffinity) {
-                    if (evolutionStage === 1) {
-                        if (stats.lockedAffinity === 'fire') soulNext = 'F_SOUL';
-                        if (stats.lockedAffinity === 'water') soulNext = 'W_SOUL';
-                        if (stats.lockedAffinity === 'grass') {
-                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                            soulNext = ['passionate', 'stubborn'].includes(dominantNature) ? 'GR_SOUL_ALT' : 'GR_SOUL';
-                        }
-                        if (stats.lockedAffinity === 'bug') {
-                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                            soulNext = ['stubborn', 'nonsense'].includes(dominantNature) ? 'B_SOUL_ALT' : 'B_SOUL';
-                        }
-                    }
-                }
-
-                let requiredWins = 0;
-                if (evolutionStage === 1) requiredWins = 8;
-                else if (evolutionStage === 2) requiredWins = 30;
-                else if (evolutionStage === 3) requiredWins = 50;
-
-                // =====================================================
-                // 進化鏈鎖定規則：
-                if (evolutionBranch.startsWith('WILD_')) {
-                    // 野外怪獸進化線 (方案 C)
-                    const currentWildIdStr = evolutionBranch.slice(5);
-                    const nextWildIdVal = WILD_EVOLUTION_MAP[currentWildIdStr];
-                    if (nextWildIdVal) {
-                        nextBranch = 'WILD_' + nextWildIdVal;
-                    } else {
-                        nextBranch = evolutionBranch; // 已是最終型態
-                    }
-                } else if (['G1', 'G1_ALT'].includes(evolutionBranch)) {
-                    // D 線完全封閉，沿死亡線繼續 (優先度高於靈魂進化，防止幽靈線被劫持)
-                    if (evolutionBranch === 'G1' && evolutionStage === 1 && stats.bondValue >= 100) {
-                        nextBranch = 'G1_ALT';
-                    } else {
-                        nextBranch = evolutionBranch;
-                    }
-
-                } else if (soulNext || evolutionBranch.endsWith('_SOUL') || evolutionBranch.endsWith('_ALT')) {
-
-                    // 靈魂進化線最高優先
-                    if (soulNext) {
-                        nextBranch = soulNext;
-                    } else {
-                        // 水系/火系靈魂分支判斷 (Stage 2 <-> Stage 3 <-> Stage 4 皆可互相切換)
-                        if (['W_SOUL', 'W_SOUL_ALT'].includes(evolutionBranch)) {
-                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                            if (evolutionStage === 3 && stats.bondValue > 90) {
-                                nextBranch = 'W_SOUL_BOND';
-                            } else if (['nonsense', 'passionate'].includes(dominantNature)) {
-                                nextBranch = 'W_SOUL_ALT';
-                            } else {
-                                nextBranch = 'W_SOUL';
-                            }
-                        } else if (['F_SOUL', 'F_SOUL_ALT'].includes(evolutionBranch)) {
-                            const dominantNature = Object.entries(soulTagCounts).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0];
-                            if (['gentle', 'rational'].includes(dominantNature)) {
-                                nextBranch = 'F_SOUL_ALT';
-                            } else {
-                                nextBranch = 'F_SOUL';
-                            }
-                        } else {
-                            nextBranch = evolutionBranch;
-                        }
-                    }
-                } else if (evolutionStage === 1) {
-                    // ★ Stage 0→1（起始怪獸 Stage）：所有線可互通，依條件首次分支
-                    if (m >= 50 && h >= 50) {
-                        nextBranch = 'A';
-                    } else {
-                        nextBranch = 'C';
-                    }
-
-                } else if (['A', 'C'].includes(evolutionBranch)) {
-                    // ★ 已在 A/C 一般線（Stage>=2）：依據數值決定下一階段路徑
-                    if (evolutionBranch === 'A' && evolutionStage === 3 && stats.bondValue > 90) {
-                        nextBranch = 'A_BOND';
-                    } else if (evolutionBranch === 'C' && evolutionStage === 3 && stats.bondValue > 90) {
-                        nextBranch = 'C_BOND';
-                    } else if (m >= 50 && h >= 50) {
-                        nextBranch = 'A';
-                    } else {
-                        nextBranch = 'C';
-                    }
-
-                } else {
-                    // 其他未覆蓋情況（保底）
-                    nextBranch = 'C';
-                }
-
-                // 提前計算進化後的 ID 並設定細節
-                const currentId = getMonsterIdWrapped(evolutionBranch, evolutionStage);
-                const evolvedId = getMonsterIdWrapped(nextBranch, evolutionStage + 1);
                 setEvolutionDetails({ fromId: currentId, toId: evolvedId });
 
-                // 提前預載進化後的圖片，消除載入延遲
                 const assetId = MONSTER_ASSET_IDS[evolvedId] || evolvedId;
                 const base = import.meta.env.BASE_URL;
                 const img = new Image();
                 img.src = `${base}assets/exclusive/idle/${assetId}.gif`;
 
                 setIsEvolving(true);
-                updateDialogue("進化中！！");
-
-                // 實際的狀態更新邏輯，將在 EvolutionPerformance 結束時呼叫 (由 handleEvolutionFinish 觸發)
-                // 這裡暫時只設定 nextBranch 以供回傳使用
-                window._nextBranch = nextBranch;
+                updateDialogue('進化中！！');
                 window._evolvedId = evolvedId;
             }
         }, 500);
 
         return () => clearInterval(checkEvolutionInterval);
-    }, [isBooting, evolutionStage, isDead, isEvolving, birthTime, derivedLevel, miniGame, isRunaway, debugOverrides, isDuplicateTab, evolutionBranch, soulTagCounts]);
+    }, [isBooting, isDead, isEvolving, derivedLevel, miniGame, isRunaway, debugOverrides, isDuplicateTab, currentMonsterId]);
 
     useEffect(() => {
         if (!miniGame || miniGame.status === 'result') return;
@@ -2516,26 +2087,6 @@ export default function App() {
     }, [advLog]);
 
     // --- 🔹 戰鬥引擎與對手生成 🔹 ---
-    const generateTrainerOpponent = (stage) => {
-        const pool = TRAINER_POOLS[stage] || TRAINER_POOLS[1];
-        const base = pool[Math.floor(Math.random() * pool.length)];
-
-        const modifiers = [
-            { prefix: '強壯的', hpBonus: 1.1, atkBonus: 1.0, spdBonus: 1.0 },
-            { prefix: '狂暴的', hpBonus: 1.0, atkBonus: 1.1, spdBonus: 1.0 },
-            { prefix: '疾風的', hpBonus: 1.0, atkBonus: 1.0, spdBonus: 1.1 }
-        ];
-        const mod = modifiers[Math.floor(Math.random() * modifiers.length)];
-        return {
-            id: base.id,
-            name: `${mod.prefix} ${base.name}`,
-            power: 100 * (1 + (stage - 1) * 0.2), // 修正難度曲線，Stage 1 訓練師與玩家等級持平 (1.0倍)
-            hpMult: mod.hpBonus,
-            atkMult: mod.atkBonus,
-            spdMult: mod.spdBonus,
-            isTrainer: true
-        };
-    };
     function generateBattleState(mode, myId, pvpOpponentData = null) {
         const level = getLevelByPower(advStats.basePower);
         const speciesId = getMonsterIdWrapped();
@@ -2545,9 +2096,7 @@ export default function App() {
             calcFinalStat,
             getLevelByPower,
             monsterTraits,
-            natureConfig: NATURE_CONFIG,
             skillDatabase: SKILL_DATABASE,
-            soulTagCounts,
             speciesBaseStats: SPECIES_BASE_STATS,
             speciesId,
         });
@@ -2571,19 +2120,17 @@ export default function App() {
             const isElite = Math.random() < 0.12 && !isBaby;
             eLevel = Math.min(100, Math.min(level, isElite ? level : Math.floor(level * (0.7 + Math.random() * 0.2))));
 
-            // 野生怪隨機分配 IV 與 性格修正
-            const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
-            const eNatureMods = getNatureMods(eNature, NATURE_CONFIG);
+            // 野生怪隨機分配 IV。
             const eIVs = { hp: Math.floor(Math.random() * 32), atk: Math.floor(Math.random() * 32), def: Math.floor(Math.random() * 32), spd: Math.floor(Math.random() * 32) };
             const eEVs = { hp: eLevel * 2, atk: eLevel * 2, def: eLevel * 2, spd: eLevel * 2 };
 
-            eMaxHP = calcFinalStat('hp', enemyData.id, eIVs.hp, eEVs.hp, eLevel, eNatureMods.hp);
-            eATK = calcFinalStat('atk', enemyData.id, eIVs.atk, eEVs.atk, eLevel, eNatureMods.atk);
-            eDEF = calcFinalStat('def', enemyData.id, eIVs.def, eEVs.def, eLevel, eNatureMods.def);
-            eSPD = calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel, eNatureMods.spd);
+            eMaxHP = calcFinalStat('hp', enemyData.id, eIVs.hp, eEVs.hp, eLevel);
+            eATK = calcFinalStat('atk', enemyData.id, eIVs.atk, eEVs.atk, eLevel);
+            eDEF = calcFinalStat('def', enemyData.id, eIVs.def, eEVs.def, eLevel);
+            eSPD = calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel);
 
-            const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name} (Lv.${eLevel}) 跳了出來！`;
-            const eMoves = generateMoves(Math.max(1, Math.floor(evolutionStage * 0.8)), eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
+            const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name}（等級 ${eLevel}） 跳了出來！`;
+            const eMoves = generateMoves(enemyData.id, eLevel).map(id => SKILL_DATABASE[id]).filter(Boolean);
             const eMoveUpgrades = {};
             resultState = {
                 active: true, mode: 'trainer', encounterType: 'wild', phase: 'intro', turn: 1,
@@ -2617,7 +2164,7 @@ export default function App() {
             eSPD = (enemyData?.stats?.spd) || 90;
             eType = enemyData?.type || 'normal';
             // 重要：一定要使用傳過來的招式，而非本地生成的
-            const rawEnemyMoves = enemyData?.moves || generateMoves(1, eType, null, eLevel, true);
+            const rawEnemyMoves = enemyData?.moves || generateMoves(enemyData?.id || 4, eLevel);
             const eMoves = rawEnemyMoves.map(m => {
                 if (typeof m === 'string') return SKILL_DATABASE[m];
                 if (typeof m === 'object' && m !== null) return m; // 已經是物件了，直接用
@@ -2625,7 +2172,7 @@ export default function App() {
             }).filter(Boolean);
             if (eMoves.length === 0) eMoves.push(SKILL_DATABASE.tackle);
 
-            const initMsg = `連線成功！${enemyData?.name || '對手'} (Lv.${eLevel}) 降臨！`;
+            const initMsg = `連線成功！${enemyData?.name || '對手'}（等級 ${eLevel}） 降臨！`;
             resultState = {
                 active: true, mode: 'pvp', phase: 'intro', turn: 1,
                 player: {
@@ -2638,7 +2185,7 @@ export default function App() {
                     trait: monsterTraits?.trait || null
                 },
                 enemy: {
-                    id: enemyData?.id || 1000, name: (enemyData?.name || '對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
+                    id: enemyData?.id || 4, name: (enemyData?.name || '對手'), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isPvp: true, type: eType, moves: eMoves,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
                     moveUpgrades: enemyData?.moveUpgrades || {},
                     rogueEffects: { lifesteal: 0, reflect: 0, shield: 0, haste: 1.0 },
@@ -2650,43 +2197,7 @@ export default function App() {
                 traitUsage: { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } }
             };
         } else {
-            enemyData = generateTrainerOpponent(evolutionStage);
-            eLevel = Math.max(1, Math.min(100, level - 10)); // 訓練家等級必定低於玩家 10 級
-            const eNature = ['passionate', 'stubborn', 'rational', 'gentle', 'nonsense'][Math.floor(Math.random() * 5)];
-            const eNatureMods = getNatureMods(eNature, NATURE_CONFIG);
-            const eIVs = { hp: 20, atk: 20, def: 20, spd: 20 };
-            const eEVs = { hp: eLevel * 4, atk: eLevel * 4, def: eLevel * 4, spd: eLevel * 4 };
-
-            // Bug Fix #1: 套用 generateTrainerOpponent 產生的修飾語乘數 (hpMult/atkMult/spdMult)
-            eMaxHP = Math.floor(calcFinalStat('hp', enemyData.id, eIVs.hp, eEVs.hp, eLevel, eNatureMods.hp) * (enemyData.hpMult || 1.0));
-            eATK = Math.floor(calcFinalStat('atk', enemyData.id, eIVs.atk, eEVs.atk, eLevel, eNatureMods.atk) * (enemyData.atkMult || 1.0));
-            eDEF = calcFinalStat('def', enemyData.id, eIVs.def, eEVs.def, eLevel, eNatureMods.def);
-            eSPD = Math.floor(calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel, eNatureMods.spd) * (enemyData.spdMult || 1.0));
-
-            // Bug Fix #2: 從 SPECIES_BASE_STATS 讀取正確的雙屬性陣列，而非使用 stageMap 的硬編碼單屬性字串
-            const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
-            eType = eStatsRef.types;
-            const eMoves = generateMoves(evolutionStage, eType, null, eLevel, true).map(id => SKILL_DATABASE[id]).filter(Boolean);
-            const eMoveUpgrades = generateNpcMoveUpgrades(eMoves, level);
-
-            const initMsg = `訓練家出現，帶著他的 ${enemyData.name} (Lv.${eLevel}) 向你發起挑戰！`;
-            resultState = {
-                active: true, mode: 'trainer', phase: 'intro', turn: 1,
-                player: {
-                    hp: pMaxHP, maxHp: pMaxHP, atk: pATK, def: pDEF, spd: pSPD, id: myId, type: pType, moves: pMoves, level: level,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0, moveUpgrades: advStats.moveUpgrades || {},
-                    trait: monsterTraits?.trait || null
-                },
-                enemy: {
-                    id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isTrainer: true, type: eType, moves: eMoves,
-                    statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
-                    trait: null,
-                    moveUpgrades: eMoveUpgrades
-                },
-                logs: [initMsg], initMsg,
-                stepQueue: [], activeMsg: "", flashTarget: null, menuIdx: 0,
-                traitUsage: { player: { revives: {}, eightGatesEnded: false }, enemy: { revives: {}, eightGatesEnded: false } }
-            };
+            throw new Error(`Unsupported battle mode: ${mode}`);
         }
 
         // --- 預先載入戰鬥圖片，消除載入延遲 ---
@@ -2703,47 +2214,11 @@ export default function App() {
         const eImg = new Image();
         eImg.src = `${base}assets/exclusive/idle/${eAssetId}.gif`;
 
-        // --- 處理專屬天賦: 戰術切換 ---
-        const tacticalTrait = MONSTER_TRAITS.find(t => t.id === 'tactical_switch');
-        if (tacticalTrait) {
-            if ([1043, 1044].includes(Number(resultState.player.id))) {
-                resultState.player.trait = tacticalTrait;
-            }
-            if ([1043, 1044].includes(Number(resultState.enemy.id))) {
-                resultState.enemy.trait = tacticalTrait;
-            }
-        }
 
         return applyOpeningTraitEffects(resultState);
     };
 
 
-
-    const handleAdvGather = (log, myId) => {
-        log.push({ msg: "在路邊草叢閃爍著光芒...", hpRatio: 1 });
-
-        // 採集主要出產等級 1 物品，極低機率出高等級物品
-        let item;
-        const r = Math.random();
-        if (r < 0.85) item = ADV_ITEMS[0]; // 活力飯糰
-        else if (r < 0.98) item = ADV_ITEMS[2]; // 跑步鞋
-        else item = ADV_ITEMS[Math.floor(Math.random() * ADV_ITEMS.length)]; // 隨機
-
-        setInventory(prev => {
-            const idx = prev.findIndex(it => it.id === item.id);
-            if (idx !== -1) {
-                const next = [...prev];
-                next[idx] = { ...next[idx], count: (next[idx].count || 1) + 1 };
-                return next;
-            }
-            if (prev.length >= 99) {
-                log.push({ msg: "⚠️ 背包空間不足，物品流失了...", hpRatio: 1 });
-                return prev;
-            }
-            return [...prev, { ...item, count: 1 }];
-        });
-        log.push({ msg: `撿到了 [${item.name}]。`, hpRatio: 1, iconId: myId });
-    };
 
     const applyAdvGain = (points, log, currentHP, myId) => {
         let hpEV = 0;
@@ -2783,202 +2258,11 @@ export default function App() {
         recordGameAction(); // ✨ 修正：確保冒險獲取的戰力能觸發雲端同步
     };
 
-    // --- 物品使用邏輯 ---
-    const useItem = (itemIdx) => {
-        if (isUsingItem) return;
-        if (itemIdx < 0 || itemIdx >= inventory.length) return;
-
-        setIsUsingItem(true);
-        const item = inventory[itemIdx];
-        let success = true;
-
-        if (item.skillId) {
-            const skill = SKILL_DATABASE[item.skillId];
-            if (!skill) {
-                updateDialogue("這份秘笈書記載的內容似乎已無法辨認...");
-                success = false;
-            } else if ((advStats.moves || []).includes(item.skillId)) {
-                updateDialogue(`怪獸已經學會「${skill.name}」了，不用再讀啦！`);
-                success = false;
-            } else {
-                setPendingSkillLearn({ skill: skill, level: derivedLevel });
-                setIsInventoryOpen(false);
-                updateDialogue(`打開了${item.name}！怪獸開始專心領悟新的招式...`);
-                // 🚀 關鍵修正：技能道具使用後立即解鎖，不進入 1.8s 的延遲流程
-                // 避免 isUsingItem 狀態阻塞後續的 SkillLearnOverlay 操作
-                setIsUsingItem(false);
-
-                // 執行消耗流程（減少數量與同步）
-                setInventory(prev => {
-                    const next = [...prev];
-                    if ((next[itemIdx].count || 1) > 1) {
-                        next[itemIdx] = { ...next[itemIdx], count: next[itemIdx].count - 1 };
-                        return next;
-                    }
-                    return next.filter((_, i) => i !== itemIdx);
-                });
-                recordGameAction();
-                setSelectedItemIdx(0);
-                playSoundEffect('success');
-                return; // 提前返回，不走後面的通用 success 邏輯
-            }
-        } else {
-            switch (item.id) {
-                case 'DIARY': // 📖 對戰日記 - 永久道具，開啟全版日記 UI
-                    setIsUsingItem(false); // 立即解鎖，不走消耗流程
-                    setIsInventoryOpen(false);
-                    setDiaryViewDate(getTodayStr()); // 預設顯示今天
-                    setIsDiaryOpen(true);
-                    playBloop('success');
-                    return; // 直接返回，不走後面的 success 消耗邏輯
-
-                case '001': // 活力飯糰
-                    setAdvStats(prev => ({ ...prev, basePower: prev.basePower + 10 }));
-                    updateDialogue(`吃了${item.name}，戰力提升，感覺等級快升了！`);
-                    break;
-                case '002': // 戰鬥蛋白粉 (增加 10 點攻擊努力值與戰力)
-                    setAdvStats(prev => {
-                        const nextEVs = { ...prev.evs };
-                        const canAdd = Math.min(10, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs.atk);
-                        if (canAdd > 0) nextEVs.atk += canAdd;
-                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 10 };
-                    });
-                    updateDialogue("使用了戰鬥蛋白粉！攻擊潛能提升了");
-                    break;
-
-                case '004': // 覺醒之核 (全面提升)
-                    setAdvStats(prev => {
-                        const nextEVs = { ...prev.evs };
-                        const stats = ['hp', 'atk', 'def', 'spd'];
-                        stats.forEach(s => {
-                            const canAdd = Math.min(15, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[s]);
-                            if (canAdd > 0) nextEVs[s] += canAdd;
-                        });
-                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 80 };
-                    });
-                    updateDialogue("覺醒之核發光了！全屬性潛能開發成功");
-                    break;
-                case '005': // 奇異糖果 (隨機大幅提升)
-                    setAdvStats(prev => {
-                        const nextEVs = { ...prev.evs };
-                        const pool = ['hp', 'atk', 'def', 'spd'];
-                        const target = pool[Math.floor(Math.random() * 4)];
-                        const canAdd = Math.min(50, 510 - Object.values(nextEVs).reduce((a, b) => a + b, 0), 252 - nextEVs[target]);
-                        if (canAdd > 0) nextEVs[target] += canAdd;
-                        return { ...prev, evs: nextEVs, basePower: prev.basePower + 150 };
-                    });
-                    updateDialogue("奇異糖果真奇異！一項屬性潛能大幅爆發");
-                    break;
-                case '019': // 技能轉換器
-                    if ((advStats.moves || []).length < 4) {
-                        setAlertMsg("技能尚未全滿 (4招)，無法使用");
-                        updateDialogue("怪獸的技能還沒滿 4 招，無法使用轉換器！");
-                        success = false;
-                    } else {
-                        setIsUsingItem(false);
-                        setIsInventoryOpen(false);
-                        setUsingItemIdx(itemIdx);
-                        setIsSkillRearrangeOpen(true);
-                        playBloop('success');
-                        return; // 不在此處消耗，待調整完成後才消耗
-                    }
-                    break;
-                case '020': // 個體值提升劑
-                    {
-                        const currentIVs = advStats.ivs || { hp: 0, atk: 0, def: 0, spd: 0 };
-                        const upgradeableStats = Object.keys(currentIVs).filter(k => currentIVs[k] < 31);
-
-                        if (upgradeableStats.length === 0) {
-                            setAlertMsg("該怪獸已是最強！");
-                            updateDialogue("它的潛能已經開發到了極限。");
-                            success = false;
-                        } else {
-                            const target = upgradeableStats[Math.floor(Math.random() * upgradeableStats.length)];
-                            const upgradeMap = (val) => {
-                                if (val < 10) return 10;  // D -> C
-                                if (val < 15) return 15;  // C -> B
-                                if (val < 25) return 25;  // B -> A
-                                if (val < 31) return 31;  // A -> S
-                                return 31;
-                            };
-                            const newVal = upgradeMap(currentIVs[target]);
-                            setAdvStats(prev => {
-                                const nextIVs = { ...prev.ivs };
-                                nextIVs[target] = newVal;
-                                return { ...prev, ivs: nextIVs };
-                            });
-                            const statNameMap = { hp: '生命', atk: '攻擊', def: '防禦', spd: '速度' };
-                            updateDialogue(`使用了個體值提升劑！${statNameMap[target]}天賦提升到了 ${getIVGrade(newVal)} 級！`);
-                        }
-                    }
-                    break;
-                case '021': // 回憶膠囊
-                    if (!item.snapshot) {
-                        updateDialogue("這個膠囊似乎是空的...");
-                        success = false;
-                    } else {
-                        const sn = item.snapshot;
-                        // --- 🌟 全面恢復數據 ---
-                        setEvolutionStage(sn.evolutionStage);
-                        setEvolutionBranch(sn.evolutionBranch);
-                        setAdvStats(sn.advStats);
-                        setBondValue(sn.bondValue);
-                        setTalkCount(sn.talkCount);
-                        setLockedAffinity(sn.lockedAffinity);
-                        setSoulAffinityCounts(sn.soulAffinityCounts);
-                        setSoulTagCounts(sn.soulTagCounts);
-                        setMonsterTraits(normalizeMonsterTraits(sn.monsterTraits));
-                        setInteractionLogs(sn.interactionLogs);
-                        setInteractionCount(sn.interactionCount);
-
-                        // 重置生理狀態
-                        setHunger(100);
-                        setMood(100);
-                        setIsPooping(false);
-                        setIsSleeping(false);
-                        setLastEvolutionTime(Date.now());
-                        setBirthTime(Date.now()); // 獲得重生的 7 天壽命
-
-                        updateDialogue(`✨ 回憶湧現！${MONSTER_NAMES[sn.speciesId] || '同伴'} 回到了你的身邊！`);
-                        playBloop('success');
-
-                        // 復活後強制刷新等級 Ref，防止學習邏輯錯誤
-                        const newLevel = getLevelByPower(sn.advStats.basePower);
-                        resetLevelTracker(newLevel);
-                    }
-                    break;
-                default:
-                    updateDialogue(`未知物品 (ID: ${item.id})，無法使用`);
-                    success = false;
-            }
-        }
-
-        if (success) {
-            playSoundEffect('success');
-            // 減少數量或移除
-            setInventory(prev => {
-                const next = [...prev];
-                if ((next[itemIdx].count || 1) > 1) {
-                    next[itemIdx] = { ...next[itemIdx], count: next[itemIdx].count - 1 };
-                    return next;
-                }
-                return next.filter((_, i) => i !== itemIdx);
-            });
-            recordGameAction(); // 紀錄道具使用
-            setSelectedItemIdx(0);
-            // 延遲關閉 UI 回到主畫面方便觀看動畫
-            setTimeout(() => {
-                setIsInventoryOpen(false);
-                setIsUsingItem(false); // 解除鎖定
-            }, 1800);
-        } else {
-            setIsUsingItem(false); // 失敗也要解除
-        }
-    };
+    // 背包只負責切換寶可夢球；舊道具使用流程已移除。
 
     const triggerFarewell = () => {
         // 防呆：僅限主畫面使用 (防止在戰鬥、冒險、特訓、談心、選單中產生邏輯衝突)
-        if (defeatTutorialType || isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isInteractMenuOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
+        if (defeatTutorialType || isPvpMode || isAdvMode || battleState.active || miniGame || isInventoryOpen || isStatusUIOpen || isPediaOpen || isExpeditionOpen || isEvolving || isBooting || isDiaryOpen || pendingSkillLearn) {
             setAlertMsg("此功能僅限在主畫面使用");
             playBloop('fail');
             return;
@@ -2991,20 +2275,7 @@ export default function App() {
         setAdvStats(prev => ({ ...prev, moves: newMoves }));
         setIsSkillRearrangeOpen(false);
 
-        // 消耗道具
-        if (usingItemIdx !== -1) {
-            setInventory(prev => {
-                const next = [...prev];
-                if (next[usingItemIdx] && (next[usingItemIdx].count || 1) > 1) {
-                    next[usingItemIdx] = { ...next[usingItemIdx], count: next[usingItemIdx].count - 1 };
-                    return next;
-                }
-                return next.filter((_, i) => i !== usingItemIdx);
-            });
-            setUsingItemIdx(-1);
-        }
-
-        updateDialogue("技能順序調整完成！消耗了一個技能轉換器。");
+        updateDialogue("技能順序調整完成！");
         recordGameAction();
         playSoundEffect('success');
     };
@@ -3038,18 +2309,14 @@ export default function App() {
     const confirmFarewellAction = () => {
         setIsConfirmingFarewell(false);
         playBloop('confirm');
-        // D線抽籤：20% 機率靈魂重生
-        const dRoll = Math.random();
-        const dLine = dRoll < 0.20 ? 'G1' : null;
-        setDeathBranch(dLine);
+        // 不再抽死亡進化線；下一代會從固定進化鏈首階隨機產生。
+        setDeathBranch(null);
         setIsGenerating(true);
         setIsDead(true);
 
         setTimeout(() => {
             let words = "";
-            if (dLine) {
-                words = "靈魂不滅...我還會回來的...";
-            } else if (evolutionStage >= 5) {
+            if (evolutionStage >= 5) {
                 words = "我的靈魂永遠與你同在，搭檔。";
             } else if (evolutionStage >= 4) {
                 words = "謝謝你陪我走到最後一刻...";
@@ -3079,7 +2346,7 @@ export default function App() {
     }, [isDead, finalWords]);
 
     const handleRestart = () => {
-        const savedDeathBranch = latestStats.current.deathBranch;
+        const nextId = drawRandomPokemonStarter();
 
         setIsBooting(true); // 觸發啟動彩蛋畫面
         setBootMonsterId(prev => drawBootMonsterId(bootMonsterPoolRef, prev)); // 重新開機隨機抽一個未重複 ID
@@ -3115,30 +2382,9 @@ export default function App() {
         // 改為用等級去繼承：每級提供 1 點額外初始戰力 (最高繼承 99 點，即下一代從 10 級開始)
         const inheritedPower = Math.max(0, prevLevel - 1);
 
-        // 判斷下一代初始招式
-        const nextId = savedDeathBranch === 'G1' ? "1019" : "1000";
-        const nextStarterMove = nextId === "1019" ? 'lick' : 'tackle';
-        const nextBonusId = ['ember', 'water_gun', 'vine_whip', 'quick_attack'][Math.floor(Math.random() * 4)];
-
-        // 完美繼承招式處理：避免與新生自帶招式衝突，並且最多只保留 4 招
-        const prevMoves = latestStats.current.advStats?.moves || [];
-        let combinedMoves = [nextStarterMove]; // 保證必定擁有當前物種的基本招式
-
-        // 完美匯入前代技能
-        prevMoves.forEach(mv => {
-            if (!combinedMoves.includes(mv)) {
-                combinedMoves.push(mv);
-            }
-        });
-
-        // 若還有空間且未持有 bonus 招式，再發送 bonus
-        if (combinedMoves.length < 4 && !combinedMoves.includes(nextBonusId)) {
-            combinedMoves.push(nextBonusId);
-        }
-
-        // 把長度限制在最大四招內
-        combinedMoves = combinedMoves.slice(0, 4);
-
+        // 新生怪獸只使用該物種依目前繼承等級可學會的正式招式，不再繼承其他物種技能。
+        const nextLevel = getLevelByPower(100 + inheritedPower);
+        const combinedMoves = generateMoves(nextId, nextLevel);
         // --- 遺傳繼承：從前代個體值中挑選最強的三項繼承 ---
         const prevIVs = latestStats.current.advStats?.ivs || { hp: 0, atk: 0, def: 0, spd: 0 };
         const inheritedIVEntries = Object.entries(prevIVs)
@@ -3155,25 +2401,17 @@ export default function App() {
             nextIVs[statKey] = Number(statValue || 0);
         });
 
-        // --- 附魔繼承：保留繼承技能的強化數據 ---
-        const prevUpgrades = latestStats.current.advStats?.moveUpgrades || {};
-        const nextUpgrades = {};
-        combinedMoves.forEach(mv => {
-            if (prevUpgrades[mv]) nextUpgrades[mv] = prevUpgrades[mv];
-        });
-
         setAdvStats({
             basePower: 100 + inheritedPower,
             ivs: nextIVs,
             evs: { hp: 0, atk: 0, def: 0, spd: 0 },
-            bonusMoveId: nextBonusId, // 記錄原本隨機出的，但不一定在 moves 陣列中
             moves: combinedMoves,
-            moveUpgrades: nextUpgrades
+            moveUpgrades: {}
         });
 
         // 給予玩家反饋提示
-        if (inheritedPower > 0 || prevMoves.length > 0) {
-            updateDialogue(`繼承了前代的招式與 ${inheritedPower} 點戰力！`, true);
+        if (inheritedPower > 0) {
+            updateDialogue(`繼承了前代的 ${inheritedPower} 點戰力，並依新物種取得正式招式！`, true);
         } else {
             updateDialogue("新的一天開始了！", true);
         }
@@ -3191,24 +2429,16 @@ export default function App() {
             grass: prevAffinity === 'grass' ? 1 : 0,
             bug: prevAffinity === 'bug' ? 1 : 0
         });
-        setSoulTagCounts({ gentle: 0, stubborn: 0, passionate: 0, nonsense: 0, rational: 0 });
-        
-        // --- 🔹 防呆：重生與重置時的天賦轉換 🔹 ---
-        // 使用 generateMonsterTraits() 確保隨機分發的天賦不會包含專屬天賦 (isExclusive)
-        // 避免前一隻是世足丸時，死亡重生卻讓幽靈或新蛋繼承了「戰術切換」的 BUG
-        setMonsterTraits(generateMonsterTraits());
 
-        if (savedDeathBranch) {
-            // D線觸發：靈魂重生為霧氣精靈線
-            setEvolutionStage(1);
-            setEvolutionBranch(savedDeathBranch);
-            setDialogue(savedDeathBranch === 'G1' ? "幽影附身！" : "神秘力量覺醒！");
-        } else {
-            // 正常重啟：回到起始怪獸
-            setEvolutionStage(1);
-            setEvolutionBranch('A');
-            setDialogue("吼吼吼～");
-        }
+        // --- 🔹 防呆：重生與重置時的天賦轉換 🔹 ---
+        // 依下一隻 Pokémon 的正式特性池重新抽取特性。
+        // 重製生命時重新抽取一般天賦，避免沿用前一隻的專屬狀態。
+        setMonsterTraits(generateMonsterTraits(nextId));
+
+        setCurrentMonsterId(nextId);
+        setEvolutionStage(1);
+        setEvolutionBranch(`WILD_${nextId}`);
+        setDialogue(`新的夥伴是${MONSTER_NAMES[String(nextId)] || '像素怪獸'}！`);
 
         // 🔥 VERY IMPORTANT: Remove localStorage data immediately!
         try { clearPersistedSaveData(); } catch (e) { }
@@ -3219,10 +2449,8 @@ export default function App() {
 
 
 
-    // getMonsterId 已模組化至 src/utils/monsterIdMapper.js
-    // 包裝函式保持相同的呼叫介面，補入原本使用 closure 取得的 state 參數
-    const getMonsterIdWrapped = (branch = evolutionBranch, stage = evolutionStage) =>
-        getMonsterId(branch, stage, isDead, bondValue, soulTagCounts);
+    // 正式流程直接使用目前 Pokémon ID；舊 monsterIdMapper 只在初始化舊存檔時使用。
+    const getMonsterIdWrapped = () => currentMonsterId;
 
     useEffect(() => {
         if (debugOverrides.weatherStatus) {
@@ -3272,7 +2500,7 @@ export default function App() {
             updateDialogue("已重抓外部資訊。");
         } catch (error) {
             setDailyTopics(createFallbackDailyTopics());
-            updateDialogue(`外部資訊重抓失敗：${error?.message || 'unknown'}`);
+            updateDialogue(`外部資訊重抓失敗：${error?.message || '未知錯誤'}`);
         }
     };
 
@@ -3300,10 +2528,9 @@ export default function App() {
                 todaySpecialEvent,
                 moveUpgradeCount: moveUpgradeValues.length,
                 maxMoveUpgradeLevel: moveUpgradeValues.length ? Math.max(...moveUpgradeValues) : 0,
-                inventoryCount: inventory.length,
+                pokemonBallCount: inventory.length,
                 evolutionStage,
                 traitName: monsterTraits?.trait?.name || null,
-                soulTagCounts,
                 lastPlayerReply: petLetters?.lastPlayerReply || null,
                 aiEnabled: isPetLetterAiEnabled() && Boolean(user),
                 weatherContext,
@@ -3315,7 +2542,7 @@ export default function App() {
         refresh();
         const timer = setInterval(refresh, 60 * 1000);
         return () => clearInterval(timer);
-    }, [petLettersEnabled, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, advStats?.moveUpgrades, inventory.length, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply, debugOverrides.petLetterHour, weatherContext, dailyTopics, user]);
+    }, [petLettersEnabled, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, todayHasEvolved, todaySpecialEvent, advStats?.moveUpgrades, inventory.length, monsterTraits, petLetters?.lastPlayerReply, debugOverrides.petLetterHour, weatherContext, dailyTopics, user]);
 
     const unreadPetLetter = petLettersEnabled ? getUnreadPetLetter(petLetters) : null;
     const pendingAiPetLetter = petLettersEnabled ? getPendingAiPetLetter(petLetters) : null;
@@ -3346,7 +2573,6 @@ export default function App() {
             todayTrainWins,
             todayWildDefeated,
             todayFeedCount,
-            personalityCounts: soulTagCounts,
             traitName: monsterTraits?.trait?.name || null,
             lastPlayerReply: petLetters?.lastPlayerReply?.text || '',
             weather: weatherContext,
@@ -3390,7 +2616,7 @@ export default function App() {
             cancelled = true;
             clearTimeout(timeoutId);
         };
-    }, [petLettersEnabled, pendingAiPetLetter?.id, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, monsterTraits, soulTagCounts, petLetters?.lastPlayerReply?.text, user]);
+    }, [petLettersEnabled, pendingAiPetLetter?.id, isBooting, isDead, isDuplicateTab, evolutionBranch, evolutionStage, hunger, mood, bondValue, derivedLevel, todayTrainWins, todayWildDefeated, todayFeedCount, monsterTraits, petLetters?.lastPlayerReply?.text, user]);
 
     const openPetLetter = () => {
         if (!unreadPetLetter || isBooting || isDead || isEvolving || miniGame || isAdvMode || battleState.active || isPvpMode || isLeaderboardOpen || tournament.isTournamentOpen || cloudChoicePrompt || isCloudLoading) return;
@@ -3414,7 +2640,7 @@ export default function App() {
         if (!isBooting && !isDead) {
             unlockMonster(getMonsterIdWrapped());
         }
-    }, [isBooting, evolutionBranch, evolutionStage, isDead]);
+    }, [isBooting, evolutionBranch, evolutionStage, currentMonsterId, isDead]);
 
 
 
@@ -3495,7 +2721,7 @@ export default function App() {
     // --- 聯盟大賽 (Tournament System) ---
     const tournament = useTournament({
         user, derivedLevel, evolutionStage, myMonsterId: getMonsterIdWrapped(),
-        advStats, soulTagCounts, monsterTraits, leaderboard, updateDialogue, setAlertMsg, battleState, setBattleState, setAdvStats, setInventory, playBloop, ADV_ITEMS,
+        advStats, monsterTraits, leaderboard, updateDialogue, setAlertMsg, battleState, setBattleState, setAdvStats, playBloop,
         pendingSkillLearn,
         onTournamentLossReturn: () => {
             if (defeatTutorialEnabled) setDefeatTutorialType('tournament');
@@ -3522,11 +2748,11 @@ export default function App() {
         // 戰鬥狀態：PVP 模式、聯盟大會、冒險模式，或戰鬥狀態為 active
         const isBattleMode = isPvpMode || tournament?.isTournamentOpen || isAdvMode || battleState?.active;
 
-        // 談心系統 (包含靈魂探險介面與 miniGame 觸發的談心)
-        const isTalkMode = isExpeditionOpen || (miniGame && miniGame.type === 'talk');
+        // 無限波次 Rogue 模式使用獨立闖關狀態
+        const isTalkMode = isExpeditionOpen;
 
         if (isTalkMode) {
-            playBGM(`${base}assets/BGM/談心系統.mp3`);
+            playBGM(`${base}assets/BGM/冒險系統.mp3`);
         } else if (isBattleMode) {
             playBGM(`${base}assets/BGM/對戰音樂.mp3`);
         } else {
@@ -3536,7 +2762,6 @@ export default function App() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#1a1a1a] p-4 select-none relative">
-            <LanguageDomTranslator language={language} />
             <style dangerouslySetInnerHTML={{ __html: BATTLE_STYLES }} />
 
             {isLocalhost && !isDesktopBuild && (
@@ -3565,7 +2790,6 @@ export default function App() {
                 onClose={() => setShowDebug(false)}
                 debugOverrides={debugOverrides}
                 setDebugOverrides={setDebugOverrides}
-                advStats={advStats}
                 setAdvStats={setAdvStats}
                 inventory={inventory}
                 setInventory={setInventory}
@@ -3580,8 +2804,6 @@ export default function App() {
                 setLockedAffinity={setLockedAffinity}
                 soulAffinityCounts={soulAffinityCounts}
                 setSoulAffinityCounts={setSoulAffinityCounts}
-                soulTagCounts={soulTagCounts}
-                setSoulTagCounts={setSoulTagCounts}
                 monsterTraits={monsterTraits}
                 setMonsterTraits={setMonsterTraits}
                 interactionLogs={interactionLogs}
@@ -3704,10 +2926,10 @@ export default function App() {
                                         </div>
                                         <div style={{ display: 'flex', gap: '20px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                                <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ffca28', color: '#111', fontSize: '9px', fontWeight: 'black' }}>A:NO</div>
+                                                <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ffca28', color: '#111', fontSize: '9px', fontWeight: 'black' }}>A：否</div>
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                                <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ff5252', color: '#fff', fontSize: '9px', fontWeight: 'black' }}>B:YES</div>
+                                                <div style={{ padding: '4px 8px', border: '2px solid #111', backgroundColor: '#ff5252', color: '#fff', fontSize: '9px', fontWeight: 'black' }}>B：是</div>
                                             </div>
                                         </div>
                                     </div>
@@ -3743,21 +2965,8 @@ export default function App() {
                                 currentRound={tournament.currentRound}
                                 opponents={tournament.opponents}
                                 nextTournamentPhase={tournament.nextTournamentPhase}
-                                prevTournamentPhase={tournament.prevTournamentPhase}
                                 myMonsterId={getMonsterIdWrapped()}
                                 playerName={user?.displayName || '玩家'}
-                                cardOptions={tournament.cardOptions}
-                                pickRogueCard={tournament.pickRogueCard}
-                                advStats={advStats}
-                                rewardOptions={tournament.rewardOptions}
-                                selectedRewardMoveIdx={tournament.selectedRewardMoveIdx}
-                                setSelectedRewardMoveIdx={tournament.setSelectedRewardMoveIdx}
-                                selectChampionRewardMove={tournament.selectChampionRewardMove}
-                                selectedRewardEffectIdx={tournament.selectedRewardEffectIdx}
-                                setSelectedRewardEffectIdx={tournament.setSelectedRewardEffectIdx}
-                                confirmChampionReward={tournament.confirmChampionReward}
-                                rerollCount={tournament.rerollCount}
-                                rerollChampionRewards={tournament.rerollChampionRewards}
                             />
 
                             {/* 冒險或連線對戰系統 Overlay */}
@@ -3765,10 +2974,10 @@ export default function App() {
                                 isAdvMode={isAdvMode}
                                 isTournamentOpen={tournament.isTournamentOpen}
                                 battleState={battleState}
+                                advStats={advStats}
                                 pvp={pvp}
                                 isLeaderboardOpen={isLeaderboardOpen}
                                 advCD={advCD}
-                                advStats={advStats}
                                 fetchLeaderboard={fetchLeaderboard}
                                 startTournament={() => {
                                     setIsPvpMode(false);
@@ -3803,17 +3012,13 @@ export default function App() {
                             <StatusOverlay
                                 isStatusUIOpen={isStatusUIOpen}
                                 statusPage={statusPage}
-                                onToggleStatusPage={() => {
-                                    setStatusPage(prev => prev === 'stats' ? 'moves' : 'stats');
-                                    playBloop('select');
-                                }}
+
                                 onClose={() => {
                                     setIsStatusUIOpen(false);
                                     updateDialogue("吼吼吼～");
                                     playBloop('back');
                                 }}
                                 getMonsterId={getMonsterIdWrapped}
-                                soulTagCounts={soulTagCounts}
                                 hunger={hunger}
                                 mood={mood}
                                 bondValue={bondValue}
@@ -3833,127 +3038,25 @@ export default function App() {
                                 selectedIndex={pediaIdx}
                                 isDetailOpen={isPediaDetailOpen}
                             />
-
-                            {/* 靈魂談心系統 */}
+                            {/* Pokerogue 式無限波次挑戰 */}
                             {isExpeditionOpen && (
-                                <SoulExpeditionOverlay
-                                    monsterId={isDead ? lastAliveMonsterIdRef.current : getMonsterIdWrapped()}
-                                    initialEnergy={hunger}
-                                    lockedAffinity={lockedAffinity}
-                                    soulTagCounts={soulTagCounts}
-                                    onClose={() => setIsExpeditionOpen(false)}
-                                    onComplete={({ finalEnergy, collectedStats }) => {
+                                <PokeRogueOverlay
+                                    inventory={inventory}
+                                    activeBallId={activeBallId}
+                                    onClose={() => {
                                         setIsExpeditionOpen(false);
-                                        setHunger(finalEnergy);
-                                        const bondGain = applyTraitGrowthMod(collectedStats.bond, 'soulBondGain');
-                                        setBondValue(b => Math.min(999, b + bondGain));
-                                        setTodayBondGained(b => b + bondGain);
-                                        setTalkCount(t => t + 1);
-
-                                        // Update Tags
-                                        setSoulTagCounts(prev => {
-                                            const next = collectedStats.tagOverride ? { ...collectedStats.tagOverride } : { ...prev };
-                                            for (let t in collectedStats.tags) {
-                                                if (collectedStats.tags[t] > 0) {
-                                                    next[t] = (next[t] || 0) + collectedStats.tags[t];
-                                                }
-                                            }
-                                            return next;
-                                        });
-
-                                        // Apply Affinities (Bonus mechanism)
-                                        if (!lockedAffinity) {
-                                            setSoulAffinityCounts(prev => {
-                                                const next = { ...prev };
-                                                for (let a in collectedStats.affinities) {
-                                                    if (collectedStats.affinities[a] > 0) {
-                                                        next[a] = (next[a] || 0) + collectedStats.affinities[a];
-                                                    }
-                                                }
-                                                return next;
-                                            });
-                                        }
-
-                                        updateDialogue("談心結束了！");
-                                        logEvent("完成了一次靈魂談心。");
+                                        updateDialogue("無限波次挑戰結束。");
+                                        logEvent("結束無限波次挑戰。");
                                     }}
                                 />
-                            )}
-
-                            {/* === 🤝 互動系統子選單 UI (精緻捲軸版) === */}
-                            {isInteractMenuOpen && (
-                                <div className="absolute inset-0 z-[120] flex flex-col items-center justify-start p-2"
-                                    style={{
-                                        backgroundImage: `url("${base}assets/BG/共用底圖.png")`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center'
-                                    }}>
-                                    <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
-
-                                    <div className="w-full bg-[#383a37]/50 text-white text-[11px] px-2 py-1.5 flex justify-center items-center mb-0 font-black relative z-10 shadow-sm">
-                                        <span>互動系統</span>
-                                    </div>
-
-                                    <div className="flex-1 w-full flex flex-col gap-2 px-1 justify-center pb-4 relative z-10 overflow-hidden">
-                                        {(() => {
-                                            const options = [
-                                                { label: "🍖 餵食 (飽食度)", desc: "提供美味的肉類，快速補充體力並提升好感。" },
-                                                { label: "✋ 撫摸 (心情度)", desc: "溫和地互動，能夠安撫怪獸的心情並建立連結。" },
-                                                { label: "❌ 結束互動", desc: "完成目前的互動，返回主畫面休息。" }
-                                            ];
-
-                                            return options.map((opt, idx) => {
-                                                const isSelected = interactMenuIdx === idx;
-                                                const isNext = (interactMenuIdx + 1) % options.length === idx;
-                                                const isPrev = (interactMenuIdx - 1 + options.length) % options.length === idx;
-
-                                                if (!isSelected && !isNext && !isPrev) return null;
-
-                                                return (
-                                                    <div
-                                                        key={idx}
-                                                        className={`w-full p-2 py-2.5 rounded border-2 transition-all duration-200 flex flex-col items-center text-center backdrop-blur-[2px]
-                                                    ${isSelected
-                                                                ? 'bg-[#383a37]/50 text-[#ffca28] border-white/40 scale-100 opacity-100 z-10'
-                                                                : 'bg-white/10 text-white/50 border-white/10 scale-90 opacity-40 blur-[0.5px]'
-                                                            }`}
-                                                        style={{
-                                                            transform: isPrev ? 'translateY(-5px)' : isNext ? 'translateY(5px)' : 'none'
-                                                        }}
-                                                    >
-                                                        <div className="text-[12px] font-black">
-                                                            {opt.label}
-                                                        </div>
-                                                        {isSelected && (
-                                                            <div className="mt-2 flex flex-col items-center animate-fade-in">
-                                                                <div className="text-[9px] leading-tight px-3 py-1 bg-black/20 rounded-sm mb-2 text-white/90">
-                                                                    {opt.desc}
-                                                                </div>
-                                                                <div className="text-[9px] font-black bg-[#ff5252] text-white px-3 py-0.5 rounded-full border border-white/30 animate-pulse shadow-sm">
-                                                                    [B] 確認執行
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            });
-                                        })()}
-                                    </div>
-
-                                    <div className="absolute bottom-6 w-full text-center px-4 z-10">
-                                        <div className="text-[9px] font-black text-white opacity-60 border-t-2 border-white/10 pt-2">
-                                            使用 [A] 切換選項，[B] 執行動作
-                                        </div>
-                                    </div>
-                                </div>
                             )}
 
                             {/* 我的背包 */}
                             <InventoryOverlay
                                 isInventoryOpen={isInventoryOpen}
                                 inventory={inventory}
-                                selectedItemIdx={selectedItemIdx}
-                                isUsingItem={isUsingItem}
+                                selectedBallIdx={selectedBallIdx}
+                                activeBallId={activeBallId}
                             />
 
                             {/* === 📖 對戰日記 UI === */}
@@ -3969,7 +3072,6 @@ export default function App() {
                                 hunger={hunger}
                                 mood={mood}
                                 bondValue={bondValue}
-                                soulTagCounts={soulTagCounts}
                                 lockedAffinity={lockedAffinity}
                                 handleBUp={() => { }}
                             />
@@ -4111,15 +3213,15 @@ export default function App() {
                                                 <div className="absolute inset-0 z-60 flex flex-col items-center justify-start pt-8 pointer-events-none">
                                                     {miniGame.type === 'reaction' && (
                                                         <>
-                                                            {miniGame.status === 'ready' && <span className="text-[20px] font-bold animate-pulse text-[#111]">READY?</span>}
+                                                            {miniGame.status === 'ready' && <span className="text-[20px] font-bold animate-pulse text-[#111]">準備好了嗎？</span>}
                                                             {miniGame.status === 'countdown' && <span className="text-[48px] font-black text-[#111]">{miniGame.count}</span>}
-                                                            {miniGame.status === 'go' && <span className="text-[36px] font-black text-[#ff5252] animate-bounce" style={{ textShadow: '2px 2px 0 #fff' }}>GO!</span>}
+                                                            {miniGame.status === 'go' && <span className="text-[36px] font-black text-[#ff5252] animate-bounce" style={{ textShadow: '2px 2px 0 #fff' }}>開始！</span>}
                                                         </>
                                                     )}
 
                                                     {miniGame.type === 'charge_click' && (
                                                         <>
-                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111]">CLICK B!</span>}
+                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111]">連按 B 鍵！</span>}
                                                             {(miniGame.status === 'idle' || miniGame.status === 'clicking') && (
                                                                 <div className="w-[160px] h-[24px] border-4 border-[#111] bg-[#8fa07e] relative shadow-[0_4px_0_rgba(0,0,0,0.2)] mt-4">
                                                                     <div className="h-full bg-[#ff5252] transition-all duration-75" style={{ width: `${miniGame.energy}%` }} />
@@ -4134,8 +3236,8 @@ export default function App() {
                                                     )}
                                                     {miniGame.type === 'spin' && (
                                                         <>
-                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
-                                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
+                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">按 B 鍵開始</span>}
+                                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">按 B 鍵停止</span>}
 
                                                             {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
                                                                 <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
@@ -4146,8 +3248,8 @@ export default function App() {
                                                     )}
                                                     {miniGame.type === 'spin_heart' && (
                                                         <>
-                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">START? [B]</span>}
-                                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">STOP! [B]</span>}
+                                                            {miniGame.status === 'idle' && <span className="text-[20px] font-bold animate-pulse text-[#111] mb-2">按 B 鍵開始</span>}
+                                                            {miniGame.status === 'spinning' && <span className="text-[20px] font-bold animate-pulse text-[#ff5252] mb-2">按 B 鍵停止</span>}
 
                                                             {(miniGame.status === 'idle' || miniGame.status === 'spinning') && (
                                                                 <div className="w-[48px] h-[48px] border-4 border-[#111] bg-[#e0e0e0] flex items-center justify-center relative shadow-[0_4px_0_rgba(0,0,0,0.2)]">
@@ -4290,7 +3392,6 @@ export default function App() {
                                                 TYPE_MAP={TYPE_MAP}
                                                 onClose={() => {
                                                     setIsSkillRearrangeOpen(false);
-                                                    setUsingItemIdx(-1);
                                                 }}
                                                 onConfirm={handleConfirmRearrange}
                                             />
@@ -4300,7 +3401,7 @@ export default function App() {
                                         {alertMsg && (
                                             <div className="absolute inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[1px]">
                                                 <div className="bg-[#9dae8a] border-[4px] border-[#1a1a1a] shadow-[4px_4px_0_rgba(0,0,0,0.3)] p-3 w-full flex flex-col items-center">
-                                                    <div className="text-[12px] font-black text-[#ff5252] mb-1 tracking-widest">[ SYSTEM ALERT ]</div>
+                                                    <div className="text-[12px] font-black text-[#ff5252] mb-1 tracking-widest">［系統提示］</div>
                                                     <div className="text-[13px] font-bold text-[#111] text-center leading-tight mb-3">
                                                         {alertMsg}
                                                     </div>
@@ -4414,15 +3515,13 @@ export default function App() {
                         manualScale={manualScale}
                         setManualScale={setManualScale}
                         setIsBooting={setIsBooting}
-                        language={language}
-                        setLanguage={setLanguage}
                         defeatTutorialEnabled={defeatTutorialEnabled}
                         setDefeatTutorialEnabledState={setDefeatTutorialEnabledState}
                         petLettersEnabled={petLettersEnabled}
                         setPetLettersEnabledState={setPetLettersEnabledState}
                     />
 
-                    <TutorialAI 
+                    <TutorialAI
                         isOpen={isTutorialOpen}
                         onClose={() => setIsTutorialOpen(false)}
                     />
@@ -4435,21 +3534,8 @@ export default function App() {
                             onFinish={handleEvolutionFinish}
                         />
                     )}
-                    {/* --- 全螢幕回憶膠囊演出 --- */}
-                    {showMemoryPerformance && (
-                        <MemoryCapsulePerformance
-                            monsterId={memoryPerformanceMonsterId}
-                            onFinish={() => {
-                                setShowMemoryPerformance(false);
-                                updateDialogue(`獲得了 ${MONSTER_NAMES[memoryPerformanceMonsterId]} 的回憶膠囊。`);
-                            }}
-                        />
-                    )}
                 </div>
             </div>
         </div>
     );
 }
-
-
-

@@ -309,7 +309,8 @@ export default function BattleAdventureOverlay({
     advLog,
     advCurrentHP,
     isAdvStreaming,
-    pendingWildCapture
+    pendingWildCapture,
+    modeLabel = null
 }) {
     // 從封裝好的 pvp 物件中解構出需要的狀態與方法
     const {
@@ -336,7 +337,7 @@ export default function BattleAdventureOverlay({
             <div className="absolute inset-0 bg-blue-900/40 z-0"></div>
 
             <div className="w-full bg-[#383a37]/55 backdrop-blur-sm text-white text-[10px] px-2 py-1 flex justify-between items-center mb-1 relative z-10 shadow-sm">
-                <span>{battleState.mode === 'tournament' ? '聯盟大賽' : (isPvpMode ? '宇宙連線對戰' : '冒險模式')} {battleState.active ? (battleState.mode === 'wild' ? '[掃蕩中]' : '[戰鬥中]') : ''}</span>
+                <span>{modeLabel || (battleState.mode === 'tournament' ? '聯盟大賽' : (isPvpMode ? '宇宙連線對戰' : '冒險模式'))} {battleState.active ? '[戰鬥中]' : ''}</span>
                 <span>{isPvpMode || battleState.mode === 'tournament' ? (matchStatus === 'searching' ? '搜尋中...' : '對決中') : (advCD > 0 && !battleState.active ? `冷卻中 ${Math.floor(advCD / 60)}:${(advCD % 60).toString().padStart(2, '0')}` : '準備就緒')}</span>
             </div>
 
@@ -448,7 +449,7 @@ export default function BattleAdventureOverlay({
                                 side="enemy"
                                 hitPop={battleState.damagePop?.target === 'enemy' ? battleState.damagePop : null}
                             >
-                                <DitheredSprite id={battleState?.enemy?.id} scale={2} />
+                                <DitheredSprite id={battleState?.enemy?.id} scale={2} normalizePokemonBattleSize />
                             </BattleMonsterSprite>
                         </div>
                         <div className="pointer-events-none absolute inset-0 z-[140]">
@@ -483,7 +484,7 @@ export default function BattleAdventureOverlay({
                                 side="player"
                                 hitPop={battleState.damagePop?.target === 'player' ? battleState.damagePop : null}
                             >
-                                <DitheredBackSprite id={battleState?.player?.id} scale={2} />
+                                <DitheredBackSprite id={battleState?.player?.id} scale={2} normalizePokemonBattleSize />
                             </BattleMonsterSprite>
                         </div>
                         <div className="pointer-events-none absolute inset-0 z-[140]">
@@ -517,7 +518,7 @@ export default function BattleAdventureOverlay({
                                     {STATUS_BADGE_META[playerStatus]?.label || '狀'}
                                 </span>
                             )}
-                            <div className="text-[10px] font-bold text-white text-right truncate">Lv.{getLevelByPower(advStats.basePower)}</div>
+                            <div className="text-[10px] font-bold text-white text-right truncate">等級 {getLevelByPower(advStats?.basePower ?? 100)}</div>
                         </div>
                         <div className="w-20 h-2 bg-[#383a37] border border-[#1a1a1a] rounded-sm overflow-hidden mt-1 shadow-inner relative">
                             <div className="h-full transition-all duration-300 absolute left-0 top-0 z-[1]" style={{ width: `${Math.min(100, ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) * 100)}%`, backgroundColor: ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.5 ? '#2ecc71' : ((battleState?.player?.hp || 0) / (battleState?.player?.maxHp || 1)) > 0.25 ? '#f1c40f' : '#e74c3c' }} />

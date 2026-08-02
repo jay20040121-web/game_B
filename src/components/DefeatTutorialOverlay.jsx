@@ -5,7 +5,6 @@ const DEFEAT_TUTORIAL_IMAGES = [
     '天賦教學.png',
     '如何升級.png',
     '屬性被克制.png',
-    '常用道具.png'
 ];
 
 const pickRandomImages = () => {

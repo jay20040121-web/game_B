@@ -5,7 +5,7 @@ import { EVOLUTION_CHAINS, WILD_EVOLUTION_MAP } from '../data/evolutionConfig';
  * 根據進化分支 (branch) 與進化階段 (stage) 回傳對應的怪獸 ID。
  * 核心數據已遷移至 src/data/evolutionConfig.js
  */
-export function getMonsterId(branch, stage, isDead = false, bondValue = 0, soulTagCounts = {}) {
+export function getMonsterId(branch, stage, isDead = false, bondValue = 0) {
     // 1. 處理死亡狀態
     if (isDead) return 1019; // 幽燭燭
 

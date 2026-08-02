@@ -1,92 +1,11 @@
-/**
- * monsterRegistry.js
- * 中央怪獸註冊表 — 所有怪獸的唯一數據來源。
- * 
- * 欄位說明：
- * - id:        新的自有 ID（1000 起）
- * - name:      怪獸名稱
- * - types:     屬性陣列
- * - baseStats: 基礎數值 { hp, atk, def, spd }
- */
+import { POKEMON_MAPPINGS } from './pokemonMapping.js';
 
-export const MONSTER_REGISTRY = [
-    // === 起始 ===
-    { id: 1000, name: "晶片獸", types: ["normal"], baseStats: { hp: 48, atk: 48, def: 48, spd: 48 } },
+export const MONSTER_REGISTRY = Object.values(POKEMON_MAPPINGS).map(pokemon => ({
+    id: pokemon.pokemonId,
+    name: pokemon.name,
+    types: pokemon.types,
+    baseStats: pokemon.baseStats,
+    pokemonId: pokemon.pokemonId
+}));
 
-    // === 火系靈魂 ===
-    { id: 1001, name: "火星寶寶", types: ["fire"], baseStats: { hp: 39, atk: 60, def: 50, spd: 65 } },
-    { id: 1002, name: "火星獸", types: ["fire"], baseStats: { hp: 58, atk: 80, def: 65, spd: 80 } },
-    { id: 1003, name: "火星摔角人", types: ["fire"], baseStats: { hp: 78, atk: 109, def: 85, spd: 100 } },
-
-    // === 水系靈魂 ===
-    { id: 1004, name: "泡泡娃", types: ["water"], baseStats: { hp: 44, atk: 50, def: 65, spd: 43 } },
-    { id: 1005, name: "吹泡蠑螈", types: ["water"], baseStats: { hp: 59, atk: 65, def: 80, spd: 58 } },
-    { id: 1042, name: "泡沫鱷王", types: ["water"], baseStats: { hp: 100, atk: 102, def: 92, spd: 91 } },
-    { id: 1006, name: "大師蠑螈", types: ["water"], baseStats: { hp: 79, atk: 85, def: 105, spd: 78 } },
-
-    // === 水系靈魂 (熱血/無俚頭分支) ===
-    { id: 1028, name: "守護龍仔", types: ["water"], baseStats: { hp: 60, atk: 85, def: 60, spd: 70 } },
-    { id: 1029, name: "守護龍獸", types: ["water"], baseStats: { hp: 90, atk: 110, def: 80, spd: 93 } },
-
-    // === 火系靈魂 (溫柔/理性分支) ===
-    { id: 1030, name: "喵星人", types: ["fire"], baseStats: { hp: 75, atk: 70, def: 60, spd: 90 } },
-    { id: 1031, name: "喵星特務X", types: ["fire"], baseStats: { hp: 100, atk: 90, def: 80, spd: 115 } },
-
-    // === 草系靈魂 ===
-    { id: 1007, name: "綿綿獸", types: ["grass"], baseStats: { hp: 45, atk: 65, def: 65, spd: 45 } },
-    { id: 1008, name: "甜點獸", types: ["grass"], baseStats: { hp: 60, atk: 80, def: 80, spd: 60 } },
-    { id: 1009, name: "草莓蛋糕獸", types: ["grass"], baseStats: { hp: 80, atk: 100, def: 100, spd: 80 } },
-
-    // === 草系靈魂 (熱血/執著分支) ===
-    { id: 1032, name: "熱血芽獸", types: ["grass"], baseStats: { hp: 45, atk: 70, def: 55, spd: 55 } },
-    { id: 1033, name: "棘藤猴子", types: ["grass"], baseStats: { hp: 60, atk: 95, def: 65, spd: 70 } },
-    { id: 1034, name: "森拳金剛", types: ["grass"], baseStats: { hp: 85, atk: 120, def: 85, spd: 90 } },
-
-    // === 蟲系靈魂 ===
-    { id: 1010, name: "藍領蜂", types: ["bug"], baseStats: { hp: 45, atk: 50, def: 65, spd: 45 } },
-    { id: 1011, name: "社畜蜂兵", types: ["bug"], baseStats: { hp: 80, atk: 50, def: 65, spd: 45 } },
-    { id: 1012, name: "女王蜂", types: ["bug"], baseStats: { hp: 80, atk: 90, def: 110, spd: 90 } },
-
-    // === 蟲系靈魂 (固執/無俚頭分支) ===
-    { id: 1035, name: "小角幼甲", types: ["bug"], baseStats: { hp: 52, atk: 58, def: 72, spd: 38 } },
-    { id: 1036, name: "鐵角甲士", types: ["bug"], baseStats: { hp: 72, atk: 82, def: 98, spd: 48 } },
-    { id: 1037, name: "聖甲戰蟲", types: ["bug"], baseStats: { hp: 96, atk: 112, def: 124, spd: 58 } },
-
-    // === 一般線 A (德魯線) ===
-    { id: 1013, name: "黑德魯", types: ["poison"], baseStats: { hp: 46, atk: 57, def: 40, spd: 50 } },
-    { id: 1014, name: "野性德魯", types: ["poison"], baseStats: { hp: 61, atk: 72, def: 65, spd: 65 } },
-    { id: 1041, name: "影忍", types: ["poison", "ghost"], baseStats: { hp: 74, atk: 112, def: 70, spd: 106 } },
-    { id: 1015, name: "王者德魯", types: ["poison"], baseStats: { hp: 91, atk: 92, def: 90, spd: 65 } },
-
-    // === 一般線 C (咪球) ===
-    { id: 1016, name: "伊麗莎", types: ["normal"], baseStats: { hp: 50, atk: 56, def: 50, spd: 72 } },
-    { id: 1017, name: "麗莎狐", types: ["normal"], baseStats: { hp: 55, atk: 81, def: 50, spd: 97 } },
-    { id: 1040, name: "流流子", types: ["normal"], baseStats: { hp: 72, atk: 98, def: 68, spd: 118 } },
-
-    // === 一般線 FAIL ===
-    { id: 1018, name: "女皇莎白", types: ["normal"], baseStats: { hp: 81, atk: 85, def: 80, spd: 80 } },
-
-    // === 死亡重生 G1 ===
-    { id: 1019, name: "幽燭燭", types: ["ghost"], baseStats: { hp: 30, atk: 100, def: 35, spd: 80 } },
-    { id: 1020, name: "鍋爐燭燭", types: ["ghost"], baseStats: { hp: 45, atk: 115, def: 55, spd: 95 } },
-    { id: 1021, name: "幽靈女王", types: ["ghost"], baseStats: { hp: 60, atk: 130, def: 75, spd: 110 } },
-    { id: 1038, name: "螢手噗", types: ["ghost"], baseStats: { hp: 45, atk: 100, def: 65, spd: 105 } },
-    { id: 1039, name: "露璃", types: ["ghost"], baseStats: { hp: 70, atk: 115, def: 85, spd: 125 } },
-
-    // === 野外 (小雞獸線) ===
-    { id: 1022, name: "小雞獸", types: ["flying"], baseStats: { hp: 40, atk: 45, def: 40, spd: 56 } },
-    { id: 1023, name: "捲尾麻雀", types: ["flying"], baseStats: { hp: 63, atk: 70, def: 55, spd: 71 } },
-    { id: 1024, name: "US老鷹獸", types: ["flying"], baseStats: { hp: 83, atk: 90, def: 75, spd: 101 } },
-
-    // === 野外 (石精靈線) ===
-    { id: 1025, name: "石精靈", types: ["rock"], baseStats: { hp: 40, atk: 80, def: 100, spd: 20 } },
-    { id: 1026, name: "岩石巨兵", types: ["rock"], baseStats: { hp: 55, atk: 95, def: 115, spd: 35 } },
-    { id: 1027, name: "石像魔", types: ["rock"], baseStats: { hp: 80, atk: 120, def: 130, spd: 45 } },
-
-    // === 野外 (足球線) ===
-    { id: 1043, name: "世足丸A型", types: ["rock"], baseStats: { hp: 70, atk: 130, def: 70, spd: 150 } },
-    { id: 1044, name: "世足丸B型", types: ["rock"], baseStats: { hp: 130, atk: 70, def: 150, spd: 70 } },
-];
-
-// 快速查找工具
-export const REGISTRY_BY_ID = Object.fromEntries(MONSTER_REGISTRY.map(m => [String(m.id), m]));
+export const REGISTRY_BY_ID = Object.fromEntries(MONSTER_REGISTRY.map(monster => [String(monster.id), monster]));

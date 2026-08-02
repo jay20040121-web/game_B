@@ -1,5 +1,13 @@
 import { SKILL_DATABASE, getTypeMultiplier } from '../monsterData';
 import { checkPreTurnStatus, applyMoveEffects, processPostTurnStatus, getStatMultiplier } from './battleEngine';
+import {
+    applySpecialStatusMove,
+    getAccuracyStageMultiplier,
+    getCriticalChance,
+    rollHitCount,
+    tickPokemonMoveEffects,
+    validateMoveUse
+} from './pokemonMoveEffectSystem';
 
 export const splitShieldDamage = (target, amount) => {
     const hp = Math.max(0, target?.hp || 0);
@@ -96,8 +104,16 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
     const pPrio = (playerMove.priority || 0) + (prev.player.moveUpgrades?.[playerMove.id]?.ailments?.priority || 0);
     const ePrio = (enemyMove.priority || 0) + (prev.enemy.moveUpgrades?.[enemyMove.id]?.ailments?.priority || 0);
 
-    let pEffSpd = prev.player.spd * getStatMultiplier(prev.player.statStages?.spd || 0);
-    let eEffSpd = prev.enemy.spd * getStatMultiplier(prev.enemy.statStages?.spd || 0);
+    const weatherSpeedMultiplier = entity => {
+        if (prev.weather === 'sun' && entity.trait?.id === 'chlorophyll') return 2;
+        if (prev.weather === 'rain' && entity.trait?.id === 'swift-swim') return 2;
+        if (entity.heldItemConsumed && entity.trait?.id === 'unburden') return 2;
+        return 1;
+    };
+    let pEffSpd = prev.player.spd * getStatMultiplier(prev.player.statStages?.spd || 0) * weatherSpeedMultiplier(prev.player)
+        * ((prev.fieldEffects?.player?.tailwindTurns || 0) > 0 ? 2 : 1);
+    let eEffSpd = prev.enemy.spd * getStatMultiplier(prev.enemy.statStages?.spd || 0) * weatherSpeedMultiplier(prev.enemy)
+        * ((prev.fieldEffects?.enemy?.tailwindTurns || 0) > 0 ? 2 : 1);
 
     if (prev.player.status === 'paralysis') pEffSpd *= 0.5;
     if (prev.enemy.status === 'paralysis') eEffSpd *= 0.5;
@@ -120,22 +136,29 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         // BUFF 類技能或無精準度要求的技能必定命中
         if (isPureBuff) return { dmg: 0, msg: "HIT" };
 
-        if (defender.isProtected) {
+        if (defender.quickGuard && (move.priority || 0) > 0) return { dmg: 0, msg: 'BLOCKED' };
+        if (defender.isProtected && attacker.trait?.id !== 'infiltrator') {
             return { dmg: 0, msg: "BLOCKED" };
         }
 
-        const attackerEffSpd = attacker.spd * getStatMultiplier(attacker.statStages?.spd || 0) * (attacker.status === 'paralysis' ? 0.5 : 1);
-        const defenderEffSpd = defender.spd * getStatMultiplier(defender.statStages?.spd || 0) * (defender.status === 'paralysis' ? 0.5 : 1);
+        const attackerEffSpd = attacker.spd * getStatMultiplier(attacker.statStages?.spd || 0) * weatherSpeedMultiplier(attacker) * (attacker.status === 'paralysis' ? 0.5 : 1);
+        const defenderEffSpd = defender.spd * getStatMultiplier(defender.statStages?.spd || 0) * weatherSpeedMultiplier(defender) * (defender.status === 'paralysis' ? 0.5 : 1);
 
         const speedRatio = attackerEffSpd / defenderEffSpd;
 
         // 取得技能基礎命中 (預設 100)，加上附魔命中加成
         const enchantAccBonus = attacker.moveUpgrades?.[move.id]?.ailments?.accuracy || 0;
-        const baseAccuracy = ((move.accuracy || 100) + enchantAccBonus) / 100;
+        const attackerAccuracy = getAccuracyStageMultiplier(attacker.statStages?.accuracy || 0);
+        const defenderEvasion = getAccuracyStageMultiplier(defender.statStages?.evasion || 0);
+        const gravityAccuracy = (prev.gravityTurns || 0) > 0 ? 5 / 3 : 1;
+        const baseAccuracy = (((move.accuracy || 100) + enchantAccBonus) / 100) * attackerAccuracy / defenderEvasion * gravityAccuracy;
         const speedMod = 1 + 0.1 * Math.log2(speedRatio);
-        const hitRateProb = Math.min(1.0, Math.max(0.3, baseAccuracy * speedMod));
+        let hitRateProb = Math.min(1.0, Math.max(0.3, baseAccuracy * speedMod));
+        if (prev.weather === 'sand' && defender.trait?.id === 'sand-veil') hitRateProb *= 0.8;
 
-        const rng = rFunc();
+        const noGuard = attacker.trait?.id === 'no-guard' || defender.trait?.id === 'no-guard' || attacker.lockOn;
+        if (attacker.lockOn) attacker.lockOn = false;
+        const rng = noGuard ? 0 : rFunc();
         if (rng >= hitRateProb) {
             // 判定為落空，區分是「速度太慢被閃開」還是「運氣不好招式偏離」
             if (speedRatio < 1 && rng >= baseAccuracy) {
@@ -154,9 +177,48 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         let effectiveAtk = attacker.atk * atkMult;
         let effectiveDef = defender.def * defMult;
 
-        if (attacker.status === 'burn') effectiveAtk *= 0.5;
+        if (attacker.status && attacker.trait?.id === 'guts') effectiveAtk *= 1.5;
+        if (prev.weather === 'sun' && attacker.trait?.id === 'solar-power') effectiveAtk *= 1.5;
+        else if (attacker.status === 'burn') effectiveAtk *= 0.5;
+        if (defender.status && defender.trait?.id === 'marvel-scale') effectiveDef *= 1.5;
+
+        if (move.type === 'ground' && (prev.gravityTurns || 0) <= 0
+            && (defender.trait?.id === 'levitate' || (defender.magnetRiseTurns || 0) > 0)) return { dmg: 0, msg: 'ABILITY_BLOCK' };
+        if (move.type === 'electric' && defender.trait?.id === 'lightning-rod') {
+            defender.statStages = { ...(defender.statStages || {}), atk: Math.min(6, (defender.statStages?.atk || 0) + 1) };
+            return { dmg: 0, msg: 'ABILITY_BLOCK' };
+        }
+        if (move.type === 'fire' && defender.trait?.id === 'flash-fire') {
+            defender.flashFireActive = true;
+            return { dmg: 0, msg: 'ABILITY_BLOCK' };
+        }
+        if (['explosion', 'self-destruct', 'self_destruct'].includes(move.id) && (attacker.trait?.id === 'damp' || defender.trait?.id === 'damp')) return { dmg: 0, msg: 'ABILITY_BLOCK' };
 
         let baseDmg = (Math.floor((2 * attackerLevel) / 5 + 2) * move.power * (effectiveAtk / effectiveDef)) / 50 + 2;
+        const defenderSide = defender === updatedPlayer ? 'player' : 'enemy';
+        const defenderField = fieldState.sides[defenderSide] || {};
+        if (move.damageClass === 'physical' && (defenderField.reflectTurns || 0) > 0) baseDmg *= 0.5;
+        if (move.damageClass === 'special' && (defenderField.lightScreenTurns || 0) > 0) baseDmg *= 0.5;
+        if (fieldState.weather === 'sun') {
+            if (move.type === 'fire') baseDmg *= 1.5;
+            if (move.type === 'water') baseDmg *= 0.5;
+        } else if (fieldState.weather === 'rain') {
+            if (move.type === 'water') baseDmg *= 1.5;
+            if (move.type === 'fire') baseDmg *= 0.5;
+        }
+        if (fieldState.terrain === 'electric' && move.type === 'electric') baseDmg *= 1.3;
+        if (fieldState.terrain === 'grassy' && move.type === 'grass') baseDmg *= 1.3;
+        if (fieldState.terrain === 'misty' && move.type === 'dragon') baseDmg *= 0.5;
+        if (attacker.helpingHand) { baseDmg *= 1.5; attacker.helpingHand = false; }
+        const lowHpBoostType = { overgrow: 'grass', blaze: 'fire', torrent: 'water', swarm: 'bug' }[attacker.trait?.id];
+        if (lowHpBoostType === move.type && attacker.hp <= attacker.maxHp / 3) baseDmg *= 1.5;
+        if (attacker.flashFireActive && move.type === 'fire') baseDmg *= 1.5;
+        if (attacker.trait?.id === 'reckless' && (move.recoil || move.recoilPct)) baseDmg *= 1.2;
+        if (defender.trait?.id === 'multiscale' && defender.hp >= defender.maxHp) baseDmg *= 0.5;
+        const criticalChance = attacker.laserFocus ? 1 : Math.min(1, getCriticalChance(move) * (attacker.focusEnergy ? 2 : 1));
+        const isCritical = rFunc() < criticalChance;
+        if (isCritical) baseDmg *= attacker.trait?.id === 'sniper' ? 2.25 : 1.5;
+        if (attacker.laserFocus) attacker.laserFocus = false;
 
         const attackerTypes = Array.isArray(attacker.type) ? attacker.type : [attacker.type];
         if (attackerTypes.includes(move.type)) baseDmg *= 1.5;
@@ -168,19 +230,20 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         const mult = getTypeMultiplier(move.type, defender.type);
         const rngMod = 0.85 + rFunc() * 0.15;
-        const finalDmg = Math.max(1, Math.floor(baseDmg * mult * rngMod));
+        const hitCount = rollHitCount(move, rFunc);
+        const finalDmg = Math.max(1, Math.floor(baseDmg * mult * rngMod)) * hitCount;
 
         let effectMsg = '';
         if (mult >= 2.0) effectMsg = ' (效果絕佳！)';
         else if (mult <= 0.5 && mult > 0) effectMsg = ' (效果似乎不太好...)';
         else if (mult === 0) effectMsg = ' (似乎沒有效果...)';
 
-        return { dmg: finalDmg, msg: effectMsg };
+        return { dmg: finalDmg, msg: effectMsg, isCritical, hitCount };
     };
 
     const applyEnchantAilment = (attacker, move, defender, defenderName, attackerSide, attackerName) => {
         const enchantData = attacker.moveUpgrades?.[move.id]?.ailments || {};
-        if (Object.keys(enchantData).length === 0 || defender.status) return;
+        if (defender.trait?.id === 'shield-dust' || Object.keys(enchantData).length === 0 || defender.status) return;
 
         const ailmentTypes = ['burn', 'paralysis', 'poison', 'confusion', 'leech-seed', 'trap', 'freeze', 'sleep']
             .filter(ailment => (enchantData[ailment] || 0) > 0)
@@ -223,6 +286,23 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         rogueEffects: { ...(prev.enemy.rogueEffects || {}) },
         statusRecoveryPending: null
     };
+    const fieldState = {
+        weather: prev.weather || null,
+        weatherTurns: prev.weatherTurns || 0,
+        terrain: prev.terrain || null,
+        terrainTurns: prev.terrainTurns || 0,
+        gravityTurns: prev.gravityTurns || 0,
+        magicRoomTurns: prev.magicRoomTurns || 0,
+        wonderRoomTurns: prev.wonderRoomTurns || 0,
+        sides: {
+            player: { ...(prev.fieldEffects?.player || {}) },
+            enemy: { ...(prev.fieldEffects?.enemy || {}) }
+        }
+    };
+    updatedPlayer.fieldEffects = fieldState.sides.player;
+    updatedEnemy.fieldEffects = fieldState.sides.enemy;
+    updatedPlayer.battleTerrain = fieldState.terrain;
+    updatedEnemy.battleTerrain = fieldState.terrain;
 
     const applyDamageToState = (target, amount) => {
         const result = splitShieldDamage(target, amount);
@@ -357,7 +437,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             ? (defender.name || (isPlayer ? '對手' : '玩家'))
             : (isPlayer ? defender.name : '你');
 
+if (attacker.trait?.id === 'inner-focus') attacker.flinch = false;
+        const hadFlinch = !!attacker.flinch;
         const preCheck = checkPreTurnStatus(attacker, rFunc);
+        if (hadFlinch && attacker.trait?.id === 'steadfast') {
+            attacker.statStages = { ...(attacker.statStages || {}), spd: Math.min(6, (attacker.statStages?.spd || 0) + 1) };
+            pushMsg(`${attacker.trait.name}發動！${attackerName}的速度提高。`, { kind: 'system', actorSide: isPlayer ? 'player' : 'enemy', actorName: attackerName, cue: 'stat-up' });
+        }
         if (preCheck.clearStatus) {
             attacker.statusRecoveryPending = preCheck.clearStatus;
             attacker.statusTurns = preCheck.nextTurns;
@@ -405,49 +491,23 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             console.warn(`[Battle] ${attackerName} 嘗試使用不存在的招式`, move);
             move = SKILL_DATABASE.tackle;
         }
+        if (['copycat', 'mimic'].includes(move.id) && defender.lastMove && !['copycat', 'mimic'].includes(defender.lastMove.id)) {
+            move = defender.lastMove;
+            pushMsg(`${attackerName}模仿了${move.name}！`, { kind: 'system', actorSide: isPlayer ? 'player' : 'enemy', cue: 'copy' });
+        }
 
-        // --- 戰術切換 (Tactical Switch) 邏輯 ---
-        const attackerTraitMods = getTraitMods(isPlayer ? 'player' : 'enemy');
-        if (attackerTraitMods.tacticalSwitch && [1043, 1044].includes(Number(attacker.id))) {
-            const isAttack = (move.power || 0) > 0;
-            const targetId = isAttack ? 1043 : 1044;
-            
-            if (Number(attacker.id) !== targetId) {
-                // 執行切換
-                const newId = targetId;
-                const newName = targetId === 1043 ? '世足丸A型' : '世足丸B型';
-                const oldMaxHp = attacker.maxHp;
-                const hpRatio = attacker.hp / oldMaxHp;
-                
-                // 依據種族值比例重新計算能力值
-                const baseStats1043 = { hp: 70, atk: 130, def: 70, spd: 150 };
-                const baseStats1044 = { hp: 130, atk: 70, def: 150, spd: 70 };
-                const oldBase = targetId === 1043 ? baseStats1044 : baseStats1043;
-                const newBase = targetId === 1043 ? baseStats1043 : baseStats1044;
-                
-                attacker.maxHp = Math.max(1, Math.floor(attacker.maxHp * (newBase.hp / oldBase.hp)));
-                attacker.hp = Math.max(1, Math.floor(attacker.maxHp * hpRatio));
-                attacker.atk = Math.max(1, Math.floor(attacker.atk * (newBase.atk / oldBase.atk)));
-                attacker.def = Math.max(1, Math.floor(attacker.def * (newBase.def / oldBase.def)));
-                attacker.spd = Math.max(1, Math.floor(attacker.spd * (newBase.spd / oldBase.spd)));
-                // 不要立刻改變 attacker.id / name，讓畫面不會馬上切換，透過 step 延遲切換
-                
-                // 更新播報名稱 (使用舊名)
-                attackerName = isPvpMode 
-                    ? (attacker.name || (isPlayer ? '玩家' : '對手')) 
-                    : (isPlayer ? '你' : attacker.name);
+        if (attacker.disabledMoveId === move.id && (attacker.disabledMoveTurns || 0) > 0) {
+            attacker.disabledMoveTurns -= 1;
+            if (attacker.disabledMoveTurns <= 0) attacker.disabledMoveId = null;
+            pushMsg(`${move.name}受到定身法影響，無法使用！`, { kind: 'status', actorSide: isPlayer ? 'player' : 'enemy', actorName: attackerName, cue: 'disable' });
+            return;
+        }
+        if ((attacker.disabledMoveTurns || 0) > 0) attacker.disabledMoveTurns -= 1;
 
-                pushMsg(`戰術切換發動！型態轉換為${newName}！`, {
-                    kind: 'system',
-                    actorSide: isPlayer ? 'player' : 'enemy',
-                    actorName: attackerName,
-                    cue: 'form_change',
-                    hpValue: attacker.hp,
-                    maxHpValue: attacker.maxHp,
-                    newId: newId,
-                    newName: newName
-                });
-            }
+        const invalidMoveReason = validateMoveUse(move, attacker, defender);
+        if (invalidMoveReason) {
+            pushMsg(`${attackerName}${invalidMoveReason}`, { kind: 'status', actorSide: isPlayer ? 'player' : 'enemy', actorName: attackerName, cue: 'fail' });
+            return;
         }
 
         pushMsg(`${attackerName} 使出了 [${move.name || '未知招式'}]！`, {
@@ -460,6 +520,7 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             moveName: move.name,
             cue: 'move'
         });
+        attacker.lastMove = move;
 
         if (move.isProtect) {
             if ((attacker.protectLeft || 0) > 0) {
@@ -513,10 +574,52 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             return;
         }
 
+        if (move.damageClass === 'status') {
+            fieldState.sourceSide = isPlayer ? 'player' : 'enemy';
+            const special = applySpecialStatusMove({ move, source: attacker, target: defender, field: fieldState, rng: rFunc });
+            if (special.handled) {
+                updatedPlayer.battleTerrain = fieldState.terrain;
+                updatedEnemy.battleTerrain = fieldState.terrain;
+                special.messages.forEach(text => pushMsg(`${attackerName}：${text}`, {
+                    kind: 'status', actorSide: isPlayer ? 'player' : 'enemy', targetSide: isPlayer ? 'enemy' : 'player', cue: 'effect'
+                }));
+                if (special.sourceDamage > 0) {
+                    const damage = applyDamageToState(attacker, special.sourceDamage);
+                    pushDamageStep({ target: isPlayer ? 'player' : 'enemy', value: damage.actual, text: `${attackerName}失去了 ${damage.actual} HP！`, actorSide: isPlayer ? 'player' : 'enemy', targetSide: isPlayer ? 'player' : 'enemy', cue: 'recoil' });
+                }
+                if (special.targetDamage > 0) {
+                    const damage = applyDamageToState(defender, special.targetDamage);
+                    pushDamageStep({ target: isPlayer ? 'enemy' : 'player', value: damage.actual, text: `${defenderName}失去了 ${damage.actual} HP！`, actorSide: isPlayer ? 'player' : 'enemy', targetSide: isPlayer ? 'enemy' : 'player', cue: 'damage' });
+                }
+                if (special.sourceHeal > 0) attacker.hp = Math.min(attacker.maxHp, attacker.hp + special.sourceHeal);
+                if (special.targetHeal > 0) defender.hp = Math.min(defender.maxHp, defender.hp + special.targetHeal);
+                if (special.escape && prev.encounterType === 'wild') fieldState.escapeRequested = true;
+                return;
+            }
+        }
+
+        if ((move.healing || 0) > 0) {
+            const healAmount = Math.max(1, Math.floor(attacker.maxHp * (move.healing / 100)));
+            const actualHeal = Math.max(0, Math.min(healAmount, attacker.maxHp - attacker.hp));
+            attacker.hp = Math.min(attacker.maxHp, attacker.hp + healAmount);
+            pushHealStep({
+                target: isPlayer ? 'player' : 'enemy',
+                value: actualHeal,
+                text: `${attackerName} 回復了 ${actualHeal} 點生命值！`,
+                actorSide: isPlayer ? 'player' : 'enemy',
+                targetSide: isPlayer ? 'player' : 'enemy',
+                actorName: attackerName,
+                cue: 'heal'
+            });
+            return;
+        }
         const result = calcDamage(attacker, move, defender);
 
         if (result.msg === 'BLOCKED') {
             pushMsg(`但是被 ${defenderName} 完美地擋下來了！`, { kind: 'system', targetSide: isPlayer ? 'enemy' : 'player', targetName: defenderName, cue: 'blocked' });
+            return;
+        } else if (result.msg === 'ABILITY_BLOCK') {
+            pushMsg(`${defender.trait?.name || '特性'}發動！${defenderName}沒有受到傷害。`, { kind: 'system', targetSide: isPlayer ? 'enemy' : 'player', targetName: defenderName, cue: 'blocked' });
             return;
         } else if (result.msg === 'MISS_SPEED') {
             pushMsg(`${defenderName} 靈巧地閃開了！`, { kind: 'system', targetSide: isPlayer ? 'enemy' : 'player', targetName: defenderName, cue: 'miss' });
@@ -528,7 +631,12 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
         applyEnchantAilment(attacker, move, defender, defenderName, isPlayer ? 'player' : 'enemy', attackerName);
 
+        const defenderStatusBeforeMoveEffects = defender.status;
         const effects = applyMoveEffects(move, defender, attacker, rFunc);
+        if (!defenderStatusBeforeMoveEffects && defender.status && defender.trait?.id === 'synchronize' && !attacker.status && ['burn', 'paralysis', 'poison'].includes(defender.status)) {
+            attacker.status = defender.status;
+            effects.messages.push({ text: '同步將異常狀態傳給了對手！', targetType: 'source' });
+        }
         effects.messages.forEach(m => {
             const targetName = m.targetType === 'source' ? attackerName : defenderName;
             pushMsg(`${targetName} ${m.text}`, {
@@ -609,7 +717,26 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 return;
             }
 
-            const { actual: actualDmg, shieldValue: shieldDmg, hpValue: hpDmg } = applyDamageToState(defender, finalDamage);
+            if (defender.endure && finalDamage >= defender.hp) {
+                finalDamage = Math.max(0, defender.hp - 1 + (defender.shield || 0));
+                pushMsg(`${defenderName}挺住了攻擊！`, { kind: 'system', targetSide: defenderSide, cue: 'survive' });
+            }
+if (defender.trait?.id === 'sturdy' && defender.hp >= defender.maxHp && finalDamage >= defender.hp) {
+                finalDamage = Math.max(0, defender.hp - 1 + (defender.shield || 0));
+                pushMsg(`${defender.trait.name}發動！${defenderName}撐住了攻擊。`, { kind: 'system', targetSide: defenderSide, targetName: defenderName, cue: 'survive' });
+            }
+            if ((defender.substituteHp || 0) > 0 && attacker.trait?.id !== 'infiltrator') {
+                const absorbed = Math.min(defender.substituteHp, finalDamage);
+                defender.substituteHp -= absorbed;
+                pushMsg(defender.substituteHp > 0 ? `${defenderName}的替身承受了傷害！` : `${defenderName}的替身消失了！`, { kind: 'system', targetSide: defenderSide, cue: 'blocked' });
+                return;
+            }
+const damageResult = attacker.trait?.id === 'infiltrator'
+                ? (() => { const hpValue = Math.min(defender.hp, finalDamage); defender.hp = Math.max(0, defender.hp - hpValue); return { actual: hpValue, shieldValue: 0, hpValue }; })()
+                : applyDamageToState(defender, finalDamage);
+            const { actual: actualDmg, shieldValue: shieldDmg, hpValue: hpDmg } = damageResult;
+            if (result.isCritical) pushMsg('擊中要害！', { kind: 'system', actorSide: attackerSide, targetSide: defenderSide, cue: 'critical' });
+            if ((result.hitCount || 1) > 1) pushMsg(`連續命中 ${result.hitCount} 次！`, { kind: 'system', actorSide: attackerSide, targetSide: defenderSide, cue: 'multi-hit' });
             pushDamageStep({
                 target: isPlayer ? 'enemy' : 'player',
                 value: actualDmg, text: `對 ${defenderName} 造成了 ${actualDmg} 點傷害！${result.msg}`,
@@ -626,9 +753,28 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
                 hpValue: hpDmg,
                 cue: 'damage'
             });
-            if (defender.hp <= 0) tryFeignDeath(isPlayer ? 'enemy' : 'player');
+if (defender.hp <= 0) tryFeignDeath(isPlayer ? 'enemy' : 'player');
+            if (defender.hp <= 0 && defender.destinyBond && attacker.hp > 0) {
+                const bondDamage = applyDamageToState(attacker, attacker.hp + (attacker.shield || 0));
+                pushDamageStep({ target: attackerSide, value: bondDamage.actual, text: `同命讓${attackerName}也倒下了！`, actorSide: defenderSide, targetSide: attackerSide, cue: 'destiny-bond' });
+            }
 
-            if (effects.recoilPct > 0) {
+            if (defender.hp > 0 && !attacker.status && ['static', 'poison-point', 'flame-body'].includes(defender.trait?.id) && rFunc() < 0.3) {
+                const statusByAbility = { static: 'paralysis', 'poison-point': 'poison', 'flame-body': 'burn' };
+                attacker.status = statusByAbility[defender.trait.id];
+                pushMsg(`${defender.trait.name}發動！${attackerName}陷入了異常狀態。`, { kind: 'status', actorSide: defenderSide, targetSide: attackerSide, actorName: defenderName, targetName: attackerName, cue: 'ailment' });
+                if (attacker.trait?.id === 'synchronize' && !defender.status && ['burn', 'paralysis', 'poison'].includes(attacker.status)) {
+                    defender.status = attacker.status;
+                    pushMsg(`同步發動！${defenderName}也陷入了相同異常狀態。`, { kind: 'status', actorSide: attackerSide, targetSide: defenderSide, cue: 'synchronize' });
+                }
+            }
+            if (defender.hp > 0 && defender.trait?.id === 'cursed-body' && rFunc() < 0.3) {
+                attacker.disabledMoveId = move.id;
+                attacker.disabledMoveTurns = 2;
+                pushMsg(`詛咒之軀發動！${attackerName}的${move.name}暫時無法使用。`, { kind: 'status', actorSide: defenderSide, targetSide: attackerSide, cue: 'disable' });
+            }
+
+            if (effects.recoilPct > 0 && attacker.trait?.id !== 'rock-head') {
                 const recoilDmg = Math.floor(actualDmg * effects.recoilPct);
                 if (recoilDmg > 0) {
                     const { actual: actualRecoil, shieldValue: recoilShieldDmg, hpValue: recoilHpDmg } = applyDamageToState(attacker, recoilDmg);
@@ -717,10 +863,13 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         addMoveExecution('enemy', enemyMove);
     } else if (isPlayerFirst) {
         addMoveExecution('player', playerMove);
-        if (updatedEnemy.hp > 0) addMoveExecution('enemy', enemyMove);
+        if (updatedEnemy.hp > 0 && !fieldState.escapeRequested) addMoveExecution('enemy', enemyMove);
     } else {
         addMoveExecution('enemy', enemyMove);
-        if (updatedPlayer.hp > 0) addMoveExecution('player', playerMove);
+        if (updatedPlayer.hp > 0 && !fieldState.escapeRequested) addMoveExecution('player', playerMove);
+    }
+    if (fieldState.escapeRequested) {
+        nextQueue.push(createBattleStep('run', { kind: 'system', text: '戰鬥結束了！', cue: 'run' }));
     }
 
     // 針對 PVP 模式優化播報名稱
@@ -812,6 +961,53 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
             });
         }
     }
+
+    const applyTimedMoveEvents = (entity, side, name) => {
+        const events = tickPokemonMoveEffects(entity, fieldState.sides[side], fieldState);
+        events.forEach(event => {
+            if (event.damage) {
+                const damage = applyDamageToState(entity, event.damage);
+                pushDamageStep({ target: side, value: damage.actual, text: `${name}${event.text}`, actorSide: side, targetSide: side, cue: 'post-status' });
+            }
+            if (event.heal) {
+                const heal = Math.min(event.heal, entity.maxHp - entity.hp);
+                entity.hp += heal;
+                if (heal > 0) pushHealStep({ target: side, value: heal, text: `${name}${event.text}`, actorSide: side, targetSide: side, cue: 'regen' });
+            }
+            if (!event.damage && !event.heal && event.text) pushMsg(`${name}${event.text}`, { kind: 'status', actorSide: side, targetSide: side, cue: 'countdown' });
+        });
+    };
+    applyTimedMoveEvents(updatedPlayer, 'player', pName);
+    applyTimedMoveEvents(updatedEnemy, 'enemy', eName);
+    for (const key of ['weatherTurns', 'terrainTurns', 'gravityTurns', 'magicRoomTurns', 'wonderRoomTurns']) {
+        if ((fieldState[key] || 0) > 0) fieldState[key] -= 1;
+    }
+    if (fieldState.weatherTurns === 0) fieldState.weather = null;
+    if (fieldState.terrainTurns === 0) fieldState.terrain = null;
+
+const applyOfficialEndTurnAbility = (entity, side, name) => {
+        if (!entity || entity.hp <= 0) return;
+        if (entity.trait?.id === 'shed-skin' && entity.status && rFunc() < 1 / 3) {
+            entity.status = null;
+            entity.statusTurns = 0;
+            pushMsg(`蛻皮發動！${name}治癒了異常狀態。`, { kind: 'status', actorSide: side, targetSide: side, cue: 'recover' });
+        }
+        if (entity.trait?.id === 'speed-boost') {
+            entity.statStages = { ...(entity.statStages || {}), spd: Math.min(6, (entity.statStages?.spd || 0) + 1) };
+            pushMsg(`加速發動！${name}的速度提高。`, { kind: 'system', actorSide: side, cue: 'stat-up' });
+        }
+        if (prev.weather === 'rain' && entity.trait?.id === 'rain-dish') {
+            const heal = Math.min(entity.maxHp - entity.hp, Math.max(1, Math.floor(entity.maxHp / 16)));
+            if (heal > 0) { entity.hp += heal; pushHealStep({ target: side, value: heal, text: `雨盤讓${name}回復 ${heal} HP。`, actorSide: side, targetSide: side, cue: 'regen' }); }
+        }
+        if (prev.weather === 'sun' && entity.trait?.id === 'solar-power') {
+            const loss = Math.max(1, Math.floor(entity.maxHp / 8));
+            applyDamageToState(entity, loss);
+            pushDamageStep({ target: side, value: loss, text: `太陽之力使${name}失去 ${loss} HP。`, actorSide: side, targetSide: side, cue: 'trait-recoil' });
+        }
+    };
+    applyOfficialEndTurnAbility(updatedPlayer, 'player', pName);
+    applyOfficialEndTurnAbility(updatedEnemy, 'enemy', eName);
 
     if ((traitMods.battleRegenMaxHp || 0) > 0 && updatedPlayer.hp > 0 && updatedEnemy.hp > 0) {
         const heal = Math.min(
@@ -912,6 +1108,14 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
     const finalBattleState = {
         ...prev,
+        weather: fieldState.weather,
+        weatherTurns: fieldState.weatherTurns,
+        terrain: fieldState.terrain,
+        terrainTurns: fieldState.terrainTurns,
+        gravityTurns: fieldState.gravityTurns,
+        magicRoomTurns: fieldState.magicRoomTurns,
+        wonderRoomTurns: fieldState.wonderRoomTurns,
+        fieldEffects: fieldState.sides,
         // 修正：播報期間不應提前增加 turn，統一由 App.js 播報結束後累加，防止跳號
         turn: prev.turn,
         phase: 'action_streaming',
@@ -987,5 +1191,3 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
 
     return finalBattleState;
 };
-
-

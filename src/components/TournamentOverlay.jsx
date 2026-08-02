@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { DitheredSprite, DitheredBackSprite } from './SpriteRenderer';
-import { SKILL_DATABASE } from '../monsterData';
 import AutoFitText from './AutoFitText';
 
 export function TournamentOverlay({
@@ -9,22 +8,8 @@ export function TournamentOverlay({
     currentRound,
     opponents,
     nextTournamentPhase,
-    prevTournamentPhase,
     myMonsterId,
-    playerName,
-    cardOptions = [],
-    pickRogueCard,
-    // 冠軍附魔 props
-    advStats,
-    rewardOptions = [],
-    selectedRewardMoveIdx = 0,
-    setSelectedRewardMoveIdx,
-    selectChampionRewardMove,
-    selectedRewardEffectIdx = 0,
-    setSelectedRewardEffectIdx,
-    confirmChampionReward,
-    rerollCount,
-    rerollChampionRewards
+    playerName
 }) {
     if (!isTournamentOpen) return null;
 
@@ -32,7 +17,7 @@ export function TournamentOverlay({
     if (tPhase === 'fighting' || tPhase === 'idle') return null;
 
     // 只有在特定階段才顯示黑色背景層 (防止狀態不同步時出現空黑屏)
-    const activePhases = ['intro', 'bracket', 'battle_intro', 'champion', 'lost', 'card_selection', 'champion_reward_move', 'champion_reward_effect'];
+    const activePhases = ['intro', 'bracket', 'battle_intro', 'champion', 'lost'];
     if (!activePhases.includes(tPhase)) return null;
 
     return (
@@ -76,7 +61,7 @@ export function TournamentOverlay({
                                 return matches.map((m, idx) => (
                                     <div key={idx} className={`flex justify-between items-center text-[9px] px-2 py-1 border border-black/30 ${m.highlight ? 'bg-[#ffca28] text-black font-black' : 'text-gray-400 bg-black/10'}`}>
                                         <span className="w-[48%] text-center truncate">{m.p1}</span>
-                                        <span className="text-[7px] opacity-50">VS</span>
+                                        <span className="text-[7px] opacity-50">對戰</span>
                                         <span className="w-[48%] text-center truncate">{m.p2}</span>
                                     </div>
                                 ));
@@ -102,7 +87,7 @@ export function TournamentOverlay({
                                     {opponents[1].monster?.name}
                                 </AutoFitText>
                                 <AutoFitText as="span" className="text-[8px] w-full min-w-0 text-white/90" minFontSize={6} maxFontSize={8}>
-                                    Lv.{opponents[1].monster?.level}
+                                    等級 {opponents[1].monster?.level}
                                 </AutoFitText>
                             </div>
                         </div>
@@ -125,152 +110,6 @@ export function TournamentOverlay({
                             VS
                         </div>
                     </div>
-                </div>
-            )}
-
-            {tPhase === 'card_selection' && (
-                <div className="flex flex-col items-center w-full animate-fade-in">
-                    <h2 className="text-[#ffca28] text-sm font-black mb-1">挑選獎勵卡片</h2>
-                    <div className="text-[7px] text-red-400 font-bold mb-3 animate-pulse">※ 請直接點擊螢幕內的卡片進行選擇</div>
-                    
-                    <div className="flex flex-col gap-3 w-full px-2">
-                        {cardOptions.map((card, idx) => (
-                            <button 
-                                key={idx}
-                                onClick={() => pickRogueCard(card)}
-                                className={`
-                                    relative flex flex-col items-start p-2 border-2 rounded-lg transition-all duration-200
-                                    ${card.rarity >= 3 ? 'border-[#ffca28] bg-[#ffca28]/10' : 'border-white/30 bg-black/40'}
-                                    hover:scale-105 active:scale-95 text-left group overflow-hidden
-                                `}
-                            >
-                                <div className="flex justify-between w-full items-center mb-1">
-                                    <AutoFitText as="span" className={`text-[10px] font-black ${card.rarity >= 3 ? 'text-[#ffca28]' : 'text-white'} w-[78%]`} minFontSize={7} maxFontSize={10}>
-                                        {card.name}
-                                    </AutoFitText>
-                                    <span className="text-[7px] bg-black/50 px-1 rounded text-gray-400">
-                                        {'★'.repeat(card.rarity)}
-                                    </span>
-                                </div>
-                                <div className="text-[8px] text-gray-200 leading-tight">
-                                    {card.desc}
-                                </div>
-                                {card.rarity >= 3 && (
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* 冠軍附魔 - 第一步：選擇技能 */}
-            {tPhase === 'champion_reward_move' && (
-                <div className="flex flex-col items-center w-full animate-fade-in">
-                    <h2 className="text-[#ffca28] text-sm font-black mb-1">🏆 冠軍附魔</h2>
-                    <div className="text-[7px] text-red-400 font-bold mb-3 animate-pulse">※ 請點擊要強化的技能</div>
-                    
-                    <div className="flex flex-col gap-2 w-full px-2">
-                        {(advStats?.moves || []).map((moveId, idx) => {
-                            const skill = SKILL_DATABASE[moveId];
-                            if (!skill) return null;
-                            const upgradeData = advStats?.moveUpgrades?.[moveId];
-                            const count = upgradeData?.count || 0;
-                            const isMaxed = count >= 10;
-                            const isAttack = (skill.power || 0) > 0;
-                            const isSelected = selectedRewardMoveIdx === idx;
-
-                            return (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        if (!isAttack || isMaxed) return;
-                                        selectChampionRewardMove ? selectChampionRewardMove(idx) : setSelectedRewardMoveIdx(idx);
-                                        if (!selectChampionRewardMove) nextTournamentPhase(); // 進入選效果階段
-                                    }}
-                                    disabled={!isAttack || isMaxed}
-                                    className={`
-                                        flex justify-between items-center p-2 border-2 rounded-lg transition-all text-left
-                                        ${!isAttack ? 'border-gray-600 bg-gray-800/50 opacity-40 cursor-not-allowed' :
-                                          isMaxed ? 'border-red-800 bg-red-900/30 opacity-60 cursor-not-allowed' :
-                                          'border-[#ffca28]/50 bg-black/40 hover:border-[#ffca28] hover:scale-[1.02] active:scale-95'}
-                                    `}
-                                >
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-bold text-white">{skill.name}</span>
-                                        <span className="text-[7px] text-gray-400">
-                                            威力:{skill.power || '-'} | 命中:{skill.accuracy || '-'} | {skill.type}
-                                        </span>
-                                    </div>
-                                    <div className="flex flex-col items-end">
-                                        <span className={`text-[9px] font-bold ${isMaxed ? 'text-red-400' : count > 0 ? 'text-[#ffca28]' : 'text-gray-500'}`}>
-                                            {isMaxed ? 'MAX' : `${count}/10`}
-                                        </span>
-                                        {!isAttack && <span className="text-[7px] text-gray-500">輔助技</span>}
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {/* 冠軍附魔 - 第二步：選擇附魔效果 */}
-            {tPhase === 'champion_reward_effect' && (
-                <div className="flex flex-col items-center w-full animate-fade-in">
-                    <h2 className="text-[#ffca28] text-sm font-black mb-1">🏆 選擇附魔效果</h2>
-                    <div className="text-[7px] text-red-400 font-bold mb-3 animate-pulse">※ 請點擊要附加的效果</div>
-                    
-                    <div className="flex flex-col gap-2 w-full px-2">
-                        {rewardOptions.map((effect, idx) => {
-                            const moveId = advStats?.moves?.[selectedRewardMoveIdx];
-                            const currentVal = advStats?.moveUpgrades?.[moveId]?.ailments?.[effect.id] || 0;
-                            const isAilmentMaxed = effect.type === 'ailment' && currentVal >= 100;
-
-                            return (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        if (isAilmentMaxed) return;
-                                        setSelectedRewardEffectIdx(idx);
-                                        confirmChampionReward(idx);
-                                    }}
-                                    disabled={isAilmentMaxed}
-                                    className={`
-                                        flex flex-col items-start p-2 border-2 rounded-lg transition-all text-left
-                                        ${isAilmentMaxed ? 'border-gray-600 bg-gray-800/50 opacity-40 cursor-not-allowed' :
-                                          'border-purple-400/50 bg-purple-900/20 hover:border-purple-400 hover:scale-[1.02] active:scale-95'}
-                                    `}
-                                >
-                                    <div className="flex justify-between w-full items-center mb-1">
-                                        <span className="text-[10px] font-bold text-purple-300">{effect.name}</span>
-                                        {currentVal > 0 && (
-                                            <span className="text-[7px] text-purple-400 bg-purple-900/50 px-1 rounded">
-                                                已有 +{currentVal}{effect.type === 'ailment' ? '%' : ''}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className="text-[8px] text-gray-300">{effect.desc}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {rerollCount > 0 && (
-                        <button 
-                            onClick={() => rerollChampionRewards()}
-                            className="mt-3 flex items-center gap-1.5 px-3 py-1.5 bg-[#f39c12] hover:bg-[#e67e22] text-black text-[9px] font-bold rounded-full shadow-lg transition-all active:scale-95 animate-bounce"
-                        >
-                            🎲 重來骰子 (剩餘 {rerollCount} 次)
-                        </button>
-                    )}
-                    
-                    <button 
-                        onClick={() => prevTournamentPhase()}
-                        className="mt-3 text-[8px] text-gray-400 underline hover:text-white"
-                    >
-                        ← 返回選擇技能
-                    </button>
                 </div>
             )}
 

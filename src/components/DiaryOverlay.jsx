@@ -13,7 +13,6 @@ export default function DiaryOverlay({
     hunger,
     mood,
     bondValue,
-    soulTagCounts,
     lockedAffinity,
 }) {
     if (!isDiaryOpen) return null;
@@ -66,42 +65,6 @@ export default function DiaryOverlay({
                             <div style={{ fontSize: '9px', color: '#1a1a1a', borderBottom: '1px solid #383a37', paddingBottom: '3px', marginBottom: '3px' }}>
                                 📊 {isToday ? '今日記錄' : '當日回顧'}
                             </div>
-
-                            {(() => {
-                                const tag = isToday
-                                    ? Object.entries(soulTagCounts || {}).reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0])[0]
-                                    : (entry?.dominantTag || 'none');
-
-                                const attitudeMap = {
-                                    gentle: "溫婉有加，把你當成避風港。",
-                                    stubborn: "有點嘴硬，但心裡非常依賴你。",
-                                    passionate: "熱血澎湃！把你當成親兄弟。",
-                                    nonsense: "調皮搗蛋，看到你就想撒嬌。",
-                                    rational: "冷靜沉穩，對你抱持深厚信任。",
-                                    none: "還在摸索與你的相處之道..."
-                                };
-
-                                return (
-                                    <div className="flex flex-col gap-1.5">
-                                        <div className="flex justify-between items-start" style={{ fontSize: '9px', color: '#1a1a1a' }}>
-                                            <span className="shrink-0">🤝 對你的態度:</span>
-                                            <span className="font-black text-right pl-2 text-[8px] leading-tight">
-                                                {attitudeMap[tag] || attitudeMap.none}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center" style={{ fontSize: '9px', color: '#1a1a1a' }}>
-                                            <span>🌿 擊敗野怪:</span>
-                                            <span className="font-black">{entry?.wildDefeated ?? 0} 隻</span>
-                                        </div>
-                                        <div className="mt-1 pt-1 border-t border-[#383a37]/30 flex flex-col gap-1">
-                                            <div style={{ fontSize: '8px', opacity: 0.8 }}>📍 特殊事件:</div>
-                                            <div style={{ fontSize: '9px', color: '#c00', fontWeight: '900' }}>
-                                                {entry?.specialEvent || '今日尚無重大事件'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })()}
                         </div>
 
                         <div className="border-2 border-[#383a37] bg-[#b8c8a8] p-2 flex flex-col gap-1 flex-1">

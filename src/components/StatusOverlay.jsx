@@ -1,5 +1,5 @@
 import React from 'react';
-import { SPECIES_BASE_STATS, NATURE_CONFIG, SKILL_DATABASE, TYPE_MAP, calcFinalStat, getLevelByPower } from '../monsterData';
+import { SPECIES_BASE_STATS, SKILL_DATABASE, TYPE_MAP, calcFinalStat, getLevelByPower } from '../monsterData';
 import AutoFitText from './AutoFitText';
 import { buildAilmentBadges } from '../utils/ailmentBadgeUtils';
 import { useState } from 'react';
@@ -45,10 +45,8 @@ const ailmentClass = (ailment) => (
 export default function StatusOverlay({
     isStatusUIOpen,
     statusPage = 'stats',
-    onToggleStatusPage,
     onClose,
     getMonsterId,
-    soulTagCounts,
     hunger,
     mood,
     bondValue,
@@ -56,33 +54,23 @@ export default function StatusOverlay({
     monsterTraits,
     getIVGrade
 }) {
-    if (!isStatusUIOpen) return null;
-
     const [selectedSkillDetail, setSelectedSkillDetail] = useState(null);
+
+    if (!isStatusUIOpen) return null;
 
     const isMovesPage = statusPage === 'moves';
     const sid = getMonsterId();
     const level = getLevelByPower(advStats.basePower);
     const types = SPECIES_BASE_STATS[String(sid)]?.types || ['normal'];
-    const tagEntries = Object.entries(soulTagCounts || {});
-    const bestTag = tagEntries.reduce((a, b) => a[1] > b[1] ? a : b, ['none', 0]);
-    const dominantTag = bestTag[0];
-    const natureName = bestTag[1] > 0 ? (NATURE_CONFIG[dominantTag]?.name || '未知') : '尚未分化';
-    const nMods = { atk: 1.0, def: 1.0, spd: 1.0 };
-
-    if (dominantTag === 'passionate') { nMods.atk = 1.1; nMods.def = 0.9; }
-    else if (dominantTag === 'stubborn') { nMods.def = 1.1; nMods.spd = 0.9; }
-    else if (dominantTag === 'rational') { nMods.spd = 1.1; nMods.atk = 0.9; }
-    else if (dominantTag === 'nonsense') { nMods.spd = 1.1; nMods.def = 0.9; }
 
     const traitMods = monsterTraits?.trait?.modifiers || {};
     const levelTraitMod = level >= (traitMods.thresholdLevel || Infinity)
         ? (traitMods.highLevelStat || 1)
         : (traitMods.lowLevelStat || 1);
     const fHP = Math.floor(calcFinalStat('hp', sid, advStats.ivs.hp, advStats.evs.hp, level) * (traitMods.hp || 1) * levelTraitMod);
-    const fATK = Math.floor(calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level, nMods.atk) * (traitMods.atk || 1) * levelTraitMod);
-    const fDEF = Math.floor(calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level, nMods.def) * (traitMods.def || 1) * levelTraitMod);
-    const fSPD = Math.floor(calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level, nMods.spd) * (traitMods.spd || 1) * levelTraitMod);
+    const fATK = Math.floor(calcFinalStat('atk', sid, advStats.ivs.atk, advStats.evs.atk, level) * (traitMods.atk || 1) * levelTraitMod);
+    const fDEF = Math.floor(calcFinalStat('def', sid, advStats.ivs.def, advStats.evs.def, level) * (traitMods.def || 1) * levelTraitMod);
+    const fSPD = Math.floor(calcFinalStat('spd', sid, advStats.ivs.spd, advStats.evs.spd, level) * (traitMods.spd || 1) * levelTraitMod);
     const moveSlots = Array.from({ length: 4 }, (_, idx) => advStats?.moves?.[idx] || null);
     const selectedMoveId = selectedSkillDetail?.moveId;
     const selectedMoveSkill = selectedMoveId ? SKILL_DATABASE[selectedMoveId] : null;
@@ -103,9 +91,8 @@ export default function StatusOverlay({
 
             <div className="w-full bg-[#383a37]/50 text-white text-[12px] px-2 py-1.5 flex justify-between items-center mb-2 font-black relative z-10 shadow-sm">
                 <span>{isMovesPage ? '技能欄位' : '狀態資訊'}</span>
-                <button type="button" onClick={onToggleStatusPage} className="text-[9px] text-[#ffca28] underline decoration-dotted">
-                    [B] {isMovesPage ? '狀態' : '技能'}
-                </button>
+
+
                 <button type="button" className="cursor-pointer" onClick={onClose}>[C] 關閉</button>
             </div>
 
@@ -114,7 +101,6 @@ export default function StatusOverlay({
                     <>
                         <div className="border-b-2 border-[#383a37] pb-1 flex justify-between text-[11px] font-black text-white">
                             <span>屬性: {types.map(t => TYPE_LABELS[t] || t).join(' / ')}</span>
-                            <span>性格: {natureName}</span>
                         </div>
 
                         <div className="flex flex-col gap-0.5">
@@ -146,12 +132,12 @@ export default function StatusOverlay({
 
                         <div className="text-[10px] font-black text-white mt-0.5 border-t border-[#383a37]/30 pt-0">
                             <div className="bg-black/20 border border-white/10 rounded px-1.5 py-1 flex flex-col gap-0.5">
-                                <div className="text-[#ffca28]">天賦: {monsterTraits?.trait?.name || '尚未覺醒'}</div>
+                                <div className="text-[#ffca28]">特性: {monsterTraits?.trait?.name || '尚未設定'}</div>
                                 <div className="text-[10px] text-[#9be58f] leading-tight">
-                                    加成: {monsterTraits?.trait?.bonus || '尚未獲得特殊加成'}
+                                    加成: {monsterTraits?.trait?.bonus || '尚無已實作的戰鬥效果'}
                                 </div>
                                 <div className="text-[10px] text-[#ff9f9f] leading-tight">
-                                    代價: {monsterTraits?.trait?.drawback || '尚未獲得特殊代價'}
+                                    限制: {monsterTraits?.trait?.drawback || '無'}
                                 </div>
                             </div>
                         </div>
@@ -221,7 +207,7 @@ export default function StatusOverlay({
                         })}
 
                         <div className="text-[8px] font-black text-white/60 text-center border-t border-white/10 pt-1 mt-0.5">
-                            [B] 返回狀態　[C] 關閉
+                            [C] 關閉
                         </div>
                     </div>
                 )}

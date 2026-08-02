@@ -1,71 +1,33 @@
-const isMagicianTrait = (trait) => trait?.id === 'magician' || trait?.name === '魔術師';
+const clampStage = value => Math.max(-6, Math.min(6, Number(value || 0)));
 
-const cloneMove = (move) => {
-    if (!move || typeof move !== 'object') return move;
-    return { ...move };
-};
-
-const cloneUpgrade = (upgrade) => {
-    if (!upgrade || typeof upgrade !== 'object') return upgrade;
-    return {
-        ...upgrade,
-        ailments: { ...(upgrade.ailments || {}) }
-    };
-};
-
-export const applyOpeningTraitEffects = (battleState) => {
+export const applyOpeningTraitEffects = battleState => {
     if (!battleState?.player || !battleState?.enemy) return battleState;
 
-    const playerHasMagician = isMagicianTrait(battleState.player.trait);
-    const enemyHasMagician = isMagicianTrait(battleState.enemy.trait);
-    if (!playerHasMagician && !enemyHasMagician) return battleState;
-
-    const originalPlayerMoves = Array.isArray(battleState.player.moves) ? battleState.player.moves : [];
-    const originalEnemyMoves = Array.isArray(battleState.enemy.moves) ? battleState.enemy.moves : [];
-    const playerFirstMove = originalPlayerMoves[0] || null;
-    const enemyFirstMove = originalEnemyMoves[0] || null;
-    const nextPlayerMoves = [...originalPlayerMoves];
-    const nextEnemyMoves = [...originalEnemyMoves];
-    const originalPlayerUpgrades = battleState.player.moveUpgrades || {};
-    const originalEnemyUpgrades = battleState.enemy.moveUpgrades || {};
-    const nextPlayerUpgrades = { ...originalPlayerUpgrades };
-    const nextEnemyUpgrades = { ...originalEnemyUpgrades };
+    let player = { ...battleState.player, statStages: { ...(battleState.player.statStages || {}) } };
+    let enemy = { ...battleState.enemy, statStages: { ...(battleState.enemy.statStages || {}) } };
     const logs = [...(battleState.logs || [])];
+    const originalPlayerTrait = player.trait || null;
+    const originalEnemyTrait = enemy.trait || null;
 
-    if ((playerHasMagician || enemyHasMagician) && playerFirstMove && enemyFirstMove) {
-        nextPlayerMoves[0] = cloneMove(enemyFirstMove);
-        nextEnemyMoves[0] = cloneMove(playerFirstMove);
-        const playerFirstMoveId = playerFirstMove.id;
-        const enemyFirstMoveId = enemyFirstMove.id;
-        if (playerFirstMoveId && enemyFirstMoveId) {
-            const playerUpgrade = cloneUpgrade(originalPlayerUpgrades[playerFirstMoveId]);
-            const enemyUpgrade = cloneUpgrade(originalEnemyUpgrades[enemyFirstMoveId]);
-            if (enemyUpgrade) nextPlayerUpgrades[enemyFirstMoveId] = enemyUpgrade;
-            else delete nextPlayerUpgrades[enemyFirstMoveId];
-            if (playerUpgrade) nextEnemyUpgrades[playerFirstMoveId] = playerUpgrade;
-            else delete nextEnemyUpgrades[playerFirstMoveId];
-        }
-        if (playerHasMagician && enemyHasMagician) {
-            logs.push(`雙方魔術師開場觸發！彼此交換了第一招。`);
-        } else if (playerHasMagician) {
-            logs.push(`魔術師開場觸發！你與對手交換了第一招。`);
-        } else {
-            logs.push(`對手的魔術師開場觸發！你與對手交換了第一招。`);
-        }
+    // 複製：使用出場瞬間對手原本的特性，避免雙方複製造成循環。
+    if (originalPlayerTrait?.id === 'trace' && originalEnemyTrait?.id !== 'trace') {
+        player.trait = originalEnemyTrait;
+        logs.push(`複製發動！你複製了對手的${originalEnemyTrait?.name || '特性'}。`);
+    }
+    if (originalEnemyTrait?.id === 'trace' && originalPlayerTrait?.id !== 'trace') {
+        enemy.trait = originalPlayerTrait;
+        logs.push(`對手的複製發動！取得了${originalPlayerTrait?.name || '特性'}。`);
     }
 
-    return {
-        ...battleState,
-        player: {
-            ...battleState.player,
-            moves: nextPlayerMoves,
-            moveUpgrades: nextPlayerUpgrades
-        },
-        enemy: {
-            ...battleState.enemy,
-            moves: nextEnemyMoves,
-            moveUpgrades: nextEnemyUpgrades
-        },
-        logs
-    };
+    // 威嚇：精神力不受威嚇影響。
+    if (player.trait?.id === 'intimidate' && enemy.trait?.id !== 'inner-focus') {
+        enemy.statStages.atk = clampStage((enemy.statStages.atk || 0) - 1);
+        logs.push('威嚇發動！對手的攻擊下降。');
+    }
+    if (enemy.trait?.id === 'intimidate' && player.trait?.id !== 'inner-focus') {
+        player.statStages.atk = clampStage((player.statStages.atk || 0) - 1);
+        logs.push('對手的威嚇發動！你的攻擊下降。');
+    }
+
+    return { ...battleState, player, enemy, logs };
 };
