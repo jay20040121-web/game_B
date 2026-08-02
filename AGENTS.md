@@ -427,3 +427,24 @@ UI 修改要保持小型裝置、像素遊戲的風格。不要突然加入大�
 - 目前不是線上機器翻譯，不會也不應在前端放翻譯 API key；大量劇情、怪獸來信或 AI 文字若要高品質英文，需要另外補人工翻譯表或走後端服務。
 
 
+
+## BDD 與 MCP 程式圖譜
+
+- BDD 行為規則在 `AI_BDD.md`，修改相關系統前要先閱讀對應的 Given-When-Then 情境；目前是 agent 規範文件，不是 Cucumber 自動化測試。
+- 專案已安裝 `@sdsrs/code-graph`，Codex 專案層 MCP 設定在 `.codex/config.toml`，索引資料在 `.code-graph/` 並由 Git 忽略。
+- `npm run codegraph:index`：建立或增量更新 AST 程式圖譜。
+- `npm run codegraph:status`：檢查索引健康狀態；Codex 新增 MCP 設定後需重新啟動工作階段才會載入工具。
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in this repository's GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default Matt Pocock triage roles and matching GitHub label names. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repository using root `CONTEXT.md` and `docs/adr/` when those documents are created. See `docs/agents/domain.md`.

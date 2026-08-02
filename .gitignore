@@ -89,3 +89,4 @@ local-assets/
 !styles.css
 !assets/
 config.json
+.code-graph/

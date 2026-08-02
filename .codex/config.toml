@@ -1,0 +1,8 @@
+[mcp_servers.code_graph]
+command = "node"
+args = ["node_modules/@sdsrs/code-graph/bin/cli.js"]
+cwd = "."
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+enabled = true
+default_tools_approval_mode = "auto"
