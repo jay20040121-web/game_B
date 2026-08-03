@@ -484,7 +484,7 @@ export default function BattleAdventureOverlay({
                                 side="player"
                                 hitPop={battleState.damagePop?.target === 'player' ? battleState.damagePop : null}
                             >
-                                <DitheredBackSprite id={battleState?.player?.id} scale={2} normalizePokemonBattleSize />
+                                <DitheredBackSprite id={battleState?.player?.id} scale={2} normalizePokemonBattleSize battleVisibleScale={1.15} />
                             </BattleMonsterSprite>
                         </div>
                         <div className="pointer-events-none absolute inset-0 z-[140]">

@@ -231,6 +231,7 @@ export default function PokeRogueOverlay({ inventory, activeBallId, onClose }) {
                 key={`${wave}-${activeIdx}-${battleNonce}`}
                 player={active}
                 enemy={enemy}
+                trainer={encounter?.trainer}
                 wave={wave}
                 encounterLabel={encounter?.trainer ? `${encounter.trainer.title}?${encounter.trainer.name}?${enemyIndex + 1}/${enemyTeam.length}?` : null}
                 onExit={onClose}

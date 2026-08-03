@@ -260,10 +260,14 @@ export default function App() {
         }
         // 舊技能資料轉換：只保留目前 Pokémon 在最新招式表中可學會的正式招式。
         const monId = String(normalizePokemonSpeciesId(initialData?.currentMonsterId || initialData?.id || localStorage.getItem('pixel_monster_id') || 4));
-        const monLevel = getLevelByPower(d.basePower || 100);
-        const officialMoves = generateMoves(monId, monLevel);
-        const savedOfficialMoves = (d.moves || []).filter(moveId => officialMoves.includes(moveId));
-        d.moves = [...savedOfficialMoves, ...officialMoves.filter(moveId => !savedOfficialMoves.includes(moveId))].slice(-4);
+        const monLevel = getLevelByPower(d.basePower || 100);        const officialMoves = generateMoves(monId, monLevel);
+        // 玩家已配置的招式是權威資料：升級時只補足空位，不重新洗牌或淘汰既有招式。
+        const savedMoves = [...new Set((Array.isArray(d.moves) ? d.moves : [])
+            .filter(moveId => SKILL_DATABASE[moveId]))].slice(0, 4);
+        const missingSlots = Math.max(0, 4 - savedMoves.length);
+        d.moves = [...savedMoves, ...officialMoves
+            .filter(moveId => !savedMoves.includes(moveId))
+            .slice(0, missingSlots)];
         delete d.bonusMoveId;
         // 只保留目前正式招式仍對應得到的附魔資料。
         d.moveUpgrades = Object.fromEntries(Object.entries(d.moveUpgrades || {}).filter(([moveId]) => d.moves.includes(moveId)));
@@ -920,7 +924,11 @@ export default function App() {
                     ...prev,
                     stepQueue: prev.activeStepPending ? prev.stepQueue : prev.stepQueue.slice(1),
                     activeStepPending: false,
-                    activeMsg: nextStep.text || ""
+                    activeMsg: nextStep.text || "",
+                    // 保留每個演出步驟，讓 MISS 與屬性效果訊息留在戰鬥日誌。
+                    logs: nextStep.text
+                        ? [...(prev.logs || []), nextStep.text].slice(-5)
+                        : (prev.logs || [])
                 };
 
                 if (nextStep.type === 'damage') {
@@ -1232,8 +1240,8 @@ export default function App() {
         recordGameAction(); // 紀錄對戰勝利
         if (battleState.encounterType === 'wild' && enemy) {
             setTodayWildDefeated(n => n + 1);
-            const priority = enemy.isElite ? 2 : 1;
-            const prefix = enemy.isElite ? '擊敗了精英怪：' : '擊敗了野怪：';
+            const priority = 1;
+            const prefix = '擊敗了野怪：';
             updateDiaryEvent(`${prefix}${enemy.name || '未知怪獸'}`, priority);
         }
 
@@ -1355,6 +1363,11 @@ export default function App() {
                 d.setDate(d.getDate() - 1);
                 return getTodayStr(d);
             });
+            playBloop('select');
+            return;
+        }
+        if (tournament.isTournamentOpen && tournament.tPhase === 'champion_reward_effect') {
+            tournament.setSelectedRewardEffectIdx(prev => (prev + 1) % Math.max(1, tournament.rewardOptions.length));
             playBloop('select');
             return;
         }
@@ -1484,7 +1497,10 @@ export default function App() {
             dispatchRogueControl('B');
             return;
         }
-        if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer' || battleState.mode === 'tournament')) {
+        if (tournament.isTournamentOpen && tournament.tPhase === 'champion_reward_effect') {
+            tournament.confirmChampionReward();
+            return;
+        }        if (battleState.active && (battleState.mode === 'pvp' || battleState.mode === 'trainer' || battleState.mode === 'tournament')) {
             if (battleState.phase === 'player_action') {
                 // 防抖：0.4秒內不允許重複提交動作 (提高對戰流暢度)
                 const now = Date.now();
@@ -2116,9 +2132,8 @@ export default function App() {
             enemyData = ADV_WILD_POOL[Math.floor(Math.random() * ADV_WILD_POOL.length)];
             const eStatsRef = SPECIES_BASE_STATS[String(enemyData.id)] || { types: ['normal'] };
             eType = eStatsRef.types;
-            const isBaby = evolutionStage < 2;
-            const isElite = Math.random() < 0.12 && !isBaby;
-            eLevel = Math.min(100, Math.min(level, isElite ? level : Math.floor(level * (0.7 + Math.random() * 0.2))));
+            // 冒險野怪一律使用普通配置，等級維持在玩家同行怪獸等級以下。
+            eLevel = Math.max(1, Math.min(100, level, Math.floor(level * (0.7 + Math.random() * 0.2))));
 
             // 野生怪隨機分配 IV。
             const eIVs = { hp: Math.floor(Math.random() * 32), atk: Math.floor(Math.random() * 32), def: Math.floor(Math.random() * 32), spd: Math.floor(Math.random() * 32) };
@@ -2129,7 +2144,7 @@ export default function App() {
             eDEF = calcFinalStat('def', enemyData.id, eIVs.def, eEVs.def, eLevel);
             eSPD = calcFinalStat('spd', enemyData.id, eIVs.spd, eEVs.spd, eLevel);
 
-            const initMsg = `野生 ${isElite ? '精銳 ' : ''}${enemyData.name}（等級 ${eLevel}） 跳了出來！`;
+            const initMsg = `野生 ${enemyData.name}（等級 ${eLevel}） 跳了出來！`;
             const eMoves = generateMoves(enemyData.id, eLevel).map(id => SKILL_DATABASE[id]).filter(Boolean);
             const eMoveUpgrades = {};
             resultState = {
@@ -2142,7 +2157,7 @@ export default function App() {
                     trait: monsterTraits?.trait || null
                 },
                 enemy: {
-                    id: enemyData.id, name: (isElite ? `精銳 ${enemyData.name}` : enemyData.name), hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, isElite, type: eType, moves: eMoves,
+                    id: enemyData.id, name: enemyData.name, hp: eMaxHP, maxHp: eMaxHP, atk: eATK, def: eDEF, spd: eSPD, level: eLevel, type: eType, moves: eMoves,
                     statStages: { atk: 0, def: 0, spd: 0 }, status: null, statusTurns: 0,
                     moveUpgrades: eMoveUpgrades,
                     protectLeft: 3,
@@ -2967,6 +2982,11 @@ export default function App() {
                                 nextTournamentPhase={tournament.nextTournamentPhase}
                                 myMonsterId={getMonsterIdWrapped()}
                                 playerName={user?.displayName || '玩家'}
+                                rewardOptions={tournament.rewardOptions}
+selectedRewardEffectIdx={tournament.selectedRewardEffectIdx}
+                                moveUpgrades={advStats.moveUpgrades || {}}
+                                playerMoves={(advStats.moves || []).map(id => SKILL_DATABASE[id]).filter(Boolean)}
+                                onRewardEffectSelect={tournament.setSelectedRewardEffectIdx}
                             />
 
                             {/* 冒險或連線對戰系統 Overlay */}

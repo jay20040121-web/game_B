@@ -1,7 +1,13 @@
 import React, { useState, useEffect, memo } from 'react';
 import { MONSTER_ASSET_IDS } from '../monsterData';
 import { POKEMON_VISIBLE_HEIGHTS } from '../data/pokemonMapping';
+import { getNextPokemonEvolution, getPokemonEvolutionStage } from '../data/pokemonEvolutionSystem';
 
+const getBattleTargetVisibleHeight = id => {
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId) || !getNextPokemonEvolution(numericId)) return 68;
+    return getPokemonEvolutionStage(numericId) === 1 ? 54 : 62;
+};
 const measureVisiblePixelHeight = image => {
     try {
         const canvas = document.createElement('canvas');
@@ -77,7 +83,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
     const imageRendering = isPokemonSprite ? 'pixelated' : (useSmoothAnimated ? (isSmallSmoothGif ? smallSmoothImageRendering : 'auto') : 'pixelated');
     const pokemonScaleStep = naturalWidth > 0
         ? (normalizePokemonBattleSize
-            ? 68 / (POKEMON_VISIBLE_HEIGHTS[assetId] || visibleHeight || naturalHeight || 68)
+            ? getBattleTargetVisibleHeight(assetId) / (POKEMON_VISIBLE_HEIGHTS[assetId] || visibleHeight || naturalHeight || 68)
             : (targetSize >= naturalWidth * 2 ? 2 : (targetSize >= naturalWidth ? 1 : 0.5)))
         : 1;
     const pokemonWidth = naturalWidth > 0 ? Math.round(naturalWidth * pokemonScaleStep) : targetSize;
@@ -144,7 +150,7 @@ const DitheredSprite = memo(({ id, className = "", scale = 4.5, animated = true,
 // ==========================================
 // 背面 4-Color 網點運算引擎
 // ==========================================
-const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true, forceStatic = false, smoothAnimated = false, normalizePokemonBattleSize = false }) => {
+const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = true, pure = true, forceStatic = false, smoothAnimated = false, normalizePokemonBattleSize = false, battleVisibleScale = 1 }) => {
     const assetId = MONSTER_ASSET_IDS[id] || id;
     const isPokemonSprite = Boolean(MONSTER_ASSET_IDS[id]);
     const base = import.meta.env.BASE_URL;
@@ -193,7 +199,7 @@ const DitheredBackSprite = memo(({ id, className = "", scale = 4.5, animated = t
     const innerScale = useSmoothAnimated ? 1 : (naturalWidth >= 120 ? 0.7 : 0.55);
     const pokemonScaleStep = naturalWidth > 0
         ? (normalizePokemonBattleSize
-            ? 68 / (POKEMON_VISIBLE_HEIGHTS[assetId] || visibleHeight || naturalHeight || 68)
+            ? (getBattleTargetVisibleHeight(assetId) * battleVisibleScale) / (POKEMON_VISIBLE_HEIGHTS[assetId] || visibleHeight || naturalHeight || 68)
             : (targetSize >= naturalWidth * 2 ? 2 : (targetSize >= naturalWidth ? 1 : 0.5)))
         : 1;
     const pokemonWidth = naturalWidth > 0 ? Math.round(naturalWidth * pokemonScaleStep) : targetSize;

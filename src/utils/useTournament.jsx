@@ -80,7 +80,7 @@ const getLeaderboardBattleProfile = (entry) => {
         type: profile?.type || species.types || ['normal'],
         moves: resolvedMoves,
         moveUpgrades: {},
-        trait: profile?.trait || profile?.monsterTraits?.trait || entry?.trait || entry?.monsterTraits?.trait || null
+                trait: profile?.trait || profile?.monsterTraits?.trait || entry?.trait || entry?.monsterTraits?.trait || null
     };
 };
 
@@ -107,6 +107,8 @@ export function useTournament({
     const [currentRound, setCurrentRound] = useState(1);
     const [isExtraChampionChallenge, setIsExtraChampionChallenge] = useState(false);
     const [lastTournamentEnemyId, setLastTournamentEnemyId] = useState(null);
+    const [rewardOptions, setRewardOptions] = useState([]);
+    const [selectedRewardEffectIdx, setSelectedRewardEffectIdx] = useState(0);
 
     const applyBattleGrowthMod = (value) => Math.max(1, Math.floor(Number(value || 0) * (monsterTraits?.trait?.modifiers?.battleGrowth || 1)));
     const [lastPvpChallengePlayerId, setLastPvpChallengePlayerId] = useState(null);
@@ -208,6 +210,7 @@ export function useTournament({
                 handleTournamentLoss();
             }
         }
+        return undefined;
     }, [battleState?.active, tPhase, battleState?.player?.hp, battleState?.enemy?.hp, pendingSkillLearn]);
 
     // 生成這輪賽事的初始 32 強名單 (玩家 + 31 名電腦)
@@ -415,7 +418,7 @@ export function useTournament({
                 moves: playerMoves,
                 status: null,
                 statStages: { atk: 0, def: 0, spd: 0, accuracy: 0 },
-                moveUpgrades: {},
+                moveUpgrades: advStats.moveUpgrades || {},
                 trait
             },
             enemy: {
@@ -436,15 +439,7 @@ export function useTournament({
         setBattleState(applyOpeningTraitEffects(newBattleState));
     };
 
-    const handleTournamentWin = () => {
-        setLastTournamentEnemyId(battleState?.tournamentEnemyInfo?.monster?.id || battleState?.enemy?.id || null);
-
-        const battlePowerGain = applyBattleGrowthMod(10);
-        setAdvStats(prev => ({
-            ...prev,
-            basePower: Math.min(9999, prev.basePower + battlePowerGain)
-        }));
-
+    const continueTournamentWin = () => {
         if (isExtraChampionChallenge) {
             setTPhase('champion');
             playBloop('confirm');
@@ -458,7 +453,7 @@ export function useTournament({
                 setBracket([bracket[0], extraOpponent]);
                 setCurrentRound(TOURNAMENT_TOTAL_ROUNDS + 1);
                 setTPhase('battle_intro');
-                updateDialogue(`冠軍挑戰：排行榜訓練家 ${extraOpponent.playerName} 現身！`);
+                updateDialogue(`???嚗?銵?閮毀摰?${extraOpponent.playerName} ?曇澈嚗`);
                 playBloop('confirm');
                 return;
             }
@@ -474,6 +469,68 @@ export function useTournament({
         playBloop('confirm');
     };
 
+    const generateChampionRewards = () => {
+        const effects = [
+            { id: 'damage', name: '破壞附魔', value: 1, desc: '技能傷害 +1%' },
+            { id: 'accuracy', name: '鷹眼附魔', value: 2, desc: '技能命中 +2%' },
+            { id: 'priority', name: '迅捷附魔', value: 0.1, desc: '技能先手率 +0.1' }
+        ];
+        const moves = (advStats.moves || []).filter(moveId => (SKILL_DATABASE[moveId]?.power || 0) > 0);
+        const shuffledEffects = [...effects].sort(() => Math.random() - 0.5);
+        const shuffledMoves = [...moves].sort(() => Math.random() - 0.5);
+        const options = shuffledEffects.map((effect, idx) => {
+            const moveId = shuffledMoves[idx % Math.max(1, shuffledMoves.length)];
+            const move = moveId ? SKILL_DATABASE[moveId] : null;
+            return { ...effect, moveId, moveName: move?.name || '攻擊技能' };
+        });
+        setRewardOptions(options);
+        setSelectedRewardEffectIdx(0);
+    };
+    const confirmChampionReward = () => {
+        if (tPhase !== 'champion_reward_effect') return;
+        const effect = rewardOptions[selectedRewardEffectIdx];
+        const moveId = effect?.moveId;
+        const moveData = moveId ? SKILL_DATABASE[moveId] : null;
+        if (!moveData || !effect) return;
+        if ((moveData.power || 0) <= 0) {
+            setAlertMsg(`技能「${moveData.name || moveId}」是輔助技能，無法附魔。`);
+            playBloop('fail');
+            return;
+        }
+
+        setAdvStats(prev => {
+            const nextUpgrades = { ...(prev.moveUpgrades || {}) };
+            const current = nextUpgrades[moveId] || { ailments: {}, count: 0 };
+            nextUpgrades[moveId] = {
+                ...current,
+                ailments: { ...(current.ailments || {}), [effect.id]: Number(current.ailments?.[effect.id] || 0) + effect.value },
+                count: Number(current.count || 0) + 1
+            };
+            return { ...prev, moveUpgrades: nextUpgrades };
+        });
+        setTPhase('champion');
+        updateDialogue(`附魔成功：「${moveData.name}」${effect.desc}`);
+        playBloop('success');
+        continueTournamentWin();
+    };
+
+    const handleTournamentWin = () => {
+        setLastTournamentEnemyId(battleState?.tournamentEnemyInfo?.monster?.id || battleState?.enemy?.id || null);
+
+        const battlePowerGain = applyBattleGrowthMod(10);
+        setAdvStats(prev => ({
+            ...prev,
+            basePower: Math.min(9999, prev.basePower + battlePowerGain)
+        }));
+
+        if (!isExtraChampionChallenge && currentRound === TOURNAMENT_TOTAL_ROUNDS) {
+            generateChampionRewards();
+            setTPhase('champion_reward_effect');
+            playBloop('success');
+            return;
+        }
+        continueTournamentWin();
+    };
     const handleTournamentLoss = () => {
         setLastTournamentEnemyId(battleState?.tournamentEnemyInfo?.monster?.id || battleState?.enemy?.id || null);
 
@@ -490,12 +547,16 @@ export function useTournament({
     return {
         isTournamentOpen,
         tPhase,
-        opponents: bracket,
+        setTPhase,
         currentRound,
         startTournament,
         closeTournament,
         nextTournamentPhase,
         handleTournamentWin,
-        handleTournamentLoss
+        handleTournamentLoss,
+        rewardOptions,
+        selectedRewardEffectIdx,
+        setSelectedRewardEffectIdx,
+        confirmChampionReward
     };
 }

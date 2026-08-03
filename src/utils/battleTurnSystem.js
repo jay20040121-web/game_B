@@ -195,6 +195,8 @@ export const processBattleTurn = (prev, playerAction, actionMove, pvpEnemyMove, 
         if (['explosion', 'self-destruct', 'self_destruct'].includes(move.id) && (attacker.trait?.id === 'damp' || defender.trait?.id === 'damp')) return { dmg: 0, msg: 'ABILITY_BLOCK' };
 
         let baseDmg = (Math.floor((2 * attackerLevel) / 5 + 2) * move.power * (effectiveAtk / effectiveDef)) / 50 + 2;
+        const enchantDamageBonus = attacker.moveUpgrades?.[move.id]?.ailments?.damage || 0;
+        if (enchantDamageBonus > 0) baseDmg *= 1 + (enchantDamageBonus / 100);
         const defenderSide = defender === updatedPlayer ? 'player' : 'enemy';
         const defenderField = fieldState.sides[defenderSide] || {};
         if (move.damageClass === 'physical' && (defenderField.reflectTurns || 0) > 0) baseDmg *= 0.5;

@@ -55,6 +55,14 @@ const cleanText = value => String(value || '').replace(/[\n\f\r]+/g, ' ').replac
 const statMap = { attack: 'atk', defense: 'def', speed: 'spd', accuracy: 'accuracy', evasion: 'evasion', 'special-attack': 'atk', 'special-defense': 'def' };
 const selfTargets = new Set(['user', 'users-field', 'user-and-allies', 'all-allies']);
 const protectMoves = new Set(['protect', 'detect', 'kings-shield', 'spiky-shield', 'baneful-bunker', 'silk-trap', 'burning-bulwark', 'obstruct']);
+const TRADITIONAL_MOVE_TEXT_OVERRIDES = {
+  'headlong-rush': { name: '突飛猛撲', description: '以全身撞擊的方式猛撞對手。同時會降低自己的防禦與特防。' },
+  'hyper-drill': { name: '強力鑽', description: '高速旋轉身體尖端刺穿對手。可以擊中正在使用守住或看穿等招式的對手。' },
+  'raging-bull': { name: '怒牛', description: '像狂怒的牛一樣撞擊對手。招式屬性會依自己的形態而改變，也能破壞光牆與反射壁等屏障。' },
+  'raging-fury': { name: '大憤慨', description: '連續２～３回合猛烈攻擊並噴出火焰，之後自己會陷入混亂。' },
+  'twin-beam': { name: '雙光束', description: '從雙眼發射神秘光束攻擊對手。會連續命中對手兩次。' },
+  'wave-crash': { name: '波動衝', description: '讓水流包覆全身後，以身體猛烈撞擊對手。自己也會受到相當大的傷害。' }
+};
 
 const pokemon = await mapLimit(SPECIES_IDS, 8, id => fetchJson(`${API}/pokemon/${id}`));
 const learnsets = {};
@@ -85,7 +93,7 @@ for (const [id, move] of moveEntries.sort(([a], [b]) => a.localeCompare(b))) {
   moves[id] = {
     id,
     apiId: move.id,
-    name: localize(move.names) || id,
+    name: TRADITIONAL_MOVE_TEXT_OVERRIDES[id]?.name || localize(move.names) || id,
     type: move.type?.name || 'normal',
     damageClass: move.damage_class?.name || 'status',
     power: move.power ?? 0,
@@ -108,7 +116,7 @@ for (const [id, move] of moveEntries.sort(([a], [b]) => a.localeCompare(b))) {
     stat_chance: Number(meta.stat_chance || 0),
     stat_target: selfTargets.has(target) ? 'self' : 'target',
     isProtect: protectMoves.has(id),
-    description: cleanText(flavor?.flavor_text || localize(move.effect_entries || [], 'effect') || effectEntry?.short_effect || effectEntry?.effect || '')
+    description: TRADITIONAL_MOVE_TEXT_OVERRIDES[id]?.description || cleanText(flavor?.flavor_text || localize(move.effect_entries || [], 'effect') || effectEntry?.short_effect || effectEntry?.effect || '')
   };
 }
 

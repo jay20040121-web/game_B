@@ -17107,7 +17107,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
   "headlong-rush": {
     "id": "headlong-rush",
     "apiId": 838,
-    "name": "突飞猛扑",
+    "name": "突飛猛撲",
     "type": "ground",
     "damageClass": "physical",
     "power": 120,
@@ -17130,7 +17130,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
     "stat_chance": 0,
     "stat_target": "target",
     "isProtect": false,
-    "description": "The user smashes into the target in a full-body tackle. This also lowers the user’s Defense and Sp. Def stats."
+    "description": "以全身撞擊的方式猛撞對手。同時會降低自己的防禦與特防。"
   },
   "heal-bell": {
     "id": "heal-bell",
@@ -17569,7 +17569,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
   "hyper-drill": {
     "id": "hyper-drill",
     "apiId": 887,
-    "name": "强力钻",
+    "name": "強力鑽",
     "type": "normal",
     "damageClass": "physical",
     "power": 100,
@@ -17592,7 +17592,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
     "stat_chance": 0,
     "stat_target": "target",
     "isProtect": false,
-    "description": "The user spins the pointed part of its body at high speed to pierce the target. This attack can hit a target using a move such as Protect or Detect."
+    "description": "高速旋轉身體尖端刺穿對手。可以擊中正在使用守住或看穿等招式的對手。"
   },
   "hyper-voice": {
     "id": "hyper-voice",
@@ -20411,12 +20411,12 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
     "stat_chance": 0,
     "stat_target": "target",
     "isProtect": false,
-    "description": "The user performs a tackle like a raging bull. This move's type depends on the user's form. It can also break barriers, such as Light Screen and Reflect."
+    "description": "像狂怒的牛一樣撞擊對手。招式屬性會依自己的形態而改變，也能破壞光牆與反射壁等屏障。"
   },
   "raging-fury": {
     "id": "raging-fury",
     "apiId": 833,
-    "name": "大愤慨",
+    "name": "大憤慨",
     "type": "fire",
     "damageClass": "physical",
     "power": 120,
@@ -20439,7 +20439,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
     "stat_chance": 0,
     "stat_target": "target",
     "isProtect": false,
-    "description": "The user rampages around spewing flames for two to three turns. The user then becomes confused."
+    "description": "連續２～３回合猛烈攻擊並噴出火焰，之後自己會陷入混亂。"
   },
   "rain-dance": {
     "id": "rain-dance",
@@ -23620,7 +23620,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
   "twin-beam": {
     "id": "twin-beam",
     "apiId": 888,
-    "name": "双光束",
+    "name": "雙光束",
     "type": "psychic",
     "damageClass": "special",
     "power": 40,
@@ -23643,7 +23643,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
     "stat_chance": 0,
     "stat_target": "target",
     "isProtect": false,
-    "description": "The user shoots mystical beams from its eyes to inflict damage. The target is hit twice in a row."
+    "description": "從雙眼發射神秘光束攻擊對手。會連續命中對手兩次。"
   },
   "twister": {
     "id": "twister",
@@ -23969,7 +23969,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
   "wave-crash": {
     "id": "wave-crash",
     "apiId": 834,
-    "name": "波动冲",
+    "name": "波動衝",
     "type": "water",
     "damageClass": "physical",
     "power": 120,
@@ -23992,7 +23992,7 @@ export const POKEMON_MOVE_DATABASE = Object.freeze({
     "stat_chance": 0,
     "stat_target": "target",
     "isProtect": false,
-    "description": "The user shrouds itself in water and slams into the target with its whole body to inflict damage. This also damages the user quite a lot."
+    "description": "讓水流包覆全身後，以身體猛烈撞擊對手。自己也會受到相當大的傷害。"
   },
   "weather-ball": {
     "id": "weather-ball",
