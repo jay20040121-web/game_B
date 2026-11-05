@@ -1138,9 +1138,9 @@ const removeRemainingChinese = (text, original) => {
 export const getStoredLanguage = () => {
     try {
         const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-        return stored === LANGUAGES.zh ? LANGUAGES.zh : LANGUAGES.en;
+        return stored === LANGUAGES.en ? LANGUAGES.en : LANGUAGES.zh;
     } catch {
-        return LANGUAGES.en;
+        return LANGUAGES.zh;
     }
 };
 
